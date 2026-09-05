@@ -216,7 +216,7 @@ export default function AllPlayersPointsPage() {
           // Rounds not available — that's fine, we'll show cumulative
           setRounds([]);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading league data:', err);
         setError('fetch_error');
       } finally {
@@ -249,7 +249,7 @@ export default function AllPlayersPointsPage() {
       setTotalAll(data.total_players || 0);
       setTotalAvailable(data.available_players || 0);
       setTotalDrafted(data.drafted_players || 0);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading players:', err);
     } finally {
       setPlayersLoading(false);

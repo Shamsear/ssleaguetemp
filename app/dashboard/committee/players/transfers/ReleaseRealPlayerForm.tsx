@@ -137,7 +137,7 @@ export default function ReleaseRealPlayerForm() {
                 refundAmount,
                 releaseSeasonId
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error calculating preview:', err);
             setPreview(null);
         }

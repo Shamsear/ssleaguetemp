@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         has_more: offset + limit < totalCount
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching transfer history:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch transfer history', details: error instanceof Error ? error.message : 'Unknown error' },

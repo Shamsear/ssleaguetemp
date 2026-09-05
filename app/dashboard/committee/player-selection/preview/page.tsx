@@ -67,7 +67,7 @@ export default function PlayerSelectionPreviewPage() {
           changes: actualChanges,
           changes_count: actualChanges.length
         })
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading preview:', err)
         alert('Failed to load preview data')
         router.push('/dashboard/committee/player-selection')
@@ -154,7 +154,7 @@ export default function PlayerSelectionPreviewPage() {
 
       alert(`Successfully updated ${successCount} player(s)${errorCount > 0 ? `, ${errorCount} error(s)` : ''}`)
       router.push('/dashboard/committee/player-selection')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error applying changes:', err)
       alert('Failed to apply changes')
     } finally {

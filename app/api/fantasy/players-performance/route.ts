@@ -139,17 +139,17 @@ export async function GET(request: NextRequest) {
           photo_url: photosMap[player.player_id] || null,
         };
       })
-      .filter((player) => player !== null); // Remove null entries
+      .filter((player: any) => player !== null); // Remove null entries
 
     // Sort by total base points (highest first)
-    playersWithStats.sort((a, b) => b.total_base_points - a.total_base_points);
+    playersWithStats.sort((a: any, b: any) => b.total_base_points - a.total_base_points);
 
     return NextResponse.json({
       success: true,
       players: playersWithStats,
       total_players: playersWithStats.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching players performance:', error);
     return NextResponse.json(
       { error: 'Failed to fetch players performance', details: error instanceof Error ? error.message : 'Unknown error' },

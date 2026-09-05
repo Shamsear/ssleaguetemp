@@ -79,7 +79,7 @@ export default function TeamDashboard() {
         } else {
           setSeasonStatus({ hasActiveSeason: false, isRegistered: false });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error checking registration:', err);
         // Default to registered=true to avoid hiding menu on error
         setSeasonStatus({ hasActiveSeason: false, isRegistered: false });
@@ -156,7 +156,7 @@ export default function TeamDashboard() {
 
       setTeamLogoUrl(result.url);
       alert('Team logo uploaded successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading logo:', error);
       alert('Failed to upload logo. Please try again.');
     } finally {
@@ -182,7 +182,7 @@ export default function TeamDashboard() {
         if (data.success) {
           setHistoricalStats(data.data);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching historical stats:', error);
       } finally {
         setLoadingStats(false);
@@ -204,7 +204,7 @@ export default function TeamDashboard() {
       if (data.success) {
         setActiveSeasonDetails(data.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching active season details:', error);
     } finally {
       setLoadingActiveDetails(false);

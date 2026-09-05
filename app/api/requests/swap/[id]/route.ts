@@ -196,7 +196,7 @@ export async function PATCH(
             url: `/dashboard/team/requests`
           }, { teamId: req.target_team_id });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send swap status notifications:', err);
       }
     }

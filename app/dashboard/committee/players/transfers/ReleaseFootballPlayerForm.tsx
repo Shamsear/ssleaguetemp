@@ -91,7 +91,7 @@ export default function ReleaseFootballPlayerForm() {
         }
 
         setPlayers(loadedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {
@@ -149,7 +149,7 @@ export default function ReleaseFootballPlayerForm() {
         remainingHalfSeasons,
         releaseSeasonId
       };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error calculating preview:', err);
       return null;
     }

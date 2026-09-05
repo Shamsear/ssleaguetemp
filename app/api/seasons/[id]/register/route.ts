@@ -447,7 +447,7 @@ export async function POST(
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing season registration:', error);
     return NextResponse.json({
       success: false,

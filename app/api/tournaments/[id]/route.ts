@@ -25,7 +25,7 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, tournament: tournaments[0] });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tournament:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch tournament' },
@@ -129,7 +129,7 @@ export async function PATCH(
       tournament: updatedTournament,
       message: 'Tournament updated successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating tournament:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update tournament' },
@@ -164,7 +164,7 @@ export async function DELETE(
       success: true,
       message: 'Tournament and all related data deleted successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting tournament:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete tournament' },

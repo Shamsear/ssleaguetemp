@@ -143,7 +143,7 @@ export async function GET(
     console.log(`[Season Stats API] Found ${playerStats.length} players`);
 
     // Combine team stats with logos
-    const teams = teamStats.map((team, index) => ({
+    const teams = teamStats.map((team: any, index: any) => ({
       team_id: team.team_id,
       team_name: team.team_name,
       rank: team.rank || index + 1,

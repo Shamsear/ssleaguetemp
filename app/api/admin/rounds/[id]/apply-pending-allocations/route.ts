@@ -148,7 +148,7 @@ export async function POST(
             `Required: £${allocation.amount}, Available: £${teamBalance}, Shortfall: £${shortfall}`
           );
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error validating budget for team ${allocation.team_id}:`, error);
         budgetValidationErrors.push(
           `Failed to validate budget for team ${allocation.team_name}: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -284,7 +284,7 @@ export async function POST(
         round_status: 'completed',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error applying pending allocations:', error);
     
     // Log the error for debugging

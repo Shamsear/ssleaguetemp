@@ -44,7 +44,7 @@ export default function SeasonsArchivePage() {
       if (data.success && data.seasons) {
         setSeasons(data.seasons);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching seasons:', error);
     } finally {
       setLoading(false);

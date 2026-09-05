@@ -1,3 +1,4 @@
+import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';

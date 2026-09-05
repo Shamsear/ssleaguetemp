@@ -358,7 +358,7 @@ export default function PreviewHistoricalSeason() {
           // Load existing entities and check for duplicates, passing transformed data
           loadExistingEntitiesAndCheckDuplicates(transformedTeams, transformedPlayers);
         }, 100);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error parsing upload data:', error);
         alert('Error loading upload data. Please try uploading again.');
         router.push('/dashboard/superadmin/historical-seasons/import');
@@ -479,7 +479,7 @@ export default function PreviewHistoricalSeason() {
         
         setDuplicateMatches(matches);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading existing entities:', error);
     } finally {
       setLoadingDuplicates(false);

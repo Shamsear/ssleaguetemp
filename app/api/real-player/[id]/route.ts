@@ -1,3 +1,4 @@
+import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
@@ -85,7 +86,7 @@ export async function GET(
         if (rows.length > 0 && rows[0].team_name) {
           teamName = rows[0].team_name;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching team name from Neon:', error);
       }
 
@@ -101,7 +102,7 @@ export async function GET(
             const teamSeasonData = teamSeasonDoc.data();
             teamName = teamSeasonData?.team_name;
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error fetching team name from Firestore:', error);
         }
       }

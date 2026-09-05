@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
           if (!playerSnapshot.empty) {
             playerName = playerSnapshot.docs[0].data().name
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching player name:', err)
         }
 
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     )
 
     return NextResponse.json({ requests })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching email requests:', error)
     return NextResponse.json(
       { error: 'Failed to fetch email verification requests' },

@@ -64,7 +64,7 @@ export default function RealPlayersPage() {
           }
         });
         setAvailablePlaces(Array.from(places).sort());
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching players:', error);
         setError('Failed to load players data');
       } finally {

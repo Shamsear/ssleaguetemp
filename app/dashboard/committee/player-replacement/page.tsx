@@ -59,7 +59,7 @@ export default function PlayerReplacementPage() {
       if (data.success) {
         setSquad(data.data?.players || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch squad:', err);
     } finally {
       setSquadLoading(false);
@@ -92,7 +92,7 @@ export default function PlayerReplacementPage() {
       } else {
         setActionError(resData.error || 'Failed to load replacement options.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching replacement details:', err);
       setActionError('An error occurred while loading replacement details.');
     } finally {
@@ -119,7 +119,7 @@ export default function PlayerReplacementPage() {
         if (resData.success) {
           setCandidateInfo(resData.data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to search bulk candidates:', err);
       } finally {
         setInfoLoading(false);

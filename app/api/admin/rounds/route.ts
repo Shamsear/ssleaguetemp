@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
           } else {
             console.error(`❌ Failed to finalize round ${round.id}:`, finalizationResult.error);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Failed to auto-finalize round ${round.id}:`, error);
         }
       });

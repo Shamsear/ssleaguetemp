@@ -182,7 +182,7 @@ export default function DraftDetailedResultsPage() {
       link.download = `${player.player_name.replace(/\s+/g, '_')}_sold.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Download failed:', err);
       showAlert({ type: 'error', title: 'Download Failed', message: 'Could not generate player card' });
     }
@@ -256,7 +256,7 @@ export default function DraftDetailedResultsPage() {
           });
         }
       }
-      summarySheet.eachRow((row, rowNumber) => {
+      summarySheet.eachRow((row: any, rowNumber: any) => {
         row.eachCell((cell) => {
           cell.border = {
             top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
@@ -294,7 +294,7 @@ export default function DraftDetailedResultsPage() {
             });
           }
         }
-        ws.eachRow((row, rowNumber) => {
+        ws.eachRow((row: any, rowNumber: any) => {
           row.eachCell((cell) => {
             cell.border = {
               top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
@@ -342,7 +342,7 @@ export default function DraftDetailedResultsPage() {
         ws.addRow({ target: 'Budget Spent', bid: team.budget_spent });
         ws.getRow(ws.lastRow.number - 1).font = { bold: true };
         ws.getRow(ws.lastRow.number).font = { bold: true };
-        ws.eachRow((row, rowNumber) => {
+        ws.eachRow((row: any, rowNumber: any) => {
           row.eachCell((cell) => {
             cell.border = {
               top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
@@ -869,7 +869,7 @@ export default function DraftDetailedResultsPage() {
                                 src={a.player_image}
                                 alt={a.player_name}
                                 className="w-16 h-16 rounded-full object-cover border-2 border-emerald-300"
-                                onError={(e) => {
+                                onError={(e: any) => {
                                   (e.target as HTMLImageElement).src = '/images/player-placeholder.png';
                                 }}
                               />
@@ -878,7 +878,7 @@ export default function DraftDetailedResultsPage() {
                                   src={a.team_logo}
                                   alt="Team Logo"
                                   className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-white object-cover"
-                                  onError={(e) => {
+                                  onError={(e: any) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
                                   }}
                                 />
@@ -972,7 +972,7 @@ export default function DraftDetailedResultsPage() {
                           if (filterStatus === 'all') return true;
                           return target.bids.some((b: any) => b.status === filterStatus);
                         })
-                        .map((target) => (
+                        .map((target: any) => (
                         <div key={target.target_id} className="border border-slate-100 rounded-2xl overflow-hidden">
                           <div className="bg-slate-50 px-4 py-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -1024,7 +1024,7 @@ export default function DraftDetailedResultsPage() {
               <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm sticky top-4">
                 <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-4">Teams</h2>
                 <div className="space-y-2">
-                  {teams.map((team) => (
+                  {teams.map((team: any) => (
                     <button
                       key={team.team_id}
                       onClick={() => setSelectedTeam(team.team_id)}

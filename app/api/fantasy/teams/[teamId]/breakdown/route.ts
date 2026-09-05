@@ -68,7 +68,7 @@ export async function GET(
     // Combine by round
     const allRounds = new Set([...playerPointsByRound.keys(), ...teamBonusesByRound.keys()]);
     const roundBreakdown = Array.from(allRounds)
-      .sort((a, b) => a - b)
+      .sort((a: any, b: any) => a - b)
       .map((round: any) => ({
         round,
         player_points: playerPointsByRound.get(round) || 0,
@@ -78,17 +78,17 @@ export async function GET(
 
     return NextResponse.json({
       team: {
-        id: fantasyTeam.id,
-        team_name: fantasyTeam.team_name,
-        player_points: fantasyTeam.player_points || 0,
-        team_bonus_points: fantasyTeam.team_bonus_points || 0,
-        total_points: fantasyTeam.total_points || 0,
-        rank: fantasyTeam.rank || 0,
+        id: (fantasyTeam as any)?.id,
+        team_name: (fantasyTeam as any)?.team_name,
+        player_points: (fantasyTeam as any)?.player_points || 0,
+        team_bonus_points: (fantasyTeam as any)?.team_bonus_points || 0,
+        total_points: (fantasyTeam as any)?.total_points || 0,
+        rank: (fantasyTeam as any)?.rank || 0,
       },
       round_breakdown: roundBreakdown,
       team_bonuses_detail: teamBonusDetails,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team breakdown:', error);
     return NextResponse.json(
       { error: 'Failed to fetch team breakdown', details: error instanceof Error ? error.message : 'Unknown error' },

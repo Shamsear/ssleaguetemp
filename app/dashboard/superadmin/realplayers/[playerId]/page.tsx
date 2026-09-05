@@ -71,7 +71,7 @@ export default function PlayerProfilePage() {
           ...row,
           player_id: row.player_id || row.id,
         } as PlayerData);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching player:', error);
         setError('Failed to load player data');
       } finally {

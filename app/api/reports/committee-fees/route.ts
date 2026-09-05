@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
             data.team_name = teamNames.get(teamId)!;
           }
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching team names:', error);
         // Continue with team IDs as names
       }
@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating committee fee report:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

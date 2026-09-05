@@ -92,7 +92,7 @@ async function updateProgress(importId: string, updates: Partial<ImportProgress>
       return updates as ImportProgress;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error updating progress:', error);
     return null;
   }
@@ -132,7 +132,7 @@ async function generateSeasonId(seasonData: ImportSeasonData['seasonInfo'], exis
   const seasonsQuery = await adminDb.collection('seasons').get();
   let maxNumber = 0;
 
-  seasonsQuery.forEach((doc) => {
+  seasonsQuery.forEach((doc: any) => {
     const id = doc.id;
     if (id.startsWith(prefix)) {
       const numberPart = parseInt(id.substring(prefix.length));
@@ -233,7 +233,7 @@ async function detectReimport(
     console.log(`   - Classification: ${isReimport ? 'RE-IMPORT' : 'NEW IMPORT'}`);
 
     return { isReimport, matchRate, sampleSize };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in smart detection:', error);
     // On error, assume new import (safer default)
     return { isReimport: false, matchRate: 0, sampleSize };
@@ -356,7 +356,7 @@ async function batchLoadForReimport(
     console.log(`   - Note: Skipped selective queries (entities assumed to exist)`);
 
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in re-import batch load:', error);
     throw error;
   }
@@ -553,7 +553,7 @@ async function batchLoadExistingEntities(
     console.log(`   - Seasons: ${result.allSeasonIds.length} total IDs`);
 
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in batch load:', error);
     throw error;
   }
@@ -597,7 +597,7 @@ async function generateNewTeamId(): Promise<string> {
     const newId = `${prefix}${paddedNumber}`;
     console.log(`🆔 Generated team ID: ${newId}`);
     return newId;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating team ID:', error);
     // Fallback to random number if query fails
     const randomNumber = Math.floor(Math.random() * 10000);
@@ -1201,7 +1201,7 @@ function generateNewPlayerId(): string {
     const newId = `${prefix}${paddedNumber}`;
     console.log(`🆔 Generated player ID: ${newId}`);
     return newId;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating player ID:', error);
     // Fallback to random number if query fails
     const randomNumber = Math.floor(Math.random() * 10000);
@@ -1240,7 +1240,7 @@ function getOrCreatePlayerByName(name: string, batchLookup: BatchLookupData): { 
     // Cache the newly generated ID
     playerIdCache.set(name, result);
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in getOrCreatePlayerByName:', error);
     throw error;
   }
@@ -1664,7 +1664,7 @@ async function updateTeamPerformanceStats(
     try {
       await batch.commit();
       console.log(`✅ Updated ${teams.length} teamstats documents with player counts`);
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Team stats update completed with some issues:', error);
     }
   }

@@ -305,7 +305,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
       } else {
         setError(data?.error || 'Failed to load dashboard data');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching dashboard:', err);
       setError('Unable to connect to the server');
     } finally {
@@ -599,7 +599,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           message: data.error || 'Failed to delete bid'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       setDashboardData(prev => {
         if (!prev) return prev;
         return {

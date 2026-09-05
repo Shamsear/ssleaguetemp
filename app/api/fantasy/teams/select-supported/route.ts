@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       supported_team_id,
       supported_team_name,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error selecting supported team:', error);
     return NextResponse.json(
       { error: 'Failed to select supported team' },

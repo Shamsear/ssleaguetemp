@@ -1,3 +1,4 @@
+import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
             }
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error during backend quota validation:', err);
       }
     }
@@ -216,7 +217,7 @@ export async function POST(request: NextRequest) {
       try {
         const doc = await teamSeasonRef.get();
         return { teamId, teamSeasonRef, data: doc.exists ? doc.data() : null };
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error reading team ${teamId} budget:`, error);
         return { teamId, teamSeasonRef, data: null };
       }

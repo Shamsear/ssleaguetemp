@@ -89,7 +89,7 @@ export async function POST(
     }
 
     // Sort teams by name for consistent fixture generation
-    const teams = teamsData.sort((a, b) => a.team_name.localeCompare(b.team_name));
+    const teams = teamsData.sort((a: any, b: any) => a.team_name.localeCompare(b.team_name));
 
     // Generate fixtures based on tournament format
     let fixtures: any[] = [];
@@ -260,7 +260,7 @@ export async function POST(
       fixtures_count: fixtures.length,
       message: `Generated ${fixtures.length} fixtures for tournament`,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating fixtures:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate fixtures' },
@@ -323,7 +323,7 @@ export async function GET(
     }));
 
     return NextResponse.json({ success: true, fixtures: fixturesWithLogos });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching fixtures:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch fixtures' },
@@ -357,7 +357,7 @@ export async function DELETE(
       success: true,
       message: 'All fixtures deleted successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting fixtures:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete fixtures' },

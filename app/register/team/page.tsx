@@ -105,7 +105,7 @@ function SeasonRegistrationContent() {
               const docData = existingDoc.data();
               setRegistrationStatus(docData.status === 'registered' ? 'registered' : 'declined');
             }
-          } catch (err) {
+          } catch (err: any) {
             // No existing registration
             setRegistrationStatus('none');
           }
@@ -143,7 +143,7 @@ function SeasonRegistrationContent() {
           });
           router.push('/dashboard/team');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching season:', err);
         showAlert({
           type: 'error',
@@ -210,7 +210,7 @@ function SeasonRegistrationContent() {
         message: `You have declined ${season.name}. You can join future seasons.`
       });
       setTimeout(() => router.push('/dashboard/team'), 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error processing decision:', err);
       showAlert({
         type: 'error',
@@ -252,7 +252,7 @@ function SeasonRegistrationContent() {
         message: `Successfully joined ${season.name}!${joinFantasy ? ' You\'re also registered for Fantasy League!' : ''}`
       });
       setTimeout(() => router.push('/dashboard/team'), 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error processing registration:', err);
       showAlert({
         type: 'error',

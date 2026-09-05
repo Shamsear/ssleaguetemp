@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       message: `Calculated team bonuses for ${bonusesAwarded.length} fantasy team(s)`,
       bonuses_awarded: bonusesAwarded,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error calculating team bonuses:', error);
     return NextResponse.json(
       { error: 'Failed to calculate team bonuses' },

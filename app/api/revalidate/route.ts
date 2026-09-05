@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         revalidatePath(path);
         results.push({ path, success: true });
         console.log(`Successfully revalidated: ${path}`);
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.push({ path, success: false, error: errorMessage });
         console.error(`Failed to revalidate ${path}:`, error);
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Revalidation error:', error);
     return NextResponse.json(
       {

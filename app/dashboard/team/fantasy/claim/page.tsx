@@ -44,7 +44,7 @@ export default function ClaimFantasyTeamPage() {
         router.push('/dashboard/team/fantasy/my-team');
       }, 2000);
 
-    } catch (error) {
+    } catch (error: any) {
       setMessage(`[ERROR] ${error instanceof Error ? error.message : 'Failed to claim team'}`);
     } finally {
       setClaiming(false);

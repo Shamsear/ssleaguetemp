@@ -111,7 +111,7 @@ export default function AdminNotificationsPage() {
         const data = await response.json();
         setCurrentSeason(data.season || null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading current season:', error);
     }
   };
@@ -123,7 +123,7 @@ export default function AdminNotificationsPage() {
         const data = await response.json();
         setSeasons(data.seasons || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading seasons:', error);
     }
   };
@@ -135,7 +135,7 @@ export default function AdminNotificationsPage() {
         const data = await response.json();
         setRounds(data.data || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading rounds:', error);
     }
   };
@@ -147,7 +147,7 @@ export default function AdminNotificationsPage() {
         const data = await response.json();
         setFixtures(data.fixtures || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading fixtures:', error);
     }
   };
@@ -170,7 +170,7 @@ export default function AdminNotificationsPage() {
       } else {
         console.error('[Notification Users] API Error:', response.status, response.statusText);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Notification Users] Error loading notification users:', error);
     } finally {
       setLoadingUsers(false);
@@ -187,7 +187,7 @@ export default function AdminNotificationsPage() {
         console.log('[Season Teams] Sample team user_ids:', data.teams?.slice(0, 3).map((t: any) => ({ name: t.team_name, user_id: t.user_id })));
         setSeasonTeams(data.teams || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading season teams:', error);
     } finally {
       setLoadingSeasonTeams(false);

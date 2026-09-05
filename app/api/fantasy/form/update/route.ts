@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Form update error:', error);
     return NextResponse.json(
       { 
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       form_data: formData
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Form fetch error:', error);
     return NextResponse.json(
       { 

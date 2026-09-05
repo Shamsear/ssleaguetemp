@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       bonusAmount: amount,
       reason
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error issuing bonus:', error);
     return NextResponse.json(
       { error: 'Failed to issue bonus' },

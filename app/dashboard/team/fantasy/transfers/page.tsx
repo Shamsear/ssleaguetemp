@@ -180,7 +180,7 @@ export default function TeamTransfersPage() {
         setCurrentSubmission(subData.submission || null);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transfer data:', error);
     } finally {
       setIsLoading(false);
@@ -248,7 +248,7 @@ export default function TeamTransfersPage() {
       setSelectedIn(null);
       loadTransferData();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transfer submission error:', error);
       showAlert({
         type: 'error',
@@ -287,7 +287,7 @@ export default function TeamTransfersPage() {
       });
 
       loadTransferData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Cancel transfer error:', error);
       showAlert({
         type: 'error',
@@ -334,7 +334,7 @@ export default function TeamTransfersPage() {
       setShowCaptainModal(false);
       loadTransferData();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Captain update error:', error);
       showAlert({
         type: 'error',

@@ -111,7 +111,7 @@ export async function GET(
       active: true,
       timeRemaining: Math.max(0, Math.floor((endTime.getTime() - now.getTime()) / 1000)),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking round status:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

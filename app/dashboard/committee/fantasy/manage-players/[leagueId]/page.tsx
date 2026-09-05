@@ -74,7 +74,7 @@ export default function ManagePlayersPage() {
           const playersData = await playersResponse.json();
           setAvailablePlayers(playersData.available_players);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
         showAlert({
           type: 'error',
@@ -98,7 +98,7 @@ export default function ManagePlayersPage() {
         const data = await response.json();
         setDraftedPlayers(data.drafted_players || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading drafted players:', error);
     }
   };
@@ -136,7 +136,7 @@ export default function ManagePlayersPage() {
 
       await loadDraftedPlayers();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       showAlert({
         type: 'error',
         title: 'Error',
@@ -181,7 +181,7 @@ export default function ManagePlayersPage() {
 
       await loadDraftedPlayers();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       showAlert({
         type: 'error',
         title: 'Error',
@@ -228,7 +228,7 @@ export default function ManagePlayersPage() {
 
       await loadDraftedPlayers();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       showAlert({
         type: 'error',
         title: 'Error',
@@ -263,7 +263,7 @@ export default function ManagePlayersPage() {
       });
 
       await loadDraftedPlayers();
-    } catch (error) {
+    } catch (error: any) {
       showAlert({
         type: 'error',
         title: 'Error',

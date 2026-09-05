@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         if (neonTeams.length > 0) {
           teamId = neonTeams[0].id;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Neon teams lookup warning:', err);
       }
     }
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         if (neonTS.length > 0) {
           teamId = neonTS[0].team_id;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Neon team_seasons user lookup warning:', err);
       }
     }
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         if (activeSeasons.length > 0) {
           seasonId = activeSeasons[0].id;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Neon active season lookup warning:', err);
       }
     }
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
         if (tsRows.length > 0) {
           teamSeasonData = tsRows[0];
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Neon team_seasons lookup warning:', err);
       }
     }
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           LIMIT 500
         `;
         allTransactions = txRows;
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Neon transactions table lookup warning:', err);
         allTransactions = [];
       }

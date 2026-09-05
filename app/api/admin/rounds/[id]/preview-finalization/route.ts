@@ -273,7 +273,7 @@ export async function POST(
       },
       message: 'Preview finalization complete. Review the allocations and click "Finalize for Real" to apply.',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in preview finalization:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

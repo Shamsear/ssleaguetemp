@@ -100,7 +100,7 @@ export async function PATCH(
           await userRef.update(userUpdateData);
           console.log('✅ Updated users collection');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('⚠️ Error updating users collection:', error);
         // Don't fail the whole request if user update fails
       }
@@ -133,7 +133,7 @@ export async function PATCH(
 
         await Promise.all(updatePromises);
         console.log(`✅ Updated ${teamSeasonsSnapshot.size} team_seasons records`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('⚠️ Error updating team_seasons:', error);
         // Don't fail the whole request if team_seasons update fails
       }
@@ -150,7 +150,7 @@ export async function PATCH(
           WHERE id = ${teamId}
         `;
         console.log('✅ Updated Neon teams table');
-      } catch (error) {
+      } catch (error: any) {
         console.error('⚠️ Error updating Neon teams table:', error);
         // Don't fail the whole request if Neon update fails
       }

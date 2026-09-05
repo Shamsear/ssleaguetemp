@@ -93,7 +93,7 @@ export default function TeamsManagement() {
       setSeasons(seasonsList.map((s: any) => ({ id: s.id, name: s.name || s.id })));
       
       await refetchTeams();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
       setError(errorMessage);
@@ -129,7 +129,7 @@ export default function TeamsManagement() {
         initial_balance: 10000000,
         season_id: '',
       });
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create team';
       setError(errorMessage);
     } finally {
@@ -173,7 +173,7 @@ export default function TeamsManagement() {
       
       setShowEditTeamModal(false);
       setSelectedTeam(null);
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update team';
       setError(errorMessage);
     } finally {
@@ -190,7 +190,7 @@ export default function TeamsManagement() {
       setError(null);
       await fetch(`/api/teams/${team.id}`, { method: 'DELETE' });
       await loadData();
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete team';
       setError(errorMessage);
       alert(`Error: ${errorMessage}`);
@@ -206,7 +206,7 @@ export default function TeamsManagement() {
         body: JSON.stringify({ is_active: !team.is_active }),
       });
       await loadData();
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to toggle team status';
       setError(errorMessage);
       alert(`Error: ${errorMessage}`);

@@ -132,7 +132,7 @@ async function assignPlayerToTeam(
         AND season_id = ${seasonId}
       `;
       console.log(` Neon teams budget updated successfully for ${teamId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Error updating Neon teams budget for ${teamId}:`, error);
     }
   }
@@ -363,7 +363,7 @@ async function createTiebreakerForPlayer(
       player_name: playerName,
       team_count: bids.length,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(`❌ WebSocket broadcast error for tiebreaker ${tiebreakerId}:`, err);
   }
 

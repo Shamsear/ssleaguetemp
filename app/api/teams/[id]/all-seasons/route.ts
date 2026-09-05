@@ -54,7 +54,7 @@ export async function GET(
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching team from Firebase:', error);
     }
 
@@ -293,7 +293,7 @@ export async function GET(
           points: player.points || 0,
           category: player.category
         }));
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching players:', error);
       }
 
@@ -321,7 +321,7 @@ export async function GET(
           trophy_position: trophy.trophy_position,
           notes: trophy.notes
         }));
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching trophies:', error);
       }
 
@@ -371,7 +371,7 @@ export async function GET(
       success: true,
       seasons
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team seasons:', error);
     return NextResponse.json({
       success: false,

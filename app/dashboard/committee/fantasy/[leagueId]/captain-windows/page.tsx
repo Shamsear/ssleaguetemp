@@ -140,7 +140,7 @@ export default function CaptainWindowsPage() {
       if (!response.ok) throw new Error('Failed to fetch captain windows');
       const data = await response.json();
       setWindows(data.windows || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading captain windows:', error);
       showAlert({
         type: 'error',

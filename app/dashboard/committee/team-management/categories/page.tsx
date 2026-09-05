@@ -104,7 +104,7 @@ function CategoriesPageContent() {
         if (result.success) {
           setCategories(result.data);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching categories:', error);
       } finally {
         setIsLoadingCategories(false);
@@ -149,7 +149,7 @@ function CategoriesPageContent() {
           message: `Error: ${result.error}`
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting category:', error);
       showAlert({
         type: 'error',

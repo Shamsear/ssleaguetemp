@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const team = teams[0];
 
     // Verify ownership
-    if (team.owner_uid !== auth.user?.uid) {
+    if (team.owner_uid !== (auth as any).user?.uid) {
       return NextResponse.json(
         { error: 'Forbidden: Not your team' },
         { status: 403 }
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching draft results:', error);
     return NextResponse.json(
       { error: 'Failed to fetch draft results' },

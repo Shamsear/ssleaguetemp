@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         try {
           const decrypted = decryptBidData(bid.encrypted_bid_data);
           totalActiveBidsAmount += decrypted.amount || 0;
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to decrypt active bid amount:', err);
         }
       }
@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to decrypt existing bid:', err);
       }
       
@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-      } catch (err) {
+      } catch (err: any) {
         // Skip if decryption fails
         console.error('Failed to decrypt existing bid:', err);
       }
@@ -435,7 +435,7 @@ export async function POST(request: NextRequest) {
       message: 'Bid placed successfully',
       bid: newBid,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error placing bid:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

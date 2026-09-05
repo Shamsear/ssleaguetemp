@@ -338,7 +338,7 @@ export function TournamentDashboardPageContent() {
           // Fetch categories
           await fetchCategories();
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching tournament data:', error);
       } finally {
         setIsLoading(false);
@@ -355,7 +355,7 @@ export function TournamentDashboardPageContent() {
       if (data.success) {
         setCategories(data.data || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching categories:', error);
     }
   };
@@ -382,7 +382,7 @@ export function TournamentDashboardPageContent() {
         }
         setTournamentFixtures(allTournamentFixtures);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tournaments:', error);
     }
   };
@@ -531,7 +531,7 @@ export function TournamentDashboardPageContent() {
           setIsFixturesManagementExpanded(true);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tournament fixtures:', error);
     }
   };
@@ -1167,7 +1167,7 @@ export function TournamentDashboardPageContent() {
         title: 'Teams Loaded',
         message: sourceMessage || `Loaded ${allTeams.length} teams.`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading teams:', error);
       showAlert({
         type: 'error',
@@ -1231,7 +1231,7 @@ export function TournamentDashboardPageContent() {
           message: data.error || 'Failed to delete fixtures'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting fixtures:', error);
       showAlert({
         type: 'error',
@@ -1255,7 +1255,7 @@ export function TournamentDashboardPageContent() {
           .map((t: any) => t.team_id);
         setSelectedTeamsForTournament(assignedTeamIds);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tournament teams:', error);
     }
   };
@@ -1308,7 +1308,7 @@ export function TournamentDashboardPageContent() {
       if (data.success) {
         setTournamentStandings(data.standings || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tournament standings:', error);
     }
   };
@@ -1325,7 +1325,7 @@ export function TournamentDashboardPageContent() {
           setNumberOfGroups(data.tournament.number_of_groups);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tournament groups:', error);
     }
   };
@@ -1421,7 +1421,7 @@ export function TournamentDashboardPageContent() {
         });
         await loadTournamentGroups(selectedTournamentForGroups);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error clearing groups:', error);
     }
   };
@@ -4037,7 +4037,7 @@ export function TournamentDashboardPageContent() {
                                     message: `Fantasy league ${tournament.include_in_fantasy ? 'disabled' : 'enabled'} for this tournament`
                                   });
                                 }
-                              } catch (error) {
+                              } catch (error: any) {
                                 showAlert({
                                   type: 'error',
                                   title: 'Error',
@@ -4072,7 +4072,7 @@ export function TournamentDashboardPageContent() {
                                     message: `Awards ${tournament.include_in_awards ? 'disabled' : 'enabled'} for this tournament`
                                   });
                                 }
-                              } catch (error) {
+                              } catch (error: any) {
                                 showAlert({
                                   type: 'error',
                                   title: 'Error',
@@ -4119,7 +4119,7 @@ export function TournamentDashboardPageContent() {
                                   qualification_threshold: settingsData.settings?.qualification_threshold ?? tournament.qualification_threshold ?? null,
                                   lineup_category_requirements: settingsData.settings?.lineup_category_requirements || {},
                                 });
-                              } catch (error) {
+                              } catch (error: any) {
                                 console.error('Error fetching tournament settings:', error);
                                 setEditingTournament({
                                   ...tournament,

@@ -123,7 +123,7 @@ function PlayersContent() {
             if (detailsData.success) {
               setSeasonName(detailsData.data.name || '');
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching season name:', err);
           }
           
@@ -140,7 +140,7 @@ function PlayersContent() {
                 photoMap.set(p.player_id, p);
               });
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching player photos:', err);
           }
           
@@ -214,7 +214,7 @@ function PlayersContent() {
       // Extract unique teams for filter
       const uniqueTeams = Array.from(new Set(playersData.map(p => p.team_name).filter(Boolean))) as string[];
       setTeams(uniqueTeams.sort());
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching players:', error);
     } finally {
       setLoading(false);

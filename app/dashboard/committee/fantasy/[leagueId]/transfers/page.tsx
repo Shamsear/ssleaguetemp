@@ -83,7 +83,7 @@ export default function CommitteeTransfersPage() {
       }
       setResolutions(initialResolutions);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transfer submissions:', error);
     } finally {
       setIsLoading(false);

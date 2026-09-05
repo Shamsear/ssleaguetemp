@@ -78,7 +78,7 @@ export default function TeamDetailPage() {
 
       setAllSeasonData(data.seasons);
       setTeam(data.seasons[0]); // Set current season as default
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching team data:', err);
       setError('Failed to load team data');
     } finally {

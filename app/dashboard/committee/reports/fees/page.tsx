@@ -63,7 +63,7 @@ export default function CommitteeFeeReportsPage() {
       } else {
         setError('Failed to load report');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading fee report:', err);
       setError('An error occurred while loading the report');
     } finally {

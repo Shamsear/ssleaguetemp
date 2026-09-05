@@ -60,7 +60,7 @@ export default function HistoricalSeasons() {
         } else {
           setError(data.error || 'Failed to fetch seasons');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching seasons:', error);
         setError('Failed to load seasons data');
       } finally {
@@ -112,7 +112,7 @@ export default function HistoricalSeasons() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading template:', error);
       alert('Failed to download template');
     }
@@ -144,7 +144,7 @@ export default function HistoricalSeasons() {
       } else {
         setError(data.error || 'Failed to delete season');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting season:', error);
       setError('An error occurred while deleting the season');
     } finally {

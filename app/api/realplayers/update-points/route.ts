@@ -70,7 +70,7 @@ async function recalculateAllPlayerCategories(season_id: string) {
     }
 
     return { success: true, totalPlayers: players.length, legendCount: legendThreshold };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating categories:', error);
     return { success: false, error: 'Failed to recalculate categories' };
   }
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
           salary_per_match: currentSalary,
           old_points: currentPoints,
           new_points: newPoints,
-          old_stars: oldStarRating,
+          old_stars: (Number(oldStarRating || 3) || 3),
           new_stars: newStarRating,
           old_category: currentCategory,
           new_category: newCategory
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
 
         // Calculate new salary if star rating changed
         let newSalary = currentSalary;
-        if (!usesCategoryPoints && newStarRating !== oldStarRating) {
+        if (!usesCategoryPoints && newStarRating !== (Number(oldStarRating || 3) || 3)) {
           const auctionData = await sql`
             SELECT auction_value FROM player_seasons
             WHERE id = ${homeStatsId}
@@ -325,9 +325,9 @@ export async function POST(request: NextRequest) {
           old_points: currentPoints,
           new_points: newPoints,
           points_change: homePointsChange,
-          old_stars: oldStarRating,
+          old_stars: (Number(oldStarRating || 3) || 3),
           new_stars: newStarRating,
-          salary_updated: !usesCategoryPoints && newStarRating !== oldStarRating
+          salary_updated: !usesCategoryPoints && newStarRating !== (Number(oldStarRating || 3) || 3)
         });
       } else {
         console.log(`⚠️  Home player ${home_player_id} NOT found in player_seasons`);
@@ -375,7 +375,7 @@ export async function POST(request: NextRequest) {
           salary_per_match: currentSalary,
           old_points: currentPoints,
           new_points: newPoints,
-          old_stars: oldStarRating,
+          old_stars: (Number(oldStarRating || 3) || 3),
           new_stars: newStarRating,
           old_category: currentCategory,
           new_category: newCategory
@@ -387,7 +387,7 @@ export async function POST(request: NextRequest) {
 
         // Calculate new salary if star rating changed
         let newSalary = currentSalary;
-        if (!usesCategoryPoints && newStarRating !== oldStarRating) {
+        if (!usesCategoryPoints && newStarRating !== (Number(oldStarRating || 3) || 3)) {
           const auctionData = await sql`
             SELECT auction_value FROM player_seasons
             WHERE id = ${awayStatsId}
@@ -439,9 +439,9 @@ export async function POST(request: NextRequest) {
           old_points: currentPoints,
           new_points: newPoints,
           points_change: awayPointsChange,
-          old_stars: oldStarRating,
+          old_stars: (Number(oldStarRating || 3) || 3),
           new_stars: newStarRating,
-          salary_updated: !usesCategoryPoints && newStarRating !== oldStarRating
+          salary_updated: !usesCategoryPoints && newStarRating !== (Number(oldStarRating || 3) || 3)
         });
       } else {
         console.log(`⚠️  Away player ${away_player_id} NOT found in player_seasons`);
@@ -571,7 +571,7 @@ export async function POST(request: NextRequest) {
           });
 
           console.log(`   ✅ SUCCESS`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`   ❌ FAILED:`, error);
           salaryErrors.push({
             player_id: playerSalary.player_id,
@@ -588,7 +588,7 @@ export async function POST(request: NextRequest) {
       console.log(`   ✅ Successful: ${salaryDeductions.length} players`);
       console.log(`   ❌ Failed: ${salaryErrors.length} players`);
       if (salaryDeductions.length > 0) {
-        const totalDeducted = salaryDeductions.reduce((sum, d) => sum + d.salary, 0);
+        const totalDeducted = salaryDeductions.reduce((sum: any, d: any) => sum + d.salary, 0);
         console.log(`   💵 Total deducted: $${totalDeducted.toFixed(2)}`);
 
         // Show breakdown by team
@@ -613,7 +613,7 @@ export async function POST(request: NextRequest) {
       salaryErrors: salaryErrors.length > 0 ? salaryErrors : undefined
       // categoryUpdate: categoryResult
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating player points:', error);
     return NextResponse.json(
       { error: 'Failed to update player points' },

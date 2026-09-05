@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       registeredPlayers.forEach((row: any) => {
         registeredPlayerIds.add(row.player_id);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking player registration status:', error);
       // Continue with empty set if query fails
     }
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error searching players:', error);
     return NextResponse.json(
       { error: 'Failed to search players' },

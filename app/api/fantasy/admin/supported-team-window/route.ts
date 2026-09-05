@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
                 is_active: true,
             },
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Error creating supported team window:', error);
         return NextResponse.json(
             { error: 'Failed to create window', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
         // Get change statistics for each window
         const windowsWithStats = await Promise.all(
-            windows.map(async (window) => {
+            windows.map(async (window: any) => {
                 const changes = await fantasySql`
           SELECT COUNT(*) as change_count
           FROM supported_team_changes
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             windows: windowsWithStats,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Error fetching supported team windows:', error);
         return NextResponse.json(
             { error: 'Failed to fetch windows', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -183,7 +183,7 @@ export async function PATCH(request: NextRequest) {
             success: true,
             message: 'Window closed successfully',
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Error closing window:', error);
         return NextResponse.json(
             { error: 'Failed to close window', details: error instanceof Error ? error.message : 'Unknown error' },

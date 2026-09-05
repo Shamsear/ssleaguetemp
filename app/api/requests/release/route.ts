@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         body: `${player_name} drop request submitted.`,
         url: `/dashboard/committee/requests`
       }, { isCommittee: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to notify admins of release request:', err);
     }
     

@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       user_id
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat reaction error:', error);
     
     return NextResponse.json(

@@ -133,7 +133,7 @@ export default function MyFantasyTeamPage() {
           loadOtherTeams(data.team.fantasy_league_id, data.team.id);
           loadDraftSettings(data.team.fantasy_league_id);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading fantasy team:', error);
       } finally {
         setIsLoading(false);
@@ -153,7 +153,7 @@ export default function MyFantasyTeamPage() {
       const data = await response.json();
       const others = data.leaderboard.filter((team: OtherTeam) => team.id !== myTeamId);
       setOtherTeams(others);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading other teams:', error);
     }
   };
@@ -171,7 +171,7 @@ export default function MyFantasyTeamPage() {
         const roundsData = await roundsRes.json();
         setDraftRounds(roundsData.rounds || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading draft settings:', error);
     }
   };
@@ -238,7 +238,7 @@ export default function MyFantasyTeamPage() {
         }
       });
       setExpandedPlayer(playerId);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading player stats:', error);
     } finally {
       setLoadingPlayerStats({ ...loadingPlayerStats, [playerId]: false });
@@ -285,7 +285,7 @@ export default function MyFantasyTeamPage() {
 
       // Reload the page to show the newly created team
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error registering for fantasy:', error);
       alert(error instanceof Error ? error.message : 'Failed to register for fantasy league');
     } finally {

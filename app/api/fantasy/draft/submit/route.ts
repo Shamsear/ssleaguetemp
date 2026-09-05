@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       message: 'Draft submitted successfully',
       player_count: playerCount
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting draft:', error);
     return NextResponse.json(
       { error: 'Failed to submit draft', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -156,7 +156,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Draft unlocked for editing',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error unsubmitting draft:', error);
     return NextResponse.json(
       { error: 'Failed to unlock draft', details: error instanceof Error ? error.message : 'Unknown error' },

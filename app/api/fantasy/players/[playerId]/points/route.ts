@@ -139,7 +139,7 @@ export async function GET(
         };
       }),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player points:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player points', details: error instanceof Error ? error.message : 'Unknown error' },

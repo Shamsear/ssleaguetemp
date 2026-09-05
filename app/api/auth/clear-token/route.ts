@@ -9,7 +9,7 @@ export async function POST() {
     
     console.log('[clear-token API] ✅ Token cookie cleared');
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error clearing token:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to clear token' },

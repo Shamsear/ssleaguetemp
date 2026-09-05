@@ -112,7 +112,7 @@ export default function PlayerLeaderboardPage() {
         } else {
           console.log('⚠️ [Player Leaderboard] No active season found');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[Player Leaderboard] Error fetching team season:', error);
       }
     };
@@ -145,7 +145,7 @@ export default function PlayerLeaderboardPage() {
         if (teamsData.success) {
           setTeams(teamsData.data);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);

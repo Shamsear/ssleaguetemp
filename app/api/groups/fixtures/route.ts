@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       success: true, 
       fixtures 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching group fixtures:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch group fixtures' },
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       message: 'Group fixtures generated successfully',
       fixturesCount: result.fixtures?.length || 0
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating group fixtures:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate group fixtures' },
@@ -99,7 +99,7 @@ export async function DELETE(request: NextRequest) {
       success: true, 
       message: 'Group fixtures deleted successfully' 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting group fixtures:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete group fixtures' },

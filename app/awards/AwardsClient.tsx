@@ -103,7 +103,7 @@ function AwardsContent() {
         if (trophiesData.success) {
           setTrophies(trophiesData.trophies || []);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching awards data:', error);
       } finally {
         setLoading(false);

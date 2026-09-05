@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
             }
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error formatting column for field ${field}:`, error);
       }
     });

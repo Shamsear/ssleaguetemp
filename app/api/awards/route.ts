@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       try {
         enrichedTodAwards = await enrichTeamAwards(todAwards);
         console.log(`Enriched ${enrichedTodAwards.length} TOD awards with fixture data`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error enriching TOD awards:', error);
         // Continue with unenriched data if enrichment fails
       }
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       try {
         enrichedTowAwards = await enrichTeamOfWeekAwards(towAwards);
         console.log(`Enriched ${enrichedTowAwards.length} TOW awards with team logos from Firebase`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error enriching TOW awards:', error);
         // Continue with unenriched data if enrichment fails
       }

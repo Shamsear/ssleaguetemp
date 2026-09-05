@@ -24,7 +24,7 @@ import { sendNotification } from '@/lib/notifications/send-notification';
  *   player_b_id: string,
  *   player_b_type: 'real' | 'football',
  *   cash_amount?: number,
- *   cash_direction?: 'A_to_B' | 'B_to_A' | 'none',
+ *   cash_direction?: 'A_to_B' | 'B_to_A' | 'none' as any,
  *   season_id: string,
  *   swapped_by: string,
  *   swapped_by_name: string,
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Force cash to 0 for free swaps
     const cash_amount = 0;
-    const cash_direction = 'none';
+    const cash_direction = 'none' as any;
 
     const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
     const isModern = seasonNum === 16 || seasonNum === 17;
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate cash direction
-    if (!['A_to_B', 'B_to_A', 'none'].includes(cash_direction)) {
+    if (!['A_to_B', 'B_to_A', 'none' as any].includes(cash_direction)) {
       return NextResponse.json(
         { 
           success: false, 

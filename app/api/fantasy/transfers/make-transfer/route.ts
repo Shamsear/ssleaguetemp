@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       },
       transfers_remaining: maxTransfers - transfersUsed - 1,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error making transfer:', error);
     return NextResponse.json(
       { error: 'Failed to make transfer', details: error instanceof Error ? error.message : 'Unknown error' },

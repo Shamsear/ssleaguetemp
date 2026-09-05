@@ -196,7 +196,7 @@ export default function RealPlayersPlannerPage() {
             setAvailableRealPlayers(realPlayers);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching planner data:', err);
       } finally {
         setIsLoading(false);

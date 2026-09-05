@@ -91,7 +91,7 @@ export default function AwardPhotosManagement() {
           setSelectedSeason(data.seasons[0].id);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching seasons:', err);
     }
   };
@@ -119,7 +119,7 @@ export default function AwardPhotosManagement() {
           setPlayerAwards(data.awards || []);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching data:', err);
       setError('Failed to load data');
     } finally {
@@ -167,7 +167,7 @@ export default function AwardPhotosManagement() {
         setError(data.error || 'Failed to update');
         setTimeout(() => setError(null), 4000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating:', err);
       setError('Failed to update Instagram link');
       setTimeout(() => setError(null), 4000);

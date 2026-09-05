@@ -114,7 +114,7 @@ export default function MatchRewardsAuditPage() {
                   })});
                   console.log(`Updated eCoin transaction ${oldestTxn.id} from ${oldestTxn.amount} to ${match.expectedECoin}`);
                   successCount++;
-                } catch (error) {
+                } catch (error: any) {
                   errorCount++;
                   console.error(`Failed to update transaction ${oldestTxn.id}:`, error);
                 }
@@ -126,7 +126,7 @@ export default function MatchRewardsAuditPage() {
                   await fetch(`/api/transactions/${txn.id}`, { method: 'DELETE' });
                   deletedCount++;
                   console.log(`Deleted duplicate eCoin transaction: ${txn.id}`);
-                } catch (error) {
+                } catch (error: any) {
                   errorCount++;
                   console.error(`Failed to delete transaction ${txn.id}:`, error);
                 }
@@ -159,7 +159,7 @@ export default function MatchRewardsAuditPage() {
                   })});
                   console.log(`Updated SSCoin transaction ${oldestTxn.id} from ${oldestTxn.amount} to ${match.expectedSSCoin}`);
                   successCount++;
-                } catch (error) {
+                } catch (error: any) {
                   errorCount++;
                   console.error(`Failed to update transaction ${oldestTxn.id}:`, error);
                 }
@@ -171,7 +171,7 @@ export default function MatchRewardsAuditPage() {
                   await fetch(`/api/transactions/${txn.id}`, { method: 'DELETE' });
                   deletedCount++;
                   console.log(`Deleted duplicate SSCoin transaction: ${txn.id}`);
-                } catch (error) {
+                } catch (error: any) {
                   errorCount++;
                   console.error(`Failed to delete transaction ${txn.id}:`, error);
                 }
@@ -204,7 +204,7 @@ export default function MatchRewardsAuditPage() {
                 errorCount++;
                 console.error(`Failed to create eCoin for ${team.teamName} - ${match.matchupId}`);
               }
-            } catch (error) {
+            } catch (error: any) {
               errorCount++;
               console.error(`Error creating eCoin for ${team.teamName}:`, error);
             }
@@ -221,7 +221,7 @@ export default function MatchRewardsAuditPage() {
                 })});
                 console.log(`Updated eCoin transaction ${eCoinTxns[0].id} from ${eCoinTxns[0].amount} to ${match.expectedECoin}`);
                 successCount++;
-              } catch (error) {
+              } catch (error: any) {
                 errorCount++;
                 console.error(`Failed to update transaction ${eCoinTxns[0].id}:`, error);
               }
@@ -251,7 +251,7 @@ export default function MatchRewardsAuditPage() {
                 errorCount++;
                 console.error(`Failed to create SSCoin for ${team.teamName} - ${match.matchupId}`);
               }
-            } catch (error) {
+            } catch (error: any) {
               errorCount++;
               console.error(`Error creating SSCoin for ${team.teamName}:`, error);
             }
@@ -268,7 +268,7 @@ export default function MatchRewardsAuditPage() {
                 })});
                 console.log(`Updated SSCoin transaction ${sSCoinTxns[0].id} from ${sSCoinTxns[0].amount} to ${match.expectedSSCoin}`);
                 successCount++;
-              } catch (error) {
+              } catch (error: any) {
                 errorCount++;
                 console.error(`Failed to update transaction ${sSCoinTxns[0].id}:`, error);
               }
@@ -281,7 +281,7 @@ export default function MatchRewardsAuditPage() {
       
       // Reload the audit data
       loadAuditData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in bulk fix:', error);
       alert('[ERROR]  Error during bulk fix. Check console for details.');
     } finally {
@@ -326,7 +326,7 @@ export default function MatchRewardsAuditPage() {
         const error = await response.json();
         alert(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to create transaction: ${error.error || 'Unknown error'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating transaction:', error);
       alert('[ERROR]  Error creating transaction. Check console for details.');
     } finally {
@@ -604,7 +604,7 @@ export default function MatchRewardsAuditPage() {
               const errorData = await matchesResponse.json().catch(() => ({}));
               console.error(`Failed to fetch matches for ${team.name}:`, matchesResponse.status, errorData);
             }
-          } catch (error) {
+          } catch (error: any) {
             console.error(`Error fetching matches for ${team.name}:`, error);
           }
           
@@ -656,7 +656,7 @@ export default function MatchRewardsAuditPage() {
             status,
             missingMatches
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error fetching stats for team ${team.name}:`, error);
         }
       }
@@ -676,7 +676,7 @@ export default function MatchRewardsAuditPage() {
       console.log(`Missing: ${results.filter(r => r.status === 'missing').length}, Partial: ${results.filter(r => r.status === 'partial').length}, Complete: ${results.filter(r => r.status === 'complete').length}`);
       
       setAuditResults(results);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading audit data:', error);
       alert('Error loading audit data. Check console for details.');
     } finally {
@@ -741,7 +741,7 @@ export default function MatchRewardsAuditPage() {
         console.error('Failed to copy:', err);
         alert('[ERROR]  Failed to copy. Please try again.');
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating WhatsApp message:', error);
       alert('[ERROR]  Error generating report.');
     }
@@ -1107,7 +1107,7 @@ export default function MatchRewardsAuditPage() {
                                                         alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
                                                         loadAuditData();
                                                       }
-                                                    } catch (error) {
+                                                    } catch (error: any) {
                                                       console.error('Error fixing duplicates:', error);
                                                       alert('[ERROR]  Error fixing duplicates. Check console.');
                                                     }
@@ -1191,7 +1191,7 @@ export default function MatchRewardsAuditPage() {
                                                         alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
                                                         loadAuditData();
                                                       }
-                                                    } catch (error) {
+                                                    } catch (error: any) {
                                                       console.error('Error fixing duplicates:', error);
                                                       alert('[ERROR]  Error fixing duplicates. Check console.');
                                                     }

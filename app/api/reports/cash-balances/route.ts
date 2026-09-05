@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
 
       // Sort seasons played numerically ascending (e.g. S7, S8, S9, S10...)
       const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
-      joinedSeasons = [...joinedSeasons].sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
+      joinedSeasons = [...joinedSeasons].sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
 
       // Fetch or create their cash balance doc using live name to ensure DB sync
       const balance = await getOrCreateTeamCashBalance(ts.team_id, liveName);
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Auto-heal: For registered seasons where the team played as seasonal, ensure payment records exist if registered
-      joinedSeasons.forEach((sid) => {
+      joinedSeasons.forEach((sid: any) => {
         const paymentsThisSeason = payments.filter((p: any) => {
           if (!p.season_id) return false;
           const pNum = parseInt(p.season_id.replace(/\D/g, '')) || 0;
@@ -222,10 +222,10 @@ export async function GET(request: NextRequest) {
       });
 
       // Calculate total payments
-      const totalPayments = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const totalPayments = payments.reduce((sum: any, p: any) => sum + (p.amount || 0), 0);
 
       // Generate deductions dynamically based on seasons played (always 100 per season)
-      const deductions = joinedSeasons.map((sid) => {
+      const deductions = joinedSeasons.map((sid: any) => {
         const amount = 100;
         return {
           deduction_id: `deduct_${ts.team_id}_${sid}`,
@@ -235,7 +235,7 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0);
+      const totalDeductions = deductions.reduce((sum: any, d: any) => sum + d.amount, 0);
       const remainingBalance = totalPayments - totalDeductions;
 
       // Self-healing database: Sync remaining_balance and payments in Firestore if updated
@@ -246,7 +246,7 @@ export async function GET(request: NextRequest) {
             remaining_balance: remainingBalance,
             updated_at: new Date()
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to update team_cash_balances in Firestore:', err);
         }
       }
@@ -274,14 +274,14 @@ export async function GET(request: NextRequest) {
     const balances = await Promise.all(balancesPromises);
 
     // 3. Sort balances alphabetically by team name (case-insensitive)
-    balances.sort((a, b) => a.team_name.localeCompare(b.team_name, undefined, { sensitivity: 'base' }));
+    balances.sort((a: any, b: any) => a.team_name.localeCompare(b.team_name, undefined, { sensitivity: 'base' }));
 
     return NextResponse.json({
       success: true,
       balances,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in GET /api/reports/cash-balances:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
@@ -418,13 +418,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Sort seasons played numerically ascending
-        const sortedSeasons = seasonsToProcess.sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
+        const sortedSeasons = seasonsToProcess.sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
 
         // Chronological plan calculation to determine current season's plan type
         let runningPlan = paymentType;
         let upfrontSeasonsRemaining = 0;
 
-        sortedSeasons.forEach((sid) => {
+        sortedSeasons.forEach((sid: any) => {
           // Include current payments in this check except when calculating if they've paid S6
           const paymentsThisSeason = payments
             .filter((p: any) => p.season_id === sid)
@@ -457,7 +457,7 @@ export async function POST(request: NextRequest) {
         let carryover = 0;
         const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
 
-        sortedSeasons.forEach((sid) => {
+        sortedSeasons.forEach((sid: any) => {
           const fee = 100;
           const paymentsThisSeason = payments
             .filter((p: any) => p.season_id === sid && p.season_id !== seasonId)
@@ -592,7 +592,7 @@ export async function POST(request: NextRequest) {
             payment_type: paymentType,
             updated_at: new Date()
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to update payment_type in teams collection bulk:', err);
         }
       });
@@ -737,7 +737,7 @@ export async function POST(request: NextRequest) {
           payment_type: paymentType,
           updated_at: new Date()
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to update payment_type in teams collection:', err);
       }
       
@@ -797,12 +797,12 @@ export async function POST(request: NextRequest) {
               seasonsToProcess.push(seasonId);
             }
           }
-          const sortedSeasons = seasonsToProcess.sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
+          const sortedSeasons = seasonsToProcess.sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
 
           let carryover = 0;
           const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
 
-          sortedSeasons.forEach((sid) => {
+          sortedSeasons.forEach((sid: any) => {
             const fee = 100;
             const paymentsThisSeason = payments
               .filter((p: any) => p.season_id === sid && p.season_id !== seasonId)
@@ -907,7 +907,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in POST /api/reports/cash-balances:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

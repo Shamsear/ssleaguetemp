@@ -121,7 +121,7 @@ export default function SuperAdminCashBalances() {
         } else if (loadedSeasons.length > 0) {
           setSelectedSeasonId(loadedSeasons[0].id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading seasons:', err);
         setError('Failed to load seasons');
       }
@@ -152,7 +152,7 @@ export default function SuperAdminCashBalances() {
       } else {
         setError(data.error || 'Failed to load cash balances');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading cash balances:', err);
       setError('An error occurred while loading cash balances');
     } finally {
@@ -186,7 +186,7 @@ export default function SuperAdminCashBalances() {
       } else {
         loadBalances(true); // Silent Refresh
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating subscription type:', err);
       alert('Failed to update subscription');
     } finally {
@@ -232,7 +232,7 @@ export default function SuperAdminCashBalances() {
       } else {
         alert(docErrorMsg(data.error));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error recording cash payment:', err);
       alert('Failed to record payment');
     } finally {
@@ -266,7 +266,7 @@ export default function SuperAdminCashBalances() {
       } else {
         alert(docErrorMsg(data.error));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error recording bulk cash payment:', err);
       alert('Failed to record bulk payment');
     } finally {
@@ -309,7 +309,7 @@ export default function SuperAdminCashBalances() {
       } else {
         alert(docErrorMsg(data.error));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting payment:', err);
       alert('Failed to delete payment');
     } finally {
@@ -347,7 +347,7 @@ export default function SuperAdminCashBalances() {
       } else {
         alert(docErrorMsg(data.error));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating bulk plans:', err);
       alert('Failed to update plans');
     } finally {
@@ -384,7 +384,7 @@ export default function SuperAdminCashBalances() {
       } else {
         alert(docErrorMsg(data.error));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error in bulk delete payments:', err);
       alert('Failed to delete payments');
     } finally {

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Verification request submitted successfully'
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting email verification request:', error)
     return NextResponse.json(
       { error: 'Failed to submit verification request' },

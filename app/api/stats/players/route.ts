@@ -445,7 +445,7 @@ export async function GET(request: NextRequest) {
       ]);
 
       // Combine and sort by season
-      const allSeasons = [...modernSeasons, ...historicalSeasons].sort((a, b) => {
+      const allSeasons = [...modernSeasons, ...historicalSeasons].sort((a: any, b: any) => {
         const aNum = parseInt(a.season_id.replace(/\D/g, '')) || 0;
         const bNum = parseInt(b.season_id.replace(/\D/g, '')) || 0;
         return bNum - aNum; // Descending order
@@ -716,7 +716,7 @@ export async function GET(request: NextRequest) {
                 motm_awards: d.motm_awards || 0,
               };
             });
-          } catch (err) {
+          } catch (err: any) {
             console.error('[Player Stats API] adminDb fallback error:', err);
             stats = [];
           }

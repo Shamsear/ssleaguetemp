@@ -131,7 +131,7 @@ export default function FixtureLineupPage() {
         console.log('<Info className="w-4 h-4 text-blue-500" /> DEBUG - No existing lineup found for this team (lineups is null/undefined)');
         setExistingLineup(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
     } finally {
       setLoadingData(false);

@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error claiming fantasy team:', error);
     return NextResponse.json(
       { error: 'Failed to claim fantasy team', details: error instanceof Error ? error.message : 'Unknown' },

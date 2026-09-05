@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
               auction_value: 0
             };
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('[team player-stats API] Firestore realplayers fallback error:', err);
         }
       }
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
         FROM player_matches
         GROUP BY player_season_id, player_id
       `;
-    } catch (err) {
+    } catch (err: any) {
       console.warn('[team player-stats API] Neon matchups aggregation warning:', err);
       statsFromMatchups = [];
     }
@@ -243,7 +243,7 @@ export async function GET(request: NextRequest) {
         WHERE season_id = ${seasonId}
       `;
       maxRound = maxRoundResult[0]?.max_round || 10;
-    } catch (error) {
+    } catch (error: any) {
       console.log('Could not determine max round from matchups, using default:', error);
     }
 

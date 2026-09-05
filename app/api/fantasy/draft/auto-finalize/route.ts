@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
           total_teams_drafted: applyResult.total_teams_drafted,
         });
 
-      } catch (err) {
+      } catch (err: any) {
         console.error(`❌ [AUTO-FINALIZE] Error processing slot ${slotIdx}:`, err);
         results.push({
           league_id: lid,
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       processed: results.length,
       results,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in auto-finalize:', error);
     return NextResponse.json(
       { success: false, error: 'Auto-finalize failed', details: error instanceof Error ? error.message : 'Unknown' },

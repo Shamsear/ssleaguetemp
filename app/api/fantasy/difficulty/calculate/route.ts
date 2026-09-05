@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Difficulty calculation error:', error);
     return NextResponse.json(
       { 
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Difficulty fetch error:', error);
     return NextResponse.json(
       { 

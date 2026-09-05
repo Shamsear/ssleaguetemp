@@ -83,7 +83,7 @@ export default function BulkSwapForm() {
         }
 
         setPlayers(loadedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {
@@ -248,7 +248,7 @@ export default function BulkSwapForm() {
     if (!user || !userSeasonId) return;
 
     const { teamFees, swapBreakdown } = calculateFeesPreview();
-    const totalFee = Array.from(teamFees.values()).reduce((sum, fee) => sum + fee, 0);
+    const totalFee = Array.from(teamFees.values()).reduce((sum: any, fee: any) => sum + fee, 0);
 
     const swapSummary = swapPairs.map((pair, idx) => {
       const playerA = players.find(p => p.id === pair.player_a_id)!;

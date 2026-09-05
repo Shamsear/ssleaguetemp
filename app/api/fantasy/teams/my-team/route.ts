@@ -278,7 +278,7 @@ export async function GET(request: NextRequest) {
           logo_scale_square = teamRow.logo_scale_square || null;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching team logo:', error);
     }
 
@@ -307,7 +307,7 @@ export async function GET(request: NextRequest) {
       players: draftedPlayers,
       recent_rounds: formattedRounds,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching my fantasy team:', error);
     return NextResponse.json(
       { error: 'Failed to fetch fantasy team' },
@@ -578,7 +578,7 @@ export async function POST(request: NextRequest) {
         player_count: 0
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error registering fantasy team:', error);
     return NextResponse.json(
       { error: 'Failed to register fantasy team', details: error instanceof Error ? error.message : 'Unknown error' },

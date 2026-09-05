@@ -78,7 +78,7 @@ export default function ReleaseTeamPage() {
             setSelectedSeason(data.seasons[0].season_id);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch seasons:', err);
       }
     };
@@ -99,7 +99,7 @@ export default function ReleaseTeamPage() {
             setSelectedTeam(data.teams[0].team_id);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch teams:', err);
       }
     };

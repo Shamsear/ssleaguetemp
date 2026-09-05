@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ players: enrichedPlayers });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player stats:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player stats' },
@@ -238,7 +238,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating player stats:', error);
     return NextResponse.json(
       { error: 'Failed to update player stats' },

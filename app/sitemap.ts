@@ -1,3 +1,4 @@
+import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { MetadataRoute } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.6,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating seasons sitemap entries:', error);
   }
 
@@ -63,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         };
       })
       .filter(Boolean);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating real players sitemap entries:', error);
   }
 
@@ -78,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating teams sitemap entries:', error);
   }
 
@@ -100,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.6,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating news sitemap entries:', error);
   }
 
@@ -121,7 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.5,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating polls sitemap entries:', error);
   }
 
@@ -142,7 +143,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.5,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating football players sitemap entries:', error);
   }
 

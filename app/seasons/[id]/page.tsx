@@ -9,7 +9,7 @@ async function getSeasonData(id: string) {
     const seasonDoc = await adminDb.collection('seasons').doc(id).get();
     if (!seasonDoc.exists) return null;
     return seasonDoc.data();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching season data for metadata:', error);
     return null;
   }

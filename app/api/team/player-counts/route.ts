@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player counts:', error);
     return NextResponse.json(
       {

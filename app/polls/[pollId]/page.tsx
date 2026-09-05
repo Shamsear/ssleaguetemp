@@ -14,7 +14,7 @@ async function getPollData(id: string) {
     `;
     if (!polls || polls.length === 0) return null;
     return polls[0];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching poll data for metadata:', error);
     return null;
   }

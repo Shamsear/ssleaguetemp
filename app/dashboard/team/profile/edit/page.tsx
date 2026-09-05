@@ -177,7 +177,7 @@ export default function EditTeamProfilePage() {
         } else {
           console.log('[ERROR] API returned error:', result.error);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[ERROR] Error fetching data:', error);
       }
     };

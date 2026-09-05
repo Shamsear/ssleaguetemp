@@ -256,7 +256,7 @@ export async function GET(request: NextRequest) {
       totalPoints,
       matchesPlayed: matchdayStats.length
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player matchday stats:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player matchday stats' },

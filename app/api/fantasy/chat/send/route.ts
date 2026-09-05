@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat message send error:', error);
     
     return NextResponse.json(

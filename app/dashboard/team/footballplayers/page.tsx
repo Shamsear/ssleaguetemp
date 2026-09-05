@@ -99,7 +99,7 @@ export default function PlayerStatisticsPage() {
           }
           setShareCount(count);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching share count:', err);
       } finally {
         if (active) setIsLoadingShareCount(false);
@@ -184,7 +184,7 @@ export default function PlayerStatisticsPage() {
           setTotalPages(1);
           setTotalPlayers(0);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
         // Reset to empty arrays on error
         setPlayers([]);
@@ -225,7 +225,7 @@ export default function PlayerStatisticsPage() {
             setActiveTeamIds(data.teamIds);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching filter options:', err);
       }
     };
@@ -259,7 +259,7 @@ export default function PlayerStatisticsPage() {
             setPlayingStyleFilter('');
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching position-specific playing styles:', err);
         // Fallback to all playing styles on error
         setPlayingStyles(allPlayingStyles);
@@ -279,7 +279,7 @@ export default function PlayerStatisticsPage() {
         if (success && data) {
           setTeams(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching teams:', err);
       }
     };
@@ -331,7 +331,7 @@ export default function PlayerStatisticsPage() {
           message: 'Failed to update starred status. Please try again.'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error toggling star:', err);
       
       // Revert on error
@@ -584,7 +584,7 @@ export default function PlayerStatisticsPage() {
                         setSharePositionGroups(data.positionGroups || positionGroups);
                         setSharePlayingStyles(data.playingStyles || allPlayingStyles);
                       }
-                    } catch (err) {
+                    } catch (err: any) {
                       console.error('Error fetching filter options:', err);
                       setSharePositions(positions);
                       setSharePositionGroups(positionGroups);
@@ -625,7 +625,7 @@ export default function PlayerStatisticsPage() {
                         if (success && data.playingStyles) {
                           setSharePlayingStyles(data.playingStyles);
                         }
-                      } catch (err) {
+                      } catch (err: any) {
                         console.error('Error fetching playing styles:', err);
                         setSharePlayingStyles(shareFilters.starredFilter === 'starred' ? sharePlayingStyles : allPlayingStyles);
                       } finally {
@@ -680,7 +680,7 @@ export default function PlayerStatisticsPage() {
                           if (data.positions) setSharePositions(data.positions);
                           if (data.positionGroups) setSharePositionGroups(data.positionGroups);
                         }
-                      } catch (err) {
+                      } catch (err: any) {
                         console.error('Error fetching updated positions:', err);
                       } finally {
                         setIsLoadingShareFilters(false);
@@ -723,7 +723,7 @@ export default function PlayerStatisticsPage() {
                         if (data.positionGroups) setSharePositionGroups(data.positionGroups);
                         if (data.playingStyles) setSharePlayingStyles(data.playingStyles);
                       }
-                    } catch (err) {
+                    } catch (err: any) {
                       console.error('Error fetching filter options for team:', err);
                       setSharePositions(positions);
                       setSharePositionGroups(positionGroups);
@@ -855,7 +855,7 @@ export default function PlayerStatisticsPage() {
                       window.open(whatsappUrl, '_blank');
                     }
                     setShowShareModal(false);
-                  } catch (error) {
+                  } catch (error: any) {
                     console.error('Error generating share message:', error);
                     showAlert({
                       type: 'error',
@@ -974,7 +974,7 @@ export default function PlayerStatisticsPage() {
                       message: `Exported ${filteredForExport.length} players to ${filename}`
                     });
                     setShowShareModal(false);
-                  } catch (error) {
+                  } catch (error: any) {
                     console.error('Error generating Excel file:', error);
                     showAlert({
                       type: 'error',

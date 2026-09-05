@@ -182,11 +182,11 @@ export async function GET(
     });
 
     // Calculate aggregated stats
-    const totalPoints = matchHistory.reduce((sum, m) => sum + m.total_points, 0);
+    const totalPoints = matchHistory.reduce((sum: any, m: any) => sum + m.total_points, 0);
     const matchesPlayed = matchHistory.length;
     const averagePoints = matchesPlayed > 0 ? totalPoints / matchesPlayed : 0;
-    const totalGoals = matchHistory.reduce((sum, m) => sum + m.goals_scored, 0);
-    const totalConceded = matchHistory.reduce((sum, m) => sum + m.goals_conceded, 0);
+    const totalGoals = matchHistory.reduce((sum: any, m: any) => sum + m.goals_scored, 0);
+    const totalConceded = matchHistory.reduce((sum: any, m: any) => sum + m.goals_conceded, 0);
     const motmCount = matchHistory.filter((m: any) => m.is_motm).length;
     const cleanSheets = matchHistory.filter((m: any) => m.is_clean_sheet).length;
     const wins = matchHistory.filter((m: any) => m.result === 'win').length;
@@ -219,7 +219,7 @@ export async function GET(
       },
       match_history: matchHistory,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player stats:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player stats' },

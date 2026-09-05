@@ -100,7 +100,7 @@ export default function H2HPage() {
         setFixtures(fixturesData.fixtures || []);
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading H2H data:', err);
       setError('Failed to load H2H data');
     } finally {

@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
         can_lock: true, // Can always lock, but warnings show issues
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating auto-lock preview:', error);
     return NextResponse.json(
       { 

@@ -60,7 +60,7 @@ export default function AdminPollPage() {
         setVotes(data.votes);
         setStats(data.stats);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch votes:', error);
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export default function AdminPollPage() {
       } else {
         alert(`Failed to delete: ${data.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete vote:', error);
       alert('Failed to delete vote');
     } finally {

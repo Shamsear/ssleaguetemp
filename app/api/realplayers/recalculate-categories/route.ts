@@ -63,7 +63,7 @@ async function recalculateSeasonCategories(season_id: string) {
     
     // Sort by points (most granular metric) - highest first
     // Star rating is derived from points, so points is the source of truth
-    players.sort((a, b) => b.points - a.points);
+    players.sort((a: any, b: any) => b.points - a.points);
     
     // Calculate top 50% threshold
     const legendThreshold = Math.ceil(players.length / 2);
@@ -72,7 +72,7 @@ async function recalculateSeasonCategories(season_id: string) {
     
     // Update categories for all players
     const updates: any[] = [];
-    const updatePromises = players.map(async (player, index) => {
+    const updatePromises = players.map(async (player: any, index: any) => {
       const isLegend = index < legendThreshold;
       const newCategory = isLegend ? 'LEGEND' : 'CLASSIC';
       
@@ -122,7 +122,7 @@ async function recalculateSeasonCategories(season_id: string) {
       classicCount,
       updates 
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating categories:', error);
     return { 
       success: false, 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       message: `Categories recalculated for season ${season_id}`,
       ...result
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in recalculate-categories API:', error);
     return NextResponse.json(
       { error: 'Failed to recalculate categories' },

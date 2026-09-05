@@ -106,7 +106,7 @@ export default function TeamCashBalances() {
         } else if (loadedSeasons.length > 0) {
           setSelectedSeasonId(loadedSeasons[0].id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading seasons:', err);
         setError('Failed to load seasons');
       }
@@ -135,7 +135,7 @@ export default function TeamCashBalances() {
       } else {
         setError(data.error || 'Failed to load cash balances');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading cash balances:', err);
       setError('An error occurred while loading cash balances');
     } finally {

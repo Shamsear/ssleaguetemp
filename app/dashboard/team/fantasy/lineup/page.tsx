@@ -56,7 +56,7 @@ export default function LineupPage() {
           setIsLineupLocked(lockData.is_lineup_locked || false);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching squad:', error);
       alert('Failed to load squad');
     } finally {
@@ -129,7 +129,7 @@ export default function LineupPage() {
 
       alert('Lineup saved successfully!');
       router.push('/dashboard/team/fantasy/my-team');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving lineup:', error);
       alert(error instanceof Error ? error.message : 'Failed to save lineup');
     } finally {

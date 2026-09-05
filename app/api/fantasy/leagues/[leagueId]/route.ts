@@ -237,7 +237,7 @@ export async function GET(
           AND is_active = true
         ORDER BY rule_type ASC
       `;
-    } catch (error) {
+    } catch (error: any) {
       console.log('Scoring rules table does not exist yet, returning empty array');
     }
 
@@ -280,7 +280,7 @@ export async function GET(
       })),
       total_teams: teams.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching fantasy league:', error);
     return NextResponse.json(
       { 
@@ -345,7 +345,7 @@ export async function PATCH(
       league: updated[0],
       message: 'Fantasy league updated successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating fantasy league:', error);
     return NextResponse.json(
       { 

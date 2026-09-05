@@ -120,7 +120,7 @@ export default function CommitteeFixtureDetailPage() {
         });
         setEditedScores(scores);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching fixture data:', error);
       showAlert({
         type: 'error',
@@ -171,7 +171,7 @@ export default function CommitteeFixtureDetailPage() {
           message: error.error || 'Unknown error'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error declaring WO:', error);
       showAlert({
         type: 'error',
@@ -220,7 +220,7 @@ export default function CommitteeFixtureDetailPage() {
           message: error.error || 'Unknown error'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error declaring NULL:', error);
       showAlert({
         type: 'error',
@@ -266,7 +266,7 @@ export default function CommitteeFixtureDetailPage() {
           message: data.error || 'Failed to generate matchups'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating round robin matchups:', error);
       showAlert({
         type: 'error',
@@ -340,7 +340,7 @@ export default function CommitteeFixtureDetailPage() {
           message: error.error || 'Unknown error'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving results:', error);
       showAlert({
         type: 'error',

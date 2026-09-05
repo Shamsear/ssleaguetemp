@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
         created_at: season.created_at,
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching current season:', error);
     return NextResponse.json(
       { error: 'Failed to fetch current season' },

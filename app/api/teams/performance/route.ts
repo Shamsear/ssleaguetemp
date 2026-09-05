@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
             created_at: seasonRows[0].created_at ? new Date(seasonRows[0].created_at) : null
           };
         }
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`Failed to get season details for ${seasonId}:`, error);
         seasonDetails[seasonId] = { name: 'Unknown Season', short_name: 'Unknown' };
       }

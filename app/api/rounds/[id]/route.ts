@@ -1,3 +1,4 @@
+import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
@@ -135,7 +136,7 @@ export async function GET(
           // Use denormalized team_name from bids table (zero Firebase reads)
           team_name: bid.team_name || bid.team_id,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error processing bid ${bid.id}:`, error);
       }
     }
@@ -580,7 +581,7 @@ export async function DELETE(
               currency_type: curr === 'dual' ? 'football' : 'single',
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Error refunding team_seasons ${bid.team_id}:`, error);
         }
 
@@ -610,7 +611,7 @@ export async function DELETE(
           const deletePromises = transactionsSnapshot.docs.map((doc: any) => doc.ref.delete());
           await Promise.all(deletePromises);
           console.log(`✅ Deleted ${transactionsSnapshot.size} transaction(s) for player ${bid.player_id}`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Error deleting transactions for player ${bid.player_id}:`, error);
         }
       }
@@ -622,7 +623,7 @@ export async function DELETE(
         const deleteResult = await tsql`DELETE FROM news WHERE metadata->>'round_id' = ${roundId}`;
         const deletedCount = (deleteResult as any).rowCount || 0;
         console.log(`✅ Deleted ${deletedCount} news article(s) for round ${roundId}`);
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error deleting news for round ${roundId}:`, error);
       }
 
@@ -718,7 +719,7 @@ export async function DELETE(
               currency_type: curr === 'dual' ? 'football' : 'single',
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Error refunding team_seasons ${allocation.team_id}:`, error);
         }
 
@@ -748,7 +749,7 @@ export async function DELETE(
           const deletePromises = transactionsSnapshot.docs.map((doc: any) => doc.ref.delete());
           await Promise.all(deletePromises);
           console.log(`✅ Deleted ${transactionsSnapshot.size} transaction(s) for player ${allocation.player_id}`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Error deleting transactions for player ${allocation.player_id}:`, error);
         }
       }

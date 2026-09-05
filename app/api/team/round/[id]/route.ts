@@ -260,7 +260,7 @@ export async function GET(
         try {
           const decrypted = decryptBidData(bid.encrypted_bid_data);
           decryptedAmount = decrypted.amount;
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to decrypt bid:', err);
           decryptedAmount = 0; // Fallback
         }
@@ -361,7 +361,7 @@ export async function GET(
         bid_count: submissionData.bid_count,
       } : null,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching round data:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

@@ -28,7 +28,7 @@ export default function PopulateFantasyPlayersPage() {
         
         const data = await response.json();
         setLeague(data.league);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading league:', error);
         setError('Failed to load fantasy league');
       }
@@ -63,7 +63,7 @@ export default function PopulateFantasyPlayersPage() {
       }
 
       setResult(data);
-    } catch (error) {
+    } catch (error: any) {
       setError(error instanceof Error ? error.message : 'Failed to populate players');
     } finally {
       setIsPopulating(false);

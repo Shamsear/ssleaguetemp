@@ -112,7 +112,7 @@ export default function UploadAwardImagesPage() {
         const uniqueSeasons = Array.from(seasonSet).sort((a, b) => getSeasonNum(b) - getSeasonNum(a));
         setSeasons(uniqueSeasons);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);

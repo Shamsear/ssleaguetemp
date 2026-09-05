@@ -88,7 +88,7 @@ export default function FantasyPlayersPage() {
         const playersData = await playersResponse.json();
         setPlayers(playersData.players || []);
         setFilteredPlayers(playersData.players || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
       } finally {
         setIsLoading(false);
@@ -139,7 +139,7 @@ export default function FantasyPlayersPage() {
 
       const data = await response.json();
       setMatchBreakdowns({ ...matchBreakdowns, [playerId]: data.matches || [] });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading match breakdown:', error);
     } finally {
       setLoadingBreakdown({ ...loadingBreakdown, [playerId]: false });

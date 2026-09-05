@@ -52,7 +52,7 @@ export default function CreateFantasyLeaguePage() {
               setIsLoading(false);
               return;
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log('Error checking for existing league:', error);
           }
         }
@@ -98,7 +98,7 @@ export default function CreateFantasyLeaguePage() {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading current season:', error);
         showAlert({
           type: 'error',
@@ -157,7 +157,7 @@ export default function CreateFantasyLeaguePage() {
       setTimeout(() => {
         router.push(`/dashboard/committee/fantasy/${data.league_id || data.id}`);
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating league:', error);
       showAlert({
         type: 'error',

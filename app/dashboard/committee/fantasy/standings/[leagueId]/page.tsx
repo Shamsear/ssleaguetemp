@@ -57,7 +57,7 @@ export default function FantasyStandingsPage() {
         } catch (h2hError) {
           console.error('Error loading H2H standings:', h2hError);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading leaderboard:', error);
         showAlert({
           type: 'error',

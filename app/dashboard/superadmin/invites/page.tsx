@@ -262,7 +262,7 @@ export default function AdminInvites() {
       await navigator.clipboard.writeText(text);
       setCopiedUrl(inviteId);
       setTimeout(() => setCopiedUrl(null), 2000);
-    } catch (err) {
+    } catch (err: any) {
       alert('Could not copy link. Please copy manually.');
     }
   };

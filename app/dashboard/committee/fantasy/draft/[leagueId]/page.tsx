@@ -160,7 +160,7 @@ export default function DraftResultsPage() {
                   const details = await detailsResponse.json();
                   detailsMap[team.id] = details;
                 }
-              } catch (err) {
+              } catch (err: any) {
                 console.error(`Failed to load details for team ${team.id}`);
               }
             })
@@ -174,7 +174,7 @@ export default function DraftResultsPage() {
         }
         
         setLastUpdated(new Date());
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
         showAlert({
           type: 'error',

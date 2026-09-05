@@ -185,7 +185,7 @@ export default function OptimizedDashboard({ seasonStatus, user }: Props) {
       }
       
       // React Query will automatically refetch
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error clearing bids:', err);
       showAlert({
         type: 'error',

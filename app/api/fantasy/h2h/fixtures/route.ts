@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       fixtures
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching H2H fixtures:', error);
     return NextResponse.json(
       { 
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       fixtures
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating H2H fixtures:', error);
     return NextResponse.json(
       { 

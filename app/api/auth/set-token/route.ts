@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     console.log('[set-token API] ✅ Token cookie set successfully');
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error setting token:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to set token' },

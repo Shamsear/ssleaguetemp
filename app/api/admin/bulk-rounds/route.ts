@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
           if (successCount % 500 === 0) {
             console.log(`  ✅ Inserted ${successCount} players...`);
           }
-        } catch (err) {
+        } catch (err: any) {
           failCount++;
           if (failCount <= 5) {
             console.error(`  ❌ Failed to insert player ${player.player_id}: ${err}`);

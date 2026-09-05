@@ -217,7 +217,7 @@ export default function SeasonAwardsPage() {
         if (awardsData.success) setAwards(awardsData.data || []);
         if (playerAwardsData.success) setPlayerAwards(playerAwardsData.awards || []);
         if (trophiesData.success) setTrophies(trophiesData.trophies || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching season awards:', error);
       } finally {
         setLoading(false);

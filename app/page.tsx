@@ -160,7 +160,7 @@ export default function Home() {
                 { type: 'SYSTEM', team: 'League', detail: 'Waiting for transfer activities...', time: 'Active' }
               ]);
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching live transfer history:', err);
           }
 
@@ -185,11 +185,11 @@ export default function Home() {
                 }
               }
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching tournament standings:', err);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching homepage data:', error);
       } finally {
         setLoading(false);

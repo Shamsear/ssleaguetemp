@@ -116,7 +116,7 @@ export default function LineupStatusPage() {
           console.error('Error details:', errorData);
           setError('Failed to load tournaments');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching tournaments:', err);
         setError('Failed to load tournaments');
       } finally {
@@ -153,7 +153,7 @@ export default function LineupStatusPage() {
           console.error('Failed to load lineup status:', response.status, errorData);
           setError('Failed to load lineup status');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching lineup status:', err);
         setError('Failed to load lineup status');
       } finally {
@@ -184,7 +184,7 @@ export default function LineupStatusPage() {
       } else {
         setError('Failed to load players');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching players:', err);
       setError('Failed to load players');
     } finally {
@@ -217,7 +217,7 @@ export default function LineupStatusPage() {
         console.error('Failed to load lineup:', response.status, errorData);
         setError('Failed to load lineup: ' + (errorData.error || 'Unknown error'));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching lineup:', err);
       setError('Failed to load lineup');
     } finally {
@@ -329,7 +329,7 @@ export default function LineupStatusPage() {
         const data = await response.json();
         alert(data.error || 'Failed to save lineup');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving lineup:', err);
       alert('Failed to save lineup');
     } finally {

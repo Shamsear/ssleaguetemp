@@ -72,7 +72,7 @@ export default function PlayerSelectionPage() {
         
         setPlayers(data)
         setFilteredPlayers(data)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err)
         showAlert({
           type: 'error',
@@ -171,7 +171,7 @@ export default function PlayerSelectionPage() {
       setPlayers(prev => prev.map(p => 
         p.id === playerId ? { ...p, is_auction_eligible: !currentStatus } : p
       ))
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating player:', err)
       showAlert({
         type: 'error',
@@ -230,7 +230,7 @@ export default function PlayerSelectionPage() {
         title: 'Success',
         message: `Successfully updated ${paginatedPlayers.length} players`
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error bulk updating players:', err)
       showAlert({
         type: 'error',
@@ -295,7 +295,7 @@ export default function PlayerSelectionPage() {
         title: 'Success',
         message: `Successfully deselected all ${eligibleCount} players`
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deselecting all players:', err)
       showAlert({
         type: 'error',
@@ -490,7 +490,7 @@ export default function PlayerSelectionPage() {
         title: 'Export Successful',
         message: `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${positionPlayers.length} ${position} players to Excel\n\nThe file includes:\n• Yes/No dropdowns in the Eligible column\n• Color coding (Green=Yes, Red=No)\n• All player information\n\nEdit the file and upload it back to apply changes in bulk!`
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error exporting:', err)
       showAlert({
         type: 'error',
@@ -548,7 +548,7 @@ export default function PlayerSelectionPage() {
         position_filter: selectedExportPosition
       }))
       router.push('/dashboard/committee/player-selection/preview')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error uploading file:', err)
       showAlert({
         type: 'error',

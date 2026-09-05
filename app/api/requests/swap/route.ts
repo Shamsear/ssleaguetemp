@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         body: `Trade proposal submitted: ${p1Name} ↔ ${p2Name}.`,
         url: `/dashboard/committee/requests`
       }, { isCommittee: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to notify admins of swap request:', err);
     }
     

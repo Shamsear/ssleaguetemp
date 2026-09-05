@@ -185,7 +185,7 @@ export async function DELETE(
       try {
         const { deleteImage } = await import('@/lib/imagekit/upload');
         await deleteImage(existing[0].photo_file_id);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error deleting photo from ImageKit:', err);
         // Continue with database deletion even if ImageKit deletion fails
       }

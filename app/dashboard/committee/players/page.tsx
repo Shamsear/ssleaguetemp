@@ -228,7 +228,7 @@ export default function CommitteePlayersPage() {
 
       setPlayers(playersWithTeams)
       setFilteredPlayers(playersWithTeams)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching players:', err)
       showAlert({
         type: 'error',
@@ -290,7 +290,7 @@ export default function CommitteePlayersPage() {
 
       setPlayers(players.filter(p => p.id !== playerId))
       alert('Player deleted successfully')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting player:', err)
       alert('Failed to delete player')
     }
@@ -697,7 +697,7 @@ export default function CommitteePlayersPage() {
         title: 'Export Successful',
         message: `✅ Exported complete footballplayer database to Excel!\n\n📊 ORGANIZED INTO ${createdSheetsCount} WORKSHEETS:\n\n🏃 POSITION SHEETS (${positionCounts.length}):\n${positionSheetNames}\n\n📋 POSITION GROUP SHEETS (${positionGroupCounts.length}):\n${groupSheetNames}\n\n📈 OVERVIEW SHEETS:\n• All Players (${totalPlayers})\n• Summary & Statistics\n\n💫 FEATURES:\n• Selected columns exported (${selectedExportColumns.length}/${ALL_EXPORT_COLUMN_KEYS.length})\n• Arranged in customized position order\n• Color-coded auction eligibility\n• Professional formatting`
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error exporting:', err)
       showAlert({
         type: 'error',

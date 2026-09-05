@@ -14,7 +14,7 @@ async function getPlayerData(id: string) {
 
     if (playersSnapshot.empty) return null;
     return playersSnapshot.docs[0].data();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player data for metadata:', error);
     return null;
   }

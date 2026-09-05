@@ -139,7 +139,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      counts: counts.reduce((acc, row) => ({
+      counts: counts.reduce((acc: any, row: any) => ({
         ...acc,
         [row.reaction_type]: row.count
       }), {}),

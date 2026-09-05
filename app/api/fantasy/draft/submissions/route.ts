@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       submitted_count: teams.filter((t: any) => t.draft_submitted).length,
       slot_names: Object.fromEntries(slotNameMap)
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching submission statuses:', error);
     return NextResponse.json(
       { error: 'Failed to fetch submission statuses', details: error instanceof Error ? error.message : 'Unknown error' },

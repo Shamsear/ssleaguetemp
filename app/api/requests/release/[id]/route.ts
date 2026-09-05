@@ -125,7 +125,7 @@ export async function PATCH(
             : `Your request to release ${req.player_name} was rejected. Reason: ${rejection_reason || 'No reason provided'}`,
           url: `/dashboard/team/requests`
         }, { teamId: req.team_id });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send release status notification:', err);
       }
     }

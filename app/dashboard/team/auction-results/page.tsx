@@ -101,7 +101,7 @@ export default function AuctionResultsPage() {
         } else {
           console.error('Failed to fetch auction results:', result.error);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching auction results:', error);
       } finally {
         setIsLoading(false);

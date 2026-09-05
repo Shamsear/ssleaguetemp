@@ -81,7 +81,7 @@ export default function DatabaseManagementPage() {
       if (tempResult.success) {
         existingScrapedPlayers = tempResult.players || []
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to pre-fetch existing scraped players count:', err)
     }
 
@@ -436,7 +436,7 @@ export default function DatabaseManagementPage() {
         total: data.total,
         byPosition: data.byPosition
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching player count:', err)
     }
   }

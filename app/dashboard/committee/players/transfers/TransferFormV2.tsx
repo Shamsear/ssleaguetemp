@@ -93,7 +93,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
         }
 
         setPlayers(loadedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {
@@ -156,7 +156,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
             }
           }));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching transfer limit:', error);
         // Don't show error to user, just log it
       }
@@ -191,7 +191,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
             [newTeamId]: result.data.balance
           }));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching team balance:', error);
         // Don't show error to user, just log it
       }
@@ -215,7 +215,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
         selectedPlayer.type
       );
       setCalculation(calc);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating transfer:', error);
       setCalculation(null);
     }

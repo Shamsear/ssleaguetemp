@@ -51,7 +51,7 @@ export async function GET(
       assignments,
       unassignedTeams,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching group assignments:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch group assignments' },
@@ -98,7 +98,7 @@ export async function POST(
       success: true,
       message: `${assignments.length} teams assigned to groups`,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving group assignments:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to save group assignments' },
@@ -125,7 +125,7 @@ export async function DELETE(
       success: true,
       message: 'All group assignments cleared',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error clearing group assignments:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to clear group assignments' },

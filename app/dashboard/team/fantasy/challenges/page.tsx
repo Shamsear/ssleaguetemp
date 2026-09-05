@@ -102,7 +102,7 @@ export default function ChallengesPage() {
         setLeaderboard(leaderboardData.leaderboard || []);
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading challenges:', err);
       setError('Failed to load challenges');
     } finally {

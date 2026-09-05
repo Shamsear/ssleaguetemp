@@ -166,7 +166,7 @@ export default function RealPlayersPage() {
 
         setTeamSeasons(teamSeasonsData);
         console.log(`Loaded ${teamSeasonsData.length} team seasons with budget data`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching season:', error);
       } finally {
         setLoadingTeamSeasons(false);
@@ -276,7 +276,7 @@ export default function RealPlayersPage() {
             players: players.map(p => p.playerName)
           })));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       });
     });
     
-    const seasons = seasonsSnapshot.docs.map((doc) => {
+    const seasons = seasonsSnapshot.docs.map((doc: any) => {
       const seasonData = doc.data();
       const seasonId = doc.id;
       
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching seasons:', error);
     return NextResponse.json(
       { 

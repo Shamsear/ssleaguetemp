@@ -169,7 +169,7 @@ export default function ImportHistoricalSeason() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading template:', error);
       alert('Failed to download template. Please try again.');
     } finally {

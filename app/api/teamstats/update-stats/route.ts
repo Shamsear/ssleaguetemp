@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         }
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating team stats:', error);
     return NextResponse.json(
       { error: 'Failed to update team stats' },

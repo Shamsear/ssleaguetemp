@@ -97,7 +97,7 @@ export default function PositionGroupsPage() {
         setAllPlayers(relevantPlayers);
         calculateStats(relevantPlayers);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching players:', err);
     } finally {
       setLoading(false);
@@ -196,7 +196,7 @@ export default function PositionGroupsPage() {
         title: 'Success',
         message: `Successfully divided ${sortedPlayers.length} players into 2 balanced groups!`
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error dividing players:', err);
       showAlert({
         type: 'error',
@@ -245,7 +245,7 @@ export default function PositionGroupsPage() {
         group2: [],
         ungrouped: freshPosPlayers
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error resetting groups:', err);
       showAlert({
         type: 'error',
@@ -300,7 +300,7 @@ export default function PositionGroupsPage() {
         group2: [],
         ungrouped: []
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error resetting all groups:', err);
       showAlert({
         type: 'error',
@@ -343,7 +343,7 @@ export default function PositionGroupsPage() {
         
         calculateStats(updatedAllPlayers);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error swapping player:', err);
       showAlert({
         type: 'error',

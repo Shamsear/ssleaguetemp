@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       message: 'Predictions submitted successfully'
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Predictions submission error:', error);
     
     // Handle specific errors
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
       predictions
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Predictions fetch error:', error);
     return NextResponse.json(
       { 

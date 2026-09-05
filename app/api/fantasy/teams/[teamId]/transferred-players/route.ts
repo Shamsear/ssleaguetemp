@@ -72,7 +72,7 @@ export async function GET(
       success: true,
       transferred_players: transferredPlayers,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching transferred players:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transferred players', details: error instanceof Error ? error.message : 'Unknown error' },

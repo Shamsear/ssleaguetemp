@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       notifications_sent: notificationsSent
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error processing draft:', error);
     
     return NextResponse.json(
@@ -224,7 +224,7 @@ async function sendDraftResultsNotifications(
     }
 
     return successCount;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in sendDraftResultsNotifications:', error);
     throw error;
   }

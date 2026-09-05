@@ -78,7 +78,7 @@ export async function GET(
         try {
           const decrypted = decryptBidData(bid.encrypted_bid_data);
           bidAmount = decrypted.amount;
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to decrypt bid:', err);
           bidAmount = 0; // Fallback
         }
@@ -154,7 +154,7 @@ export async function GET(
         highestBid,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching auction history:', error);
     return NextResponse.json(
       {

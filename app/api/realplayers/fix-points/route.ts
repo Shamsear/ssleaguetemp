@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         });
 
         console.log(`✅ ${player.player_name}: ${basePoints} (base) + ${totalPointsChange} (matches) = ${newPoints} points`);
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error updating ${player.player_name}:`, error);
         errors.push({
           player_id: player.player_id,
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
       note: 'S18+: points = base_price (from category) + goal-difference adjustment per match. S16/S17: points = star_rating base + goal-difference adjustment.'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fixing player points:', error);
     return NextResponse.json(
       { error: 'Failed to fix player points' },

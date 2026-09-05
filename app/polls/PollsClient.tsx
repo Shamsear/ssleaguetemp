@@ -43,7 +43,7 @@ function PollsListContent() {
             if (data.success) {
                 setPolls(data.data || []);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error loading polls:', err);
         } finally {
             setLoading(false);

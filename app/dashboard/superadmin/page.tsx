@@ -52,7 +52,7 @@ export default function SuperAdminDashboard() {
         ]);
         setPendingUsers(users.length);
         setPendingResets(resets.length);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching pending items:', error);
       } finally {
         setLoadingPending(false);
@@ -82,7 +82,7 @@ export default function SuperAdminDashboard() {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching active season:', error);
       }
     };

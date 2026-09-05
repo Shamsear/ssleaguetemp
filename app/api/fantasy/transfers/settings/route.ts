@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         points_cost_per_transfer: Number(window.points_cost_per_transfer || 4),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching transfer settings:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transfer settings', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
         is_transfer_window_open: updatedWindows[0].is_active,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error saving transfer settings:', error);
     return NextResponse.json(
       { error: 'Failed to save transfer settings', details: error instanceof Error ? error.message : 'Unknown error' },

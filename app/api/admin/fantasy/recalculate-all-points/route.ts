@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         const data = doc.data();
         if (data.player_id) realPlayersMap.set(String(data.player_id), data);
       });
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Could not load category data from Firestore, using flat scoring rules for result points:', err);
     }
 
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
               `;
               results.playerPointsInserted++;
             }
-          } catch (error) {
+          } catch (error: any) {
             // Skip errors
           }
         }
@@ -447,7 +447,7 @@ export async function POST(request: NextRequest) {
       results,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating fantasy points:', error);
     return NextResponse.json(
       { 

@@ -77,7 +77,7 @@ export default function PredictionsListPage() {
         setTotalPoints(total);
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading predictions:', err);
       setError('Failed to load predictions');
     } finally {

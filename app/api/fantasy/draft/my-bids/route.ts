@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       bids
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching bids:', error);
     return NextResponse.json(
       { 

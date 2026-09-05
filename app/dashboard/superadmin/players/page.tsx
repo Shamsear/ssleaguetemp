@@ -99,7 +99,7 @@ export default function PlayersManagement() {
         }));
         setSeasonsWithPlayers(seasonsArray);
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching players data:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to load players data';
         setError(errorMessage);
@@ -233,7 +233,7 @@ export default function PlayersManagement() {
       
       // Redirect to preview page
       router.push('/dashboard/superadmin/players/import-preview');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error reading file:', error);
       alert('Failed to read file. Please make sure it is a valid CSV file.');
       setUploading(false);
@@ -298,7 +298,7 @@ export default function PlayersManagement() {
       setSeasonsWithPlayers(seasonsArray);
       
       alert('Player added successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding player:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to add player';
       alert(`Error: ${errorMessage}`);
@@ -365,7 +365,7 @@ export default function PlayersManagement() {
       
       // Cleanup
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading template:', error);
       alert('Failed to download template. Please try again.');
     }
@@ -381,7 +381,7 @@ export default function PlayersManagement() {
         month: '2-digit',
         day: '2-digit'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error formatting date:', error);
       return 'Invalid Date';
     }
@@ -665,7 +665,7 @@ export default function PlayersManagement() {
                   playerCount: data.count
                 }));
                 setSeasonsWithPlayers(seasonsArray);
-              } catch (error) {
+              } catch (error: any) {
                 console.error('Error refreshing players:', error);
                 alert('Failed to refresh players data. Please try again.');
               } finally {

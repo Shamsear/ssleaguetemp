@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
           },
         }).catch(err => console.error('News generation failed:', err));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to check player milestone:', err);
     }
 

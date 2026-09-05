@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       message: 'Player stats updated successfully',
       updates,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating player stats:', error);
     return NextResponse.json(
       { error: 'Failed to update player stats' },

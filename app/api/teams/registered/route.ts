@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       })),
       count: teams.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching registered teams:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(

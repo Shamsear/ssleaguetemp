@@ -94,7 +94,7 @@ export default function TeamReleaseRequestPage() {
           setResolvedTeamId(tId || null);
           console.log('[RELEASE] Resolved team ID from Firestore:', tId);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error resolving user team ID:', err);
       }
     }
@@ -205,7 +205,7 @@ export default function TeamReleaseRequestPage() {
             setSelectedWindowId(releaseWindows[0].id.toString());
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
         setError('Failed to load your roster or active windows');
       } finally {

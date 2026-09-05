@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       captain_player_id,
       vice_captain_player_id
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error setting lineup:', error)
     return NextResponse.json(
       { error: 'Failed to set lineup', details: error instanceof Error ? error.message : 'Unknown error' },

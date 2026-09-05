@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
         photo_url: photosMap[p.real_player_id] || null,
       })),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching squad:', error);
     return NextResponse.json(
       { error: 'Failed to fetch squad', details: error instanceof Error ? error.message : 'Unknown error' },

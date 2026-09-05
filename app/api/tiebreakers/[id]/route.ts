@@ -208,7 +208,7 @@ export async function GET(
             is_current_user: tt.team_id === userTeamId,
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error fetching team ${tt.team_id}:`, error);
         teamData.push({
           ...tt,
@@ -382,7 +382,7 @@ export async function GET(
           if (b.is_current_tiebreaker) return 1;
           return b.bid_amount - a.bid_amount;
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching user bids in round:', error);
       }
     }

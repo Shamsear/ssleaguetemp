@@ -107,7 +107,7 @@ export default function BulkRoundTiebreakersPage() {
       } else {
         setTiebreakers([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching data:', err);
       setTiebreakers([]);
     } finally {
@@ -237,7 +237,7 @@ export default function BulkRoundTiebreakersPage() {
       } else {
         alert(`[ERROR] Failed to resolve tiebreaker: ${result.error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error resolving tiebreaker:', err);
       alert('[ERROR]  An error occurred while resolving the tiebreaker');
     } finally {
@@ -264,7 +264,7 @@ export default function BulkRoundTiebreakersPage() {
       } else {
         alert(`[ERROR] Failed to revert tiebreaker: ${result.error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error reverting tiebreaker:', err);
       alert('[ERROR] An error occurred while reverting the tiebreaker');
     } finally {
@@ -293,7 +293,7 @@ export default function BulkRoundTiebreakersPage() {
       } else {
         alert(`[ERROR] Failed to withdraw team: ${result.error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error withdrawing team:', err);
       alert('[ERROR] An error occurred while withdrawing the team');
     } finally {
@@ -329,7 +329,7 @@ export default function BulkRoundTiebreakersPage() {
       } else {
         alert(`[ERROR] Failed to create tiebreaker: ${result.error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating tiebreaker:', err);
       alert('[ERROR]  An error occurred while creating the tiebreaker');
     } finally {

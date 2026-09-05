@@ -39,7 +39,7 @@ export default function TeamStandingsPage() {
         } else {
           console.log('[Committee Standings] No active season found');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [Committee Standings] Error fetching active season:', error);
       }
     };

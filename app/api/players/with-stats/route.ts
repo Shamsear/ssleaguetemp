@@ -149,8 +149,8 @@ export async function GET(request: NextRequest) {
 
       allStats = Array.from(statsMap.values());
       console.log(`[Players API] Combined stats for ${allStats.length} players (S1-S15 + S16-S17 adjusted + S18+)`);
-    } catch (statsError) {
-      console.log('[Players API] Could not fetch stats:', statsError.message);
+    } catch (statsError: any) {
+      console.log('[Players API] Could not fetch stats:', statsError?.message);
       allStats = [];
     }
 

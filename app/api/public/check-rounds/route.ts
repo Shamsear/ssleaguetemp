@@ -51,7 +51,7 @@ export async function GET() {
         wasFinalized: results[index].finalized
       }))
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking rounds:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

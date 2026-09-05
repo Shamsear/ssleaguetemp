@@ -82,7 +82,7 @@ export async function DELETE(
             success: true,
             message: `Penalty removed - ${penalty.points_deducted} points restored to ${penalty.team_name}`,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error removing penalty:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to remove penalty' },

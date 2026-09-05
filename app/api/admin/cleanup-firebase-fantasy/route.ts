@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       stats,
       total_deleted: grandTotal,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error cleaning up fantasy data:', error);
     return NextResponse.json(
       { error: 'Failed to cleanup fantasy data', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -83,7 +83,7 @@ async function deleteCollection(collectionName: string): Promise<number> {
 
     console.log(`✅ Completed: ${collectionName} - ${totalDeleted} documents deleted`);
     return totalDeleted;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error deleting ${collectionName}:`, error);
     return totalDeleted;
   }

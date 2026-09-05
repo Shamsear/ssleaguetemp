@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         WHERE league_id = ${fantasy_league_id}
           AND is_active = true
       `;
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Could not fetch scoring rules, using defaults');
     }
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
             points_calculated: 0,
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.warn('Could not check tournament fantasy setting:', error);
         // Continue anyway if tournament check fails (backward compatibility)
       }
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
         const data = doc.data();
         if (data.player_id) realPlayersMap.set(String(data.player_id), data);
       });
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Could not load category data from Firestore, using flat scoring rules for result points:', err);
     }
 
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
         const bonusData = await bonusResponse.json();
         console.log(`✅ Team bonuses: ${bonusData.message}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating team bonuses:', error);
       // Don't fail the whole request if bonus calculation fails
     }
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
       message: `Calculated fantasy points for ${pointsCalculated.length} players`,
       points_calculated: pointsCalculated,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error calculating fantasy points:', error);
     return NextResponse.json(
       { 
@@ -362,7 +362,7 @@ async function processPlayer(params: {
   // Match played bonus (always awarded if player participated)
   points_breakdown.match_played = scoringRules.get('match_played') || 0;
 
-  const total_points = Object.values(points_breakdown).reduce((sum, val) => sum + val, 0);
+  const total_points = Object.values(points_breakdown).reduce((sum: number, val: any) => sum + (Number(val) || 0), 0);
 
   // Award points to EACH team that owns this player (or fallback team if free agent)
   for (const squad of targetSquads) {
@@ -558,7 +558,7 @@ async function recalculateLeaderboard(fantasy_league_id: string) {
     `;
 
     console.log(`✅ Leaderboard updated for league ${fantasy_league_id}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating leaderboard:', error);
   }
 }

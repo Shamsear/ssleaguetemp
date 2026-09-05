@@ -50,7 +50,7 @@ async function logLineupChange(params: {
       )
     `;
     console.log(`✅ Logged lineup ${action} for team ${teamId}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to log lineup change:', error);
     // Don't fail the request if audit logging fails
   }

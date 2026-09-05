@@ -191,7 +191,7 @@ export async function GET(
       })),
       matches: matchHistory,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player breakdown:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player breakdown', details: error instanceof Error ? error.message : 'Unknown error' },

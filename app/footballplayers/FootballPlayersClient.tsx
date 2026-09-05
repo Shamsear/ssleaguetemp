@@ -90,7 +90,7 @@ export default function PublicPlayerDatabasePage() {
         if (success && data && data.players && active) {
           setShareCount(data.players.length);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching share count:', err);
       } finally {
         if (active) setIsLoadingShareCount(false);
@@ -167,7 +167,7 @@ export default function PublicPlayerDatabasePage() {
           setTotalPages(1);
           setTotalPlayers(0);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
         setPlayers([]);
         setFilteredPlayers([]);
@@ -199,7 +199,7 @@ export default function PublicPlayerDatabasePage() {
             setPlayingStyles(data.playingStyles);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching filter options:', err);
       }
     };
@@ -228,7 +228,7 @@ export default function PublicPlayerDatabasePage() {
             setPlayingStyleFilter('');
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching position-specific playing styles:', err);
         setPlayingStyles(allPlayingStyles);
       }
@@ -246,7 +246,7 @@ export default function PublicPlayerDatabasePage() {
         if (success && data) {
           setTeams(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching teams:', err);
       }
     };
@@ -457,7 +457,7 @@ export default function PublicPlayerDatabasePage() {
                         if (success && data.playingStyles) {
                           setSharePlayingStyles(data.playingStyles);
                         }
-                      } catch (err) {
+                      } catch (err: any) {
                         console.error('Error fetching playing styles:', err);
                         setSharePlayingStyles(allPlayingStyles);
                       } finally {
@@ -510,7 +510,7 @@ export default function PublicPlayerDatabasePage() {
                           if (data.positions) setSharePositions(data.positions);
                           if (data.positionGroups) setSharePositionGroups(data.positionGroups);
                         }
-                      } catch (err) {
+                      } catch (err: any) {
                         console.error('Error fetching updated positions:', err);
                       } finally {
                         setIsLoadingShareFilters(false);
@@ -552,7 +552,7 @@ export default function PublicPlayerDatabasePage() {
                         if (data.positionGroups) setSharePositionGroups(data.positionGroups);
                         if (data.playingStyles) setSharePlayingStyles(data.playingStyles);
                       }
-                    } catch (err) {
+                    } catch (err: any) {
                       console.error('Error fetching filter options for team:', err);
                       setSharePositions(positions);
                       setSharePositionGroups(positionGroups);
@@ -677,7 +677,7 @@ export default function PublicPlayerDatabasePage() {
                       window.open(whatsappUrl, '_blank');
                     }
                     setShowShareModal(false);
-                  } catch (error) {
+                  } catch (error: any) {
                     console.error('Error generating share message:', error);
                     showAlert({
                       type: 'error',
@@ -787,7 +787,7 @@ export default function PublicPlayerDatabasePage() {
                       message: `Exported ${filteredForExport.length} players to ${filename}`
                     });
                     setShowShareModal(false);
-                  } catch (error) {
+                  } catch (error: any) {
                     console.error('Error generating Excel file:', error);
                     showAlert({
                       type: 'error',

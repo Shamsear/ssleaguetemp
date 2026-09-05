@@ -87,7 +87,7 @@ function PlayerRegistrationContent() {
 
         setTeams(teamsData)
         setLoading(false)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching data:', err)
         setError('Failed to load registration form')
         setLoading(false)
@@ -177,7 +177,7 @@ function PlayerRegistrationContent() {
 
       // Redirect to success page
       router.push('/register/player/success')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting registration:', err)
       setError('Failed to submit registration. Please try again.')
       setSubmitting(false)

@@ -164,7 +164,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       if (success) {
         setRound(data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching round:', err);
     } finally {
       setIsLoading(false);
@@ -186,7 +186,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       } else {
         console.error('[Team Summary] Error:', error);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Team Summary] Fetch error:', err);
     } finally {
       setLoadingTeamSummary(false);
@@ -454,7 +454,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
           const available = data.filter((p: any) => !currentPlayerIds.includes(p.id));
           setAvailablePlayers(available);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
       }
     };
@@ -486,7 +486,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
         } else {
           alert(`Error: ${error}`);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error starting round:', err);
         alert('Failed to start round');
       }
@@ -521,7 +521,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
         } else {
           alert(`Error: ${error}`);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error completing round:', err);
         alert('Failed to complete round. Please try again or contact support.');
       } finally {
@@ -544,7 +544,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
         setRound({ ...round, ...data });
         alert(`Round ${newStatus} successfully!`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating status:', err);
       alert('Failed to update status');
     }
@@ -572,7 +572,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       } else {
         alert(`Error: ${error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating tiebreaker:', err);
       alert('Failed to create tiebreaker');
     }
@@ -600,7 +600,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
         alert('Round deleted successfully');
         router.push('/dashboard/committee/bulk-rounds');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting round:', err);
       alert('Failed to delete round');
     }
@@ -636,7 +636,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
       } else {
         alert(`Error: ${error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding time to round:', err);
       alert('Failed to add time to round');
     }
@@ -891,7 +891,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                     <input
                       type="number"
                       value={minutesToAdd}
-                      onChange={(e) => setMinutesToAdd(e.target.value)}
+                      onChange={(e: any) => setMinutesToAdd(e.target.value)}
                       className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-sm"
                       placeholder="e.g. 5 or -5"
                     />
@@ -936,8 +936,8 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                         : 'TBD';
 
                       const teamLines = [...teamSummary]
-                        .sort((a, b) => b.players_selected - a.players_selected)
-                        .map((team, idx) => {
+                        .sort((a: any, b: any) => b.players_selected - a.players_selected)
+                        .map((team: any, idx: any) => {
                           const isComplete = team.players_selected >= team.slots_needed;
                           const tick = isComplete ? ' ✅' : '';
                           return `${idx + 1}. ${team.team_name}${tick}`;
@@ -985,7 +985,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                       
                       const activeTbs = round.roundPlayers.filter(p => p.tiebreaker_id && p.tiebreaker && p.tiebreaker.status === 'active');
                       const tbLines = activeTbs
-                        .map((player, idx) => {
+                        .map((player: any, idx: any) => {
                           const teamNames = player.tiebreaker?.submissions?.map(s => s.team_name).join(', ') || '';
                           return `${idx + 1}. ${player.player_name} (${teamNames})`;
                         })
@@ -1049,7 +1049,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
 
                       // Format the lines
                       const teamBlocks = [];
-                      const sortedTeamIds = Array.from(soldGroupByTeam.keys()).sort((a, b) => {
+                      const sortedTeamIds = Array.from(soldGroupByTeam.keys()).sort((a: any, b: any) => {
                         const nameA = teamNameMap.get(a) || '';
                         const nameB = teamNameMap.get(b) || '';
                         return nameA.localeCompare(nameB);
@@ -1106,8 +1106,8 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {teamSummary
-                  .sort((a, b) => b.players_selected - a.players_selected)
-                  .map((team) => {
+                  .sort((a: any, b: any) => b.players_selected - a.players_selected)
+                  .map((team: any) => {
                     const progress = (team.players_selected / team.slots_needed) * 100;
                     const isComplete = team.players_selected >= team.slots_needed;
                     const hasStarted = team.players_selected > 0;
@@ -1265,16 +1265,16 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                   type="text"
                   placeholder="Search players..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e: any) => setSearchTerm(e.target.value)}
                   className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-sm mb-4"
                 />
                 <div className="max-h-64 overflow-y-auto space-y-2 mb-4 pr-1">
-                  {filteredPlayers.map((player) => (
+                  {filteredPlayers.map((player: any) => (
                     <label key={player.id} className="flex items-center p-3 hover:bg-white rounded-xl cursor-pointer border border-transparent hover:border-slate-200/60 transition-colors">
                       <input
                         type="checkbox"
                         checked={selectedPlayers.includes(player.id)}
-                        onChange={(e) => {
+                        onChange={(e: any) => {
                           if (e.target.checked) {
                             setSelectedPlayers([...selectedPlayers, player.id]);
                           } else {
@@ -1324,9 +1324,9 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                 {/* Mobile Card View */}
                 <div className="block lg:hidden space-y-4">
                   {(round.status === 'active'
-                    ? [...round.roundPlayers].sort((a, b) => a.player_name.localeCompare(b.player_name))
-                    : [...round.roundPlayers].sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0))
-                  ).map((player) => (
+                    ? [...round.roundPlayers].sort((a: any, b: any) => a.player_name.localeCompare(b.player_name))
+                    : [...round.roundPlayers].sort((a: any, b: any) => (b.bid_count || 0) - (a.bid_count || 0))
+                  ).map((player: any) => (
                     <div key={player.id} className="bg-slate-50/40 border border-slate-200 shadow-sm rounded-2xl hover:shadow-md transition-shadow overflow-hidden">
                       <div className="p-4 flex gap-3 items-start">
                         <div className="flex-shrink-0">
@@ -1406,7 +1406,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                           return newMap;
                                         });
                                       }
-                                    } catch (err) {
+                                    } catch (err: any) {
                                       console.error('[Bids] Fetch error:', err);
                                     } finally {
                                       setLoadingBids(prev => {
@@ -1547,7 +1547,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                             <div className="space-y-2">
                               {player.tiebreaker.submissions && player.tiebreaker.submissions.length > 0 ? (
                                 player.tiebreaker.submissions
-                                  .sort((a, b) => b.new_bid_amount - a.new_bid_amount)
+                                  .sort((a: any, b: any) => b.new_bid_amount - a.new_bid_amount)
                                   .map((sub, idx) => (
                                     <div 
                                       key={sub.team_id}
@@ -1590,9 +1590,9 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {(round.status === 'active'
-                        ? [...round.roundPlayers].sort((a, b) => a.player_name.localeCompare(b.player_name))
-                        : [...round.roundPlayers].sort((a, b) => (b.bid_count || 0) - (a.bid_count || 0))
-                      ).map((player) => (
+                        ? [...round.roundPlayers].sort((a: any, b: any) => a.player_name.localeCompare(b.player_name))
+                        : [...round.roundPlayers].sort((a: any, b: any) => (b.bid_count || 0) - (a.bid_count || 0))
+                      ).map((player: any) => (
                         <React.Fragment key={player.id}>
                           <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                             <td className="py-4 px-6 font-extrabold text-slate-800">
@@ -1668,7 +1668,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                               return newMap;
                                             });
                                           }
-                                        } catch (err) {
+                                        } catch (err: any) {
                                           console.error('[Bids] Fetch error:', err);
                                         } finally {
                                           setLoadingBids(prev => {
@@ -1818,7 +1818,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                                     <div className="space-y-2">
                                       {player.tiebreaker.submissions && player.tiebreaker.submissions.length > 0 ? (
                                         player.tiebreaker.submissions
-                                          .sort((a, b) => b.new_bid_amount - a.new_bid_amount)
+                                          .sort((a: any, b: any) => b.new_bid_amount - a.new_bid_amount)
                                           .map((sub, idx) => (
                                             <div 
                                               key={sub.team_id}
@@ -1870,7 +1870,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                   : 'These players currently have multiple bids at the base price. Tiebreakers will be created when the round ends:'}
               </p>
               <div className="space-y-3 max-w-4xl">
-                {contested.map((player) => (
+                {contested.map((player: any) => (
                   <div key={player.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white rounded-2xl border border-orange-200 shadow-sm">
                     <div className="flex-1">
                       <p className="font-extrabold text-slate-800 text-sm sm:text-base">{player.player_name}</p>

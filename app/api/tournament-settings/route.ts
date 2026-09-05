@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ settings: settings[0] });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tournament settings:', error);
     return NextResponse.json(
       { error: 'Failed to fetch tournament settings' },
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Tournament settings saved successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving tournament settings:', error);
     return NextResponse.json(
       { error: 'Failed to save tournament settings' },
@@ -185,7 +185,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Tournament settings deleted successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting tournament settings:', error);
     return NextResponse.json(
       { error: 'Failed to delete tournament settings' },

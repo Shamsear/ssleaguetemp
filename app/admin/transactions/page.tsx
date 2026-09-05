@@ -56,7 +56,7 @@ export default function AdminTransactionsPage() {
       if (data.length > 0) {
         setSelectedSeason(data[0].id.toString());
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching seasons:', error);
     }
   };
@@ -69,7 +69,7 @@ export default function AdminTransactionsPage() {
       if (data.length > 0) {
         setSelectedTeam(data[0].id.toString());
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching teams:', error);
     }
   };
@@ -114,7 +114,7 @@ export default function AdminTransactionsPage() {
 
       // Refresh teams to show updated balance
       fetchTeams(selectedSeason);
-    } catch (error) {
+    } catch (error: any) {
       setMessage({
         type: 'error',
         text: error instanceof Error ? error.message : 'An error occurred'

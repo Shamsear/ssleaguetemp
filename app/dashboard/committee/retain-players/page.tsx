@@ -62,7 +62,7 @@ export default function RetainPlayersPage() {
         const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
         const teamSeasonsData = allTeamSeasons.filter((ts: any) => ts.status === 'registered' || ts.status === 'active');
         setTeamSeasons(teamSeasonsData);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
         setError('Failed to load season data');
       }
@@ -141,7 +141,7 @@ export default function RetainPlayersPage() {
 
         setTeams(teamsData);
         setAvailablePlayers(unassignedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
         setError('Failed to load data');
       } finally {

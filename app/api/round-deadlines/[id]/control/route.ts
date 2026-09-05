@@ -105,7 +105,7 @@ export async function PATCH(
               data: {
                 type: 'round_restarted',
                 tournament_id: tournamentId,
-                round_number: roundNumber,
+                round_number: String(roundNumber),
                 leg,
                 restart_time: restartTime
               }
@@ -163,7 +163,7 @@ export async function PATCH(
               data: {
                 type: 'round_paused',
                 tournament_id: tournamentId,
-                round_number: roundNumber,
+                round_number: String(roundNumber),
                 leg
               }
             },
@@ -218,7 +218,7 @@ export async function PATCH(
               data: {
                 type: 'round_resumed',
                 tournament_id: tournamentId,
-                round_number: roundNumber,
+                round_number: String(roundNumber),
                 leg
               }
             },

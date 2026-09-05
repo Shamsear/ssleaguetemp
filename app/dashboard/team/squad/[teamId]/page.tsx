@@ -173,7 +173,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
         setSeasonId(targetSeasonId);
         setSeasonName(targetSeasonName);
         setSeasonType(targetSeasonType);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching active season:', error);
         setError('Failed to load active season');
         setIsLoading(false);
@@ -209,7 +209,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
           const tmJson = await tmRes.json();
           const teamsArr = tmJson.data || tmJson.teams || [];
           baseTeamData = teamsArr.find((t: any) => t.id === teamId) || {};
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching base team:', err);
         }
 
@@ -285,7 +285,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
         }
 
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching team data:', error);
         setError('Failed to load team data');
         setIsLoading(false);

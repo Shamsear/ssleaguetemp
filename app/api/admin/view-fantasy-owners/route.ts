@@ -33,7 +33,7 @@ export async function GET() {
       }))
     });
     
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { error: 'Failed to fetch teams' },
       { status: 500 }

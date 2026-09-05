@@ -117,7 +117,7 @@ export async function GET(
         overallStats: enhancedOverall
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tournament stats:', error);
     return NextResponse.json(
       { 

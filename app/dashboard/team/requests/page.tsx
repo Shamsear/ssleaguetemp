@@ -93,7 +93,7 @@ export default function RequestsOverviewPage() {
           setResolvedTeamId(tId || null);
           console.log('[OVERVIEW] Resolved team ID from Firestore:', tId);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error resolving user team ID:', err);
       }
     }
@@ -128,7 +128,7 @@ export default function RequestsOverviewPage() {
           const windowsData = await windowsRes.json();
           setActiveWindows(windowsData.data || []);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);

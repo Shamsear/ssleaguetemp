@@ -57,7 +57,7 @@ export async function POST() {
         
         results.push(teamResult);
         
-      } catch (error) {
+      } catch (error: any) {
         teamResult.status = 'error';
         teamResult.error = error instanceof Error ? error.message : 'Unknown error';
         results.push(teamResult);
@@ -70,7 +70,7 @@ export async function POST() {
       results
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fixing owner UIDs:', error);
     return NextResponse.json(
       { error: 'Failed to fix owner UIDs', details: error instanceof Error ? error.message : 'Unknown' },

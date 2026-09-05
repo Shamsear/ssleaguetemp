@@ -118,7 +118,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
           setTeamBidCounts(countArray);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching round:', err);
     } finally {
       setIsLoading(false);
@@ -165,7 +165,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
         setRound({ ...round, ...data });
         alert(`Round status updated to ${newStatus}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating status:', err);
       alert('Failed to update status');
     }
@@ -193,7 +193,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
         alert('Round deleted successfully');
         router.push('/dashboard/committee/rounds');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting round:', err);
       alert('Failed to delete round');
     }
@@ -486,7 +486,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Export error:', error);
       alert('Failed to export data. Please try again.');
     } finally {

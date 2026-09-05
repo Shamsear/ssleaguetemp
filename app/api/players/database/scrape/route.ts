@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+// @ts-ignore
 import * as cheerio from 'cheerio';
 import { tempSql, initializeTempTable } from '@/lib/neon/temp-config';
 
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
     const headerCols = rows.first().find('th');
     const colMap: { [key: string]: number } = {};
 
-    headerCols.each((idx, col) => {
+    headerCols.each((idx: any, col: any) => {
       const link = $(col).find('a');
       const colText = (link.length ? link.text() : $(col).text()).trim().toLowerCase();
 
@@ -197,7 +198,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Make sure we have name mapping
-    headerCols.each((idx, col) => {
+    headerCols.each((idx: any, col: any) => {
       const colText = $(col).text().trim().toLowerCase();
       if (colText === 'name' || colText === 'player name') {
         colMap['name'] = idx;
@@ -231,7 +232,7 @@ export async function GET(request: NextRequest) {
       }, { status: 502 });
     }
     
-    rows.slice(1).each((_, row) => {
+    rows.slice(1).each((_: any, row: any) => {
       const cols = $(row).find('td');
       if (cols.length < 5) return;
       totalRowsParsed++;

@@ -61,7 +61,7 @@ export default function ExportPlayersPage() {
         }));
 
         // Sort by season number (extract number from ID)
-        seasonsData.sort((a, b) => {
+        seasonsData.sort((a: any, b: any) => {
           const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
           const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
           return numA - numB;
@@ -73,7 +73,7 @@ export default function ExportPlayersPage() {
         if (userSeasonId) {
           setSelectedSeasons([userSeasonId]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching seasons:', error);
       }
     };
@@ -220,7 +220,7 @@ export default function ExportPlayersPage() {
 
     try {
       // Sort selected seasons by number for consistent column order
-      const sortedSeasons = [...selectedSeasons].sort((a, b) => {
+      const sortedSeasons = [...selectedSeasons].sort((a: any, b: any) => {
         const numA = parseInt(a.replace(/\D/g, '')) || 0;
         const numB = parseInt(b.replace(/\D/g, '')) || 0;
         return numA - numB;
@@ -247,7 +247,7 @@ export default function ExportPlayersPage() {
       excelArray.push(headerRow2);
 
       // Data rows
-      Array.from(players.values()).forEach((player, index) => {
+      Array.from(players.values()).forEach((player: any, index: any) => {
         const row: any[] = [
           index + 1,
           player.player_name,
@@ -504,7 +504,7 @@ export default function ExportPlayersPage() {
                   <tr>
                     <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50 z-10">#</th>
                     <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky left-12 bg-slate-50 z-10">Player</th>
-                    {[...selectedSeasons].sort((a, b) => {
+                    {[...selectedSeasons].sort((a: any, b: any) => {
                       const numA = parseInt(a.replace(/\D/g, '')) || 0;
                       const numB = parseInt(b.replace(/\D/g, '')) || 0;
                       return numA - numB;
@@ -521,7 +521,7 @@ export default function ExportPlayersPage() {
                   <tr className="bg-slate-100">
                     <th className="px-4 py-2 sticky left-0 bg-slate-100 z-10"></th>
                     <th className="px-4 py-2 sticky left-12 bg-slate-100 z-10"></th>
-                    {[...selectedSeasons].sort((a, b) => {
+                    {[...selectedSeasons].sort((a: any, b: any) => {
                       const numA = parseInt(a.replace(/\D/g, '')) || 0;
                       const numB = parseInt(b.replace(/\D/g, '')) || 0;
                       return numA - numB;
@@ -537,11 +537,11 @@ export default function ExportPlayersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {Array.from(players.values()).slice(0, 50).map((player, index) => (
+                  {Array.from(players.values()).slice(0, 50).map((player: any, index: any) => (
                     <tr key={player.player_id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-3 text-slate-500 font-bold sticky left-0 bg-white z-10">{index + 1}</td>
                       <td className="px-4 py-3 font-bold text-slate-800 sticky left-12 bg-white z-10">{player.player_name}</td>
-                      {[...selectedSeasons].sort((a, b) => {
+                      {[...selectedSeasons].sort((a: any, b: any) => {
                         const numA = parseInt(a.replace(/\D/g, '')) || 0;
                         const numB = parseInt(b.replace(/\D/g, '')) || 0;
                         return numA - numB;

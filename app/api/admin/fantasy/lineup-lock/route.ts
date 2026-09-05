@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       league_id,
       is_lineup_locked: is_locked,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error toggling lineup lock:', error);
     return NextResponse.json(
       { 
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       is_lineup_locked: leagues[0].is_lineup_locked || false,
       updated_at: leagues[0].updated_at,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting lineup lock status:', error);
     return NextResponse.json(
       { 

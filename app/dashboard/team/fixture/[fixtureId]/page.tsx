@@ -813,7 +813,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           console.error('Error fetching lineups and matchups:', dataErr);
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading fixture:', error);
       } finally {
         setIsLoading(false);
@@ -920,7 +920,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error polling status:', error);
       }
     };
@@ -1097,7 +1097,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         title: 'Swapped',
         message: 'Opponents swapped successfully!'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error swapping opponents:', error);
       showAlert({
         type: 'error',
@@ -1138,7 +1138,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         title: 'Swapped!',
         message: 'Matchups swapped successfully!'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error swapping:', error);
       showAlert({
         type: 'error',
@@ -1230,7 +1230,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         title: 'Substitution Complete',
         message: `${newPlayer.player_name} substituted in successfully!\n+${totalPenalty} penalty goals awarded to opponent.`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error substituting:', error);
       showAlert({
         type: 'error',
@@ -1300,7 +1300,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           ? 'This matchup will not count in player stats but will count for salary and team stats'
           : 'This matchup will now count in player stats'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling null status:', error);
       showAlert({
         type: 'error',
@@ -2270,7 +2270,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           });
                           setIsEditMode(false);
                           window.location.reload();
-                        } catch (error) {
+                        } catch (error: any) {
                           console.error('Error updating matchups:', error);
                           showAlert({
                             type: 'error',
@@ -3918,7 +3918,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           setIsResultMode(false);
                           window.location.reload();
-                        } catch (error) {
+                        } catch (error: any) {
                           console.error('Error saving results:', error);
                           showAlert({
                             type: 'error',
@@ -3997,7 +3997,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           setIsResultMode(false);
                           // Reload page to show updated data
                           window.location.reload();
-                        } catch (error) {
+                        } catch (error: any) {
                           console.error('Failed to save draft:', error);
                           showAlert({
                             type: 'error',

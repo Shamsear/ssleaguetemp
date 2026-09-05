@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       }))
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team slots:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch team data' },

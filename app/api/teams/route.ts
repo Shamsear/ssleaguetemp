@@ -130,8 +130,8 @@ export async function GET(request: NextRequest) {
         GROUP BY team_id
       `;
       console.log(`[Teams API] Found stats for ${teamStats.length} teams`);
-    } catch (statsError) {
-      console.log('[Teams API] Could not fetch stats:', statsError.message);
+    } catch (statsError: any) {
+      console.log('[Teams API] Could not fetch stats:', (statsError as any)?.message);
       teamStats = [];
     }
 

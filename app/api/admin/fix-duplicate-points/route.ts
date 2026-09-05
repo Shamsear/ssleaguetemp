@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing duplicate points:', error);
     return NextResponse.json(
       { error: 'Failed to analyze duplicate points' },
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fixing duplicate points:', error);
     return NextResponse.json(
       { error: 'Failed to fix duplicate points' },

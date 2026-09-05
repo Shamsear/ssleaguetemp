@@ -358,7 +358,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Convert to array and calculate derived stats
-    const playerStats = Array.from(playerStatsMap.values()).map((player) => {
+    const playerStats = Array.from(playerStatsMap.values()).map((player: any) => {
       const winRate = player.matches_played > 0
         ? Math.round((player.wins / player.matches_played) * 100 * 10) / 10
         : 0;
@@ -368,7 +368,7 @@ export async function GET(request: NextRequest) {
       // Return player object with calculated fields - will be augmented with photo_url and team_logo later
       player.goal_difference = goalDifference;
       player.win_rate = winRate;
-      player.rounds_played = Array.from(player.rounds_played).sort((a, b) => a - b);
+      player.rounds_played = Array.from(player.rounds_played).sort((a: any, b: any) => a - b);
       
       return player;
     });
@@ -504,7 +504,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by points, then goal difference, then goals scored
-    playerStats.sort((a, b) => {
+    playerStats.sort((a: any, b: any) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
       return b.goals_scored - a.goals_scored;
@@ -530,7 +530,7 @@ export async function GET(request: NextRequest) {
       round_filter: roundNumber || 'all',
       total_players: playerStats.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player stats by round:', error);
     return NextResponse.json(
       {

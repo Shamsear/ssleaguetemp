@@ -63,7 +63,7 @@ export default function TeamRegistrationPage() {
         console.log('[Registration] Teams loaded:', teamsList.length);
         setTeams(teamsList);
         setTotalTeamsCount(teamsList.length);
-      } catch (error) {
+      } catch (error: any) {
         console.error('[Registration] Error fetching data:', error);
       } finally {
         setLoadingData(false);
@@ -87,7 +87,7 @@ export default function TeamRegistrationPage() {
         });
         setTeamRegistrationStatuses(statuses);
         setRegisteredTeamsCount(regCount);
-      } catch (err) {
+      } catch (err: any) {
         console.error('[Registration] Error fetching team statuses:', err);
       }
     };
@@ -125,7 +125,7 @@ export default function TeamRegistrationPage() {
           ? 'Team registration opened successfully!' 
           : 'Team registration closed successfully!'
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling team registration:', error);
       alert('Failed to toggle team registration');
     } finally {
@@ -178,7 +178,7 @@ export default function TeamRegistrationPage() {
       } else {
         alert(`Failed to register team: ${result.message || 'Unknown error'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error registering team:', error);
       alert('An error occurred while registering the team.');
     } finally {

@@ -84,7 +84,7 @@ export default function PlayerStatisticsPage() {
           )) as string[];
           setPlayingStyles(styles);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
       } finally {
         setIsLoading(false);
@@ -157,7 +157,7 @@ export default function PlayerStatisticsPage() {
           )
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error toggling star:', err);
       showAlert({
         type: 'error',

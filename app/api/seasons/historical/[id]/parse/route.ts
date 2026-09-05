@@ -99,18 +99,18 @@ export async function POST(
     // Read Excel file
     const buffer = Buffer.from(await file.arrayBuffer());
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    await workbook.xlsx.load((buffer as any));
 
     // Helper to convert worksheet rows to JSON
     const sheetToJson = (sheet: ExcelJS.Worksheet): any[] => {
       const headers: string[] = [];
       const result: any[] = [];
-      sheet.eachRow((row, rowNumber) => {
+      sheet.eachRow((row: any, rowNumber: any) => {
         if (rowNumber === 1) {
-          row.eachCell((cell) => { headers.push(String(cell.value || '')); });
+          row.eachCell((cell: any) => { headers.push(String(cell.value || '')); });
         } else {
           const obj: any = {};
-          row.eachCell((cell, colNumber) => {
+          row.eachCell((cell: any, colNumber: any) => {
             obj[headers[colNumber - 1]] = cell.value;
           });
           result.push(obj);
@@ -133,7 +133,7 @@ export async function POST(
     };
 
     // Process Teams sheet
-    if (workbook.SheetNames.includes('Teams')) {
+    if (workbook.worksheets.map(w => w.name).includes('Teams')) {
       console.log('📊 Parsing Teams sheet...');
       try {
         const teamsSheet = workbook.getWorksheet('Teams');
@@ -192,7 +192,7 @@ export async function POST(
     }
 
     // Process Players sheet
-    if (workbook.SheetNames.includes('Players')) {
+    if (workbook.worksheets.map(w => w.name).includes('Players')) {
       console.log('📊 Parsing Players sheet...');
       try {
         const playersSheet = workbook.getWorksheet('Players');

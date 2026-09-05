@@ -101,7 +101,7 @@ export default function TournamentRewardsViewPage() {
       
       // Store teams map in state for quick lookup
       (window as any).teamsMap = teamsMap;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading initial data:', error);
     } finally {
       setIsLoading(false);
@@ -212,7 +212,7 @@ export default function TournamentRewardsViewPage() {
 
       setTransactions(allTransactions);
       console.log(`Loaded ${allTransactions.length} tournament reward transactions`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transactions:', error);
     } finally {
       setIsFetchingTransactions(false);
@@ -309,7 +309,7 @@ export default function TournamentRewardsViewPage() {
         .sort((a, b) => b.grandTotal - a.grandTotal);
 
       setTeamSummary(summaryArray);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading team summary:', error);
     } finally {
       setIsFetchingTransactions(false);

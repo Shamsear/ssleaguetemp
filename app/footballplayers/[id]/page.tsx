@@ -14,7 +14,7 @@ async function getFootballPlayerData(id: string) {
     `;
     if (!players || players.length === 0) return null;
     return players[0];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching football player data for metadata:', error);
     return null;
   }

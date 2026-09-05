@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       success: true, 
       standings 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching group standings:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch group standings' },

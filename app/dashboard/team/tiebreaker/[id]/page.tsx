@@ -150,7 +150,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
       } else {
         setError(result.error || 'Failed to load tiebreaker details');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching tiebreaker:', error);
       setError('An error occurred while loading the tiebreaker');
     } finally {
@@ -244,7 +244,7 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
       } else {
         setError(result.error || 'Failed to submit bid');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting bid:', error);
       setError('An error occurred. Please try again.');
     } finally {

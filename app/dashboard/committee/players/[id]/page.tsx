@@ -214,7 +214,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
           alert('Player not found');
           router.push('/dashboard/committee/players');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching player:', err);
         alert('Failed to load player details');
       } finally {
@@ -236,7 +236,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
       if (result.success && result.data) {
         setAwards(result.data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching awards:', err);
     } finally {
       setLoadingAwards(false);
@@ -261,7 +261,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
         if (data.success) {
           setAuctionHistory(data.data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching auction history:', err);
       } finally {
         setLoadingAuction(false);

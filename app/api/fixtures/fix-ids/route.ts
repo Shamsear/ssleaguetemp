@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         if (updated % 10 === 0) {
           console.log(`✅ Updated ${updated} fixtures...`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error updating fixture ${fixture.id}:`, error);
         failed++;
       }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       failed,
       total: fixtures.length
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fixing fixture IDs:', error);
     return NextResponse.json(
       { error: 'Failed to fix fixture IDs', details: error instanceof Error ? error.message : 'Unknown error' },

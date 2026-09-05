@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Auto-sub settings fetch error:', error);
     return NextResponse.json(
       { 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       message: 'Auto-sub settings updated'
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Auto-sub settings update error:', error);
     return NextResponse.json(
       { 

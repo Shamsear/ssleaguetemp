@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       verified: false,
       message: 'Waiting for Telegram verification'
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking verification:', error)
     return NextResponse.json(
       { error: 'Failed to check verification status' },

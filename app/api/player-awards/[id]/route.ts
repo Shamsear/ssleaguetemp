@@ -24,7 +24,7 @@ export async function PATCH(
       success: true,
       message: 'Player award Instagram link updated successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating player award:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update player award' },
@@ -77,7 +77,7 @@ export async function DELETE(
       success: true,
       message: 'Player award deleted successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting player award:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete player award' },

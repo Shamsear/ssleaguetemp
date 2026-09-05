@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             results.updated.push(teamName);
             console.log(`✅ ${teamName} - enabling fantasy`);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error enabling ${teamName}:`, error);
           results.errors.push(`${teamName}: ${error}`);
         }
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         error_messages: results.errors,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error enabling fantasy for teams:', error);
     return NextResponse.json(
       {
@@ -228,9 +228,9 @@ export async function GET(request: NextRequest) {
           LIMIT 1
         `;
         
-        const isEnabled = fantasyTeam.length > 0 && fantasyTeam[0].is_enabled === true;
+        const isEnabled = (fantasyTeam as any)?.length > 0 && fantasyTeam[0].is_enabled === true;
         
-        console.log(`[Enable Teams] Team ${teamData.team_name} (${teamId}): ${fantasyTeam.length > 0 ? `Found in DB, is_enabled=${fantasyTeam[0].is_enabled}` : 'Not in DB'} → ${isEnabled ? 'ENABLED' : 'DISABLED'}`);
+        console.log(`[Enable Teams] Team ${teamData.team_name} (${teamId}): ${(fantasyTeam as any)?.length > 0 ? `Found in DB, is_enabled=${fantasyTeam[0].is_enabled}` : 'Not in DB'} → ${isEnabled ? 'ENABLED' : 'DISABLED'}`);
         
         const teamInfo = {
           id: teamData.id,
@@ -259,7 +259,7 @@ export async function GET(request: NextRequest) {
       teams_with_fantasy: teams.enabled,
       teams_without_fantasy: teams.disabled,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Enable Teams] Error checking fantasy status:', error);
     return NextResponse.json(
       {

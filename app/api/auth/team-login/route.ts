@@ -42,13 +42,13 @@ export async function POST(request: NextRequest) {
         const userDoc = await adminDb.collection('users').doc(uid).get();
         if (userDoc.exists) {
           const userData = userDoc.data();
-          if (userData.isActive === false) {
+          if ((userData as any)?.isActive === false) {
             return NextResponse.json(
               { success: false, error: 'Account is deactivated. Please contact support.' },
               { status: 403 }
             );
           }
-          if (userData.role === 'team' && userData.isApproved === false) {
+          if ((userData as any)?.role === 'team' && (userData as any)?.isApproved === false) {
             return NextResponse.json(
               { success: false, error: 'Your account is pending approval from the super admin. Please wait for approval before logging in.' },
               { status: 403 }

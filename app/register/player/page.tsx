@@ -125,7 +125,7 @@ function PlayerSearchContent() {
 
         setSeason(seasonData)
         setLoading(false)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching season:', err)
         setError('Failed to load registration')
         setLoading(false)
@@ -149,7 +149,7 @@ function PlayerSearchContent() {
           setError(`This email (${user.email}) has already been used to register for this season`)
           await signOut(auth)
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error checking email:', err)
       }
     }
@@ -182,7 +182,7 @@ function PlayerSearchContent() {
       
       const { players: searchResults } = await response.json()
       setPlayers(searchResults || [])
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error searching players:', err)
       setError('Failed to search players')
       setPlayers([])
@@ -241,7 +241,7 @@ function PlayerSearchContent() {
       setSuccess(null)
       setSearchTerm('')
       setPlayers([])
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sign out error:', err)
     }
   }

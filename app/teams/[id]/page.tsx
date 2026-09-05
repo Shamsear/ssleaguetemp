@@ -26,7 +26,7 @@ async function getTeamData(id: string) {
     const logoUrl = teamDoc.exists ? teamDoc.data()?.logo_url : null;
 
     return { teamName, logoUrl };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team data for metadata:', error);
     return { teamName: id, logoUrl: null };
   }

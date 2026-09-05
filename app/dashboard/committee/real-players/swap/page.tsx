@@ -96,7 +96,7 @@ export default function MidSeasonPlayerSwapPage() {
         const catRes = await fetchWithTokenRefresh('/api/categories');
         const catJson = await catRes.json();
         if (catJson.success) setCategories(catJson.data || []);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching data for player replacement page:', err);
       } finally {
         setIsLoading(false);

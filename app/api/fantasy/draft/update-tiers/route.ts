@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       message: 'Tiers updated successfully',
       tiers_updated: tiers.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating tiers:', error);
     return NextResponse.json(
       { 

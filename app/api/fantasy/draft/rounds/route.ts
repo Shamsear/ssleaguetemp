@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ success: true, rounds: safeRounds });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching draft rounds:', error);
     return NextResponse.json(
       { error: 'Failed to fetch draft rounds', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
           icon: '/fantasy-icon.png',
           url: '/dashboard/team/fantasy/draft',
         }, { allUsers: true });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send round start notification:', err);
       }
     }
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
       message: `Slot ${slotIdx} round ${action} successfully`,
       round,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating draft round:', error);
     return NextResponse.json(
       { error: 'Failed to update draft round', details: error instanceof Error ? error.message : 'Unknown error' },

@@ -96,7 +96,7 @@ export default function TeamDetailsPage() {
       setPlayers([]);
       setTransactions([]);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading team data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to load team data';
       setError(errorMessage);
@@ -177,7 +177,7 @@ export default function TeamDetailsPage() {
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading logo:', error);
       alert('Failed to download logo. Please try again or right-click and "Save image as..."');
     }
@@ -235,7 +235,7 @@ export default function TeamDetailsPage() {
       });
 
       alert(`Logo position saved successfully for ${modalShape} containers!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving logo position:', error);
       alert('Failed to save logo position. Please try again.');
     }
@@ -302,7 +302,7 @@ export default function TeamDetailsPage() {
       const uploadData = await uploadRes.json();
       setEditForm({ ...editForm, logoUrl: uploadData.url });
       alert('Logo uploaded successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading logo:', error);
       alert('Failed to upload logo. Please try again.');
     } finally {
@@ -330,7 +330,7 @@ export default function TeamDetailsPage() {
       alert('Team updated successfully!');
       setShowEditModal(false);
       loadTeamData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating team:', error);
       alert('Failed to update team. Please try again.');
     }

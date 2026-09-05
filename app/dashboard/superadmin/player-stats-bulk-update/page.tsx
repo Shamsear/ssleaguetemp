@@ -65,7 +65,7 @@ export default function PlayerStatsBulkUpdate() {
       if (result.success) {
         setSeasons(result.seasons);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching seasons:', error);
     }
   };

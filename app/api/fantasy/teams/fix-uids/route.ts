@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       message: `Fixed ${results.fixed} teams, ${results.already_ok} already correct, ${results.not_found} not found in Firebase`,
       results,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[FixUIDs] Fatal error:', error);
     return NextResponse.json(
       { error: 'Failed to fix UIDs', details: error instanceof Error ? error.message : 'Unknown error' },

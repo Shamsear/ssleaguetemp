@@ -263,7 +263,7 @@ export default function DraftSettingsPage() {
         setRegisteredTeams(teamsData.teams || []);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading settings data:', error);
     } finally {
       setIsLoading(false);
@@ -301,7 +301,7 @@ export default function DraftSettingsPage() {
         message: 'Fantasy player pool populated successfully!',
       });
       loadAllData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error populating players:', error);
       showAlert({
         type: 'error',
@@ -342,7 +342,7 @@ export default function DraftSettingsPage() {
         message: 'Draft settings saved successfully',
       });
       loadAllData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving settings:', error);
       showAlert({
         type: 'error',

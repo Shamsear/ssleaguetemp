@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
           logo_position_y_square = baseTeamData?.logo_position_y_square ?? null;
           logo_scale_square = baseTeamData?.logo_scale_square ?? null;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching base team adjustments:', error);
       }
     }
@@ -470,7 +470,7 @@ export async function GET(request: NextRequest) {
           try {
             const decrypted = decryptBidData(bid.encrypted_bid_data);
             decryptedAmount = decrypted.amount;
-          } catch (err) {
+          } catch (err: any) {
             console.error('Failed to decrypt bid:', err);
             decryptedAmount = 0; // Fallback
           }
@@ -737,7 +737,7 @@ export async function GET(request: NextRequest) {
           photo_url: null,
         }));
         console.log(`👥 Real players found:`, realPlayers.length);
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Error fetching owner/manager/players data:', error);
         // Don't fail the entire request if owner/manager/players fetch fails
       }
@@ -780,7 +780,7 @@ export async function GET(request: NextRequest) {
         try {
           const decrypted = decryptBidData(result.encrypted_bid_data);
           decryptedAmount = decrypted.amount;
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to decrypt bid result:', err);
           decryptedAmount = 0; // Fallback
         }
@@ -877,7 +877,7 @@ export async function GET(request: NextRequest) {
       },
     }, { headers });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team dashboard data:', error);
     return NextResponse.json({
       success: false,

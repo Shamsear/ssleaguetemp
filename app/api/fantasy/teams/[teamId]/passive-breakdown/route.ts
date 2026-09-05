@@ -159,7 +159,7 @@ export async function GET(
         };
       }),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching passive points breakdown:', error);
     return NextResponse.json(
       { error: 'Failed to fetch passive points breakdown', details: error instanceof Error ? error.message : 'Unknown error' },

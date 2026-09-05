@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       deductions: [],
       no_changes: [],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error bypassing salary adjustment:', error);
     return NextResponse.json(
       { error: 'Failed to adjust salaries' },
@@ -113,7 +113,7 @@ async function processRefund(
     });
 
     console.log(`   ↩️  Refunded $${salary.toFixed(2)} to ${team_id} for ${playerName}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error processing refund for ${playerName}:`, error);
   }
 }
@@ -200,7 +200,7 @@ async function processDeduction(
     });
 
     console.log(`   💸 Deducted $${salary.toFixed(2)} from ${team_id} for ${playerName}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error processing deduction for ${playerName}:`, error);
   }
 }

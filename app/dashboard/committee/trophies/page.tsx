@@ -80,7 +80,7 @@ export default function TrophyManagementPage() {
       if (data.success) {
         setTrophies(data.trophies || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching trophies:', err);
       setError('Failed to load trophies');
     } finally {
@@ -105,7 +105,7 @@ export default function TrophyManagementPage() {
         });
         setSelectedTrophies(notAwarded);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching preview:', err);
     }
   };
@@ -121,7 +121,7 @@ export default function TrophyManagementPage() {
         const teamNames = data.teams.map((t: any) => t.team_name).sort();
         setTeams(teamNames);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching teams:', err);
     }
   };
@@ -143,7 +143,7 @@ export default function TrophyManagementPage() {
         // Fallback to default options if API fails
         setTrophyOptions(['Other (Custom)']);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching tournaments:', err);
       // Fallback to default options
       setTrophyOptions(['Other (Custom)']);
@@ -183,7 +183,7 @@ export default function TrophyManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to award trophies');
     } finally {
       setAwarding(false);
@@ -235,7 +235,7 @@ export default function TrophyManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to delete trophy');
     }
   };
@@ -274,7 +274,7 @@ export default function TrophyManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to add trophy');
     }
   };

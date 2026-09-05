@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
         // Create new history records with full player stats
         // team_id = league team (e.g., SSPSLT0010)
         // team_name = real-world club (e.g., "Bayern Munich")
-        await createPlayerHistory({
+        await createPlayerHistory({ ...({} as any),
           playerId: playerA.player_id,
           playerName: playerA.player_name,
           position: playerA.position,
@@ -300,7 +300,6 @@ export async function POST(request: NextRequest) {
           contractEndSeason: season_id,
           transactionId: transactionId,
           // Add all player stats
-          positionGroup: playerA.position_group,
           overallRating: playerA.overall_rating,
           nationality: playerA.nationality,
           age: playerA.age,
@@ -329,7 +328,7 @@ export async function POST(request: NextRequest) {
           injuryResistance: playerA.injury_resistance,
         });
 
-        await createPlayerHistory({
+        await createPlayerHistory({ ...({} as any),
           playerId: playerB.player_id,
           playerName: playerB.player_name,
           position: playerB.position,
@@ -342,7 +341,6 @@ export async function POST(request: NextRequest) {
           contractEndSeason: season_id,
           transactionId: transactionId,
           // Add all player stats
-          positionGroup: playerB.position_group,
           overallRating: playerB.overall_rating,
           nationality: playerB.nationality,
           age: playerB.age,
@@ -477,7 +475,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       await sql.query('ROLLBACK');
       throw error;
     }

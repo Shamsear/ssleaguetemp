@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
     // Create password reset request
     const requestData = {
       userId: userId,
-      userEmail: userData.email,
-      username: userData.username,
-      teamName: userData.role === 'team' ? userData.teamName : null,
+      userEmail: (userData as any)?.email,
+      username: (userData as any)?.username,
+      teamName: (userData as any)?.role === 'team' ? (userData as any)?.teamName : null,
       reason: reason || null,
       status: 'pending',
       requestedAt: new Date(),

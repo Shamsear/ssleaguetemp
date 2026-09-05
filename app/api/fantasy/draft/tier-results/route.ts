@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
       success: true,
       tiers: mappedTiers
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tier results:', error);
     return NextResponse.json(
       { error: 'Failed to fetch tier results', details: error instanceof Error ? error.message : 'Unknown error' },

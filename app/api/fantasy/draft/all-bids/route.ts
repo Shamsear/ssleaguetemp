@@ -1,3 +1,4 @@
+import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth-helper';
 import { fantasySql } from '@/lib/neon/fantasy-config';
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
       SELECT 
         b.id,
         b.bid_id,
-        b.team_id,
+        ((b as any).team_id as string),
         b.slot_index,
         b.priority,
         b.target_id,
@@ -118,8 +119,8 @@ export async function GET(request: NextRequest) {
 
     const teamBids = new Map<string, any[]>();
     allBids.forEach((b: any) => {
-      if (!teamBids.has(b.team_id)) teamBids.set(b.team_id, []);
-      teamBids.get(b.team_id)!.push(b);
+      if (!teamBids.has(((b as any).team_id as string))) teamBids.set(((b as any).team_id as string), []);
+      teamBids.get(((b as any).team_id as string))!.push(b);
     });
 
     const slotBids = new Map<number, any[]>();
@@ -231,9 +232,9 @@ export async function GET(request: NextRequest) {
         total_bids: targetBids.length,
         bids: targetBids.map((b: any) => ({
           bid_id: b.bid_id,
-          team_id: b.team_id,
-          team_name: teamMap.get(b.team_id)?.team_name || b.team_id,
-          owner_name: teamMap.get(b.team_id)?.owner_name || '',
+          team_id: ((b as any).team_id as string),
+          team_name: teamMap.get(((b as any).team_id as string))?.team_name || ((b as any).team_id as string),
+          owner_name: teamMap.get(((b as any).team_id as string))?.owner_name || '',
           priority: b.priority,
           bid_amount: Number(b.bid_amount),
           status: b.status,
@@ -349,7 +350,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const totalPendingSpend = pendingCommitments.reduce((sum, c) => sum + c.bid_amount, 0);
+      const totalPendingSpend = pendingCommitments.reduce((sum: any, c: any) => sum + c.bid_amount, 0);
       const budgetRemaining = Number(t.budget_remaining);
       const projectedRemaining = budgetRemaining - totalPendingSpend;
 
@@ -402,7 +403,7 @@ export async function GET(request: NextRequest) {
         total_budget_spent: finalSquad.reduce((sum: number, s: any) => sum + Number(s.purchase_price), 0),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching all bids:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch bids', details: error instanceof Error ? error.message : 'Unknown error' },

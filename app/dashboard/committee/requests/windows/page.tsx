@@ -127,7 +127,7 @@ export default function WindowsManagementPage() {
       } else {
         alert(result.error || 'Failed to update window status');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Toggle error:', err);
       alert('An error occurred');
     }
@@ -162,7 +162,7 @@ export default function WindowsManagementPage() {
       } else {
         alert(result.error || 'Failed to create window');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Create error:', err);
       alert('An error occurred');
     } finally {

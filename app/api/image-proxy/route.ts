@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image proxy error:', error);
     return new NextResponse('Error fetching image', { status: 500 });
   }

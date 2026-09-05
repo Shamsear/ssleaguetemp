@@ -66,7 +66,7 @@ export default function RealPlayerDetailPage() {
         } else {
           setError(result.error || 'Player not found');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching player details:', err);
         setError('Failed to load player details');
       } finally {

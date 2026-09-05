@@ -1,3 +1,4 @@
+import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { runWeeklyPollTriggers } from '@/lib/polls/auto-trigger';
 

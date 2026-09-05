@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching available players:', error);
     const errorResponse = formatErrorResponse(error);
     return NextResponse.json(

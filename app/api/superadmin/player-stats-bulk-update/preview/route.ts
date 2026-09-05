@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     let errorCount = 0;
     const errors: string[] = [];
 
-    worksheet.eachRow((row, rowNumber) => {
+    worksheet.eachRow((row: any, rowNumber: any) => {
       // Skip header row
       if (rowNumber === 1) return;
 

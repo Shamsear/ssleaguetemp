@@ -144,7 +144,7 @@ export default function ProposeTradePagePage() {
       if (data.trade_value) {
         setTradeValue(data.trade_value);
       }
-    } catch (err) {
+    } catch (err: any) {
       // Silently fail for preview
     }
   };

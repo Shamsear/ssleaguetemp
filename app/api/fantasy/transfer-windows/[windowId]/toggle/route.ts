@@ -93,7 +93,7 @@ export async function POST(
       is_active: newStatus
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error toggling transfer window:', error);
     return NextResponse.json(
       { 

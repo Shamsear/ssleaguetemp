@@ -156,7 +156,7 @@ export default function PlayersImportPreview() {
           });
           
           successCount++;
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error creating player ${player.name}:`, error);
           errorCount++;
           errors.push(`Failed to create: ${player.name}`);
@@ -178,7 +178,7 @@ export default function PlayersImportPreview() {
           });
           
           successCount++;
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error updating player ${player.player_id}:`, error);
           errorCount++;
           errors.push(`Failed to update: ${player.name} (${player.player_id})`);
@@ -200,7 +200,7 @@ export default function PlayersImportPreview() {
       
       // Redirect back to players page
       router.push('/dashboard/superadmin/players');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Import error:', error);
       alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setImporting(false);

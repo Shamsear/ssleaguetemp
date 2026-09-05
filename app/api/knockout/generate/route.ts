@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       matchesCount: result.matches?.length || 0,
       stage: result.matches && result.matches.length > 0 ? result.matches[0].stage : null
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating knockout bracket:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate knockout bracket' },

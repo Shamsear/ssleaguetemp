@@ -150,7 +150,7 @@ function PlayersRegistrationPageContent() {
       
       setRegisteredPlayers(mappedPlayers as RegisteredPlayer[])
       setLoading(false)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching data:', err)
       setError('Failed to load registration page')
       setLoading(false)
@@ -195,7 +195,7 @@ function PlayersRegistrationPageContent() {
         if (statsResult.success) {
           setStats(statsResult.data)
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching stats:', err)
       }
     }
@@ -243,7 +243,7 @@ function PlayersRegistrationPageContent() {
           )
         
         setRegisteredPlayers(mappedPlayers as RegisteredPlayer[])
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err)
       }
     }
@@ -338,7 +338,7 @@ function PlayersRegistrationPageContent() {
       setSuccess('Player registration cancelled successfully!')
       setTimeout(() => setSuccess(null), 3000)
       setActioningPlayer(null)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error removing registration:', err)
       setError('Failed to remove registration. Please try again.')
       setTimeout(() => setError(null), 3000)
@@ -377,7 +377,7 @@ function PlayersRegistrationPageContent() {
       } else {
         setError(result.error)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error bulk deleting players:', error)
       setError('Failed to bulk delete players')
     } finally {
@@ -463,7 +463,7 @@ function PlayersRegistrationPageContent() {
       
       setSuccess(`Exported ${exportData.length} players to Excel!`)
       setTimeout(() => setSuccess(null), 3000)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting to Excel:', error)
       setError('Failed to export to Excel')
       setTimeout(() => setError(null), 3000)
@@ -500,7 +500,7 @@ function PlayersRegistrationPageContent() {
       } else {
         setError(result.error || 'Failed to toggle registration')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling player registration:', error)
       setError('Failed to toggle player registration')
     } finally {
@@ -575,7 +575,7 @@ function PlayersRegistrationPageContent() {
           ])
 
           successCount++
-        } catch (err) {
+        } catch (err: any) {
           console.error(`Error registering player ${player.player_id}:`, err)
           errors.push(`${player.name} (${player.player_id})`)
         }
@@ -604,7 +604,7 @@ function PlayersRegistrationPageContent() {
       }, 5000)
       
       setSubmitting(false)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error registering players:', err)
       setError('Failed to register players. Please try again.')
       setSubmitting(false)

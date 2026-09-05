@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       verificationCode,
       botUsername: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating verification code:', error)
     return NextResponse.json(
       { error: 'Failed to generate verification code' },

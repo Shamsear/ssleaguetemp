@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
           current_status: false, // Will be filled in on preview page
           new_status: newStatus
         })
-      } catch (err) {
+      } catch (err: any) {
         errors.push(`Row ${i + 1}: ${err instanceof Error ? err.message : 'Parse error'}`)
       }
     }

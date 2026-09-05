@@ -78,7 +78,7 @@ export default function TransactionsPage() {
       if (seasonsList.length > 0) {
         setSelectedSeason(seasonsList[0].id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading seasons:', error);
     }
   };
@@ -129,7 +129,7 @@ export default function TransactionsPage() {
       } else {
         throw new Error(data.error || 'Failed to load transactions');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transactions:', error);
       // Set empty data instead of mock data
       setFootballData({

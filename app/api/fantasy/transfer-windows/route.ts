@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       windows
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching transfer windows:', error);
     return NextResponse.json(
       { 
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       window_id: windowId
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating transfer window:', error);
     return NextResponse.json(
       { 

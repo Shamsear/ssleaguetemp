@@ -112,7 +112,7 @@ export default function TeamPlayersPage() {
         } else {
           console.error('API returned error:', error);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching auction players:', err);
       } finally {
         console.log('Auction players loading finished');
@@ -162,7 +162,7 @@ export default function TeamPlayersPage() {
         } else {
           console.error('Tournament players API returned error:', error);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching tournament players:', err);
       } finally {
         console.log('Tournament players loading finished');

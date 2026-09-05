@@ -82,7 +82,7 @@ export default function PollsManagementPage() {
           setAvailableTournaments(tournaments);
           setTournamentId(tournaments[0].id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching tournaments:', err);
       }
     };
@@ -103,7 +103,7 @@ export default function PollsManagementPage() {
           const maxRound = Math.max(...result.fixtures.map((f: any) => f.round_number || 0));
           setMaxRounds(maxRound);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching rounds:', err);
       }
     };
@@ -182,7 +182,7 @@ export default function PollsManagementPage() {
         setError(candidatesData.error || 'Failed to load candidates');
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading data:', err);
       setError('Failed to load polls data');
     } finally {
@@ -375,7 +375,7 @@ export default function PollsManagementPage() {
             [optionId]: result.voters || []
           }));
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading voters:', err);
       } finally {
         setLoadingVoters(false);

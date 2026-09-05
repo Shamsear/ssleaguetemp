@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     `;
 
     return NextResponse.json({ players });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player pool:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player pool', details: error instanceof Error ? error.message : 'Unknown error' },

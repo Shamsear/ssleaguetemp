@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+// @ts-ignore
 import * as cheerio from 'cheerio';
 import { tempSql, initializeTempTable } from '@/lib/neon/temp-config';
 import { promises as fs } from 'fs';

@@ -73,7 +73,7 @@ export default function LineupHistoryPage() {
         setSeasons(data.seasons);
         setSeasonId(data.seasons[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching seasons:', err);
     }
   };

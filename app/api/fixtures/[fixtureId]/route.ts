@@ -163,7 +163,7 @@ export async function GET(
           if (tsAny[0].team_logo) return tsAny[0].team_logo;
           if (tsAny[0].logo_url) return tsAny[0].logo_url;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error getting logo for team', teamId, err);
       }
       return null;
@@ -181,7 +181,7 @@ export async function GET(
     };
 
     return NextResponse.json({ fixture: fixtureWithLogos });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching fixture:', error);
     return NextResponse.json(
       { error: 'Failed to fetch fixture' },
@@ -282,7 +282,7 @@ export async function PATCH(
       success: true,
       message: 'Match details updated successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating MOTM:', error);
     return NextResponse.json(
       { error: 'Failed to update match details' },

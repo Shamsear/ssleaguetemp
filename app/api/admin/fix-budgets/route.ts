@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
           budget: correctBudget,
           players: Number(player_count)
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error updating ${team_id}:`, error);
       }
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       message: `Fixed budgets for ${updates.length} teams`,
       updates
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fixing budgets:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

@@ -115,7 +115,7 @@ export async function GET(
       matches,
       count: matches.length
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team matches:', error);
     return NextResponse.json(
       { 

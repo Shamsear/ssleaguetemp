@@ -141,7 +141,7 @@ export async function GET(
           : 0,
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Team API] Error fetching fantasy team:', error);
     return NextResponse.json(
       { error: 'Failed to fetch fantasy team', details: error instanceof Error ? error.message : 'Unknown error' },

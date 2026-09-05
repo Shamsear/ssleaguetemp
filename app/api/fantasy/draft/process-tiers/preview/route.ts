@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
         can_process: warnings.filter(w => w.severity === 'critical').length === 0,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating draft preview:', error);
     return NextResponse.json(
       { 

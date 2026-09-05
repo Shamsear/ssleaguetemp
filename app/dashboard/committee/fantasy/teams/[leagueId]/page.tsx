@@ -81,7 +81,7 @@ export default function FantasyTeamsPage() {
           });
           setScoringRules(rulesMap);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading scoring rules:', error);
         // Fallback to default values if API fails
         setScoringRules({
@@ -125,7 +125,7 @@ export default function FantasyTeamsPage() {
         if (data.teams && data.teams.length > 0) {
           loadTeamPlayers(data.teams[0]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading league:', error);
         showAlert({
           type: 'error',
@@ -165,7 +165,7 @@ export default function FantasyTeamsPage() {
 
       const data = await response.json();
       setTeamPlayers(data.players || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading team players:', error);
       showAlert({
         type: 'error',
@@ -206,7 +206,7 @@ export default function FantasyTeamsPage() {
 
       const data = await response.json();
       setPlayerData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading player data:', error);
       setPlayerData({ error: true });
     } finally {
@@ -236,7 +236,7 @@ export default function FantasyTeamsPage() {
 
       const data = await response.json();
       setPassiveData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading passive breakdown:', error);
       setPassiveData({ error: true });
     } finally {

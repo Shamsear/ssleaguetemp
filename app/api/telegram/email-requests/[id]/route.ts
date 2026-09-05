@@ -148,7 +148,7 @@ export async function POST(
         message: 'Request rejected'
       })
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing email request:', error)
     return NextResponse.json(
       { error: 'Failed to process request' },

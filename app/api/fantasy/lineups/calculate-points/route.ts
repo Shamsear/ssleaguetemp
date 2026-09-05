@@ -68,9 +68,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Return success response
-    return NextResponse.json({
-      success: true,
-      ...result
+    const { success: _, ...restResult } = result || {}; return NextResponse.json({ success: true, ...restResult
     });
 
   } catch (error: any) {

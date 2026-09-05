@@ -89,7 +89,7 @@ export async function GET(
       breakdown: breakdown,
       by_team: Object.values(byTeam),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching points breakdown:', error);
     return NextResponse.json(
       { error: 'Failed to fetch points breakdown' },

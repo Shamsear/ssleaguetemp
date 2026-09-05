@@ -44,7 +44,7 @@ export default function TeamDetailsPage() {
       
       setTeam(teamData);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading team data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to load team data';
       setError(errorMessage);

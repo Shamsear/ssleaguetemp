@@ -84,7 +84,7 @@ export async function GET(
     }
 
     // 2. Add all audit log entries
-    auditLogs.forEach((log) => {
+    auditLogs.forEach((log: any) => {
       let action = '';
       let icon = '';
       let color = '';
@@ -144,7 +144,7 @@ export async function GET(
     });
 
     // Sort timeline by timestamp
-    timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    timeline.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     return NextResponse.json({
       success: true,
@@ -161,7 +161,7 @@ export async function GET(
       timeline,
       totalEvents: timeline.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching fixture audit log:', error);
     return NextResponse.json(
       { error: 'Failed to fetch fixture audit log' },

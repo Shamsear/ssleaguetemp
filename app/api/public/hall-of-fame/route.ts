@@ -176,7 +176,7 @@ export async function GET() {
               photoUrls[doc.id] = doc.data().photo_url;
             }
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching player photos chunk:', err);
         }
       }

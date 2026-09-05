@@ -447,7 +447,7 @@ export default function RoundsManagementPage() {
             setSelectedAuctionSettingsId(String(settingsData.data[0].id));
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching auction settings:', err);
       }
 
@@ -502,7 +502,7 @@ export default function RoundsManagementPage() {
               console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchRounds] Failed to fetch submissions for round ${r.id}:`, subData.error);
               return null;
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchRounds] Error fetching submissions for round ${r.id}:`, err);
             return null;
           }
@@ -608,7 +608,7 @@ export default function RoundsManagementPage() {
         }
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching data:', err);
     } finally {
       setIsLoading(false);
@@ -669,7 +669,7 @@ export default function RoundsManagementPage() {
               console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchAllData] Failed to fetch submissions for round ${r.id}:`, subData.error);
               return null;
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> [fetchAllData] Error fetching submissions for round ${r.id}:`, err);
             return null;
           }
@@ -717,7 +717,7 @@ export default function RoundsManagementPage() {
           });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching rounds:', err);
     } finally {
       if (showLoader) setIsLoading(false);
@@ -1024,7 +1024,7 @@ export default function RoundsManagementPage() {
           message: error || 'Failed to start round'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error starting round:', err);
       showAlert({
         type: 'error',
@@ -1078,7 +1078,7 @@ export default function RoundsManagementPage() {
           setRounds(refreshData.data);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding time:', err);
       showAlert({
         type: 'error',
@@ -1145,7 +1145,7 @@ export default function RoundsManagementPage() {
           message: data.error || 'Failed to extend round deadline'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error extending round deadline:', err);
       showAlert({
         type: 'error',
@@ -1170,7 +1170,7 @@ export default function RoundsManagementPage() {
       } else {
         showAlert({ type: 'error', title: 'Error', message: 'Failed to update finalization mode' });
       }
-    } catch (err) {
+    } catch (err: any) {
       showAlert({ type: 'error', title: 'Error', message: 'Failed to update finalization mode' });
     } finally {
       setUpdatingFinalizationMode(null);
@@ -1217,7 +1217,7 @@ export default function RoundsManagementPage() {
               message: data.error || 'Failed to modify submission status'
             });
           }
-        } catch (err) {
+        } catch (err: any) {
           showAlert({
             type: 'error',
             title: 'Error',
@@ -1309,7 +1309,7 @@ export default function RoundsManagementPage() {
           message: result.error || 'Failed to resolve tiebreaker'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error resolving tiebreaker:', err);
       showAlert({
         type: 'error',
@@ -1333,7 +1333,7 @@ export default function RoundsManagementPage() {
           if (success) {
             setRoundDetails(prev => ({ ...prev, [roundId]: data }));
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching round details:', err);
         }
       }
@@ -1410,7 +1410,7 @@ export default function RoundsManagementPage() {
           message: result.error || 'Failed to create preview'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error previewing finalization:', err);
       showAlert({
         type: 'error',
@@ -1482,7 +1482,7 @@ export default function RoundsManagementPage() {
           message: result.error || 'Failed to apply pending allocations'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error applying pending allocations:', err);
       showAlert({
         type: 'error',
@@ -1528,7 +1528,7 @@ export default function RoundsManagementPage() {
           message: result.error || 'Failed to cancel pending allocations'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error canceling pending allocations:', err);
       showAlert({
         type: 'error',
@@ -1571,7 +1571,7 @@ export default function RoundsManagementPage() {
           setRounds(refreshData.data);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting round:', err);
       showAlert({
         type: 'error',
@@ -1641,7 +1641,7 @@ export default function RoundsManagementPage() {
           message: data.error || 'Failed to revert round finalization'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error reverting round:', err);
       showAlert({
         type: 'error',

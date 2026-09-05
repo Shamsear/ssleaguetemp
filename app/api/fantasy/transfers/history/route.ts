@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         transferred_at: t.transferred_at,
       })),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching transfer history:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transfer history' },

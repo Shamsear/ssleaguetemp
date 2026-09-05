@@ -161,7 +161,7 @@ function TeamDetailContent() {
 
       setAllSeasonData(data.seasons);
       setTeam(data.seasons[0]); 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching team data:', err);
       setError('Failed to load team data');
     } finally {
@@ -180,7 +180,7 @@ function TeamDetailContent() {
       } else {
         setFootballPlayers([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching football players:', err);
       setFootballPlayers([]);
     } finally {
@@ -199,7 +199,7 @@ function TeamDetailContent() {
       } else {
         setRealPlayers([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching real players:', err);
       setRealPlayers([]);
     } finally {
@@ -218,7 +218,7 @@ function TeamDetailContent() {
       } else {
         setAwards([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching awards:', err);
       setAwards([]);
     } finally {

@@ -146,7 +146,7 @@ export default function PowerUpsPage() {
         setHistory(historyData.history || []);
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading power-ups:', err);
       setError('Failed to load power-ups');
     } finally {
@@ -187,7 +187,7 @@ export default function PowerUpsPage() {
         setSuccess(null);
       }, 2000);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error activating power-up:', err);
       setError(err instanceof Error ? err.message : 'Failed to activate power-up');
     } finally {

@@ -41,7 +41,7 @@ export default function EmailVerificationRequests({ seasonId }: EmailVerificatio
       } else {
         setError(data.error || 'Failed to load verification requests')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching verification requests:', err)
       setError('Failed to load verification requests')
     } finally {
@@ -69,7 +69,7 @@ export default function EmailVerificationRequests({ seasonId }: EmailVerificatio
       } else {
         setError(data.error || 'Failed to approve request')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error approving request:', err)
       setError('Failed to approve request')
     } finally {
@@ -97,7 +97,7 @@ export default function EmailVerificationRequests({ seasonId }: EmailVerificatio
       } else {
         setError(data.error || 'Failed to reject request')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error rejecting request:', err)
       setError('Failed to reject request')
     } finally {

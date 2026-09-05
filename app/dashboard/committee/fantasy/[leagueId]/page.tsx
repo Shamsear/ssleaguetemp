@@ -60,7 +60,7 @@ export default function FantasyLeagueDashboard() {
         const data = await response.json();
         setLeague(data.league);
         setTeams(data.teams || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading league:', error);
         showAlert({
           type: 'error',

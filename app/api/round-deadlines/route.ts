@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
               d.status = 'active';
               d.is_active = true;
               console.log(`🚀 Auto-started matchday R${d.round_number} (${d.leg}) at 6:00 AM IST for date ${dateStr}`);
-            } catch (err) {
+            } catch (err: any) {
               console.error(`Error auto-starting matchday ${d.id}:`, err);
             }
           }

@@ -242,7 +242,7 @@ export async function GET(
       }
 
       availableSlots = maxSquadSize - currentSquadSize;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching team data:', error);
     }
 
@@ -263,7 +263,7 @@ export async function GET(
       if (teamData && teamData.length > 0) {
         purchasedSlots = parseInt(teamData[0].football_purchased_slots) || 0;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching slot settings:', error);
     }
 

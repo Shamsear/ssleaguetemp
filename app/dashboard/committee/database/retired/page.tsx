@@ -161,7 +161,7 @@ export default function RetiredPlayersPage() {
     const BATCH_STAGGER_MS = 120;
     
     if (players.length > 0) {
-      players.forEach((player, index) => {
+      players.forEach((player: any, index: any) => {
         // Only queue if we haven't checked or queued this player yet
         if (!verifiedStatus[player.id]) {
           const batchIndex = Math.floor(index / CONCURRENT_WORKERS);
@@ -373,7 +373,7 @@ export default function RetiredPlayersPage() {
                 type="text"
                 placeholder={activeTab === 'active' ? "Search active roster..." : "Search retired registry..."}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: any) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-55 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-550/20 focus:border-purple-550/80 text-xs font-semibold text-slate-800 placeholder:text-slate-400"
               />
             </div>
@@ -381,7 +381,7 @@ export default function RetiredPlayersPage() {
             <div className="relative">
               <select
                 value={positionFilter}
-                onChange={(e) => setPositionFilter(e.target.value)}
+                onChange={(e: any) => setPositionFilter(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-55 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-550/20 focus:border-purple-550/80 text-xs font-bold uppercase tracking-wider text-slate-600 appearance-none cursor-pointer"
               >
                 <option value="">All Positions</option>
@@ -476,7 +476,7 @@ export default function RetiredPlayersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono text-xs text-slate-700">
-                  {players.map((player) => (
+                  {players.map((player: any) => (
                     <tr key={player.id} className="hover:bg-slate-50/40 transition-colors font-mono">
                       <td className="p-4 text-center">
                         <input
@@ -489,7 +489,7 @@ export default function RetiredPlayersPage() {
                       <td className="p-4">
                         <img
                           src={player.player_id ? `/images/players/${player.player_id}.webp` : '/images/player-placeholder.png'}
-                          onError={(e) => {
+                          onError={(e: any) => {
                             (e.target as HTMLImageElement).src = '/images/player-placeholder.png'
                           }}
                           alt=""

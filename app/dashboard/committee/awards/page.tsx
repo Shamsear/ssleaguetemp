@@ -91,7 +91,7 @@ export default function AwardsManagementPage() {
           setTournamentId(tournaments[0].id);
           console.log(`<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Available tournaments:`, tournaments);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching tournaments:', err);
       }
     };
@@ -115,7 +115,7 @@ export default function AwardsManagementPage() {
         } else {
           setMaxRounds(14);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching rounds:', err);
         setMaxRounds(14);
       }
@@ -176,7 +176,7 @@ export default function AwardsManagementPage() {
       const candidatesData = await candidatesRes.json();
       setCandidates(candidatesData.success ? candidatesData.data : []);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading data:', err);
       setError('Failed to load awards data');
     } finally {

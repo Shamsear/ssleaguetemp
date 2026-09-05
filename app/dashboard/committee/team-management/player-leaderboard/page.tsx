@@ -99,7 +99,7 @@ export default function PlayerLeaderboardPage() {
         if (teamsData.success) {
           setTeams(teamsData.data);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);

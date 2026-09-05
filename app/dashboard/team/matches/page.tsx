@@ -218,7 +218,7 @@ export default function TeamMatchesPage() {
               }
             }
             return { roundKey, data: defaultData };
-          } catch (error) {
+          } catch (error: any) {
             console.error(`Error fetching round deadline for round ${roundNumber} leg ${leg}:`, error);
             return { roundKey, data: defaultData };
           }
@@ -407,7 +407,7 @@ export default function TeamMatchesPage() {
         console.log('<BarChart2 className="w-4 h-4 text-slate-500" /> Match statuses:', allMatches.map(m => ({ round: m.round_number, status: m.status })));
         console.log(`🔌 WebSocket connected: ${wsConnected}`);
         setMatches(allMatches);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching matches:', error);
       } finally {
         setIsLoading(false);

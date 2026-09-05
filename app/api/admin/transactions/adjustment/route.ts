@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       adjustmentAmount: amount,
       reason
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error applying adjustment:', error);
     return NextResponse.json(
       { error: 'Failed to apply adjustment' },

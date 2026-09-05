@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
                 is_free: true,
             },
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Supported team change error:', error);
         return NextResponse.json(
             { error: 'Failed to change supported team', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
             has_changed: hasChanged,
             previous_change: previousChange,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Error checking supported team change status:', error);
         return NextResponse.json(
             { error: 'Failed to check status', details: error instanceof Error ? error.message : 'Unknown error' },

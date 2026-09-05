@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       message: 'Fixture stats reverted successfully',
       reverted,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error reverting fixture stats:', error);
     return NextResponse.json(
       { error: 'Failed to revert fixture stats' },

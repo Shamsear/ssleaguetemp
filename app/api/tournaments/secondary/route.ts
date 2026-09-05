@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     `;
 
     return NextResponse.json({ success: true, tournaments });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching secondary tournaments:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch secondary tournaments' },

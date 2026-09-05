@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       messages
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching chat messages:', error);
     return NextResponse.json(
       { 
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       message
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending chat message:', error);
     return NextResponse.json(
       { 
@@ -268,7 +268,7 @@ export async function DELETE(request: NextRequest) {
       message: 'Message deleted'
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting chat message:', error);
     return NextResponse.json(
       { 

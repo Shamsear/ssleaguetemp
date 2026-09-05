@@ -47,7 +47,7 @@ export async function PUT(
         is_active: result[0].is_active,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating scoring rule:', error);
     return NextResponse.json(
       { error: 'Failed to update scoring rule' },
@@ -86,7 +86,7 @@ export async function DELETE(
       success: true,
       message: 'Scoring rule deleted successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting scoring rule:', error);
     return NextResponse.json(
       { error: 'Failed to delete scoring rule' },

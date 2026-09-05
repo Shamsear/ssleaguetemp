@@ -211,7 +211,7 @@ export default function TeamDraftPage() {
         setHasUnsavedChanges(false);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load draft data:', error);
     } finally {
       setIsLoading(false);
@@ -512,7 +512,7 @@ export default function TeamDraftPage() {
           : 'Your draft bids have been synced to the database.'
       });
       loadDraftData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving bids:', error);
       showAlert({
         type: 'error',

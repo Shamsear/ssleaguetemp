@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       updates: updates.slice(0, 10), // Show first 10 for preview
       categoryUpdate: categoryResult,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error initializing player ratings:', error);
     return NextResponse.json(
       { error: 'Failed to initialize player ratings' },
@@ -200,7 +200,7 @@ async function recalculateAllPlayerCategories() {
     await Promise.all(updatePromises);
     
     return { success: true, totalPlayers: players.length, legendCount: legendThreshold };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating categories:', error);
     return { success: false, error: 'Failed to recalculate categories' };
   }

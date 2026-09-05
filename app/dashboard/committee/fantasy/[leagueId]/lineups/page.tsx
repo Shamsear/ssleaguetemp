@@ -97,7 +97,7 @@ export default function WeeklyLineupsPage() {
       if (data.success) {
         setStats(data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading lineup stats:', err);
     } finally {
       setIsLoading(false);

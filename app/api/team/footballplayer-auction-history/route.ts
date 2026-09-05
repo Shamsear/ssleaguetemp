@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
                 try {
                   const decrypted = decryptBidData(b.encrypted_bid_data);
                   finalPrice = decrypted.amount;
-                } catch (error) {
+                } catch (error: any) {
                   console.error(`Failed to decrypt bid ${b.id}:`, error);
                   finalPrice = 0;
                 }
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
                 try {
                   const decrypted = decryptBidData(player.encrypted_bid_data);
                   finalPrice = decrypted.amount;
-                } catch (error) {
+                } catch (error: any) {
                   console.error(`Failed to decrypt bid for player ${player.player_id}:`, error);
                   finalPrice = 0; // Fallback to 0 if decryption fails
                 }
@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching football player auction history:', error);
     return NextResponse.json(
       {

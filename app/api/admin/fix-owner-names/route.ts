@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         
         results.push(result);
         
-      } catch (error) {
+      } catch (error: any) {
         result.status = 'error';
         result.error = error instanceof Error ? error.message : 'Unknown';
         results.push(result);
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       results
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fixing owner names:', error);
     return NextResponse.json(
       { error: 'Failed to fix owner names' },

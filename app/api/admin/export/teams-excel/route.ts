@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
         // Calculate real player spent and balance
         realPlayerSpent = realPlayers.reduce((sum, p) => sum + (parseFloat(p.acquisition_value) || 0), 0);
         realPlayerBalance = 1000 - realPlayerSpent; // Assuming 1000 is the initial real player budget
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`⚠️ Could not fetch real players for team ${team.id}:`, error);
         // Continue without real players if tournament DB is not available
       }

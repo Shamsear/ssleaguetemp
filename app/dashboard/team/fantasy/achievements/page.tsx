@@ -75,7 +75,7 @@ export default function AchievementsPage() {
 
       setAchievements(achievementsData.achievements);
       setProgress(progressData.progress);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading achievements:', err);
       setError('Failed to load achievements');
     } finally {

@@ -100,7 +100,7 @@ export default function MyPlayerStatsPage() {
                         setSelectedSeason(activeSeason.id);
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error loading seasons:', error);
             }
         };
@@ -149,7 +149,7 @@ export default function MyPlayerStatsPage() {
                 // Load total points for all players
                 loadAllPlayerTotalPoints(data.players || []);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error loading players:', error);
         } finally {
             setLoading(false);
@@ -169,7 +169,7 @@ export default function MyPlayerStatsPage() {
                     const data = await response.json();
                     newPlayerTotalPoints.set(player.id, data.totalPoints || 0);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error(`Error loading total points for ${player.player_name}:`, error);
             }
         });
@@ -201,7 +201,7 @@ export default function MyPlayerStatsPage() {
 
                 setExpandedPlayer(playerId);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error loading matchday stats:', error);
         } finally {
             setLoadingMatchday(null);

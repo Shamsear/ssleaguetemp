@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
       summary,
       league_id,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching lineups:', error);
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(

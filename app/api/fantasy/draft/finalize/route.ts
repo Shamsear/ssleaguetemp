@@ -534,7 +534,7 @@ export async function POST(request: NextRequest) {
           icon: '/fantasy-icon.png',
           url: '/dashboard/team/fantasy/draft/results',
         }, { allUsers: true });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send finalize notification:', err);
       }
 
@@ -589,7 +589,7 @@ export async function POST(request: NextRequest) {
     } catch {}
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in finalization route:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to finalize draft', details: error instanceof Error ? error.message : 'Unknown' },

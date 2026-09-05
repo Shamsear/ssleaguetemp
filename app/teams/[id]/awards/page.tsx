@@ -114,7 +114,7 @@ export default function TeamSeasonAwardsPage() {
                         });
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching team awards:', error);
             } finally {
                 setLoading(false);

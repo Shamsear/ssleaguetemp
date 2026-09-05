@@ -42,7 +42,7 @@ export default function FantasyRecalculatePage() {
       setProgress('Complete fantasy points recalculation finished successfully!');
       setResults(data.results || null);
       setSuccess(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Recalculation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to recalculate points');
       setProgress('Recalculation failed');

@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       }))
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error generating draft tiers:', error);
     
     return NextResponse.json(

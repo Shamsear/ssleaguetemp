@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       ...authParams,
       publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('ImageKit auth error:', error);
     return NextResponse.json(
       { error: 'Failed to generate authentication parameters' },

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       tiers
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tiers:', error);
     return NextResponse.json(
       { 

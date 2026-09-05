@@ -217,7 +217,7 @@ export default function SeasonDetailPage() {
       }
 
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching season data:', error);
       setError('Failed to load season data');
       setLoading(false);
@@ -267,7 +267,7 @@ export default function SeasonDetailPage() {
           setGroupStandings(null);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching tournament standings:', error);
     } finally {
       setTournamentLoading(false);

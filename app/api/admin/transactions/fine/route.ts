@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       fineAmount: amount,
       reason
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error issuing fine:', error);
     return NextResponse.json(
       { error: 'Failed to issue fine' },

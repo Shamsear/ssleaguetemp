@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       transaction_id: transactionRef.id,
       message: `Successfully created match reward transaction`
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating match reward transaction:', error);
     return NextResponse.json(
       {

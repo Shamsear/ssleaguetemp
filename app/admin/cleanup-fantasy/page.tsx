@@ -30,7 +30,7 @@ export default function CleanupFantasyPage() {
       }
 
       setResult(data);
-    } catch (err) {
+    } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);

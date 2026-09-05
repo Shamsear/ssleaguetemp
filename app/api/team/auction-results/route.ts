@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
           try {
             const decrypted = decryptBidData(bid.encrypted_bid_data);
             bidAmount = decrypted.amount;
-          } catch (err) {
+          } catch (err: any) {
             console.error('Failed to decrypt bid:', err);
             bidAmount = 0;
           }
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
 
       // Build players array with all bids
       const players = Array.from(playerBidsMap.entries()).map(([playerId, bids]) => {
-        const sortedBids = bids.sort((a, b) => b.decrypted_amount - a.decrypted_amount);
+        const sortedBids = bids.sort((a: any, b: any) => b.decrypted_amount - a.decrypted_amount);
         // Find the actual winning bid - must have status 'won' OR have final_amount set (from team_players)
         const winningBid = sortedBids.find((b: any) => b.status === 'won' || b.final_amount !== null);
         
@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Sort players by winning bid amount (descending)
-      players.sort((a, b) => b.winning_bid.amount - a.winning_bid.amount);
+      players.sort((a: any, b: any) => b.winning_bid.amount - a.winning_bid.amount);
 
       return {
         round_id: round.id,

@@ -58,7 +58,7 @@ export default function EnableFantasyTeamsPage() {
           alert(`Error: ${data.error}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to check status:', error);
       alert('Failed to load team status. Please try again.');
     } finally {
@@ -90,7 +90,7 @@ export default function EnableFantasyTeamsPage() {
       } else {
         alert(data.error || 'Failed to enable teams');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to enable teams:', error);
       alert('Failed to enable teams');
     } finally {
@@ -119,7 +119,7 @@ export default function EnableFantasyTeamsPage() {
         const data = await res.json();
         alert(data.error || 'Failed to toggle team');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to toggle team:', error);
       alert('Failed to toggle team');
     } finally {

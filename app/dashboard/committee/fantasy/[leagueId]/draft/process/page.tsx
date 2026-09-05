@@ -182,12 +182,12 @@ function SlotRoundCard({ slot, round, onAction, onToggleFinalization, onPreview,
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="block text-[9px] text-slate-500 font-bold uppercase">Opens At (IST)</label>
-                <input type="datetime-local" value={opensInput} onChange={(e) => setOpensInput(e.target.value)}
+                <input type="datetime-local" value={opensInput} onChange={(e: any) => setOpensInput(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
               </div>
               <div className="space-y-1">
                 <label className="block text-[9px] text-slate-500 font-bold uppercase">Closes At (IST)</label>
-                <input type="datetime-local" value={closesInput} onChange={(e) => setClosesInput(e.target.value)}
+                <input type="datetime-local" value={closesInput} onChange={(e: any) => setClosesInput(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-amber-500" />
               </div>
             </div>
@@ -435,7 +435,7 @@ export default function ProcessDraftPage() {
     }
 
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load submissions:', err);
     } finally {
       if (!silent) setIsLoading(false);
@@ -477,7 +477,7 @@ export default function ProcessDraftPage() {
             method: 'POST',            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ league_id: leagueId }),
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('Auto-finalize check failed:', err);
         }
       }
@@ -493,7 +493,7 @@ export default function ProcessDraftPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ league_id: leagueId, slot_index: r.slot_index, action: 'close' }),
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('Auto-close manual round failed:', err);
         }
       }

@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       })),
       total_count: transfers.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching all transfers:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transfers', details: error instanceof Error ? error.message : 'Unknown error' },

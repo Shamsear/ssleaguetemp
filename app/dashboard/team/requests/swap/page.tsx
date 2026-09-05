@@ -96,7 +96,7 @@ export default function TeamSwapRequestPage() {
           setResolvedTeamId(tId || null);
           console.log('[SWAP] Resolved team ID from Firestore:', tId);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error resolving user team ID:', err);
       }
     }
@@ -256,7 +256,7 @@ export default function TeamSwapRequestPage() {
             setSelectedWindowId(swapWindows[0].id.toString());
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
         setError('Failed to load players or active windows');
       } finally {

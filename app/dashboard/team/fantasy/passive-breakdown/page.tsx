@@ -71,7 +71,7 @@ export default function PassiveBreakdownPage() {
 
         const breakdownData = await breakdownResponse.json();
         setData(breakdownData);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading breakdown:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {

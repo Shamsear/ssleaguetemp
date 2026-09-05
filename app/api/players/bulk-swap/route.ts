@@ -638,7 +638,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       await sql.query('ROLLBACK');
       throw error;
     }

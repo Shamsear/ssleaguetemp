@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       prices,
       total_count: prices.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player prices:', error);
     return NextResponse.json(
       { error: 'Failed to fetch player prices', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       { error: 'Invalid request: provide either (player_id + price) or (generate_all + pricing_model)' },
       { status: 400 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error setting player prices:', error);
     return NextResponse.json(
       { error: 'Failed to set player prices', details: error instanceof Error ? error.message : 'Unknown error' },

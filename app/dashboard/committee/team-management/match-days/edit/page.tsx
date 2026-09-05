@@ -117,7 +117,7 @@ function EditRoundDeadlinesContent() {
           scheduled_date: dateValue
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading deadlines:', error);
     } finally {
       setIsLoading(false);
@@ -195,7 +195,7 @@ function EditRoundDeadlinesContent() {
       setTimeout(() => {
         router.push('/dashboard/committee/team-management/match-days');
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating deadlines:', error);
       showAlert({
         type: 'error',
@@ -247,7 +247,7 @@ function EditRoundDeadlinesContent() {
           timeZone: 'Asia/Kolkata'
         }),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating deadlines:', error);
       return null;
     }

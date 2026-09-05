@@ -53,7 +53,7 @@ const getOrCreatePlayerByName = async (name: string): Promise<{ playerId: string
     const playerId = await generateNewPlayerId();
     console.log(`  Will create new player: ${name} with ID: ${playerId}`);
     return { playerId, isNew: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in getOrCreatePlayerByName:', error);
     throw error;
   }
@@ -68,7 +68,7 @@ const generateNewPlayerId = async (): Promise<string> => {
     const playersQuery = await adminDb.collection('realplayers').get();
 
     let maxNumber = 0;
-    playersQuery.forEach((doc) => {
+    playersQuery.forEach((doc: any) => {
       const data = doc.data();
       if (data.player_id && data.player_id.startsWith(prefix)) {
         const numberPart = parseInt(data.player_id.substring(prefix.length));
@@ -81,7 +81,7 @@ const generateNewPlayerId = async (): Promise<string> => {
     const nextNumber = maxNumber + 1;
     const paddedNumber = nextNumber.toString().padStart(4, '0');
     return `${prefix}${paddedNumber}`;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating player ID:', error);
     // Fallback to random number if query fails
     const randomNumber = Math.floor(Math.random() * 10000);
@@ -140,18 +140,18 @@ export async function POST(
       // Read Excel file
       const buffer = Buffer.from(await file.arrayBuffer());
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(buffer);
+      await workbook.xlsx.load((buffer as any));
 
       // Helper to convert worksheet rows to JSON
       const sheetToJson = (sheet: ExcelJS.Worksheet): any[] => {
         const headers: string[] = [];
         const result: any[] = [];
-        sheet.eachRow((row, rowNumber) => {
+        sheet.eachRow((row: any, rowNumber: any) => {
           if (rowNumber === 1) {
-            row.eachCell((cell) => { headers.push(String(cell.value || '')); });
+            row.eachCell((cell: any) => { headers.push(String(cell.value || '')); });
           } else {
             const obj: any = {};
-            row.eachCell((cell, colNumber) => {
+            row.eachCell((cell: any, colNumber: any) => {
               obj[headers[colNumber - 1]] = cell.value;
             });
             result.push(obj);

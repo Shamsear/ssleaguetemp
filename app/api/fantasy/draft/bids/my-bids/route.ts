@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         submitted_at: b.submitted_at
       }))
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching my bids:', error);
     return NextResponse.json(
       { error: 'Failed to fetch bids', details: error instanceof Error ? error.message : 'Unknown error' },

@@ -675,7 +675,7 @@ export default function HistoricalSeasonDetailPage() {
       // Set both teams and players after auto-linking
       setPreviewTeams(autoLinkedTeams);
       setPreviewPlayers(playersData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading existing teams:', error);
     }
   };

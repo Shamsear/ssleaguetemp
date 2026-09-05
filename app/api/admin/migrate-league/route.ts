@@ -34,7 +34,7 @@ export async function GET() {
         fantasy_drafts: fdCount,
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     results.fantasy_leagues_s17 = 'deactivated';
 
     return NextResponse.json({ success: true, results });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

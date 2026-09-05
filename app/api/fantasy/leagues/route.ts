@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     `;
 
     return NextResponse.json({ league: result[0], created: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching/creating fantasy league:', error);
     return NextResponse.json(
       { error: 'Failed to fetch/create fantasy league' },
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     `;
 
     return NextResponse.json({ success: true, league: result[0] });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating/updating fantasy league:', error);
     return NextResponse.json(
       { error: 'Failed to create/update fantasy league' },

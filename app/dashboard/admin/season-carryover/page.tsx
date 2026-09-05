@@ -84,7 +84,7 @@ export default function SeasonCarryoverPage() {
         // Fallback for old API format
         setSeasons(data.map((s: any) => s.season_id));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching seasons:', err);
       // Keep default seasons if fetch fails
     }

@@ -48,7 +48,7 @@ export default function TransferWindowsPage() {
       
       const data = await response.json();
       setWindows(data.windows || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading windows:', error);
     } finally {
       setIsLoading(false);
@@ -88,7 +88,7 @@ export default function TransferWindowsPage() {
       setNewStartRound('');
       setNewEndRound('');
       loadWindows();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating window:', error);
       alert(error instanceof Error ? error.message : 'Failed to create window');
     } finally {
@@ -108,7 +108,7 @@ export default function TransferWindowsPage() {
       }
 
       loadWindows();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling window:', error);
       alert(error instanceof Error ? error.message : 'Failed to toggle window');
     }

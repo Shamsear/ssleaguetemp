@@ -118,12 +118,12 @@ export default function AllTransactionsPage() {
         });
       });
 
-      teamsList.sort((a, b) => a.team.name.localeCompare(b.team.name));
+      teamsList.sort((a: any, b: any) => a.team.name.localeCompare(b.team.name));
       setTeams(teamsList);
       
       // Store teams map for quick lookup
       (window as any).teamsMap = teamsMap;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading teams for season:', error);
     }
   };
@@ -176,7 +176,7 @@ export default function AllTransactionsPage() {
         }
       });
 
-      seasonsList.sort((a, b) => {
+      seasonsList.sort((a: any, b: any) => {
         if (a.created_at && b.created_at) {
           return b.created_at.toMillis() - a.created_at.toMillis();
         }
@@ -188,7 +188,7 @@ export default function AllTransactionsPage() {
       });
 
       setSeasons(seasonsList);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading initial data:', error);
     } finally {
       setIsLoading(false);
@@ -217,7 +217,7 @@ export default function AllTransactionsPage() {
       let csv = BOM + 'Date,Type,Description,Debit,Credit,Balance\n';
       
       // Sort transactions by date (oldest first for running balance)
-      const sortedTransactions = [...transactions].sort((a, b) => {
+      const sortedTransactions = [...transactions].sort((a: any, b: any) => {
         const aTime = a.created_at?.toDate?.() || new Date(a.created_at);
         const bTime = b.created_at?.toDate?.() || new Date(b.created_at);
         return aTime.getTime() - bTime.getTime();
@@ -270,7 +270,7 @@ export default function AllTransactionsPage() {
       document.body.removeChild(link);
       
       alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${transactions.length} transactions to ${filename}\n\nNote: The file will open correctly in Excel and Google Sheets with proper character encoding.`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting to Excel:', error);
       alert('[ERROR]  Error exporting data. Check console for details.');
     }
@@ -294,7 +294,7 @@ export default function AllTransactionsPage() {
         // Team Summary View
         message += '*Overall Stats*\n\n';
         
-        teamSummary.forEach((team, index) => {
+        teamSummary.forEach((team: any, index: any) => {
           message += `*${index + 1}. ${team.teamName}*\n`;
           message += `Income: ${team.totalIncome} | Expense: ${team.totalExpense}\n`;
           message += `Net: ${team.netBalance >= 0 ? '+' : ''}${team.netBalance}\n`;
@@ -395,7 +395,7 @@ export default function AllTransactionsPage() {
         console.error('Failed to copy:', err);
         alert('[ERROR]  Failed to copy. Please try again.');
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating WhatsApp message:', error);
       alert('[ERROR]  Error generating summary.');
     }
@@ -419,7 +419,7 @@ export default function AllTransactionsPage() {
       const txJson = await txRes.json();
       const allTransactions: Transaction[] = [];
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach((doc: any) => {
         const data = doc.data();
 
         // Season filter already applied in query (unless 'all' selected)
@@ -575,7 +575,7 @@ export default function AllTransactionsPage() {
       });
 
       // Sort by created_at
-      allTransactions.sort((a, b) => {
+      allTransactions.sort((a: any, b: any) => {
         const aTime = a.created_at?.toDate?.() || new Date(a.created_at);
         const bTime = b.created_at?.toDate?.() || new Date(b.created_at);
         return bTime.getTime() - aTime.getTime();
@@ -583,7 +583,7 @@ export default function AllTransactionsPage() {
 
       setTotalTransactions(allTransactions.length);
       setTransactions(allTransactions);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transactions:', error);
     } finally {
       setIsFetchingTransactions(false);
@@ -622,7 +622,7 @@ export default function AllTransactionsPage() {
       // Determine which season to filter by
       const filterSeasonId = selectedSeasonId === 'current' ? userSeasonId : selectedSeasonId;
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach((doc: any) => {
         const data = doc.data();
 
         // Apply season filter
@@ -709,10 +709,10 @@ export default function AllTransactionsPage() {
           };
         })
         .filter(team => team.transactionCount > 0)
-        .sort((a, b) => b.netBalance - a.netBalance);
+        .sort((a: any, b: any) => b.netBalance - a.netBalance);
 
       setTeamSummary(summaryArray);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading team summary:', error);
     } finally {
       setIsFetchingTransactions(false);
@@ -803,7 +803,7 @@ export default function AllTransactionsPage() {
     let message = `*<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> COMPLETE TRANSACTION SUMMARY*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    teamSummary.forEach((team, index) => {
+    teamSummary.forEach((team: any, index: any) => {
       const rank = index === 0 ? '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />' : index === 1 ? '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' : index === 2 ? '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />' : `${index + 1}.`;
 
       message += `${rank} *${team.teamName}*\n`;
@@ -824,8 +824,8 @@ export default function AllTransactionsPage() {
 
     message += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     message += `*GRAND TOTALS*\n`;
-    message += `Total Income: +${teamSummary.reduce((sum, t) => sum + t.totalIncome, 0)}\n`;
-    message += `Total Expenses: -${teamSummary.reduce((sum, t) => sum + t.totalExpense, 0)}\n`;
+    message += `Total Income: +${teamSummary.reduce((sum: any, t: any) => sum + t.totalIncome, 0)}\n`;
+    message += `Total Expenses: -${teamSummary.reduce((sum: any, t: any) => sum + t.totalExpense, 0)}\n`;
     message += `Teams: ${teamSummary.length}`;
 
     navigator.clipboard.writeText(message).then(() => {
@@ -845,23 +845,23 @@ export default function AllTransactionsPage() {
 
   // Calculate overall summary stats
   const overallStats = {
-    totalIncome: transactions.filter(t => isIncomeTransaction(t.transaction_type, t.amount)).reduce((sum, t) => sum + Math.abs(t.amount), 0),
-    totalExpense: transactions.filter(t => !isIncomeTransaction(t.transaction_type, t.amount)).reduce((sum, t) => sum + Math.abs(t.amount), 0),
+    totalIncome: transactions.filter(t => isIncomeTransaction(t.transaction_type, t.amount)).reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
+    totalExpense: transactions.filter(t => !isIncomeTransaction(t.transaction_type, t.amount)).reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
     get netBalance() {
       return this.totalIncome - this.totalExpense;
     },
-    totalECoin: transactions.filter(t => t.currency_type === 'football').reduce((sum, t) => {
+    totalECoin: transactions.filter(t => t.currency_type === 'football').reduce((sum: any, t: any) => {
       const isIncome = isIncomeTransaction(t.transaction_type, t.amount);
       return sum + (isIncome ? Math.abs(t.amount) : -Math.abs(t.amount));
     }, 0),
-    totalSSCoin: transactions.filter(t => t.currency_type === 'real').reduce((sum, t) => {
+    totalSSCoin: transactions.filter(t => t.currency_type === 'real').reduce((sum: any, t: any) => {
       const isIncome = isIncomeTransaction(t.transaction_type, t.amount);
       return sum + (isIncome ? Math.abs(t.amount) : -Math.abs(t.amount));
     }, 0),
-    matchRewards: transactions.filter(t => t.transaction_type === 'match_reward').reduce((sum, t) => sum + Math.abs(t.amount), 0),
-    tournamentRewards: transactions.filter(t => ['position_reward', 'completion_bonus', 'knockout_reward'].includes(t.transaction_type)).reduce((sum, t) => sum + Math.abs(t.amount), 0),
-    salaries: transactions.filter(t => ['salary_payment', 'salary'].includes(t.transaction_type)).reduce((sum, t) => sum + Math.abs(t.amount), 0),
-    realPlayerFees: transactions.filter(t => t.transaction_type === 'real_player_fee').reduce((sum, t) => sum + Math.abs(t.amount), 0),
+    matchRewards: transactions.filter(t => t.transaction_type === 'match_reward').reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
+    tournamentRewards: transactions.filter(t => ['position_reward', 'completion_bonus', 'knockout_reward'].includes(t.transaction_type)).reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
+    salaries: transactions.filter(t => ['salary_payment', 'salary'].includes(t.transaction_type)).reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
+    realPlayerFees: transactions.filter(t => t.transaction_type === 'real_player_fee').reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
   };
 
   if (loading || isLoading) {
@@ -1000,7 +1000,7 @@ export default function AllTransactionsPage() {
                 </label>
                 <select
                   value={selectedSeasonId}
-                  onChange={(e) => setSelectedSeasonId(e.target.value)}
+                  onChange={(e: any) => setSelectedSeasonId(e.target.value)}
                   className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="current">Current Season</option>
@@ -1021,7 +1021,7 @@ export default function AllTransactionsPage() {
                 </label>
                 <select
                   value={selectedTeamId}
-                  onChange={(e) => setSelectedTeamId(e.target.value)}
+                  onChange={(e: any) => setSelectedTeamId(e.target.value)}
                   className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="all">All Teams</option>
@@ -1041,7 +1041,7 @@ export default function AllTransactionsPage() {
                 </label>
                 <select
                   value={selectedTransactionType}
-                  onChange={(e) => setSelectedTransactionType(e.target.value)}
+                  onChange={(e: any) => setSelectedTransactionType(e.target.value)}
                   className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="all">All Types</option>
@@ -1079,7 +1079,7 @@ export default function AllTransactionsPage() {
                 </label>
                 <select
                   value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  onChange={(e: any) => setSelectedCurrency(e.target.value)}
                   className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-bold cursor-pointer"
                 >
                   <option value="all">All Currencies</option>
@@ -1139,7 +1139,7 @@ export default function AllTransactionsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {teamSummary.map((team, index) => (
+                    {teamSummary.map((team: any, index: any) => (
                       <tr key={team.teamId} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 lg:px-6 py-3">
                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-sm border ${
@@ -1184,16 +1184,16 @@ export default function AllTransactionsPage() {
                         Grand Total:
                       </td>
                       <td className="px-4 lg:px-6 py-3 text-right font-extrabold text-emerald-600 text-xs sm:text-sm">
-                        +{teamSummary.reduce((sum, team) => sum + team.totalIncome, 0)}
+                        +{teamSummary.reduce((sum: any, team: any) => sum + team.totalIncome, 0)}
                       </td>
                       <td className="px-4 lg:px-6 py-3 text-right font-extrabold text-rose-600 text-xs sm:text-sm">
-                        -{teamSummary.reduce((sum, team) => sum + team.totalExpense, 0)}
+                        -{teamSummary.reduce((sum: any, team: any) => sum + team.totalExpense, 0)}
                       </td>
                       <td className="px-4 lg:px-6 py-3 text-right font-black text-slate-800 text-sm sm:text-base">
-                        {teamSummary.reduce((sum, team) => sum + team.netBalance, 0)}
+                        {teamSummary.reduce((sum: any, team: any) => sum + team.netBalance, 0)}
                       </td>
                       <td className="px-4 lg:px-6 py-3 text-center font-extrabold text-slate-700 text-xs">
-                        {teamSummary.reduce((sum, team) => sum + team.transactionCount, 0)}
+                        {teamSummary.reduce((sum: any, team: any) => sum + team.transactionCount, 0)}
                       </td>
                     </tr>
                   </tfoot>
@@ -1227,8 +1227,8 @@ export default function AllTransactionsPage() {
                 return acc;
               }, {} as Record<string, { type: string; currency: string; transactions: Transaction[] }>);
 
-              const eCoinIncome = incomeTransactions.filter(t => t.currency_type === 'football').reduce((sum, t) => sum + Math.abs(t.amount), 0);
-              const sSCoinIncome = incomeTransactions.filter(t => t.currency_type === 'real').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+              const eCoinIncome = incomeTransactions.filter(t => t.currency_type === 'football').reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0);
+              const sSCoinIncome = incomeTransactions.filter(t => t.currency_type === 'real').reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0);
 
               return Object.keys(incomeByTypeCurrency).length > 0 && (
                 <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden mb-6 font-mono">
@@ -1252,7 +1252,7 @@ export default function AllTransactionsPage() {
 
                   <div className="p-4 space-y-6">
                     {Object.entries(incomeByTypeCurrency).map(([key, data]) => {
-                      const typeTotal = data.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                      const typeTotal = data.transactions.reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0);
                       return (
                         <div key={key} className="border border-slate-200/60 rounded-2xl overflow-hidden">
                           <div className="bg-slate-50 px-4 py-3 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
@@ -1325,8 +1325,8 @@ export default function AllTransactionsPage() {
                 return acc;
               }, {} as Record<string, { type: string; currency: string; transactions: Transaction[] }>);
 
-              const eCoinExpense = expenseTransactions.filter(t => t.currency_type === 'football').reduce((sum, t) => sum + Math.abs(t.amount), 0);
-              const sSCoinExpense = expenseTransactions.filter(t => t.currency_type === 'real').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+              const eCoinExpense = expenseTransactions.filter(t => t.currency_type === 'football').reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0);
+              const sSCoinExpense = expenseTransactions.filter(t => t.currency_type === 'real').reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0);
 
               return Object.keys(expenseByTypeCurrency).length > 0 && (
                 <div className="console-card bg-white border border-slate-200/60 rounded-2xl shadow-sm overflow-hidden mb-6 font-mono">
@@ -1350,7 +1350,7 @@ export default function AllTransactionsPage() {
 
                   <div className="p-4 space-y-6">
                     {Object.entries(expenseByTypeCurrency).map(([key, data]) => {
-                      const typeTotal = data.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                      const typeTotal = data.transactions.reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0);
                       return (
 
                         <div key={key} className="border border-slate-200/60 rounded-2xl overflow-hidden">

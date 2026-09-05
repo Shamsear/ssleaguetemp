@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       status: league.draft_status,
       changed: false,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in draft auto-close:', error);
     return NextResponse.json(
       { error: 'Failed to auto-close draft', details: error instanceof Error ? error.message : 'Unknown error' },

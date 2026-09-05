@@ -72,7 +72,7 @@ export default function DraftResultsPage() {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load draft results:', error);
     } finally {
       setIsLoading(false);

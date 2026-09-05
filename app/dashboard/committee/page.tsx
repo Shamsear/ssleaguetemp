@@ -106,7 +106,7 @@ export default function CommitteeDashboard() {
               setSmartCache(cacheKey, seasonData, CACHE_DURATIONS.MEDIUM);
               setCurrentSeason(seasonData);
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching season:', err);
           }
         })(),
@@ -129,7 +129,7 @@ export default function CommitteeDashboard() {
               setSmartCache(cacheKey, data.stats, CACHE_DURATIONS.MEDIUM);
               setPlayerStats(data.stats);
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching registered player stats:', err);
           }
         })(),
@@ -143,7 +143,7 @@ export default function CommitteeDashboard() {
             if (data.success && data.data?.teams) {
               setTeams(data.data.teams);
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching teams:', err);
           }
         })(),
@@ -185,7 +185,7 @@ export default function CommitteeDashboard() {
         });
         setRoundTiebreakers(tiebreakersByRound);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching active rounds:', err);
     } finally {
       setLoadingRounds(false);

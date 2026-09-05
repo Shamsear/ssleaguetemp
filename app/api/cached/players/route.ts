@@ -36,7 +36,7 @@ export async function GET(request: Request) {
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching players summary:', error);
     return NextResponse.json(
       {

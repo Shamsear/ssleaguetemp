@@ -677,8 +677,8 @@ export async function PATCH(
             matchups: oldMatchups
           },
           new: {
-            home_score: newHomeScore,
-            away_score: newAwayScore,
+            home_score: totalHomeScore,
+            away_score: totalAwayScore,
             result: newResult,
             matchups: matchups
           },
@@ -713,8 +713,8 @@ export async function PATCH(
         fixture_id: fixtureId,
         home_team_name: fixture.home_team_name,
         away_team_name: fixture.away_team_name,
-        home_score: newHomeScore,
-        away_score: newAwayScore,
+        home_score: totalHomeScore,
+        away_score: totalAwayScore,
         result: newResult,
         motm_player_name: fixture.motm_player_name || null,
       });
@@ -747,7 +747,7 @@ export async function PATCH(
       await sendNotificationToSeason(
         {
           title: '✏️ Match Result Edited',
-          body: `${fixture.home_team_name} vs ${fixture.away_team_name} result updated: ${newHomeScore}-${newAwayScore}`,
+          body: `${fixture.home_team_name} vs ${fixture.away_team_name} result updated: ${totalHomeScore}-${totalAwayScore}`,
           url: `/fixtures/${fixtureId}`,
           icon: '/logo.png',
           data: {
@@ -755,8 +755,8 @@ export async function PATCH(
             fixture_id: fixtureId,
             home_team: fixture.home_team_name,
             away_team: fixture.away_team_name,
-            home_score: newHomeScore.toString(),
-            away_score: newAwayScore.toString(),
+            home_score: totalHomeScore.toString(),
+            away_score: totalAwayScore.toString(),
             result: newResult,
           }
         },
@@ -772,12 +772,12 @@ export async function PATCH(
       message: 'Results edited successfully',
       fixture: {
         id: fixtureId,
-        home_score: newHomeScore,
-        away_score: newAwayScore,
+        home_score: totalHomeScore,
+        away_score: totalAwayScore,
         result: newResult
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error editing result:', error);
     return NextResponse.json(
       { error: `Failed to edit result: ${error instanceof Error ? error.message : 'Unknown error'}` },

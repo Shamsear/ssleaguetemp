@@ -245,7 +245,7 @@ export default function TeamBulkRoundPage() {
           })
           .catch(err => console.error('Error refetching bids:', err));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error parsing WebSocket message:', err);
     }
   }, [lastMessage, roundId]);

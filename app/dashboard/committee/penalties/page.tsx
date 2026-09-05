@@ -94,7 +94,7 @@ export default function TournamentPenaltiesPage() {
                 setTournaments(data.tournaments);
                 setSelectedTournament(data.tournaments[0].id);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching tournaments:', error);
             setError('Failed to load tournaments');
         }
@@ -122,7 +122,7 @@ export default function TournamentPenaltiesPage() {
             } else {
                 setError('Failed to load team stats');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching team stats:', error);
             setError('Failed to load team stats');
         } finally {
@@ -140,7 +140,7 @@ export default function TournamentPenaltiesPage() {
             if (data.success) {
                 setPenalties(data.penalties || []);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching penalty history:', error);
         } finally {
             setLoadingHistory(false);
@@ -225,7 +225,7 @@ export default function TournamentPenaltiesPage() {
             } else {
                 setError(data.error || 'Failed to apply penalty');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error applying penalty:', error);
             setError('Failed to apply penalty');
         } finally {
@@ -256,7 +256,7 @@ export default function TournamentPenaltiesPage() {
             } else {
                 setError(data.error || 'Failed to remove penalty');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error removing penalty:', error);
             setError('Failed to remove penalty');
         }
@@ -616,7 +616,7 @@ export default function TournamentPenaltiesPage() {
                                                                                             const sscoin = data.data.real_player_budget || 0;
                                                                                             setSelectedTeamForCalc({ ecoin, sscoin });
                                                                                         }
-                                                                                    } catch (error) {
+                                                                                    } catch (error: any) {
                                                                                         console.error('Error fetching balance:', error);
                                                                                     }
                                                                                 }}

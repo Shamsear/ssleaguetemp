@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
         });
 
         console.log(`Successfully finalized round ${round.id}`);
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error processing round ${round.id}:`, error);
         errors.push({
           round_id: round.id,
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
         failed_or_tied: errors.length,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in cron finalize-rounds:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

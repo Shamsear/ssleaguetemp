@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         `;
 
         insertedCount++;
-      } catch (error) {
+      } catch (error: any) {
         errors.push(`${playerData.player_name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       },
       errors: errors.length > 0 ? errors : undefined,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error populating fantasy players:', error);
     return NextResponse.json(
       { 

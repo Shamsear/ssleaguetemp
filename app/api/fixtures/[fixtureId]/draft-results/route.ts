@@ -71,7 +71,7 @@ export async function PUT(
       away_score: totalAwayScore,
       is_draft: true
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving draft results:', error);
     return NextResponse.json(
       { error: 'Failed to save draft results' },

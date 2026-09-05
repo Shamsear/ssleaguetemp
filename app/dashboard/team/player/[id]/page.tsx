@@ -200,7 +200,7 @@ export default function PlayerDetailPage() {
         } else {
           setError('Player not found');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching player:', err);
         setError('Failed to load player details');
       } finally {
@@ -230,7 +230,7 @@ export default function PlayerDetailPage() {
         if (data.success) {
           setAuctionHistory(data.data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching auction history:', err);
       } finally {
         setLoadingAuction(false);

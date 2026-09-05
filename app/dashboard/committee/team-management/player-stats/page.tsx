@@ -218,7 +218,7 @@ export default function PlayerStatsPage() {
       URL.revokeObjectURL(url);
       
       console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${exportData.length} players to ${filename}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting to Excel:', error);
       alert('Failed to export to Excel. Please try again.');
     }

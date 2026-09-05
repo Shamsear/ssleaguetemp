@@ -39,7 +39,7 @@ export default function FixDuplicatePointsPage() {
       if (!response.ok) throw new Error('Failed to analyze duplicates');
       const data = await response.json();
       setDuplicates(data.duplicates || []);
-    } catch (err) {
+    } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Failed to analyze');
     } finally {
       setAnalyzing(false);
@@ -64,7 +64,7 @@ export default function FixDuplicatePointsPage() {
       
       // Refresh the analysis
       await analyzeDuplicates();
-    } catch (err) {
+    } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Failed to fix duplicates');
     } finally {
       setLoading(false);

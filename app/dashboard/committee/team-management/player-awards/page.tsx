@@ -65,7 +65,7 @@ export default function PlayerAwardsPage() {
         });
         // Store players info map for later use
         (window as any).playersInfoMap = playersInfoMap;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching player info:', error);
       }
     };

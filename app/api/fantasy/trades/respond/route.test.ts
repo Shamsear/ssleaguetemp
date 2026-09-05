@@ -36,7 +36,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     // Mock database query
@@ -91,7 +91,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -136,7 +136,7 @@ describe('POST /api/fantasy/trades/respond', () => {
   it('should reject unauthenticated requests', async () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: false,
-      userId: null,
+      userId: undefined,
       error: 'Unauthorized'
     });
 
@@ -160,7 +160,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     const request = new NextRequest('http://localhost:3000/api/fantasy/trades/respond', {
@@ -183,7 +183,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     const request = new NextRequest('http://localhost:3000/api/fantasy/trades/respond', {
@@ -207,7 +207,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: 'different_user',
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -238,7 +238,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -277,7 +277,7 @@ describe('POST /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -328,7 +328,7 @@ describe('GET /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -374,7 +374,7 @@ describe('GET /api/fantasy/trades/respond', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{

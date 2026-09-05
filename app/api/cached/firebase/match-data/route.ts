@@ -58,7 +58,7 @@ export async function GET(request: Request) {
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching match data:', error);
     return NextResponse.json(
       {

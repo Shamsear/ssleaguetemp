@@ -269,7 +269,7 @@ export default function BalanceAuditPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {auditData.map((team) => {
+                  {auditData.map((team: any) => {
                     const isExpanded = expandedTeamId === team.team_id;
                     const squadMismatch = (team.pg_squad_count !== team.pg_cached_count) || (team.pg_squad_count !== team.fb_count);
                     const spentMismatch = (team.pg_actual_spent !== team.pg_cached_spent) || (team.pg_actual_spent !== team.fb_spent);
@@ -379,7 +379,7 @@ export default function BalanceAuditPage() {
                                   <p className="text-[10px] text-slate-450 italic">No players allocated to this team.</p>
                                 ) : (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[10px] text-slate-600">
-                                    {team.players.map((p, idx) => (
+                                    {team.players.map((p: any, idx: any) => (
                                       <div key={idx} className="flex justify-between items-center py-1 border-b border-slate-100/60">
                                         <span className="font-bold truncate pr-2 text-slate-700">{p.name}</span>
                                         <span className="shrink-0 font-bold text-slate-400 uppercase">

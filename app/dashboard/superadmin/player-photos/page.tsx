@@ -78,7 +78,7 @@ export default function PlayerPhotosManagement() {
         
         setPlayers(playersList);
         setFilteredPlayers(playersList);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
         setError('Failed to load players');
       } finally {

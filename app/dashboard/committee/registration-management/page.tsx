@@ -69,7 +69,7 @@ export default function RegistrationManagementPage() {
           
           setPlayers(registeredPlayers);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
         setError('Failed to load registration data');
       } finally {
@@ -112,7 +112,7 @@ export default function RegistrationManagementPage() {
       } else {
         setError(result.error || 'Failed to toggle registration');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling registration:', error);
       setError('Failed to toggle registration');
     } finally {

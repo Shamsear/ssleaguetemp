@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       rejected: false,
       message: 'Waiting for admin approval'
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking email approval:', error)
     return NextResponse.json(
       { error: 'Failed to check approval status' },

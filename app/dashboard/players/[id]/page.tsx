@@ -164,7 +164,7 @@ export default function PlayerDetailPage() {
             ...row
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching Firebase data:', error);
       }
     };
@@ -344,7 +344,7 @@ export default function PlayerDetailPage() {
         const seasonData = seasonDoc.data();
         setSeasonName(seasonData.name || seasonData.short_name || 'Season');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching season name:', err);
     }
   };
@@ -377,7 +377,7 @@ export default function PlayerDetailPage() {
       });
 
       setMatchHistory(history);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching match history:', err);
     }
   };

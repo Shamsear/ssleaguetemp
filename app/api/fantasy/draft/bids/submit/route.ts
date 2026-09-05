@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
       message: lock ? 'Bids submitted and locked successfully' : 'Draft bids saved successfully',
       draft_submitted: globalSubmitted
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting bids:', error);
     return NextResponse.json(
       { error: 'Failed to submit bids', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -393,7 +393,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Draft unlocked successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error unlocking draft:', error);
     return NextResponse.json(
       { error: 'Failed to unlock draft', details: error instanceof Error ? error.message : 'Unknown error' },

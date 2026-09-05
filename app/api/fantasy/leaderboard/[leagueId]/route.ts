@@ -149,7 +149,7 @@ export async function GET(
       })),
       total_teams: leaderboard.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching leaderboard:', error);
     return NextResponse.json(
       { error: 'Failed to fetch leaderboard' },

@@ -94,7 +94,7 @@ export default function TransfersManagementPage() {
         // No windows available, stop loading settings
         setIsLoadingSettings(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading windows:', error);
       setIsLoadingSettings(false);
     } finally {
@@ -131,7 +131,7 @@ export default function TransfersManagementPage() {
       setNewOpensAt('');
       setNewClosesAt('');
       loadWindows();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating window:', error);
       alert(error instanceof Error ? error.message : 'Failed to create window');
     } finally {
@@ -151,7 +151,7 @@ export default function TransfersManagementPage() {
       }
 
       loadWindows();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling window:', error);
       alert(error instanceof Error ? error.message : 'Failed to toggle window');
     }
@@ -192,7 +192,7 @@ export default function TransfersManagementPage() {
       } else {
         console.error('Failed to fetch settings:', await res.text());
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch settings:', error);
     } finally {
       setIsLoadingSettings(false);
@@ -224,7 +224,7 @@ export default function TransfersManagementPage() {
         const error = await res.json();
         alert(error.error || 'Failed to save settings');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save settings:', error);
       alert('Failed to save settings');
     } finally {
@@ -255,7 +255,7 @@ export default function TransfersManagementPage() {
         setSettings({ ...settings, is_transfer_window_open: newStatus });
         alert(`Transfer window ${newStatus ? 'opened' : 'closed'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to toggle transfer window:', error);
       alert('Failed to toggle transfer window');
     }
@@ -273,7 +273,7 @@ export default function TransfersManagementPage() {
       
       const data = await response.json();
       setTransfers(data.transfers || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transfer history:', error);
       setTransfers([]);
     } finally {

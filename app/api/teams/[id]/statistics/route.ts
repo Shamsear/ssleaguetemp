@@ -1,3 +1,4 @@
+import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 
@@ -31,7 +32,7 @@ export async function GET(
           created_at: teamData.created_at,
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching team from Firebase:', error);
     }
 
@@ -223,7 +224,7 @@ async function getTournamentWiseStats(
           seasonNames[sId] = seasonData.season_name || seasonData.name || `Season ${seasonData.season_number || ''}`;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching seasons from Firebase:', error);
     }
   }
@@ -454,7 +455,7 @@ async function getSeasonSummary(sql: any, teamId: string, seasonId: string | nul
         const seasonData = seasonDoc.data();
         seasonName = seasonData.season_name || seasonData.name || `Season ${seasonData.season_number || ''}`;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching season from Firebase:', error);
     }
 

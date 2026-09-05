@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         });
         const fallbackData = await fallbackRes.json();
         searchResults = fallbackData?.query?.search || [];
-      } catch (err) {
+      } catch (err: any) {
         console.error('Fallback search failed:', err);
       }
     }

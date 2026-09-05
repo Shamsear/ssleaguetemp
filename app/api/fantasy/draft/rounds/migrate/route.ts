@@ -121,7 +121,7 @@ export async function POST() {
       success: true,
       message: `Migration complete. ${migrated} draft rounds created. Bids linked to rounds. Old columns dropped.`,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Migration error:', error);
     return NextResponse.json(
       { error: 'Migration failed', details: error instanceof Error ? error.message : 'Unknown error' },

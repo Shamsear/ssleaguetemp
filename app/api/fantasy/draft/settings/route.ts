@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         category_settings: categorySettings,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching draft settings:', error);
     return NextResponse.json(
       { error: 'Failed to fetch draft settings', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         category_settings: result[0].category_settings,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving draft settings:', error);
     return NextResponse.json(
       { error: 'Failed to save draft settings', details: error instanceof Error ? error.message : 'Unknown error' },

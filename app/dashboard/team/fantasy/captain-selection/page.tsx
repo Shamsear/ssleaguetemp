@@ -187,7 +187,7 @@ export default function CaptainSelectionPage() {
         setSelectedCaptain(windowData.current_selections.captain_player_id || '');
         setSelectedViceCaptain(windowData.current_selections.vice_captain_player_id || '');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading data:', error);
       showAlert({
         type: 'error',

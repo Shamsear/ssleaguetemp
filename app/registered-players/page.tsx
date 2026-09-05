@@ -76,7 +76,7 @@ export default function RegisteredPlayersPage() {
         } else {
           setError('Failed to load players')
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching data:', err)
         setError('Failed to load data')
       } finally {

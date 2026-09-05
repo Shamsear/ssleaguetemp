@@ -44,7 +44,7 @@ export default function TransferSettingsPage() {
           setSettings(data.settings);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch settings:', error);
     } finally {
       setIsLoading(false);
@@ -67,7 +67,7 @@ export default function TransferSettingsPage() {
         const error = await res.json();
         alert(error.error || 'Failed to save settings');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save settings:', error);
       alert('Failed to save settings');
     } finally {
@@ -92,7 +92,7 @@ export default function TransferSettingsPage() {
         setSettings({ ...settings, is_transfer_window_open: newStatus });
         alert(`Transfer window ${newStatus ? 'opened' : 'closed'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to toggle transfer window:', error);
       alert('Failed to toggle transfer window');
     }

@@ -121,7 +121,7 @@ export default function TeamDetailPage() {
         } else {
           setError(data.error || 'Team not found');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching team details:', err);
         setError('Failed to load team details');
       } finally {
@@ -188,7 +188,7 @@ export default function TeamDetailPage() {
           setTournamentStats(transformedTournaments);
           setOverallStats(transformedOverall);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching tournament stats:', err);
       } finally {
         setLoadingStats(false);

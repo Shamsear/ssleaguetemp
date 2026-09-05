@@ -66,7 +66,7 @@ function TeamsContent() {
         });
         setSeasons(sorted);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching seasons list:', error);
     }
   };
@@ -105,7 +105,7 @@ function TeamsContent() {
           setSeasonName('');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching teams:', error);
     } finally {
       setLoading(false);

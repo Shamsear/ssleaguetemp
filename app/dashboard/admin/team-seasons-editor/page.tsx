@@ -87,7 +87,7 @@ export default function TeamSeasonsEditorPage() {
       if (seasonsList.length > 0 && !selectedSeasonId) {
         setSelectedSeasonId(seasonsList[0].id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading seasons:', error);
     } finally {
       setIsLoading(false);
@@ -152,7 +152,7 @@ export default function TeamSeasonsEditorPage() {
 
       teamSeasonsList.sort((a, b) => a.team_name.localeCompare(b.team_name));
       setTeamSeasons(teamSeasonsList);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading team seasons:', error);
     } finally {
       setIsLoading(false);
@@ -209,7 +209,7 @@ export default function TeamSeasonsEditorPage() {
       setEditingId(null);
       setEditForm({});
       alert('[SUCCESS] Team season updated successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving team season:', error);
       alert('[ERROR] Failed to save changes');
     } finally {

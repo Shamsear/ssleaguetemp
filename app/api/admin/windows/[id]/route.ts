@@ -28,7 +28,7 @@ export async function PATCH(
           body: `The ${updated.name} window is now OPEN for submitting ${updated.type.replace('_', ' ')} requests.`,
           url: `/dashboard/team/requests`
         }, updated.season_id);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send window open notification:', err);
       }
     }

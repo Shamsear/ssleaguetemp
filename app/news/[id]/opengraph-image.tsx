@@ -55,7 +55,7 @@ export default async function Image({ params }: { params: { id: string } }) {
         ...size,
       }
     )
-  } catch (error) {
+  } catch (error: any) {
     // Fallback OG image
     return new ImageResponse(
       (

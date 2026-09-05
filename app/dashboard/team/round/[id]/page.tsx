@@ -777,7 +777,7 @@ export default function TeamRoundPage() {
       } else {
         throw new Error('Copy command returned false');
       }
-    } catch (err) {
+    } catch (err: any) {
       showAlert({
         type: 'error',
         title: 'Copy Failed',

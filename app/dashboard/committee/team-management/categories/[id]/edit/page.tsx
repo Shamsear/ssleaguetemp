@@ -112,7 +112,7 @@ export default function EditCategoryPage() {
           loss_three_level_diff: String(category.loss_three_level_diff),
         });
         setCategoryNotFound(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching category:', error);
         setCategoryNotFound(true);
       } finally {

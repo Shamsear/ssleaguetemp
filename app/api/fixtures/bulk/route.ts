@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       success: true, 
       message: `${fixtures.length} fixtures saved successfully` 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving fixtures to Neon:', error);
     return NextResponse.json(
       { error: 'Failed to save fixtures', details: error instanceof Error ? error.message : 'Unknown error' },

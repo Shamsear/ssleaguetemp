@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
           }
           releasedRealPlayers++;
           console.log(`✅ Released SS Member: ${player.player_name}`);
-        } catch (error) {
+        } catch (error: any) {
           const errorMsg = `Failed to release ${player.player_name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
           errors.push(errorMsg);
           console.error(errorMsg);
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
           `;
           releasedFootballPlayers++;
           console.log(`✅ Released Football Player: ${player.player_name}`);
-        } catch (error) {
+        } catch (error: any) {
           const errorMsg = `Failed to release ${player.player_name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
           errors.push(errorMsg);
           console.error(errorMsg);
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
             AND season_id = ${seasonId}
         `;
         console.log(`✅ Marked team as withdrawn`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to update team status:', error);
       }
 

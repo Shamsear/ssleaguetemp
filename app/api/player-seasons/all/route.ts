@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: playerSeasons,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching player seasons:', error);
     return NextResponse.json({
       success: false,

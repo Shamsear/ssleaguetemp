@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, slot_submissions: result });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching slot status:', error);
     return NextResponse.json({ error: 'Failed to fetch slot status' }, { status: 500 });
   }

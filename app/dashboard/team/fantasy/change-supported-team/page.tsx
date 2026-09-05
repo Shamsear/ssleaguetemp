@@ -28,7 +28,7 @@ export default function ChangeSupportedTeamPage() {
             } else {
                 setHasFantasyTeam(false);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to check fantasy team:', error);
             setHasFantasyTeam(false);
         } finally {

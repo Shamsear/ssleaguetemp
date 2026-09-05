@@ -78,7 +78,7 @@ export default function PlayerAnalysisPage() {
       setForm(data.form);
       setPerformances(data.performances);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading player data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load player data');
     } finally {

@@ -65,7 +65,7 @@ export default function CommitteeLineupMonitoringPage() {
         setSeasons(data.seasons);
         setSeasonId(data.seasons[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching seasons:', err);
     }
   };
@@ -81,7 +81,7 @@ export default function CommitteeLineupMonitoringPage() {
           setSelectedRound(roundNumbers[0]);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching rounds:', err);
     }
   };
@@ -167,7 +167,7 @@ export default function CommitteeLineupMonitoringPage() {
       } else {
         alert(`Failed to lock lineup: ${data.error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error locking lineup:', err);
       alert('Failed to lock lineup');
     }
@@ -195,7 +195,7 @@ export default function CommitteeLineupMonitoringPage() {
       } else {
         alert(`Failed to process locks: ${data.error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error processing locks:', err);
       alert('Failed to process deadline locks');
     } finally {
@@ -264,7 +264,7 @@ export default function CommitteeLineupMonitoringPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Season</label>
               <select
                 value={seasonId}
-                onChange={(e) => setSeasonId(e.target.value)}
+                onChange={(e: any) => setSeasonId(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {seasons.map(season => (
@@ -278,7 +278,7 @@ export default function CommitteeLineupMonitoringPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Round</label>
               <select
                 value={selectedRound}
-                onChange={(e) => setSelectedRound(parseInt(e.target.value))}
+                onChange={(e: any) => setSelectedRound(parseInt(e.target.value))}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {rounds.map(round => (

@@ -159,7 +159,7 @@ export async function POST(
             },
             { teamId: allocation.team_id }
           );
-        } catch (err) {
+        } catch (err: any) {
           console.error(`Failed to send notification to team ${allocation.team_id}:`, err);
         }
       }
@@ -181,7 +181,7 @@ export async function POST(
         phase: alloc.phase,
       })),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error finalizing round:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

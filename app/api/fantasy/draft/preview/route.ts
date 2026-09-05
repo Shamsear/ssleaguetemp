@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(preview);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [PREVIEW] Error generating preview:', error);
     return NextResponse.json(
       { 

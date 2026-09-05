@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       reverted: existingPoints.length,
       teams_affected: teamPointsMap.size,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error reverting fantasy points:', error);
     return NextResponse.json(
       { 
@@ -164,7 +164,7 @@ async function recalculateLeaderboard(fantasy_league_id: string) {
     `;
 
     console.log(`✅ Leaderboard updated for league ${fantasy_league_id}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating leaderboard:', error);
   }
 }

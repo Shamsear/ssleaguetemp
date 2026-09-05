@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       extension: null,
       url: null
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking image existence:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

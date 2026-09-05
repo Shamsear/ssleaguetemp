@@ -141,7 +141,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
       }
 
       setFixtures(fixturesList);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching fixtures:', error);
     } finally {
       setIsLoading(false);

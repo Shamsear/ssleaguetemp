@@ -154,7 +154,7 @@ function ImportProgressContent() {
             };
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching progress:', error);
       }
     };

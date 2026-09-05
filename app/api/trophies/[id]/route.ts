@@ -24,7 +24,7 @@ export async function PATCH(
       success: true,
       message: 'Trophy Instagram link updated successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating trophy:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update trophy' },

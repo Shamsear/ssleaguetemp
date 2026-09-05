@@ -47,7 +47,7 @@ export async function GET(
       success: true,
       data: responseData,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching season:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },

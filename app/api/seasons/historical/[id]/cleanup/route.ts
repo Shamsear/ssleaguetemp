@@ -81,7 +81,7 @@ export async function DELETE(
       await adminDb.collection('seasons').doc(seasonId).delete();
       deletedCount.firebase_season = 1;
       console.log(`   ✅ Deleted season document`);
-    } catch (error) {
+    } catch (error: any) {
       console.log(`   ⚠️  Season document not found or already deleted`);
     }
 

@@ -98,7 +98,7 @@ export default function PlayerStatsByRoundPage() {
           const maxRound = Math.max(...result.fixtures.map((f: any) => f.round_number || 0));
           setMaxRounds(maxRound);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching rounds:', err);
       }
     };
@@ -145,7 +145,7 @@ export default function PlayerStatsByRoundPage() {
           setPlayerAwards(transformedAwards);
           console.log('Fetched and transformed awards:', transformedAwards);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching awards:', err);
       }
     };
@@ -208,7 +208,7 @@ export default function PlayerStatsByRoundPage() {
           });
           setPlayerStats(data.players || []);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading player stats:', error);
       } finally {
         setIsLoading(false);
@@ -353,7 +353,7 @@ export default function PlayerStatsByRoundPage() {
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting to Excel:', error);
       alert('Failed to export to Excel');
     }

@@ -62,7 +62,7 @@ export default function ImportPreviewPage() {
         
         setPlayers(mappedPlayers)
         setLoading(false)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading parsed data:', err)
         router.push('/dashboard/committee/database')
       }

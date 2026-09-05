@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         } : null
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching team seasons from Neon:', error);
     return NextResponse.json(
       { error: 'Failed to fetch team seasons', teams: [] },

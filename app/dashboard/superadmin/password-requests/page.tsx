@@ -80,7 +80,7 @@ export default function PasswordRequestsManagement() {
       setLoadingRequests(true);
       const allRequests = await getAllPasswordResetRequests();
       setRequests(allRequests);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching requests:', error);
       alert('Failed to load password reset requests');
     } finally {
@@ -103,7 +103,7 @@ export default function PasswordRequestsManagement() {
       setCopiedLink(false);
       setShowLinkModal(true);
       await fetchRequests();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving request:', error);
       alert('Failed to approve request: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
@@ -123,7 +123,7 @@ export default function PasswordRequestsManagement() {
       
       alert('Request rejected successfully');
       await fetchRequests();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting request:', error);
       alert('Failed to reject request');
     }
@@ -138,7 +138,7 @@ export default function PasswordRequestsManagement() {
       await deleteResetRequest(requestId);
       alert('Request deleted successfully');
       await fetchRequests();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting request:', error);
       alert('Failed to delete request');
     }

@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         message: `Tier ${tier_number} closed`
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error controlling tier:', error);
     return NextResponse.json(
       { error: 'Failed to control tier' },

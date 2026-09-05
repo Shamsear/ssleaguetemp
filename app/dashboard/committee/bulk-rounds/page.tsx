@@ -81,11 +81,11 @@ export default function BulkRoundsPage() {
                 setSelectedAuctionSettingsId(String(settingsData.data[0].id));
               }
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching auction settings:', err);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching season:', err);
       }
     };
@@ -114,7 +114,7 @@ export default function BulkRoundsPage() {
         if (success) {
           setBulkRounds(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching bulk rounds:', err);
       } finally {
         setIsLoading(false);
@@ -182,7 +182,7 @@ export default function BulkRoundsPage() {
       } else {
         alert(`Error: ${error}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating bulk round:', err);
       alert('Failed to create bulk round');
     } finally {

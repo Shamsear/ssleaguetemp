@@ -35,7 +35,7 @@ export async function GET(
     ];
 
     return NextResponse.json({ pricing });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching star rating pricing:", error);
     return NextResponse.json(
       { error: "Failed to fetch pricing" },
@@ -88,7 +88,7 @@ export async function PUT(
       success: true,
       message: "Pricing updated successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating star rating pricing:", error);
     return NextResponse.json(
       { error: "Failed to update pricing" },

@@ -56,7 +56,7 @@ export default function CustomScoringRulesPage() {
       
       const data = await response.json();
       setRules(data.rules || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading rules:', error);
     } finally {
       setIsLoading(false);
@@ -116,7 +116,7 @@ export default function CustomScoringRulesPage() {
         bonus_params: {},
       });
       loadRules();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating rule:', error);
       alert(error instanceof Error ? error.message : 'Failed to create rule');
     }
@@ -146,7 +146,7 @@ export default function CustomScoringRulesPage() {
       alert('Rule updated successfully!');
       setEditingRule(null);
       loadRules();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating rule:', error);
       alert(error instanceof Error ? error.message : 'Failed to update rule');
     }
@@ -167,7 +167,7 @@ export default function CustomScoringRulesPage() {
 
       alert('Rule deleted successfully!');
       loadRules();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting rule:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete rule');
     }

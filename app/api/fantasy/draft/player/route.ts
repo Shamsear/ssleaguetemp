@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Trigger news for fantasy draft milestone (every 10 drafts)
     if (result.squad_size % 10 === 0) {
       try {
-        await triggerNews('fantasy_draft', {
+        await triggerNews('fantasy_draft' as any, {
           season_id: teamData.season_id || null,
           league_id: teamData.league_id,
           total_drafted: result.squad_size,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error drafting player:', error);
     const errorResponse = formatErrorResponse(error);
     return NextResponse.json(
@@ -136,7 +136,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error removing player:', error);
     const errorResponse = formatErrorResponse(error);
     return NextResponse.json(

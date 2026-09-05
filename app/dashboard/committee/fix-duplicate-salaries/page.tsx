@@ -31,7 +31,7 @@ export default function FixDuplicateSalariesPage() {
       } else {
         alert('Failed to load duplicates');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading duplicates:', error);
       alert('Error loading duplicates');
     } finally {
@@ -66,7 +66,7 @@ export default function FixDuplicateSalariesPage() {
         console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Delete failed:', error);
         alert(`Failed: ${error.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error reversing duplicate:', error);
       alert('Error reversing duplicate');
     } finally {
@@ -105,7 +105,7 @@ export default function FixDuplicateSalariesPage() {
         console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Bulk delete failed:', error);
         alert(`Failed: ${error.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error reversing all:', error);
       alert('Error reversing all duplicates');
     } finally {

@@ -92,7 +92,7 @@ export default function PlayerEligibilityPage() {
                 ).map((t: any) => JSON.parse(t));
                 setTeams(uniqueTeams);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error loading players:', error);
         } finally {
             setLoading(false);

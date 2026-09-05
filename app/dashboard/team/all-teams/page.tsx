@@ -306,7 +306,7 @@ export default function AllTeamsPage() {
         }
 
         setSeasonId(targetSeasonId);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching active season:', error);
         setError('Failed to load active season');
       }
@@ -328,7 +328,7 @@ export default function AllTeamsPage() {
         if (result.success) {
           setPlayerCounts(result.data);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching player counts:', error);
       } finally {
         const elapsed = Date.now() - startTime;
@@ -415,7 +415,7 @@ export default function AllTeamsPage() {
       });
 
       setTeams(teamsData);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error processing teams:', err);
       setError('An error occurred while loading teams');
     }

@@ -61,7 +61,7 @@ export default function FantasyChatPage() {
           setMessages(messagesData.messages || []);
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading chat data:', error);
         setError('Failed to load chat');
       } finally {
@@ -132,7 +132,7 @@ export default function FantasyChatPage() {
       setMessageText('');
       messageInputRef.current?.focus();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       setError(error instanceof Error ? error.message : 'Failed to send message');
     } finally {
@@ -192,7 +192,7 @@ export default function FantasyChatPage() {
     // Update in Firebase
     try {
       await updateMessageReactions(fantasyTeam.league_id, messageId, reactions);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating reaction:', error);
       // Revert on error
       setMessages(prev => prev.map(m => 

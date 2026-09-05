@@ -62,7 +62,7 @@ export default function AdminNewsPage() {
       }
       
       setNews(filtered)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch news:', err)
     } finally {
       setLoading(false)
@@ -92,7 +92,7 @@ export default function AdminNewsPage() {
       } else {
         alert('Failed to publish news')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error publishing:', err)
       alert('Failed to publish news')
     }
@@ -120,7 +120,7 @@ export default function AdminNewsPage() {
       } else {
         alert('Failed to unpublish news')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error unpublishing:', err)
       alert('Failed to unpublish news')
     }
@@ -140,7 +140,7 @@ export default function AdminNewsPage() {
       } else {
         alert('Failed to delete news')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting:', err)
       alert('Failed to delete news')
     }
@@ -174,7 +174,7 @@ export default function AdminNewsPage() {
       } else {
         alert('Failed to update news')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating:', err)
       alert('Failed to update news')
     }

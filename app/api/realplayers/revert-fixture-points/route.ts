@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
       reverted,
       categoryUpdate: categoryResult
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error reverting player points:', error);
     return NextResponse.json(
       { error: 'Failed to revert player points' },
@@ -199,7 +199,7 @@ async function revertPlayerPoints(playerId: string, pointsChange: number, season
   }
 
   // Recalculate salary if star rating changed
-  if (!usesCategoryPoints && newStarRating !== oldStarRating && playerData.auction_value) {
+  if (!usesCategoryPoints && newStarRating !== (Number(oldStarRating || 3) || 3) && playerData.auction_value) {
     const newSalary = calculateRealPlayerSalary(playerData.auction_value, newStarRating);
     updateData.salary_per_match = newSalary;
   }
@@ -238,9 +238,9 @@ async function revertPlayerPoints(playerId: string, pointsChange: number, season
     name: playerData.name,
     old_points: currentPoints,
     new_points: newPoints,
-    old_stars: oldStarRating,
+    old_stars: (Number(oldStarRating || 3) || 3),
     new_stars: newStarRating,
-    salary_updated: !usesCategoryPoints && newStarRating !== oldStarRating
+    salary_updated: !usesCategoryPoints && newStarRating !== (Number(oldStarRating || 3) || 3)
   };
 }
 
@@ -270,7 +270,7 @@ async function recalculateAllPlayerCategories() {
     }
 
     return { success: true, totalPlayers: players.length, legendCount: legendThreshold };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recalculating categories:', error);
     return { success: false, error: 'Failed to recalculate categories' };
   }

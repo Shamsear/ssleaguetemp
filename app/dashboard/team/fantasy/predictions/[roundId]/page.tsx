@@ -114,7 +114,7 @@ export default function PredictionsPage() {
       placeholderDeadline.setDate(placeholderDeadline.getDate() + 2);
       setDeadline(placeholderDeadline);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading predictions data:', err);
       setError('Failed to load predictions');
     } finally {
@@ -181,7 +181,7 @@ export default function PredictionsPage() {
         loadData();
       }, 1500);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting predictions:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit predictions');
     } finally {

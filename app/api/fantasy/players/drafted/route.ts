@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       drafted_players: draftedPlayers,
       total_players: draftedPlayers.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching drafted players:', error);
     return NextResponse.json(
       { error: 'Failed to fetch drafted players', details: error instanceof Error ? error.message : 'Unknown error' },

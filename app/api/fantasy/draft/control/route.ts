@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       draft_opens_at: draft_opens_at || null,
       draft_closes_at: draft_closes_at || null,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating draft control:', error);
     return NextResponse.json(
       { error: 'Failed to update draft settings', details: error instanceof Error ? error.message : 'Unknown error' },

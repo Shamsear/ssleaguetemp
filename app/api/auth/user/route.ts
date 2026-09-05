@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
                 role: payload.role,
             },
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error verifying auth token:', error);
         return NextResponse.json(
             { user: null, error: 'Invalid token' },

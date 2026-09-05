@@ -91,7 +91,7 @@ export async function PATCH(
             matchup_positions,
             is_null
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error marking matchups as null:', error);
         console.error('Error details:', {
             error: error instanceof Error ? error.message : String(error),

@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // Format team standings table
-    const teamTable = teamStandings.map((team, index) => ({
+    const teamTable = teamStandings.map((team: any, index: any) => ({
       rank: index + 1,
       team_name: team.team_name,
       manager: team.manager_name,
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }));
 
     // Format player standings table
-    const playerTable = playerStandings.map((player, index) => ({
+    const playerTable = playerStandings.map((player: any, index: any) => ({
       rank: index + 1,
       player_name: player.player_name,
       points: player.total_points,
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       team_standings: teamTable,
       player_standings: playerTable,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating fantasy round standings news:', error);
     return NextResponse.json(
       { 

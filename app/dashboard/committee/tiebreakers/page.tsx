@@ -67,7 +67,7 @@ export default function CommitteeTiebreakerPage() {
       if (result.success) {
         setTiebreakers(result.data.tiebreakers);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching tiebreakers:', error);
     } finally {
       setLoadingData(false);
@@ -126,7 +126,7 @@ export default function CommitteeTiebreakerPage() {
           message: result.error || 'Failed to resolve tiebreaker'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resolving tiebreaker:', error);
       showAlert({
         type: 'error',
@@ -184,7 +184,7 @@ export default function CommitteeTiebreakerPage() {
           message: result.error || 'Failed to add time'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding time:', error);
       showAlert({
         type: 'error',

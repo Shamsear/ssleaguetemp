@@ -45,7 +45,7 @@ export default function TeamPlayersPage() {
         if (success) {
           setPlayers(data.players || []);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
       } finally {
         setIsLoading(false);

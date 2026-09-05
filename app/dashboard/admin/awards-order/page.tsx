@@ -65,7 +65,7 @@ export default function AwardsOrderPage() {
       } else {
         setError(data.error || 'Failed to load items');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching items:', err);
       setError('Failed to load items');
     } finally {
@@ -154,7 +154,7 @@ export default function AwardsOrderPage() {
       } else {
         setError(data.error || 'Failed to save order');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving order:', err);
       setError('Failed to save order');
     } finally {

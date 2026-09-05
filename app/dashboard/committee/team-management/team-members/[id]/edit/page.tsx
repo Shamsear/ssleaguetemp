@@ -82,7 +82,7 @@ export default function EditTeamMemberPage() {
 
         if (teamsData.success) setTeams(teamsData.data);
         if (categoriesData.success) setCategories(categoriesData.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
         setPlayerNotFound(true);
       } finally {

@@ -73,7 +73,7 @@ export default function EditCategoriesPage() {
           ...row
         })) as Category[];
         setCategories(categoriesData);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch categories:', error);
       }
     };
@@ -120,7 +120,7 @@ export default function EditCategoriesPage() {
           }
           setPlayers(activePlayers);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch players:', err);
       } finally {
         setIsLoading(false);
@@ -207,7 +207,7 @@ export default function EditCategoriesPage() {
       } else {
         setSaveResult({ ok: false, msg: data.error || 'Save failed.' });
       }
-    } catch (err) {
+    } catch (err: any) {
       setSaveResult({ ok: false, msg: 'Network error. Please try again.' });
     } finally {
       setIsSaving(false);

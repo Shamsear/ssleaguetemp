@@ -77,7 +77,7 @@ export default function TeamManagementPage() {
         if (matchesData.success && matchesData.data) {
           setRecentMatches(matchesData.data.slice(0, 5));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching team management data:', error);
       } finally {
         setIsLoading(false);

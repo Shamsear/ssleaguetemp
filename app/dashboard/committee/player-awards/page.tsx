@@ -122,7 +122,7 @@ export default function PlayerAwardsManagementPage() {
           setSelectedTournament(data.tournaments[0].id);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching tournaments:', err);
     }
   };
@@ -141,7 +141,7 @@ export default function PlayerAwardsManagementPage() {
       if (data.success) {
         setAwards(data.awards || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching awards:', err);
       setError('Failed to load awards');
     } finally {
@@ -158,7 +158,7 @@ export default function PlayerAwardsManagementPage() {
       if (data.success && data.players) {
         setPlayers(data.players);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching players:', err);
     }
   };
@@ -200,7 +200,7 @@ export default function PlayerAwardsManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to preview awards');
     } finally {
       setPreviewing(false);
@@ -247,7 +247,7 @@ export default function PlayerAwardsManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to auto-award');
     } finally {
       setAwarding(false);
@@ -272,7 +272,7 @@ export default function PlayerAwardsManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to delete award');
     }
   };
@@ -327,7 +327,7 @@ export default function PlayerAwardsManagementPage() {
       } else {
         setError(data.error);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to add award');
     }
   };

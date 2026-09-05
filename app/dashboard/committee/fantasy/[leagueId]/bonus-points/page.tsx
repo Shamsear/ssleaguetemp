@@ -82,7 +82,7 @@ export default function BonusPointsPage() {
 
         const data = await response.json()
         setLeague(data.league)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading league:', error)
         showAlert({
           type: 'error',
@@ -132,7 +132,7 @@ export default function BonusPointsPage() {
       if (historySuccess) {
         setBonusHistory(historyData)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error)
       showAlert({
         type: 'error',
@@ -291,7 +291,7 @@ export default function BonusPointsPage() {
         message: 'Bonus point record deleted successfully'
       })
       fetchData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting record:', error)
       showAlert({
         type: 'error',
@@ -395,7 +395,7 @@ export default function BonusPointsPage() {
               <input
                 type="number"
                 value={points || ''}
-                onChange={(e) => setPoints(parseInt(e.target.value) || 0)}
+                onChange={(e: any) => setPoints(parseInt(e.target.value) || 0)}
                 placeholder="Enter points (can be negative)"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
               />
@@ -410,7 +410,7 @@ export default function BonusPointsPage() {
               <input
                 type="text"
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                onChange={(e: any) => setReason(e.target.value)}
                 placeholder="e.g., Fair Play Award"
                 maxLength={500}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
@@ -432,7 +432,7 @@ export default function BonusPointsPage() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: any) => setSearchTerm(e.target.value)}
                 placeholder={`Search ${targetType}s...`}
                 className="pl-10 w-full py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
               />

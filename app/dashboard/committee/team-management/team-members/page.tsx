@@ -208,7 +208,7 @@ export default function TeamMembersPage() {
         const categoriesRes = await fetchWithTokenRefresh('/api/categories');
         const categoriesData = await categoriesRes.json();
         if (categoriesData.success) setCategories(categoriesData.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);
@@ -282,7 +282,7 @@ export default function TeamMembersPage() {
           message: `Error: ${error.error}`
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error assigning player:', error);
       closeAlert();
       showAlert({
@@ -341,7 +341,7 @@ export default function TeamMembersPage() {
       setBulkTeam('');
       setBulkCategory('');
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error bulk assigning players:', error);
       showAlert({
         type: 'error',
@@ -466,7 +466,7 @@ export default function TeamMembersPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing file:', error);
       showAlert({
         type: 'error',
@@ -519,7 +519,7 @@ export default function TeamMembersPage() {
       setPreviewData([]);
       setValidationResults([]);
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading data:', error);
       showAlert({
         type: 'error',

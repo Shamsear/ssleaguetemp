@@ -103,7 +103,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
 
         setRound(roundData.data);
         setPendingData(allocationsData.data);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
@@ -155,7 +155,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
           message: data.error || 'Failed to finalize round. Please try again.'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error finalizing round:', err);
       showAlert({
         type: 'error',
@@ -207,7 +207,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
           message: data.error || 'Failed to cancel pending results. Please try again.'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error canceling pending results:', err);
       showAlert({
         type: 'error',
@@ -398,7 +398,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Export error:', error);
       showAlert({
         type: 'error',

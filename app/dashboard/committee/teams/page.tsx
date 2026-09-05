@@ -68,7 +68,7 @@ export default function CommitteeTeamsPage() {
         } else {
           setError(data.error || 'Failed to load teams');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching teams:', err);
         setError('Failed to load teams');
       } finally {
@@ -174,7 +174,7 @@ export default function CommitteeTeamsPage() {
           message: 'Failed to copy. Please try again.'
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating WhatsApp message:', error);
       showAlert({
         type: 'error',

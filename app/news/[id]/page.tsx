@@ -12,7 +12,7 @@ async function getNewsItem(id: string) {
     `;
     if (!newsItems || newsItems.length === 0) return null;
     return newsItems[0];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching news item for metadata:', error);
     return null;
   }

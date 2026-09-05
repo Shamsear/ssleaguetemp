@@ -263,7 +263,7 @@ export async function GET(
     `;
 
     return NextResponse.json({ matchups });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching matchups:', error);
     return NextResponse.json(
       { error: 'Failed to fetch matchups' },
@@ -513,7 +513,7 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, message: 'Matchups updated successfully' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating matchups:', error);
     return NextResponse.json(
       { error: 'Failed to update matchups' },
@@ -890,7 +890,7 @@ export async function PATCH(
       message: 'Results saved successfully',
       fixture_status: 'completed'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving results:', error);
     return NextResponse.json(
       { error: 'Failed to save results' },

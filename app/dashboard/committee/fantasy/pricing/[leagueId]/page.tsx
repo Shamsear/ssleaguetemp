@@ -55,7 +55,7 @@ export default function FantasyPricingPage() {
       if (data.pricing && Array.isArray(data.pricing)) {
         setPricing(data.pricing);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching pricing:', error);
       showAlert({
         type: 'error',
@@ -115,7 +115,7 @@ export default function FantasyPricingPage() {
       setTimeout(() => {
         setSaved(false);
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving pricing:', error);
       showAlert({
         type: 'error',

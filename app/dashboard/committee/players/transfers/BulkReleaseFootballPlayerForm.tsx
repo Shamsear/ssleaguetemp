@@ -90,7 +90,7 @@ export default function BulkReleaseFootballPlayerForm() {
         }
 
         setPlayers(loadedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {

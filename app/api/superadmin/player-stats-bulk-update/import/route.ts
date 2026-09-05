@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const updates: any[] = [];
     let rowCount = 0;
 
-    worksheet.eachRow((row, rowNumber) => {
+    worksheet.eachRow((row: any, rowNumber: any) => {
       // Skip header row
       if (rowNumber === 1) return;
 

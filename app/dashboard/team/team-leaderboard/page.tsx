@@ -53,7 +53,7 @@ export default function TeamLeaderboardPage() {
         } else {
           console.log('[Leaderboard] No active season found');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('<XCircle className="w-4 h-4 text-rose-500" /> [Leaderboard] Error fetching team season:', error);
       }
     };

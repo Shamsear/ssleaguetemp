@@ -132,7 +132,7 @@ export default function AuctionSettingsPage() {
           });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching auction settings:', err);
     } finally {
       setLoading(false);
@@ -153,7 +153,7 @@ export default function AuctionSettingsPage() {
         console.error('No active season found');
         setLoading(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching active season:', error);
       setLoading(false);
     }
@@ -232,7 +232,7 @@ export default function AuctionSettingsPage() {
           message: `Error: ${result.error}`
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving settings:', err);
       showAlert({
         type: 'error',

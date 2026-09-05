@@ -1,3 +1,4 @@
+import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
@@ -49,7 +50,7 @@ export async function GET(
           const seasonData = seasonDoc.data();
           seasonName = seasonData.season_name || seasonData.name || `Season ${seasonData.season_number || ''}`;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching season from Firebase:', error);
       }
     }
@@ -208,7 +209,7 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
         points: 0,
       };
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching assigned teams:', error);
   }
 
@@ -393,7 +394,7 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
         qualifies: false,
       };
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching group teams:', error);
   }
 
@@ -509,7 +510,7 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
           console.error(`Error fetching group team logo for ${teamId}:`, e);
         }
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching team logos for group stage:', error);
     }
   }
@@ -528,7 +529,7 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
     });
 
     // Assign positions and qualification status
-    teams.forEach((team, index) => {
+    teams.forEach((team: any, index: any) => {
       team.position = index + 1;
       team.qualifies = index < teamsAdvancing;
     });

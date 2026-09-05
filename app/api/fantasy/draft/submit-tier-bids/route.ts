@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
       deadline: null
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error submitting tier bids:', error);
     
     return NextResponse.json(

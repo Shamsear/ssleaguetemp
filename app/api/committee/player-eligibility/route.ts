@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     // For each player, calculate stats from matchups in the round range
     const playersWithStats = await Promise.all(
-      playerSeasons.map(async (player) => {
+      playerSeasons.map(async (player: any) => {
         const stats = await sql`
           WITH home_matches AS (
             SELECT 

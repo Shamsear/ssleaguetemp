@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`    ℹ️  Already awarded`);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(`    ❌ Error awarding trophy:`, err);
       }
     }

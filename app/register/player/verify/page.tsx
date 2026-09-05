@@ -240,7 +240,7 @@ function PlayerVerifyContent() {
         }
 
         setLoading(false)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching data:', err)
         setError('Failed to load registration details')
         setLoading(false)
@@ -264,7 +264,7 @@ function PlayerVerifyContent() {
             setLastUpdated(new Date())
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         // Silently fail - don't disrupt user experience
         console.error('Error refreshing slots:', err)
       }
@@ -317,7 +317,7 @@ function PlayerVerifyContent() {
       )
 
       setSearchResults(filteredPlayers)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error searching players:', err)
     } finally {
       setSearching(false)
@@ -364,7 +364,7 @@ function PlayerVerifyContent() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching previous season data:', err)
     }
 
@@ -458,7 +458,7 @@ function PlayerVerifyContent() {
     try {
       await signOut(auth)
       router.push(`/register/player?season=${seasonId}`)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sign out error:', err)
     }
   }
@@ -610,7 +610,7 @@ function PlayerVerifyContent() {
 
       // Redirect to success page
       router.push('/register/player/success')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error confirming registration:', err)
       setError(err instanceof Error ? err.message : 'Failed to complete registration. Please try again.')
       setSubmitting(false)

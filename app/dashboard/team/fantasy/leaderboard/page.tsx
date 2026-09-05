@@ -55,7 +55,7 @@ export default function FantasyLeaderboardPage() {
         const leaderboardData = await leaderboardResponse.json();
         setLeagueName(leaderboardData.league.name);
         setLeaderboard(leaderboardData.leaderboard);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading leaderboard:', error);
       } finally {
         setIsLoading(false);

@@ -191,7 +191,7 @@ export default function PlayerCategorizationPage() {
           );
           setManualOverrides(map);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Could not load saved overrides:', err);
       }
     };
@@ -216,7 +216,7 @@ export default function PlayerCategorizationPage() {
             body: JSON.stringify({ seasonId: userSeasonId, overrides: overrideArray })
           }
         );
-      } catch (err) {
+      } catch (err: any) {
         console.error('Could not auto-save overrides:', err);
       }
     }, 800);
@@ -548,7 +548,7 @@ export default function PlayerCategorizationPage() {
             { method: 'DELETE' }
           );
           setManualOverrides(new Map());
-        } catch (err) {
+        } catch (err: any) {
           console.error('Could not clear temp overrides:', err);
         }
       } else {
@@ -1426,7 +1426,7 @@ export default function PlayerCategorizationPage() {
                               `/api/committee/player-categorization/temp-overrides?seasonId=${userSeasonId}&playerId=${playerId}`,
                               { method: 'DELETE' }
                             );
-                          } catch (err) {
+                          } catch (err: any) {
                             console.error('Could not remove saved override:', err);
                           }
                         }}

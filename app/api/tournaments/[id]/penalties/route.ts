@@ -52,7 +52,7 @@ export async function GET(
         }
 
         return NextResponse.json({ success: true, penalties });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching penalties:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to fetch penalties' },
@@ -119,7 +119,7 @@ export async function POST(
                     oldEcoinBalance = data?.football_budget || 0;
                     oldSscoinBalance = data?.real_player_budget || 0;
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.warn('Could not fetch team balance for WhatsApp message:', error);
             }
         }
@@ -213,7 +213,7 @@ export async function POST(
                 });
 
                 console.log(`✅ Firebase budgets updated: ECoin -${ecoin_fine}, SSCoin -${sscoin_fine}`);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error updating Firebase budgets:', error);
                 // Don't fail the whole operation if Firebase update fails
             }
@@ -234,7 +234,7 @@ export async function POST(
                 `;
 
                 console.log(`✅ Auction DB football_budget updated: -${ecoin_fine}`);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error updating auction DB:', error);
                 // Don't fail the whole operation if auction DB update fails
             }
@@ -282,7 +282,7 @@ export async function POST(
             message: `${points_deducted} points deducted from ${team_name}`,
             whatsapp_message: whatsappMessage,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error applying penalty:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to apply penalty' },

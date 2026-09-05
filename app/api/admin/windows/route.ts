@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
           body: `The ${newWindow.name} window is now OPEN for submitting ${newWindow.type.replace('_', ' ')} requests.`,
           url: `/dashboard/team/requests`
         }, season_id);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to send window open notification:', err);
       }
     }

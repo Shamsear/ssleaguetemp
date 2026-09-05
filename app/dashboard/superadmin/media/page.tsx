@@ -482,7 +482,7 @@ export default function ImageKitMediaPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       setLinkEntities(data.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch link entities:', err);
     } finally {
       setLinkLoading(false);

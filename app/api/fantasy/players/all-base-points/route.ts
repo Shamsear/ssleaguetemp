@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
       available_players: totalAvailable,
       drafted_players: totalDrafted,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching all players base points:', error);
     return NextResponse.json(
       { 

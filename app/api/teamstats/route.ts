@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
             success: true,
             teamStats: teamStats,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching team stats:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to fetch team stats' },

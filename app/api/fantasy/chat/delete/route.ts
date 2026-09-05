@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest) {
       deleted_at: deletedMessage.updated_at
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat message deletion error:', error);
     
     return NextResponse.json(

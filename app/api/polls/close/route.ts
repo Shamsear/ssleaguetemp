@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           
           await calculatePollResults(id);
           closedIds.push(id);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Failed to close poll ${id}:`, error);
         }
       }
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
         
         closedPollIds.push(poll.id);
         console.log(`✅ Closed poll: ${poll.id} - ${poll.question_en}`);
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Failed to close poll ${poll.id}:`, error);
       }
     }
@@ -227,7 +227,7 @@ async function calculatePollResults(pollId: string): Promise<void> {
       }));
 
       // Sort by votes to find winner
-      results.sort((a, b) => b.votes - a.votes);
+      results.sort((a: any, b: any) => b.votes - a.votes);
       const winner = results[0];
 
       // Store results
@@ -301,7 +301,7 @@ async function calculatePollResults(pollId: string): Promise<void> {
         });
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error calculating results for poll ${pollId}:`, error);
     throw error;
   }

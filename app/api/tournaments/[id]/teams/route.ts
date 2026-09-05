@@ -84,7 +84,7 @@ export async function GET(
       tournament_id: tournamentId,
       season_id: seasonId
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tournament teams:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch teams' },
@@ -226,7 +226,7 @@ export async function POST(
         unchanged: team_ids.length - teamsToAdd.length
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error assigning teams to tournament:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to assign teams' },
@@ -257,7 +257,7 @@ export async function DELETE(
       message: 'All team assignments removed',
       removed_count: result.length
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error removing team assignments:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to remove team assignments' },

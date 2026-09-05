@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       duplicates,
       total: duplicates.length
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error finding duplicates:', error);
     return NextResponse.json(
       { error: 'Failed to find duplicates', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
       { error: 'Invalid action' },
       { status: 400 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error reversing duplicate:', error);
     return NextResponse.json(
       { error: 'Failed to reverse duplicate', details: error instanceof Error ? error.message : 'Unknown error' },

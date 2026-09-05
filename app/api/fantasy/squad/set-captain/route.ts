@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       captain_player_id,
       vice_captain_player_id,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error setting captain/vice-captain:', error);
     return NextResponse.json(
       { error: 'Failed to set captain/vice-captain', details: error instanceof Error ? error.message : 'Unknown error' },

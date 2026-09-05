@@ -128,7 +128,7 @@ export async function GET(
           original_amount: originalAmount !== finalAmount ? originalAmount : undefined,
           from_tiebreaker: tiebreakerReplacements.has(replacementKey),
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Failed to decrypt bid ${bid.id}:`, error);
       }
     }
@@ -398,7 +398,7 @@ export async function GET(
         })),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating finalization preview:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

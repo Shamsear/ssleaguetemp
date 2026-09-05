@@ -107,7 +107,7 @@ export default function FantasyPointsBreakdownPage() {
                     setTournaments(data.tournaments || []);
                     setMaxRounds(data.maxRounds || 0);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching fantasy points breakdown:', error);
             } finally {
                 setIsLoading(false);

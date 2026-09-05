@@ -168,7 +168,7 @@ export default function RealPlayersPage() {
           const uniqueCats = Array.from(new Set(rawPlayers.map((p) => p.category).filter(Boolean))) as string[];
           setCategories(uniqueCats.sort());
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching players:', error);
       } finally {
         const elapsed = Date.now() - startTime;

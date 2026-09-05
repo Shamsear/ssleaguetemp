@@ -273,7 +273,7 @@ Continue?`;
                   <div className="space-y-3 max-h-[600px] overflow-y-auto">
                     {comparison.toUpdate
                       .slice((updatePage - 1) * itemsPerPage, updatePage * itemsPerPage)
-                      .map((player, idx) => (
+                      .map((player: any, idx: any) => (
                     <div key={idx} className="glass rounded-lg p-3 border border-orange-200 hover:shadow-md transition-shadow">
                       <div className="font-bold text-lg mb-2 text-gray-900 flex items-center gap-2">
                         <span className="text-orange-600"><RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
@@ -859,7 +859,7 @@ Continue?`;
                 <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {comparison.unchanged
                     .slice((unchangedPage - 1) * itemsPerPage, unchangedPage * itemsPerPage)
-                    .map((player, idx) => (
+                    .map((player: any, idx: any) => (
                     <div key={idx} className="glass rounded-xl p-3 border border-gray-200 flex justify-between items-center">
                       <div>
                         <div className="font-bold text-lg text-gray-900">
@@ -936,7 +936,7 @@ Continue?`;
                 <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {comparison.notFoundInNew
                     .slice((notFoundPage - 1) * itemsPerPage, notFoundPage * itemsPerPage)
-                    .map((player, idx) => (
+                    .map((player: any, idx: any) => (
                     <div key={idx} className="glass rounded-xl p-3 border border-red-200 flex justify-between items-center">
                       <div>
                         <div className="font-bold text-lg text-gray-900">

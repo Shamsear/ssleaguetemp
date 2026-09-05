@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     `;
 
     return NextResponse.json({ fixtures });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching season fixtures:', error);
     return NextResponse.json(
       { error: 'Failed to fetch fixtures' },
@@ -113,7 +113,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'All fixtures, matchups, and round deadlines deleted successfully' 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting season fixtures:', error);
     return NextResponse.json(
       { error: 'Failed to delete fixtures' },

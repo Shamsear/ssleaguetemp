@@ -36,7 +36,7 @@ describe('POST /api/fantasy/trades/propose', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     // Mock database queries
@@ -96,7 +96,7 @@ describe('POST /api/fantasy/trades/propose', () => {
   it('should reject unauthenticated requests', async () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: false,
-      userId: null,
+      userId: undefined,
       error: 'Unauthorized'
     });
 
@@ -127,7 +127,7 @@ describe('POST /api/fantasy/trades/propose', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     const request = new NextRequest('http://localhost:3000/api/fantasy/trades/propose', {
@@ -152,7 +152,7 @@ describe('POST /api/fantasy/trades/propose', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     const request = new NextRequest('http://localhost:3000/api/fantasy/trades/propose', {
@@ -182,7 +182,7 @@ describe('POST /api/fantasy/trades/propose', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: 'different_user',
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -219,7 +219,7 @@ describe('POST /api/fantasy/trades/propose', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql)
@@ -274,7 +274,7 @@ describe('GET /api/fantasy/trades/propose', () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: true,
       userId: mockUserId,
-      error: null
+      error: undefined
     });
 
     vi.mocked(fantasySql).mockResolvedValueOnce([{
@@ -316,7 +316,7 @@ describe('GET /api/fantasy/trades/propose', () => {
   it('should reject unauthenticated preview requests', async () => {
     vi.mocked(verifyAuth).mockResolvedValue({
       authenticated: false,
-      userId: null,
+      userId: undefined,
       error: 'Unauthorized'
     });
 

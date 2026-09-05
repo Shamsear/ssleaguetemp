@@ -177,7 +177,7 @@ async function getTeamPlayers(teamId: string, seasonId: string) {
       player_id: doc.data().player_id,
       player_name: doc.data().player_name,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching players for team ${teamId}:`, error);
     return [];
   }

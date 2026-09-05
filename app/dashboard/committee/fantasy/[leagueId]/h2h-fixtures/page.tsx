@@ -42,7 +42,7 @@ export default function H2HFixturesPage() {
       if (data.success) {
         setFixtures(data.fixtures || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading fixtures:', err);
     }
   };

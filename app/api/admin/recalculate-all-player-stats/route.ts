@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         if (doc.id) categoriesMap.set(doc.id.toLowerCase(), data);
         if (data.name) categoriesMap.set(data.name.toLowerCase(), data);
       });
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Could not load categories, using default category rules:', err);
     }
 

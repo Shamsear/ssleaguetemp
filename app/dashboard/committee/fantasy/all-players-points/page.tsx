@@ -202,7 +202,7 @@ export default function CommitteeAllPlayersPointsPage() {
             // Draft settings not available
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading leagues:', error);
       } finally {
         setLeagueLoading(false);
@@ -258,7 +258,7 @@ export default function CommitteeAllPlayersPointsPage() {
       setTotalAll(data.total_players || 0);
       setTotalAvailable(data.available_players || 0);
       setTotalDrafted(data.drafted_players || 0);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading players:', error);
     } finally {
       setPlayersLoading(false);

@@ -97,7 +97,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
         }
 
         setPlayers(loadedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {
@@ -181,7 +181,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
               }
             }));
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error fetching transfer limit:', error);
           // Don't show error to user, just log it
         }
@@ -223,7 +223,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
               [teamId]: result.data.balance
             }));
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error fetching team balance:', error);
           // Don't show error to user, just log it
         }

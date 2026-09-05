@@ -83,7 +83,7 @@ export default function BudgetPlannerPage() {
             footballTotalSlots: stats.football_total_slots || ss.max_football_players || 25,
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching budget:', err);
       } finally {
         setIsLoadingBudget(false);

@@ -128,7 +128,7 @@ export default function CommitteeRequestsPage() {
           setSelectedWindow('all');
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching windows:', err);
     }
   };
@@ -152,7 +152,7 @@ export default function CommitteeRequestsPage() {
         const swapData = await swapRes.json();
         setSwapRequests(swapData.data || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching requests:', error);
       setError('Failed to fetch pending requests');
     } finally {

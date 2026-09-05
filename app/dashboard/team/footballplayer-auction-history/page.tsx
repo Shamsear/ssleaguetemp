@@ -100,7 +100,7 @@ export default function FootballPlayerAuctionHistoryPage() {
           setSelectedSeason(seasonsList[0].id);
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching seasons:', error);
       } finally {
         setIsLoadingSeasons(false);
@@ -147,7 +147,7 @@ export default function FootballPlayerAuctionHistoryPage() {
           console.error('Failed to fetch auction history:', result.error, result.details);
           setRounds([]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching auction history:', error);
         setRounds([]);
       } finally {
@@ -322,7 +322,7 @@ export default function FootballPlayerAuctionHistoryPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Export error:', error);
       alert('Failed to export data. Please try again.');
     } finally {

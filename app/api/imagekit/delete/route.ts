@@ -23,7 +23,7 @@ export async function DELETE(request: NextRequest) {
     await imagekit.deleteFile(fileId);
     
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('ImageKit delete error:', error);
     return NextResponse.json(
       { error: 'Failed to delete file' },

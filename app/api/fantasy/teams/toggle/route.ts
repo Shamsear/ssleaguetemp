@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         fantasy_participating: enable,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error toggling fantasy for team:', error);
     return NextResponse.json(
       {

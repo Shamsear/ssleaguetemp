@@ -106,7 +106,7 @@ export async function GET(
         },
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching pending allocations:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
@@ -237,7 +237,7 @@ export async function DELETE(
         round_status: 'expired_pending_finalization',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error canceling pending allocations:', error);
     console.error('📋 Audit: Failed to cancel pending allocations:', error instanceof Error ? error.message : 'Unknown error');
     

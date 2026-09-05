@@ -1,0 +1,130 @@
+app/api/fantasy/challenges/route.ts(41,9): error TS7034: Variable 'completions' implicitly has type 'any[]' in some locations where its type cannot be determined.
+app/api/fantasy/challenges/route.ts(51,7): error TS7005: Variable 'completions' implicitly has an 'any[]' type.
+app/api/fantasy/draft/all-bids/route.ts(201,68): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+app/api/fantasy/draft/all-bids/route.ts(202,47): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+app/api/fantasy/draft/tier-results/route.ts(132,11): error TS1117: An object literal cannot have multiple properties with the same name.
+app/api/fantasy/teams/enable-all/route.ts(233,53): error TS2339: Property 'team_name' does not exist on type '{ id: string; }'.
+app/api/fantasy/teams/enable-all/route.ts(237,26): error TS2339: Property 'team_name' does not exist on type '{ id: string; }'.
+app/api/fixtures/[fixtureId]/audit-log/route.ts(87,24): error TS7006: Parameter 'log' implicitly has an 'any' type.
+app/api/fixtures/[fixtureId]/lineup/route.ts(755,13): error TS7034: Variable 'formattedLineup' implicitly has type 'any[]' in some locations where its type cannot be determined.
+app/api/fixtures/[fixtureId]/lineup/route.ts(779,17): error TS7005: Variable 'formattedLineup' implicitly has an 'any[]' type.
+app/api/fixtures/fix-ids/route.ts(12,47): error TS2345: Argument of type 'CollectionReference<DocumentData, DocumentData>' is not assignable to parameter of type 'Query<unknown, DocumentData>'.
+app/api/knockout/generate/route.ts(45,13): error TS2322: Type 'number' is not assignable to type 'string'.
+app/api/knockout/generate/route.ts(46,13): error TS2322: Type 'string | null' is not assignable to type 'string'.
+app/api/lineups/auto-lock/route.ts(228,27): error TS2304: Cannot find name 'isModern'.
+app/api/news/route.ts(197,19): error TS2783: 'id' is specified more than once, so this usage will be overwritten.
+app/api/players/swap/route.ts(208,9): error TS2559: Type 'string' has no properties in common with type 'NotificationOptions'.
+app/api/players/swap/route.ts(233,9): error TS2559: Type 'string' has no properties in common with type 'NotificationOptions'.
+app/api/players/transfer/route.ts(177,9): error TS2559: Type 'string' has no properties in common with type 'NotificationOptions'.
+app/api/realplayers/revert-fixture-points/route.ts(203,75): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+app/api/realplayers/revert-fixture-points/route.ts(250,34): error TS2304: Cannot find name 'mainSql'.
+app/api/realplayers/revert-fixture-points/route.ts(269,13): error TS2304: Cannot find name 'mainSql'.
+app/api/realplayers/update-points/route.ts(280,63): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+app/api/realplayers/update-points/route.ts(397,63): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+app/api/register/player/delete/route.ts(165,87): error TS2339: Property 'player_name' does not exist on type 'never'.
+app/api/register/player/delete/route.ts(172,39): error TS2339: Property 'player_id' does not exist on type 'never'.
+app/api/register/player/delete/route.ts(173,41): error TS2339: Property 'player_name' does not exist on type 'never'.
+app/api/register/player/delete/route.ts(174,47): error TS2339: Property 'registration_date' does not exist on type 'never'.
+app/api/reports/cash-balances/route.ts(160,47): error TS2339: Property 'is_registered' does not exist on type '{ team_id: string; team_name: string; team_logo: string; }'.
+app/api/reports/cash-balances/route.ts(199,30): error TS7006: Parameter 'sid' implicitly has an 'any' type.
+app/api/reports/cash-balances/route.ts(228,45): error TS7006: Parameter 'sid' implicitly has an 'any' type.
+app/api/rounds/[id]/route.ts(34,9): error TS7034: Variable 'roundPlayers' implicitly has type 'any[]' in some locations where its type cannot be determined.
+app/api/rounds/[id]/route.ts(227,9): error TS7005: Variable 'roundPlayers' implicitly has an 'any[]' type.
+app/api/rounds/[id]/route.ts(571,15): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ player_id: string; player_name: string; action: "acquired" | "refunded"; price: number; }'.
+app/api/rounds/[id]/route.ts(577,15): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ new_balance: number; amount_spent?: number | undefined; amount_refunded?: number | undefined; currency_type: "single" | "football" | "basketball"; }'.
+app/api/rounds/[id]/route.ts(709,15): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ player_id: string; player_name: string; action: "acquired" | "refunded"; price: number; }'.
+app/api/rounds/[id]/route.ts(715,15): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ new_balance: number; amount_spent?: number | undefined; amount_refunded?: number | undefined; currency_type: "single" | "football" | "basketball"; }'.
+app/api/seasons/historical/[id]/parse/route.ts(136,18): error TS2339: Property 'SheetNames' does not exist on type 'Workbook'.
+app/api/seasons/historical/[id]/parse/route.ts(151,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+app/api/seasons/historical/[id]/parse/route.ts(155,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+app/api/seasons/historical/[id]/parse/route.ts(160,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(161,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(162,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(163,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(164,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(165,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(166,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(167,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(168,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(169,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/[id]/parse/route.ts(195,18): error TS2339: Property 'SheetNames' does not exist on type 'Workbook'.
+app/api/seasons/historical/[id]/parse/route.ts(225,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+app/api/seasons/historical/[id]/parse/route.ts(226,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+app/api/seasons/historical/[id]/parse/route.ts(227,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+app/api/seasons/historical/[id]/parse/route.ts(228,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(229,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(230,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(231,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(232,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(233,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(234,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(235,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number'.
+app/api/seasons/historical/[id]/parse/route.ts(236,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number'.
+app/api/seasons/historical/[id]/parse/route.ts(237,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number'.
+app/api/seasons/historical/[id]/parse/route.ts(238,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number'.
+app/api/seasons/historical/[id]/parse/route.ts(239,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | null'.
+app/api/seasons/historical/[id]/parse/route.ts(241,15): error TS2322: Type 'number | null | undefined' is not assignable to type 'number | undefined'.
+app/api/seasons/historical/import/route.ts(834,56): error TS18048: 'leaguePosition' is possibly 'undefined'.
+app/api/seasons/historical/import/route.ts(1077,59): error TS18048: 'positionNew' is possibly 'undefined'.
+app/api/seasons/list/route.ts(24,29): error TS2345: Argument of type '(seasonId: string) => void' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => void'.
+app/api/stats/players/route.ts(791,55): error TS2304: Cannot find name 'star_rating'.
+app/api/superadmin/player-stats-bulk-update/import/route.ts(25,30): error TS2345: Argument of type 'Buffer<ArrayBuffer>' is not assignable to parameter of type 'Buffer'.
+app/api/superadmin/player-stats-bulk-update/preview/route.ts(24,30): error TS2345: Argument of type 'Buffer<ArrayBuffer>' is not assignable to parameter of type 'Buffer'.
+app/api/team/purchase-football-slots/route.ts(115,13): error TS2349: This expression is not callable.
+app/api/team/purchase-football-slots/route.ts(124,13): error TS2349: This expression is not callable.
+app/api/teams/[id]/statistics/route.ts(23,19): error TS2304: Cannot find name 'getMainDb'.
+app/api/teams/[id]/statistics/route.ts(220,21): error TS2304: Cannot find name 'getMainDb'.
+app/api/teams/[id]/statistics/route.ts(223,23): error TS2538: Type 'unknown' cannot be used as an index type.
+app/api/teams/[id]/statistics/route.ts(452,19): error TS2304: Cannot find name 'getMainDb'.
+app/api/teams/generate-id/route.ts(14,21): error TS2769: No overload matches this call.
+app/api/teams/route.ts(134,57): error TS18046: 'statsError' is of type 'unknown'.
+app/api/telegram/email-requests/[id]/route.ts(129,122): error TS2304: Cannot find name 'contractId'.
+app/api/tiebreakers/[id]/submit/route.ts(270,11): error TS2554: Expected 3 arguments, but got 2.
+app/api/tournaments/[id]/fixtures/route.ts(249,13): error TS2322: Type 'number' is not assignable to type 'string'.
+app/api/tournaments/[id]/standings/route.ts(47,21): error TS2304: Cannot find name 'getMainDb'.
+app/api/upload-award-image/route.ts(57,29): error TS2339: Property 'url' does not exist on type 'FileObject | FolderObject'.
+app/api/upload-award-image/route.ts(58,32): error TS2339: Property 'fileId' does not exist on type 'FileObject | FolderObject'.
+app/dashboard/committee/all-transactions/page.tsx(159,30): error TS2304: Cannot find name 'doc'.
+app/dashboard/committee/all-transactions/page.tsx(160,30): error TS2304: Cannot find name 'doc'.
+app/dashboard/committee/all-transactions/page.tsx(162,17): error TS2304: Cannot find name 'doc'.
+app/dashboard/committee/all-transactions/page.tsx(163,16): error TS2304: Cannot find name 'doc'.
+app/dashboard/committee/all-transactions/page.tsx(422,7): error TS2304: Cannot find name 'snapshot'.
+app/dashboard/committee/all-transactions/page.tsx(625,7): error TS2304: Cannot find name 'snapshot'.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(986,41): error TS18048: 'round.roundPlayers' is possibly 'undefined'.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(989,81): error TS7006: Parameter 's' implicitly has an 'any' type.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(1041,23): error TS18048: 'round.roundPlayers' is possibly 'undefined'.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(1062,32): error TS7006: Parameter 'name' implicitly has an 'any' type.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(1551,41): error TS7006: Parameter 'sub' implicitly has an 'any' type.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(1551,46): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(1822,49): error TS7006: Parameter 'sub' implicitly has an 'any' type.
+app/dashboard/committee/bulk-rounds/[id]/page.tsx(1822,54): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+app/dashboard/committee/database/balance-audit/page.tsx(63,53): error TS2367: This comparison appears to be unintentional because the types '"team" | "super_admin"' and '"admin"' have no overlap.
+app/dashboard/committee/database/import-progress/page.tsx(145,67): error TS7006: Parameter 'p' implicitly has an 'any' type.
+app/dashboard/committee/database/retired/page.tsx(511,62): error TS2339: Property 'thumbnail' does not exist on type '{ loading: boolean; retired: boolean | null; summary?: string | undefined; url?: string | undefined; }'.
+app/dashboard/committee/database/retired/page.tsx(513,70): error TS2339: Property 'thumbnail' does not exist on type '{ loading: boolean; retired: boolean | null; summary?: string | undefined; url?: string | undefined; }'.
+app/dashboard/committee/database/retired/page.tsx(531,62): error TS2339: Property 'thumbnail' does not exist on type '{ loading: boolean; retired: boolean | null; summary?: string | undefined; url?: string | undefined; }'.
+app/dashboard/committee/database/retired/page.tsx(533,70): error TS2339: Property 'thumbnail' does not exist on type '{ loading: boolean; retired: boolean | null; summary?: string | undefined; url?: string | undefined; }'.
+app/dashboard/committee/database/update-preview/page.tsx(86,48): error TS18047: 'comparison' is possibly 'null'.
+app/dashboard/committee/database/update-preview/page.tsx(97,13): error TS18047: 'comparison' is possibly 'null'.
+app/dashboard/committee/export-players/page.tsx(303,29): error TS2339: Property 'displayName' does not exist on type 'string'.
+app/dashboard/committee/export-players/page.tsx(303,51): error TS2339: Property 'name' does not exist on type 'string'.
+app/dashboard/committee/export-players/page.tsx(305,50): error TS2322: Type '"center"' is not assignable to type '"top" | "justify" | "distributed" | "middle" | "bottom" | undefined'.
+app/dashboard/committee/export-players/page.tsx(321,50): error TS2322: Type '"center"' is not assignable to type '"top" | "justify" | "distributed" | "middle" | "bottom" | undefined'.
+app/dashboard/committee/fantasy/[leagueId]/bonus-points/page.tsx(158,38): error TS2339: Property 'real_player_id' does not exist on type 'RealPlayer | PassiveTeam'.
+app/dashboard/committee/fantasy/[leagueId]/bonus-points/page.tsx(158,60): error TS2339: Property 'team_id' does not exist on type 'RealPlayer | PassiveTeam'.
+app/dashboard/committee/fantasy/[leagueId]/bonus-points/page.tsx(611,9): error TS2322: Type '(() => void) | undefined' is not assignable to type '() => void'.
+app/dashboard/committee/fantasy/[leagueId]/draft/process/page.tsx(371,29): error TS2339: Property 'slot_submissions' does not exist on type 'TeamSubmission'.
+app/dashboard/committee/fantasy/[leagueId]/draft/process/page.tsx(456,43): error TS2339: Property 'slot_submissions' does not exist on type 'TeamSubmission'.
+app/dashboard/committee/fantasy/[leagueId]/draft/process/page.tsx(803,46): error TS2339: Property 'slot_submissions' does not exist on type 'TeamSubmission'.
+app/dashboard/committee/fantasy/[leagueId]/draft/results/page.tsx(260,23): error TS7006: Parameter 'cell' implicitly has an 'any' type.
+app/dashboard/committee/fantasy/[leagueId]/draft/results/page.tsx(298,25): error TS7006: Parameter 'cell' implicitly has an 'any' type.
+app/dashboard/committee/fantasy/[leagueId]/draft/results/page.tsx(343,19): error TS18048: 'ws.lastRow' is possibly 'undefined'.
+app/dashboard/committee/fantasy/[leagueId]/draft/results/page.tsx(344,19): error TS18048: 'ws.lastRow' is possibly 'undefined'.
+app/dashboard/committee/fantasy/[leagueId]/draft/results/page.tsx(346,25): error TS7006: Parameter 'cell' implicitly has an 'any' type.
+app/dashboard/committee/fantasy/[leagueId]/draft/results/page.tsx(971,33): error TS7006: Parameter 'target' implicitly has an 'any' type.
+app/dashboard/committee/lineups/page.tsx(78,15): error TS2322: Type 'unknown[]' is not assignable to type 'number[]'.
+app/dashboard/committee/lineups/page.tsx(78,118): error TS2345: Argument of type '(a: number, b: number) => number' is not assignable to parameter of type '(a: unknown, b: unknown) => number'.
+app/dashboard/committee/players/transfers/BulkSwapForm.tsx(31,73): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | undefined'.
+app/dashboard/committee/players/transfers/BulkSwapForm.tsx(80,40): error TS2339: Property 'name' does not exist on type 'TeamSummary'.
+app/dashboard/committee/players/transfers/FootballPlayerForm.tsx(28,73): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | undefined'.
+app/dashboard/committee/players/transfers/FootballPlayerForm.tsx(86,40): error TS2339: Property 'name' does not exist on type 'TeamSummary'.

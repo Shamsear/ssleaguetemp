@@ -215,7 +215,7 @@ export default function MatchDayManagementPage() {
                   }
                 }
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error('Error fetching round deadlines for tournament:', tournament.id, error);
             }
 
@@ -232,7 +232,7 @@ export default function MatchDayManagementPage() {
         setRounds(allRounds);
         console.log('Loaded rounds from tournaments:', allRounds.length);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading rounds:', error);
     } finally {
       setIsLoading(false);

@@ -136,7 +136,7 @@ export async function DELETE(
       success: true,
       message: 'Bid deleted successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error cancelling bid:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

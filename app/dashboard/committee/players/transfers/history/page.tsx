@@ -131,7 +131,7 @@ export default function TransferHistoryPage() {
           setTeams(teamsData.data.teams);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading initial data:', error);
     }
   };
@@ -169,7 +169,7 @@ export default function TransferHistoryPage() {
         throw new Error(result.error || 'Failed to fetch transfer history');
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading transactions:', error);
     } finally {
       setIsLoading(false);
@@ -300,7 +300,7 @@ export default function TransferHistoryPage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Season</label>
               <select
                 value={selectedSeason}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   setSelectedSeason(e.target.value);
                   setCurrentPage(0);
                 }}
@@ -318,7 +318,7 @@ export default function TransferHistoryPage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Team</label>
               <select
                 value={selectedTeamId}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   setSelectedTeamId(e.target.value);
                   setCurrentPage(0);
                 }}
@@ -336,7 +336,7 @@ export default function TransferHistoryPage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Transaction Type</label>
               <select
                 value={selectedType}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   setSelectedType(e.target.value);
                   setCurrentPage(0);
                 }}
@@ -355,7 +355,7 @@ export default function TransferHistoryPage() {
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Player Type</label>
               <select
                 value={selectedPlayerType}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   setSelectedPlayerType(e.target.value);
                   setCurrentPage(0);
                 }}
@@ -378,7 +378,7 @@ export default function TransferHistoryPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {transactions.map((tx) => (
+            {transactions.map((tx: any) => (
               <div key={tx.id} className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
                 {/* Header bar */}
                 <div className="bg-slate-800 text-white px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider">
@@ -499,7 +499,7 @@ export default function TransferHistoryPage() {
                             )}
                             <p>Team: {tx.teams?.team_a_id}</p>
                             {tx.teams?.team_a_pays > 0 && (
-                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams.team_a_pays?.toLocaleString()}</p>
+                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams?.team_a_pays?.toLocaleString()}</p>
                             )}
                           </div>
                         </div>
@@ -516,7 +516,7 @@ export default function TransferHistoryPage() {
                             )}
                             <p>Team: {tx.teams?.team_b_id}</p>
                             {tx.teams?.team_b_pays > 0 && (
-                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams.team_b_pays?.toLocaleString()}</p>
+                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams?.team_b_pays?.toLocaleString()}</p>
                             )}
                           </div>
                         </div>

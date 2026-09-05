@@ -89,7 +89,7 @@ export default function FootballPlayerForm() {
         }
 
         setPlayers(loadedPlayers);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading players:', error);
         setError('Failed to load players');
       } finally {
@@ -169,7 +169,7 @@ export default function FootballPlayerForm() {
               [teamId]: result.data
             }));
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error fetching swap limits:', error);
         }
       }

@@ -209,7 +209,7 @@ export default function TeamBulkTiebreakerPage() {
         console.error('[ERROR] API returned error:', result);
         setFetchError(result.error || 'Failed to load tiebreaker data');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[ERROR] Error fetching data:', err);
       setFetchError('An unexpected error occurred');
     } finally {
@@ -386,7 +386,7 @@ export default function TeamBulkTiebreakerPage() {
       // ⚡ NO MODAL - Silent success for faster bidding
       // WebSocket will handle real-time updates from other bidders
       // No need to refetch - optimistic update is already done
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error placing bid:', err);
       
       // Always rollback optimistic update first
@@ -496,7 +496,7 @@ export default function TeamBulkTiebreakerPage() {
         // Redirect after showing message
         setTimeout(() => router.push('/dashboard/team'), 2000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error withdrawing:', err);
       showAlert({
         type: 'error',

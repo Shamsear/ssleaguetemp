@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
         budget_remaining: newBudget,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error making transfer:', error);
     return NextResponse.json(
       { error: 'Failed to complete transfer', details: error instanceof Error ? error.message : 'Unknown error' },

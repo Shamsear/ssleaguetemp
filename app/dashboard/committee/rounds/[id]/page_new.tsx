@@ -76,7 +76,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
         if (success) {
           setRound(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching round:', err);
       } finally {
         setIsLoading(false);
@@ -103,7 +103,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
           const available = data.filter((p: any) => !currentPlayerIds.includes(p.id));
           setAvailablePlayers(available);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching players:', err);
       }
     };
@@ -130,7 +130,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
         setRound({ ...round, ...data });
         alert(`Round status updated to ${newStatus}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating status:', err);
       alert('Failed to update status');
     }
@@ -158,7 +158,7 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
         alert('Round deleted successfully');
         router.push('/dashboard/committee/rounds');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting round:', err);
       alert('Failed to delete round');
     }

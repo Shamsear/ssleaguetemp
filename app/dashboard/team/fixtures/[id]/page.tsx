@@ -113,7 +113,7 @@ export default function FixtureManagementPage() {
       // Load team players
       await loadTeamPlayers(matchObj.home_team_id, matchObj.away_team_id);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading match data:', error);
       setError('Failed to load match data');
     } finally {
@@ -208,7 +208,7 @@ export default function FixtureManagementPage() {
       }));
 
       setMatchups(matchupsList);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading matchups:', error);
     }
   };
@@ -243,7 +243,7 @@ export default function FixtureManagementPage() {
         const awayPlayers = await loadPlayers(awayPlayerIds);
         setAwayPlayers(awayPlayers);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading team players:', error);
     }
   };
@@ -271,7 +271,7 @@ export default function FixtureManagementPage() {
             categoryPriority: categoryData.priority,
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading player:', error);
       }
     }
@@ -324,7 +324,7 @@ export default function FixtureManagementPage() {
       setSuccess('Matchups created successfully!');
       await loadMatchups(matchId);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating matchups:', error);
       setError('Failed to create matchups');
     } finally {
@@ -386,7 +386,7 @@ export default function FixtureManagementPage() {
       setSuccess('Results saved successfully!');
       await loadMatchData();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving results:', error);
       setError('Failed to save results');
     } finally {
