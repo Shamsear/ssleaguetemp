@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 
-let hf: ReturnType<typeof import('@huggingface/inference').HfInference> | null = null;
+let hf: any = null;
 
 async function getHf() {
   if (!hf) {
@@ -404,11 +404,9 @@ export async function generateNewsImage(
   metadata: Record<string, any>,
   newsId: string
 ): Promise<string | null> {
+  const prompt = generateSDXLPrompt(eventType, metadata);
   try {
     console.log('🎨 Generating image with Pollinations.ai (free alternative)...');
-
-    // Generate prompt with text instructions
-    const prompt = generateSDXLPrompt(eventType, metadata);
     
     // Use Pollinations.ai instead of Hugging Face
     const imageUrl = generateImageWithPollinations(prompt);

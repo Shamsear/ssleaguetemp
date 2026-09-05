@@ -110,7 +110,7 @@ describe('H2H Points Calculator - Unit Tests', () => {
 
   test('should calculate standings updates correctly for a win', () => {
     // Simulate a win
-    const h2hPoints = 3;
+    const h2hPoints: number = 3;
     const pointsFor = 90.0;
     const pointsAgainst = 70.0;
 
@@ -140,7 +140,7 @@ describe('H2H Points Calculator - Unit Tests', () => {
 
   test('should calculate standings updates correctly for a draw', () => {
     // Simulate a draw
-    const h2hPoints = 1;
+    const h2hPoints: number = 1;
     const pointsFor = 80.0;
     const pointsAgainst = 80.0;
 
@@ -170,7 +170,7 @@ describe('H2H Points Calculator - Unit Tests', () => {
 
   test('should calculate standings updates correctly for a loss', () => {
     // Simulate a loss
-    const h2hPoints = 0;
+    const h2hPoints: number = 0;
     const pointsFor = 65.0;
     const pointsAgainst = 90.0;
 

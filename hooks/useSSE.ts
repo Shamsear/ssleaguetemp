@@ -87,7 +87,7 @@ export function useSSE<T = any>(
       }
     });
 
-    es.addEventListener('error', (event) => {
+    es.addEventListener('error', (event: any) => {
       try {
         const payload = JSON.parse(event.data);
         setError(payload.error || 'Connection error');

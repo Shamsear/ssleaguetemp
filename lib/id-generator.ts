@@ -24,17 +24,18 @@ async function getNextCounter(tableName: string, idColumn: string = 'id'): Promi
       result = await sql.unsafe(`SELECT ${idColumn} FROM ${tableName} ORDER BY created_at DESC`);
     }
     
-    if (!result || result.length === 0) {
+    const rows = (result as any[]) || [];
+    if (rows.length === 0) {
       console.log(`🆕 No existing ${tableName} found, starting from 1`);
       return 1; // First ID
     }
     
-    console.log(`🔍 Found ${result.length} ${tableName} records`);
+    console.log(`🔍 Found ${rows.length} ${tableName} records`);
     
     // Find the maximum counter from all IDs
     let maxCounter = 0;
     
-    for (const row of result) {
+    for (const row of rows) {
       if (!row || typeof row !== 'object') {
         continue;
       }

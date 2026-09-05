@@ -793,7 +793,7 @@ export async function swapPlayersNeon(
     
     return {
       success: true,
-      fee_paid_to: feePaidTo,
+      fee_paid_to: feePaidTo || undefined,
       fee_amount: Math.abs(feeAmount),
       message: `Swap completed successfully. ${feeMessage}`
     };

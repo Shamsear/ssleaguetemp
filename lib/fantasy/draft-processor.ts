@@ -254,19 +254,19 @@ async function processSingleTier(
   }
 
   // 2. Separate skipped bids
-  const skippedBids = allBids.filter(bid => bid.is_skip);
-  const activeBids = allBids.filter(bid => !bid.is_skip);
+  const skippedBids = allBids.filter((bid: any) => bid.is_skip);
+  const activeBids = allBids.filter((bid: any) => !bid.is_skip);
 
   result.skipped = skippedBids.length;
   console.log(`  📊 Total bids: ${allBids.length} (${activeBids.length} active, ${skippedBids.length} skipped)`);
 
   // 3. Mark skipped bids
   for (const bid of skippedBids) {
-    await updateBidStatus(bid.bid_id, 'skipped');
+    await updateBidStatus((bid as any).bid_id, 'skipped');
   }
 
   // 4. Filter valid bids (can afford + player not already awarded)
-  const validBids = activeBids.filter(bid => {
+  const validBids = activeBids.filter((bid: any) => {
     const budget = teamBudgets.get(bid.team_id) || 0;
     const canAfford = budget >= bid.bid_amount;
     const playerAvailable = !awardedPlayers.has(bid.player_id);
@@ -391,7 +391,7 @@ async function initializeTeamBudgets(leagueId: string): Promise<Map<string, numb
   `;
 
   const budgets = new Map<string, number>();
-  teams.forEach(team => {
+  teams.forEach((team: any) => {
     budgets.set(team.team_id, team.budget_remaining);
   });
 
@@ -594,7 +594,7 @@ export async function generateDraftReport(leagueId: string): Promise<{
       squad_size: team.squad_size,
       budget_spent: team.budget_spent,
       budget_remaining: team.budget_remaining,
-      players: squad.map(p => ({
+      players: squad.map((p: any) => ({
         player_name: p.player_name,
         position: p.position,
         purchase_price: p.purchase_price,

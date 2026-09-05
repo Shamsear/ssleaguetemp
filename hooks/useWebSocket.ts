@@ -39,13 +39,13 @@ export function useDashboardWebSocket(seasonId: string | null, teamId: string | 
       // Listen to squad updates
       unsubSquads = listenToSquadUpdates(seasonId, (event: SquadUpdateEvent) => {
         console.log('📦 [Squad Update] Received:', event);
-        invalidateSquadCaches(queryClient, seasonId, event.team_id);
+        invalidateSquadCaches(queryClient, event.team_id);
       });
 
       // Listen to wallet updates
       unsubWallets = listenToWalletUpdates(seasonId, (event: WalletUpdateEvent) => {
         console.log('💰 [Wallet Update] Received:', event);
-        invalidateWalletCaches(queryClient, seasonId, event.team_id);
+        invalidateWalletCaches(queryClient, event.team_id);
       });
 
       // Listen to round updates (new rounds, status changes)
@@ -55,7 +55,7 @@ export function useDashboardWebSocket(seasonId: string | null, teamId: string | 
       if (realtimeDb) {
         const seasonRoundsRef = ref(realtimeDb, `seasons/${seasonId}/rounds`);
         
-        unsubRounds = onValue(seasonRoundsRef, (snapshot) => {
+        unsubRounds = onValue(seasonRoundsRef, (snapshot: any) => {
           const data = snapshot.val();
           if (data) {
             console.log('🎯 [Round Update] Received for season:', seasonId);
@@ -144,7 +144,7 @@ export function useAuctionWebSocket(roundId: string | null, enabled: boolean = t
       if (realtimeDb) {
         const roundRef = ref(realtimeDb, `rounds/${roundId}`);
         
-        unsubscribe = onValue(roundRef, (snapshot) => {
+        unsubscribe = onValue(roundRef, (snapshot: any) => {
           const data = snapshot.val();
           if (data) {
             console.log('📊 [Round Update] Received:', data);
@@ -209,7 +209,7 @@ export function useWebSocket(options: {
         
         // onChildAdded fires for each new child added to the channel
         // This is perfect for .push() broadcasts which create new child nodes
-        unsubscribe = onChildAdded(channelRef, (snapshot) => {
+        unsubscribe = onChildAdded(channelRef, (snapshot: any) => {
           const data = snapshot.val();
           if (data) {
             console.log('📨 [Channel Update] New message:', data);

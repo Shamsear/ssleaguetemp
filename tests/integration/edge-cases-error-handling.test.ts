@@ -54,6 +54,7 @@ interface WorkflowSimulator {
   cancelPendingAllocations: (roundId: string) => void;
   manuallyReduceBudget: (teamId: string, newBudget: number) => void;
   createTiedBids: (roundId: string, bids: any[]) => void;
+  detectTiedBids: (bids: any[]) => any[];
   acquireLock: (roundId: string, userId: string) => boolean;
   releaseLock: (roundId: string, userId: string) => void;
 }

@@ -40,7 +40,7 @@ async function run() {
       AND r.status IN ('active', 'closed', 'completed')
     ON CONFLICT (team_id, league_id, slot_index) DO NOTHING
   `;
-  console.log(`   ✅ Backfill complete (${backfilled.count || 0} rows)\n`);
+  console.log(`   ✅ Backfill complete (${(backfilled as any).count || 0} rows)\n`);
 
   // Verify
   const count = await sql`SELECT COUNT(*)::int as cnt FROM fantasy_slot_submissions`;

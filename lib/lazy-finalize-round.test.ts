@@ -50,14 +50,15 @@ describe('checkAndFinalizeExpiredRound', () => {
       // Mock finalization success
       vi.mocked(finalizeRound.finalizeRound).mockResolvedValueOnce({
         success: true,
+        tieDetected: false,
         allocations: [
           {
-            teamId: 'team1',
-            teamName: 'Team 1',
-            playerId: 'player1',
-            playerName: 'Player 1',
+            team_id: 'team1',
+            team_name: 'Team 1',
+            player_id: 'player1',
+            player_name: 'Player 1',
             amount: 100,
-            bidId: 'bid1',
+            bid_id: 'bid1',
             phase: 'regular',
           },
         ],
@@ -342,6 +343,7 @@ describe('checkAndFinalizeExpiredRound', () => {
       // Mock tiebreaker detection
       vi.mocked(finalizeRound.finalizeRound).mockResolvedValueOnce({
         success: false,
+        allocations: [],
         tieDetected: true,
         tiebreakerId: 'tiebreaker123',
       });
@@ -380,6 +382,7 @@ describe('checkAndFinalizeExpiredRound', () => {
       // Mock finalization success
       vi.mocked(finalizeRound.finalizeRound).mockResolvedValueOnce({
         success: true,
+        tieDetected: false,
         allocations: [],
       });
       

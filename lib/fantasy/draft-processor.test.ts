@@ -4,7 +4,7 @@
  * Comprehensive tests for tier-by-tier draft processing
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach, vi as jest } from 'vitest';
 import {
   processDraftTiers,
   generateDraftReport,
@@ -19,7 +19,7 @@ jest.mock('@/lib/neon/fantasy-config', () => ({
   fantasySql: jest.fn()
 }));
 
-const mockFantasySql = fantasySql as jest.MockedFunction<typeof fantasySql>;
+const mockFantasySql = fantasySql as any;
 
 describe('Draft Processor', () => {
   beforeEach(() => {

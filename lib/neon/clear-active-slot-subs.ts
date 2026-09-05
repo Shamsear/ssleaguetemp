@@ -12,7 +12,7 @@ async function run() {
 
   for (const r of active) {
     const removed = await sql`DELETE FROM fantasy_slot_submissions WHERE slot_index = ${r.slot_index}`;
-    console.log(`  Cleared slot ${r.slot_index} (${r.slot_name}): ${removed.count} entries removed`);
+    console.log(`  Cleared slot ${r.slot_index} (${r.slot_name}): ${(removed as any).count ?? removed.length} entries removed`);
   }
 
   // Show remaining

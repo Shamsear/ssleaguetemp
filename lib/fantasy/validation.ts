@@ -45,10 +45,10 @@ export type RemovePlayerQuery = z.infer<typeof RemovePlayerQuerySchema>;
  * Generic validation helper
  * Validates request data against a Zod schema
  */
-export async function validateRequest<T>(
+export function validateRequest<T>(
   schema: z.ZodSchema<T>,
   data: unknown
-): Promise<{ success: true; data: T } | { success: false; errors: z.ZodError }> {
+): { success: true; data: T } | { success: false; errors: z.ZodError } {
   try {
     const validated = schema.parse(data);
     return { success: true, data: validated };
@@ -104,7 +104,7 @@ export function formatValidationErrors(errors: z.ZodError): {
   return {
     error: 'Validation failed',
     code: 'VALIDATION_ERROR',
-    details: errors.errors.map(err => ({
+    details: (errors.issues || []).map((err: any) => ({
       field: err.path.join('.'),
       message: err.message,
     })),

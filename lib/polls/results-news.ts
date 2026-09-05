@@ -69,7 +69,7 @@ export async function generatePollResultsNews(pollId: string): Promise<string | 
     console.log('🎰 Generating poll results news for:', pollId);
     
     // Generate bilingual news
-    const bilingualResult = await generateBilingualNews(newsInput);
+    const bilingualResult = await generateBilingualNews(newsInput as any);
     
     // Save news to database
     const newsId = `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

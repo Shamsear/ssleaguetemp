@@ -31,8 +31,7 @@ describe('GET /api/fantasy/draft/my-results', () => {
   describe('Authentication', () => {
     it('should require authentication', async () => {
       vi.mocked(authHelper.verifyAuth).mockResolvedValue({
-        authenticated: false,
-        user: null
+        authenticated: false
       });
 
       const request = new NextRequest(
@@ -52,7 +51,8 @@ describe('GET /api/fantasy/draft/my-results', () => {
     beforeEach(() => {
       vi.mocked(authHelper.verifyAuth).mockResolvedValue({
         authenticated: true,
-        user: { uid: mockUserId }
+        userId: mockUserId,
+        uid: mockUserId
       });
     });
 
@@ -87,7 +87,8 @@ describe('GET /api/fantasy/draft/my-results', () => {
     beforeEach(() => {
       vi.mocked(authHelper.verifyAuth).mockResolvedValue({
         authenticated: true,
-        user: { uid: mockUserId }
+        userId: mockUserId,
+        uid: mockUserId
       });
     });
 
@@ -135,7 +136,8 @@ describe('GET /api/fantasy/draft/my-results', () => {
     beforeEach(() => {
       vi.mocked(authHelper.verifyAuth).mockResolvedValue({
         authenticated: true,
-        user: { uid: mockUserId }
+        userId: mockUserId,
+        uid: mockUserId
       });
     });
 
@@ -275,7 +277,8 @@ describe('GET /api/fantasy/draft/my-results', () => {
     beforeEach(() => {
       vi.mocked(authHelper.verifyAuth).mockResolvedValue({
         authenticated: true,
-        user: { uid: mockUserId }
+        userId: mockUserId,
+        uid: mockUserId
       });
     });
 

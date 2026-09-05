@@ -27,7 +27,7 @@ export function useAutoFinalize({
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Calculate time remaining
   useEffect(() => {

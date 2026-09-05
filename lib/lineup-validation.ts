@@ -146,7 +146,8 @@ export async function validateLineup(
           console.log('🔍 Category requirements ENABLED - validating...');
           
           // Validate each category requirement
-          for (const [categoryId, minCount] of Object.entries(categoryRequirements)) {
+          for (const [categoryId, minCountRaw] of Object.entries(categoryRequirements)) {
+            const minCount = Number(minCountRaw);
             const actualCount = categoryCounts[categoryId] || 0;
             console.log(`🔍 Checking category requirement:`, {
               categoryId,

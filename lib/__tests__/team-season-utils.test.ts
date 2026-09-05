@@ -3,6 +3,7 @@
  * Verifies backward compatibility with legacy data formats
  */
 
+import { describe, it, expect } from 'vitest';
 import {
   getTeamBudgets,
   getTeamSlots,

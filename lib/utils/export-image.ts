@@ -1,31 +1,94 @@
 import { toPng } from 'html-to-image';
 
+function blobToDataUrl(blob: Blob): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        resolve(null);
+      }
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
+
 /**
  * Preloads all <img> tags inside a DOM node and converts cross-origin images to base64 Data URLs.
- * This prevents html-to-image / toPng from failing due to CORS / canvas tainting.
+ * Uses a server-side proxy fallback (/api/image-proxy) if direct browser fetch fails due to CORS.
+ * This prevents html-to-image / toPng from failing or omitting logos/images when deployed on Vercel.
  */
 export async function inlineContainerImages(container: HTMLElement): Promise<void> {
   const images = Array.from(container.querySelectorAll('img'));
+  
+  // Wait for any images currently loading to finish or timeout
   await Promise.all(
     images.map(async (img) => {
-      if (!img.src || img.src.startsWith('data:')) return;
-      try {
-        const response = await fetch(img.src, { mode: 'cors' });
-        if (!response.ok) return;
-        const blob = await response.blob();
+      if (!img.complete && img.src && !img.src.startsWith('data:')) {
         await new Promise<void>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-              img.src = reader.result;
-            }
-            resolve();
-          };
-          reader.onerror = () => resolve();
-          reader.readAsDataURL(blob);
+          const onDone = () => resolve();
+          img.addEventListener('load', onDone, { once: true });
+          img.addEventListener('error', onDone, { once: true });
+          setTimeout(onDone, 1000);
         });
+      }
+    })
+  );
+
+  await Promise.all(
+    images.map(async (img) => {
+      const src = img.src;
+      if (!src || src.startsWith('data:')) return;
+
+      // 1. Try direct fetch
+      try {
+        const response = await fetch(src, { mode: 'cors' });
+        if (response.ok) {
+          const blob = await response.blob();
+          const dataUrl = await blobToDataUrl(blob);
+          if (dataUrl) {
+            img.src = dataUrl;
+            return;
+          }
+        }
+      } catch {
+        // Direct fetch failed (likely CORS error on external storage domain like Firebase or ImageKit)
+      }
+
+      // 2. Fallback: Proxy fetch via /api/image-proxy
+      try {
+        const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+        const response = await fetch(proxyUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          const dataUrl = await blobToDataUrl(blob);
+          if (dataUrl) {
+            img.src = dataUrl;
+            return;
+          }
+        }
       } catch (err) {
-        console.warn('Could not inline image for export:', img.src, err);
+        console.warn('Proxy fetch failed for image:', src, err);
+      }
+
+      // 3. Fallback: Try offscreen canvas conversion if image is loaded in DOM
+      try {
+        if (img.naturalWidth && img.naturalHeight) {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            img.src = dataUrl;
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Canvas conversion failed for image:', src, err);
       }
     })
   );

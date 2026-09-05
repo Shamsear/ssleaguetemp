@@ -142,7 +142,6 @@ export function FixturesSnapshot({
                           transform: `scale(${(match.homeTeam.team as any).logo_scale_square ?? 1})`,
                           transformOrigin: `${(match.homeTeam.team as any).logo_position_x_square ?? 50}% ${(match.homeTeam.team as any).logo_position_y_square ?? 50}%`,
                         }} 
-                        crossOrigin="anonymous" 
                       />
                     ) : (
                       <SoccerBallIcon className="w-6 h-6 text-slate-500" />
@@ -182,7 +181,6 @@ export function FixturesSnapshot({
                           transform: `scale(${(match.awayTeam.team as any).logo_scale_square ?? 1})`,
                           transformOrigin: `${(match.awayTeam.team as any).logo_position_x_square ?? 50}% ${(match.awayTeam.team as any).logo_position_y_square ?? 50}%`,
                         }} 
-                        crossOrigin="anonymous" 
                       />
                     ) : (
                       <SoccerBallIcon className="w-6 h-6 text-slate-500" />

@@ -204,7 +204,7 @@ async function getAvailablePlayers(
     `;
     const ownedPlayerIds = new Set(ownedPlayers.map((p: any) => p.real_player_id));
     
-    return players.filter(p => !ownedPlayerIds.has(p.real_player_id));
+    return players.filter((p: any) => !ownedPlayerIds.has(p.real_player_id));
   }
 }
 

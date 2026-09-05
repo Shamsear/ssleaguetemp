@@ -176,7 +176,9 @@ export async function awardSeasonTrophies(
           
           if (result.length > 0) {
             awards.push({
+              team_id: topTeam[0].team_id,
               team_name: topTeam[0].team_name,
+              trophy_type: 'special',
               trophy_name: `${fantasyLeague.league_name} Winner`,
               position: 1
             });
@@ -617,7 +619,7 @@ export async function previewSeasonTrophies(
         console.log(`   🔍 Knockout rounds: ${rounds.join(', ')}`);
         
         // Find the final
-        let finalRound = rounds.find((r: string) => r.toLowerCase().includes('final') && !r.toLowerCase().includes('semi'));
+        let finalRound = rounds.find((r: any) => r && String(r).toLowerCase().includes('final') && !String(r).toLowerCase().includes('semi'));
         if (!finalRound) finalRound = rounds.sort().pop();
         console.log(`   🏆 Final round: ${finalRound}`);
         
@@ -667,7 +669,7 @@ export async function previewSeasonTrophies(
         console.log(`   🔍 Knockout rounds: ${rounds.join(', ')}`);
         
         // Find the final
-        let finalRound = rounds.find((r: string) => r.toLowerCase().includes('final') && !r.toLowerCase().includes('semi'));
+        let finalRound = rounds.find((r: any) => r && String(r).toLowerCase().includes('final') && !String(r).toLowerCase().includes('semi'));
         if (!finalRound) finalRound = rounds.sort().pop();
         console.log(`   🏆 Final round: ${finalRound}`);
         
@@ -738,7 +740,7 @@ export async function previewSeasonTrophies(
         console.log(`   🔍 Knockout rounds: ${rounds.join(', ')}`);
         
         // Find the final
-        let finalRound = rounds.find((r: string) => r.toLowerCase().includes('final') && !r.toLowerCase().includes('semi'));
+        let finalRound = rounds.find((r: any) => r && String(r).toLowerCase().includes('final') && !String(r).toLowerCase().includes('semi'));
         if (!finalRound) finalRound = rounds.sort().pop();
         console.log(`   🏆 Final round: ${finalRound}`);
         

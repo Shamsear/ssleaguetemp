@@ -140,7 +140,6 @@ export function LeaderboardSnapshot({
                               src={row.seasonTeam.team.logoUrl}
                               alt={row.seasonTeam.team.name}
                               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              crossOrigin="anonymous" // CRITICAL FOR EXTERNAL IMAGES
                               loading="eager"
                             />
                           ) : (

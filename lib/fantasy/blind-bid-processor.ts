@@ -98,7 +98,7 @@ export async function processBlindBidDraft(leagueId: string): Promise<{
     const teamSquads = new Map<string, Set<string>>();
 
     // Initialize team budgets
-    allBids.forEach(bid => {
+    allBids.forEach((bid: any) => {
       if (!teamBudgets.has(bid.team_id)) {
         teamBudgets.set(bid.team_id, bid.current_budget);
         teamSquads.set(bid.team_id, new Set());

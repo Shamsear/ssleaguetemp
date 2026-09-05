@@ -77,7 +77,7 @@ describe('Finalization Real-time Updates', () => {
     });
 
     it('should handle missing allocations count gracefully', () => {
-      const mockMessage = {
+      const mockMessage: any = {
         event_type: 'finalization_complete',
         finalized: true,
         round_id: 'test-round-123',
@@ -89,7 +89,7 @@ describe('Finalization Real-time Updates', () => {
     });
 
     it('should not trigger on non-finalization events', () => {
-      const mockMessage = {
+      const mockMessage: any = {
         type: 'round_started',
         round_id: 'test-round-123',
         season_id: 'test-season-456',

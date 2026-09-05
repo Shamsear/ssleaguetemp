@@ -100,7 +100,7 @@ export async function getReplacementInfo(
   }
   
   // 4. Fetch the candidates
-  let roundPlayersResult;
+  let roundPlayersResult: any[] = [];
   
   if (round.round_type === 'bulk') {
     if (search && search.trim() !== '') {
@@ -368,7 +368,7 @@ export async function executePlayerReplacement(params: {
         }
         
         await logTransaction({
-          userId: teamOwnerUid,
+          user_id: teamOwnerUid,
           team_id: teamId,
           seasonId: seasonId,
           transaction_type: 'auction_win',
@@ -381,7 +381,7 @@ export async function executePlayerReplacement(params: {
             replacedPlayerId: originalPlayerId,
             replacedPlayerName: original.player_name
           }
-        });
+        } as any);
       }
     } catch (txnErr) {
       console.error('Failed to update transactions in Firestore:', txnErr);

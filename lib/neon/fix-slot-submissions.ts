@@ -26,7 +26,7 @@ async function run() {
             AND b.slot_index = ss.slot_index
         )
     `;
-    console.log(`  Cleaned slot ${r.slot_index} (${r.slot_name}): removed ${removed.count || 0} entries`);
+    console.log(`  Cleaned slot ${r.slot_index} (${r.slot_name}): removed ${(removed as any).count || 0} entries`);
   }
 
   // Show final state
