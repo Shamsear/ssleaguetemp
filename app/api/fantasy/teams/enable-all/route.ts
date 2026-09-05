@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all team IDs
-    const teamIds = teamSeasonsSnap.docs.map(doc => doc.data().team_id);
+    const teamIds = teamSeasonsSnap.docs.map((doc: any) => doc.data().team_id);
     console.log(`📋 Found ${teamIds.length} registered teams`);
 
     // Fetch team documents and update in batches
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const teamIds = teamSeasonsSnap.docs.map(doc => doc.data().team_id);
+    const teamIds = teamSeasonsSnap.docs.map((doc: any) => doc.data().team_id);
     console.log(`[Enable Teams] Found ${teamIds.length} registered teams: ${teamIds.join(', ')}`);
     
     const teams: { enabled: any[]; disabled: any[] } = {

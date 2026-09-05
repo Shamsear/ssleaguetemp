@@ -219,7 +219,7 @@ export async function GET(
       LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
       WHERE ft.league_id = ${league.league_id}
       GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.draft_submitted, ft.supported_team_id, ft.supported_team_name, ft.passive_points, ft.budget_remaining
-      ORDER BY ft.rank ASC NULLS LAST, ft.total_points DESC
+      ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
     `;
 
     // Get scoring rules (if table exists)
@@ -258,7 +258,7 @@ export async function GET(
         created_at: league.created_at,
         updated_at: league.updated_at,
       },
-      teams: teams.map(team => ({
+      teams: teams.map((team: any) => ({
         id: team.team_id,
         team_name: team.team_name,
         owner_name: team.owner_name,
@@ -271,7 +271,7 @@ export async function GET(
         passive_points: Number(team.passive_points) || 0,
         budget_remaining: Number(team.budget_remaining) || 0,
       })),
-      scoring_rules: scoringRules.map(rule => ({
+      scoring_rules: scoringRules.map((rule: any) => ({
         id: rule.id,
         rule_type: rule.rule_type,
         points_value: Number(rule.points_value) || 0,

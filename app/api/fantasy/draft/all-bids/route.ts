@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
       }));
 
       // Build all targets with win/loss status for preview
-      const allTargetResults = targets.map(t => {
+      const allTargetResults = targets.map((t: any) => {
         const isWinner = winningBids.some((w: any) => w.target_id === t.target_id);
         const winnerBid = winningBids.find((w: any) => w.target_id === t.target_id);
         return {

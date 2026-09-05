@@ -30,7 +30,7 @@ interface PlayerRelease {
 
 export default function BulkReleaseFootballPlayerForm() {
   const { user, userSeasonId } = usePermissions();
-  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId);
+  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId || undefined);
 
   // Form state
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
@@ -84,7 +84,7 @@ export default function BulkReleaseFootballPlayerForm() {
           loadedPlayers.forEach(player => {
             if (!player.team_name) {
               const team = cachedTeams.find(t => t.id === player.team_id);
-              player.team_name = team?.name || 'Unknown Team';
+              player.team_name = (team as any)?.name || (team as any)?.team_name || 'Unknown Team';
             }
           });
         }

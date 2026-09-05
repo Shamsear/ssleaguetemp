@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     let operationCount = 0;
 
     for (const doc of playersSnapshot.docs) {
-      const data = doc.data();
+      const data = (doc.data() || {}) as Record<string, any>;
       const fieldsToRemove: { [key: string]: any } = {};
       let hasFieldsToRemove = false;
 

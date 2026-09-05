@@ -530,7 +530,7 @@ export default function TeamSwapRequestPage() {
                       disabled={submitting}
                       label="Your Player"
                       placeholder="Search your roster..."
-                      color="amber"
+                      color="orange"
                       playerType="football"
                     />
 

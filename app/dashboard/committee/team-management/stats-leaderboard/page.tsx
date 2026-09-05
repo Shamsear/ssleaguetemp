@@ -60,80 +60,17 @@ export default function StatsLeaderboardPage() {
   
   // Use React Query hooks for stats from Neon - now tournament-aware
   const { data: playerStatsData, isLoading: playerStatsLoading } = usePlayerStats({
-    tournamentId: selectedTournamentId,
+    tournamentId: selectedTournamentId || undefined,
     seasonId: userSeasonId || '' // Fallback for backward compatibility
   });
   
   const { data: teamStatsData, isLoading: teamStatsLoading } = useTeamStats({
-    tournamentId: selectedTournamentId,
+    tournamentId: selectedTournamentId || undefined,
     seasonId: userSeasonId || '' // Fallback for backward compatibility
   });
 
   useEffect(() => {
-    const fetchStats = async () => {
-      if (!user || user.role !== 'committee_admin' || !userSeasonId) return;
-
-      try {
-        setIsLoading(true);
-
-        // Fetch all realplayers from Neon
-        const rpRes = await fetch('/api/realplayers');
-        const { data: rpRows } = await rpRes.json();
-        const playersTeamMap = new Map();
-        (rpRows || []).forEach((row: any) => {
-          if (row.player_id) {
-            playersTeamMap.set(row.player_id, row.team_name || 'Unassigned');
-          }
-        });
-        
-        // Player stats now come from React Query hook (Neon)
-        // Processing happens in separate useEffect
-
-        // Team stats now come from React Query hook (Neon)
-        
-        // Fetch all teams from Neon
-        const teamsRes = await fetch('/api/teams');
-        const { data: teamRows } = await teamsRes.json();
-        const teamsMap = new Map();
-        (teamRows || []).forEach((row: any) => {
-          teamsMap.set(row.id, row.team_name || 'Unknown Team');
-        });
-        
-        const teams: TeamStats[] = [];
-        teamStatsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          const wins = data.wins || 0;
-          const draws = data.draws || 0;
-          const points = (wins * 3) + (draws * 1);
-          
-          teams.push({
-            team_id: data.team_id,
-            team_name: teamsMap.get(data.team_id) || 'Unknown Team',
-            matches_played: data.matches_played || 0,
-            wins,
-            draws,
-            losses: data.losses || 0,
-            goals_for: data.goals_for || 0,
-            goals_against: data.goals_against || 0,
-            goal_difference: data.goal_difference || 0,
-            points,
-          });
-        });
-
-        // Sort by points, then goal difference, then goals for
-        teams.sort((a, b) => {
-          if (b.points !== a.points) return b.points - a.points;
-          if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
-          return b.goals_for - a.goals_for;
-        });
-
-        setTeamStats(teams);
-      } catch (error) {
-        console.error('Error fetching team names:', error);
-      }
-    };
-
-    fetchStats();
+    // Player and team stats are loaded via usePlayerStats and useTeamStats React Query hooks below
   }, [user, userSeasonId]);
 
   // Process player stats data from Neon when it arrives

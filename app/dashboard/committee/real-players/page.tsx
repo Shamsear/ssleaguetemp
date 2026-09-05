@@ -39,7 +39,6 @@ export default function RealPlayersPage() {
   const [currentSeason, setCurrentSeason] = useState<Season | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
 
-  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams();
   const [teamSeasons, setTeamSeasons] = useState<any[]>([]);
   const [loadingTeamSeasons, setLoadingTeamSeasons] = useState(true);
 
@@ -245,12 +244,14 @@ export default function RealPlayersPage() {
             const assignedPlayers = teamMap[teamId] || [];
 
             // Use dual currency system for real players
-            const originalBudget = teamSeason.initial_real_player_budget ||
+            const originalBudget = Number(
+              teamSeason.initial_real_player_budget ||
               teamSeason.real_player_budget_initial ||
               teamSeason.real_player_starting_balance ||
-              1000;
-            const currentBudget = teamSeason.real_player_budget ?? originalBudget;
-            const currentSpent = teamSeason.real_player_spent || 0;
+              1000
+            );
+            const currentBudget = Number(teamSeason.real_player_budget ?? originalBudget);
+            const currentSpent = Number(teamSeason.real_player_spent || 0);
 
             console.log(`Team ${teamSeason.team_name || teamSeason.team_code}: originalBudget=${originalBudget}, currentBudget=${currentBudget}, currentSpent=${currentSpent}`);
 
@@ -534,7 +535,7 @@ export default function RealPlayersPage() {
     if (!team) return;
 
     // Validate exact player count
-    const requiredPlayers = currentSeason?.required_real_players || currentSeason?.min_real_players || 5;
+    const requiredPlayers = currentSeason?.required_real_players || (currentSeason as any)?.min_real_players || 5;
 
     if (team.assignedPlayers.length !== requiredPlayers) {
       setError(`${team.name} must have exactly ${requiredPlayers} players (currently ${team.assignedPlayers.length})`);
@@ -600,7 +601,7 @@ export default function RealPlayersPage() {
     }
   };
 
-  if (loading || teamsLoading || loadingTeamSeasons) {
+  if (loading || loadingTeamSeasons) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center">
         <div className="text-center font-mono">
@@ -829,7 +830,7 @@ export default function RealPlayersPage() {
     normalizeStr(p.playerName).includes(normalizeStr(searchTerm))
   );
 
-  const minPlayers = currentSeason?.min_real_players || 5;
+  const minPlayers = (currentSeason as any)?.min_real_players || 5;
   const maxPlayers = minPlayers; // Max equals min for exact count
 
   return (
@@ -856,8 +857,16 @@ export default function RealPlayersPage() {
             </p>
           </div>
           
-          <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl border border-slate-700 shadow-sm shrink-0">
-            COMMITTEE ADMIN ONLY
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/dashboard/committee/real-players/swap"
+              className="inline-flex items-center px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all border border-purple-600"
+            >
+              <RefreshCw className="w-4 h-4 mr-1.5" /> Replace / Swap Player
+            </Link>
+            <div className="bg-slate-800 text-white font-mono font-bold text-xs uppercase tracking-wider px-3 py-2 rounded-xl border border-slate-700 shadow-sm">
+              COMMITTEE ADMIN ONLY
+            </div>
           </div>
         </div>
 
@@ -1555,15 +1564,24 @@ export default function RealPlayersPage() {
                                       </span>
                                     </div>
                                   </div>
-                                  <button
-                                    onClick={() => removePlayerFromTeam(team.id, player.id)}
-                                    className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
-                                    title="Remove player"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
+                                  <div className="flex items-center gap-1">
+                                    <Link
+                                      href={`/dashboard/committee/real-players/swap?teamId=${team.id}&playerId=${player.id}`}
+                                      className="p-1 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors border border-transparent hover:border-purple-200"
+                                      title="Replace / Swap Player"
+                                    >
+                                      <RefreshCw className="w-4 h-4" />
+                                    </Link>
+                                    <button
+                                      onClick={() => removePlayerFromTeam(team.id, player.id)}
+                                      className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                                      title="Remove player"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/50">
                                   <span className="text-[10px] text-slate-500 font-bold uppercase">Auction Bid:</span>
@@ -1598,7 +1616,7 @@ export default function RealPlayersPage() {
                           ) : (
                             <div
                               className="relative !overflow-visible"
-                              ref={(el) => dropdownRefs.current.set(team.id, el)}
+                              ref={(el) => { dropdownRefs.current.set(team.id, el); }}
                             >
                               <input
                                 type="text"

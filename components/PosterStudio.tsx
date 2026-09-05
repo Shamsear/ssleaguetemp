@@ -2,6 +2,7 @@
 
 import { useRef, useState, useMemo, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
+import { generateContainerPng } from '@/lib/utils/export-image';
 import { SinglePlayerDesign, TableDesign, TeamOfWeekDesign, TeamOfDayDesign } from './PosterDesigns';
 import { 
   BarChart2, 
@@ -581,14 +582,7 @@ export default function PosterStudio({
     setDownloading(true);
     
     try {
-      const dataUrl = await htmlToImage.toPng(posterRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: theme.bg[0],
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
+      const dataUrl = await generateContainerPng(posterRef.current);
 
       const blob = await (await fetch(dataUrl)).blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -616,14 +610,7 @@ export default function PosterStudio({
     setSharing(true);
     
     try {
-      const dataUrl = await htmlToImage.toPng(posterRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: theme.bg[0],
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
+      const dataUrl = await generateContainerPng(posterRef.current);
 
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], 'poster.png', { type: 'image/png' });
@@ -740,7 +727,7 @@ export default function PosterStudio({
         if (activeTheme === 'team-of-week' && teamOfWeekAward) {
           sourceUrl = customPlayerPhoto || teamOfWeekAward.player_photo || null;
         } else {
-          sourceUrl = customPlayerPhoto || (filteredPlayers.length > 0 ? (filteredPlayers[0].player_photo || filteredPlayers[0].photo_url) : null);
+          sourceUrl = customPlayerPhoto || (filteredPlayers.length > 0 ? (filteredPlayers[0].player_photo || filteredPlayers[0].photo_url || null) : null);
         }
       } else if (imageType === 'logo') {
         // For Team of Day, get the main team logo
@@ -749,7 +736,7 @@ export default function PosterStudio({
         } else if (activeTheme === 'team-of-week' && teamOfWeekAward) {
           sourceUrl = customTeamLogo || teamOfWeekAward.team_logo || null;
         } else {
-          sourceUrl = customTeamLogo || (filteredPlayers.length > 0 ? filteredPlayers[0].team_logo : null);
+          sourceUrl = customTeamLogo || (filteredPlayers.length > 0 ? (filteredPlayers[0].team_logo || null) : null);
         }
       } else if (imageType === 'home-logo') {
         // Home team logo for Team of Day

@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
       ORDER BY opens_at DESC
     `;
 
-    const windowMap = new Map(windows.map(w => [w.window_id, w.window_name]));
+    const windowMap = new Map(windows.map((w: any) => [w.window_id, w.window_name]));
 
     return NextResponse.json({
       success: true,
-      transfers: transfers.map(t => ({
+      transfers: transfers.map((t: any) => ({
         transfer_id: t.transfer_id,
         team_id: t.team_id,
         team_name: t.team_name,

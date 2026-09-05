@@ -75,7 +75,7 @@ function PollsListContent() {
             if (poll[mlField]) return poll[mlField] as string;
         }
         const enField = `${field}_en` as keyof Poll;
-        return (poll[enField] || poll[field] || '') as string;
+        return (poll[enField] || (poll as any)[field] || '') as string;
     };
 
     const formatClosesDate = (closesAt: string) => {

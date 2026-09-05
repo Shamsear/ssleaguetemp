@@ -6,6 +6,9 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { findMatches, MatchResult } from '@/lib/utils/fuzzyMatch';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft } from 'lucide-react';
+import AuthGuard from '@/components/auth/AuthGuard';
+
+const normalizeStr = (str: any) => String(str || '').toLowerCase().trim();
 
 interface TeamData {
   rank: number;
@@ -509,10 +512,10 @@ export default function PreviewHistoricalSeason() {
     }
   }, [players, uploadData]);
 
-  const handleTeamChange = useCallback((index: number, field: keyof TeamData, value: string) => {
+  const handleTeamChange = useCallback((index: number, field: keyof TeamData, value: any) => {
     const oldTeams = [...teams];
     const newTeams = [...teams];
-    newTeams[index][field] = value;
+    (newTeams[index] as any)[field] = value;
     setTeams(newTeams);
     
     // Save to localStorage to preserve linkings
@@ -537,7 +540,7 @@ export default function PreviewHistoricalSeason() {
     }
     
     // Re-check duplicates when team name changes (debounced)
-    if (field === 'team_name' && existingEntities) {
+    if ((field as string) === 'team_name' && existingEntities) {
       const timeoutId = setTimeout(() => loadExistingEntitiesAndCheckDuplicates(), 500);
       return () => clearTimeout(timeoutId);
     }
@@ -551,12 +554,12 @@ export default function PreviewHistoricalSeason() {
         field === 'total_matches' || field === 'total_points') {
       // Allow null/empty for optional fields
       if (value === '' || value === null) {
-        newPlayers[index][field] = null;
+        (newPlayers[index] as any)[field] = null;
       } else {
-        newPlayers[index][field] = typeof value === 'string' ? (parseFloat(value) || 0) : value;
+        (newPlayers[index] as any)[field] = typeof value === 'string' ? (parseFloat(value) || 0) : value;
       }
     } else {
-      newPlayers[index][field] = value;
+      (newPlayers[index] as any)[field] = value;
     }
     setPlayers(newPlayers);
     
@@ -897,9 +900,9 @@ export default function PreviewHistoricalSeason() {
             {uploadData && (
               <div className="mt-2 text-xs space-y-1 font-mono">
                 <div>
-                  <span className="font-bold text-amber-600">Season {uploadData.seasonInfo.seasonNumber}</span>
+                  <span className="font-bold text-amber-600">Season {(uploadData.seasonInfo as any).seasonNumber}</span>
                   <span className="mx-2 text-slate-300">•</span>
-                  <span className="text-slate-500">ID: SSPSLS{uploadData.seasonInfo.seasonNumber}</span>
+                  <span className="text-slate-500">ID: SSPSLS{(uploadData.seasonInfo as any).seasonNumber}</span>
                 </div>
                 <div className="text-[10px] text-slate-450">
                   📄 {uploadData.seasonInfo.fileName} ({(uploadData.seasonInfo.fileSize / 1024).toFixed(1)} KB)
@@ -2026,8 +2029,6 @@ export default function PreviewHistoricalSeason() {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-1">Ready to Import</h3>
               <p className="text-sm text-gray-600">Review your changes and start the import process</p>
-import { normalizeStr } from '@/lib/utils/normalizeStr';
-import AuthGuard from '@/components/auth/AuthGuard';
             </div>
             <div className="flex gap-3">
               <button

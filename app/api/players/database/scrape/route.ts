@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       process.env.SCRAPER_API_KEY || "12e89d3469aa5f5bb80cbba557ceec9b",
       process.env.BACKUP_SCRAPER_API_KEY || "c042d3b9be6af433b58e0ace8b98d66b"
     ].filter(Boolean);
-    console.log(`🔑 Loaded Scraper keys count: ${scraperKeys.length} (${scraperKeys.map(k => k.substring(0, 4) + '...').join(', ')})`);
+    console.log(`🔑 Loaded Scraper keys count: ${scraperKeys.length} (${scraperKeys.map((k: any) => k.substring(0, 4) + '...').join(', ')})`);
     const randomUserAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
     // Cookie with plain-text (decoded) values — this is how browsers send cookies
@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
       'physical_contact', 'balance', 'stamina', 'defensive_awareness', 'tackling', 'aggression',
       'defensive_engagement', 'gk_awareness', 'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
     ];
-    const cookieWorked = statsColumns.some(f => colMap[f] !== undefined);
+    const cookieWorked = statsColumns.some((f: any) => colMap[f] !== undefined);
 
     if (!cookieWorked) {
       // The cookie was stripped — pesdb.net rendered a minimal table with no stat columns.
@@ -296,14 +296,14 @@ export async function GET(request: NextRequest) {
       };
 
       // Extract stats
-      statsColumns.forEach(field => {
+      statsColumns.forEach((field: any) => {
         const idx = colMap[field];
         player[field] = idx !== undefined ? safeInt(cols.eq(idx).text()) : 0;
       });
 
       // Guard: if all numeric stats are 0 but the player has a rating, the cookie
       // didn't apply for this row. Skip instead of saving zeroed-out data.
-      const hasAnyStats = statsColumns.some(f => player[f] > 0);
+      const hasAnyStats = statsColumns.some((f: any) => player[f] > 0);
       if (!hasAnyStats && player.overall_rating > 0) {
         noStatsCount++;
         return;
@@ -342,9 +342,9 @@ export async function GET(request: NextRequest) {
     const queryParams: any[] = [];
     let paramIndex = 1;
 
-    parsedPlayers.forEach(p => {
+    parsedPlayers.forEach((p: any) => {
       const rowPlaceholders: string[] = [];
-      columnsToInsert.forEach(col => {
+      columnsToInsert.forEach((col: any) => {
         rowPlaceholders.push(`$${paramIndex++}`);
         if (col === 'overall_rating' || col === 'age') {
           queryParams.push(p[col] ? Number(p[col]) : null);

@@ -513,9 +513,9 @@ function SeasonRegistrationContent() {
                   <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider mb-6 text-center">Register Team Owner</h3>
                   
                   <OwnerRegistrationForm
-                    teamId={user.teamId || user.uid}
+                    teamId={(user as any).teamId || user.uid}
                     userId={user.uid}
-                    userName={user.displayName || user.teamName || ''}
+                    userName={(user as any).displayName || (user as any).teamName || ''}
                     userEmail={user.email || ''}
                     onSuccess={() => {
                       // After owner registration, complete season registration

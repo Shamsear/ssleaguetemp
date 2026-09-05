@@ -85,7 +85,7 @@ export async function POST(
       );
     }
 
-    const substituteCount = players.filter(p => p.is_substitute).length;
+    const substituteCount = players.filter((p: any) => p.is_substitute).length;
     if (substituteCount !== 1) {
       return NextResponse.json(
         { success: false, error: 'Lineup must have exactly 1 substitute' },
@@ -445,7 +445,7 @@ export async function PUT(
       );
     }
 
-    const substituteCount = players.filter(p => p.is_substitute).length;
+    const substituteCount = players.filter((p: any) => p.is_substitute).length;
     if (substituteCount !== 1) {
       return NextResponse.json(
         { success: false, error: 'Lineup must have exactly 1 substitute' },
@@ -749,7 +749,7 @@ export async function GET(
           `;
 
       // Create a map of player_id to player_name
-      const playerMap = new Map(players.map(p => [p.player_id, p.player_name]));
+      const playerMap = new Map(players.map((p: any) => [p.player_id, p.player_name]));
 
       // Format the lineup with player names
       const formattedLineup = [];

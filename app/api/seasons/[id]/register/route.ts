@@ -61,7 +61,7 @@ export async function POST(
     const teamId = userData.teamId; // User document should have teamId field
 
     // Check if team document exists
-    let teamDocId: string;
+    let teamDocId: string = '';
     let existingTeamQuery: any = { empty: true };
 
     if (teamId) {
@@ -213,14 +213,14 @@ export async function POST(
         teamDocId,
         seasonId,
         footballBudget,
-        'football_budget' // eCoin for football players
+        'football_budget' as any // eCoin for football players
       );
       
       await logInitialBalance(
         teamDocId,
         seasonId,
         realPlayerBudget,
-        'real_player_budget' // SSCoin for real players
+        'real_player_budget' as any // SSCoin for real players
       );
 
       console.log(`✅ Created dual currency registration for ${teamName}: ${teamSeasonId}`);
@@ -320,7 +320,7 @@ export async function POST(
         const isReturning = teamData?.seasons && teamData.seasons.length > 1; // Has previous season history
         const teamLogo = userData.logoUrl || teamData?.team_logo || null;
 
-        await triggerNews('team_registered', {
+        await triggerNews('team_registered' as any, {
           season_id: seasonId,
           team_name: teamName,
           total_teams: totalTeams,
@@ -333,7 +333,7 @@ export async function POST(
 
       // Send FCM notification to the registered team
       try {
-        await sendNotification(
+        await (sendNotification as any)(
           {
             title: '✅ Registration Complete!',
             body: `Welcome to ${seasonData.name}! Start building your team!`,

@@ -142,7 +142,7 @@ export default function PlayerDetailPage() {
       const seasonsSnapshot = await getDocs(seasonsRef);
       const seasonsData = seasonsSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...(doc.data() || {})
       }));
 
       // Cache the results
@@ -1116,11 +1116,11 @@ export default function PlayerDetailPage() {
                     const isS17Plus = seasonNum >= 17;
                     
                     const isLeague = isS17Plus 
-                      ? (trophy.trophy_position?.toLowerCase().includes('shield winner') || trophy.trophy_type === 'league')
+                      ? ((trophy as any).trophy_position?.toLowerCase().includes('shield winner') || trophy.trophy_type === 'league')
                       : trophy.trophy_type === 'league';
                       
                     const isCup = isS17Plus 
-                      ? (trophy.trophy_position?.toLowerCase().includes('knockout winner') || trophy.trophy_type === 'cup')
+                      ? ((trophy as any).trophy_position?.toLowerCase().includes('knockout winner') || trophy.trophy_type === 'cup')
                       : trophy.trophy_type === 'cup';
 
                     const displayType = isS17Plus

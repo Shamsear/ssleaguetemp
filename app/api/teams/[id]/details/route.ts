@@ -69,7 +69,7 @@ export async function GET(
     // 4. Fetch championships/achievements from Firebase seasons
     const seasonsSnapshot = await adminDb.collection('seasons').get();
     const achievements = seasonsSnapshot.docs
-      .map(doc => {
+      .map((doc: any) => {
         const data = doc.data();
         if (data.champion_team_id === teamId || data.champion_team_name === teamInfo.team_name) {
           return {
@@ -130,7 +130,7 @@ export async function GET(
     // Combine and aggregate player stats
     const playerStatsMap = new Map();
     
-    [...historicalPlayers, ...modernPlayers].forEach(player => {
+    [...historicalPlayers, ...modernPlayers].forEach((player: any) => {
       const existing = playerStatsMap.get(player.player_id);
       if (existing) {
         existing.total_matches += parseInt(player.matches_played) || 0;
@@ -187,7 +187,7 @@ export async function GET(
           goals_conceded: parseInt(allTimeStats[0]?.total_goals_conceded) || 0,
           points: parseInt(allTimeStats[0]?.total_points) || 0
         },
-        seasonBreakdown: seasonBreakdown.map(season => ({
+        seasonBreakdown: seasonBreakdown.map((season: any) => ({
           season_id: season.season_id,
           tournament_id: season.tournament_id,
           matches_played: parseInt(season.matches_played) || 0,
@@ -202,7 +202,7 @@ export async function GET(
         })),
         achievements,
         players: allPlayers,
-        fixtures: fixtures.map(fixture => ({
+        fixtures: fixtures.map((fixture: any) => ({
           id: fixture.id,
           season_id: fixture.season_id,
           match_day: fixture.match_day,

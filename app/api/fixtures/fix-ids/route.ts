@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const teamSeasonsSnapshot = await getDocs(adminDb.collection('team_seasons'));
     const teamMapping = new Map<string, { teamId: string, teamName: string, seasonId: string }>();
     
-    teamSeasonsSnapshot.docs.forEach(doc => {
+    teamSeasonsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       // Create a key from team name and season
       const key = `${data.team_name}_${data.season_id}`;

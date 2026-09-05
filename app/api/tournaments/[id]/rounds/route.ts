@@ -23,7 +23,7 @@ export async function GET(
     `;
 
     // Transform to expected format
-    const formattedRounds = rounds.map(r => ({
+    const formattedRounds = rounds.map((r: any) => ({
       id: `${tournamentId}-R${r.round_number}`,
       round_number: r.round_number,
       position: `Round ${r.round_number}`,

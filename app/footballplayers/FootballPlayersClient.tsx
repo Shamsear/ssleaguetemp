@@ -518,7 +518,7 @@ export default function PublicPlayerDatabasePage() {
                     }
                   }}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs font-bold"
-                  disabled={shareFilters.positionFilter && sharePlayingStyles.length === 0}
+                  disabled={Boolean(shareFilters.positionFilter) && sharePlayingStyles.length === 0}
                 >
                   <option value="">All Playing Styles</option>
                   {sharePlayingStyles.map(style => (
@@ -758,7 +758,7 @@ export default function PublicPlayerDatabasePage() {
                     if (exportData.length > 0) {
                       const colWidths = [5, 25, 10, 20, 20, 12, 8, 12, 12, 10, 10, 12, 10, 10, 18, 10, 12, 12, 12, 20];
                       ws.columns = Object.keys(exportData[0]).map((key, i) => ({ header: key, key, width: colWidths[i] || 12 }));
-                      exportData.forEach(row => ws.addRow(row));
+                      exportData.forEach((row: any) => ws.addRow(row));
                     }
                     const buffer = await wb.xlsx.writeBuffer();
                     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

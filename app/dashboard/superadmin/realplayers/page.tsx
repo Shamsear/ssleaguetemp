@@ -420,9 +420,9 @@ export default function RealPlayersPage() {
                             shape="circle"
                             size={32}
                             className="border border-slate-200 shadow-sm"
-                            posXCircle={player.photo_position_x_circle}
-                            posYCircle={player.photo_position_y_circle}
-                            scaleCircle={player.photo_scale_circle}
+                            posXCircle={(player as any).photo_position_x_circle}
+                            posYCircle={(player as any).photo_position_y_circle}
+                            scaleCircle={(player as any).photo_scale_circle}
                           />
                         )}
                         <div>
@@ -487,9 +487,9 @@ export default function RealPlayersPage() {
                       shape="circle"
                       size={40}
                       className="border border-slate-200 shadow-sm"
-                      posXCircle={player.photo_position_x_circle}
-                      posYCircle={player.photo_position_y_circle}
-                      scaleCircle={player.photo_scale_circle}
+                      posXCircle={(player as any).photo_position_x_circle}
+                      posYCircle={(player as any).photo_position_y_circle}
+                      scaleCircle={(player as any).photo_scale_circle}
                     />
                   )}
                   <div className="flex-grow min-w-0">

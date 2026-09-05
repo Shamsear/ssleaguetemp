@@ -152,7 +152,7 @@ export default function CommitteeFixtureDetailPage() {
         body: JSON.stringify({
           absent_team: absentTeam,
           declared_by: user?.uid,
-          declared_by_name: user?.displayName || user?.email,
+          declared_by_name: (user as any)?.displayName || user?.email,
         })
       });
 
@@ -201,7 +201,7 @@ export default function CommitteeFixtureDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           declared_by: user?.uid,
-          declared_by_name: user?.displayName || user?.email,
+          declared_by_name: (user as any)?.displayName || user?.email,
         })
       });
 
@@ -319,7 +319,7 @@ export default function CommitteeFixtureDetailPage() {
         body: JSON.stringify({
           matchups: editedMatchups,
           edited_by: user?.uid,
-          edited_by_name: user?.displayName || user?.email,
+          edited_by_name: (user as any)?.displayName || user?.email,
           edit_reason: reason || 'Result corrected by committee admin'
         })
       });
@@ -755,7 +755,7 @@ export default function CommitteeFixtureDetailPage() {
               awayTeamId={fixture.away_team_id}
               awayTeamName={fixture.away_team_name}
               userId={user.uid}
-              userName={user.displayName || user.email || 'Committee Admin'}
+              userName={(user as any)?.displayName || user.email || 'Committee Admin'}
               onSuccess={() => {
                 setShowMatchupCreator(false);
                 showAlert({
@@ -783,7 +783,7 @@ export default function CommitteeFixtureDetailPage() {
               awayTeamId={fixture.away_team_id}
               awayTeamName={fixture.away_team_name}
               userId={user.uid}
-              userName={user.displayName || user.email || 'Committee Admin'}
+              userName={(user as any)?.displayName || user.email || 'Committee Admin'}
               onSuccess={() => {
                 setShowLineupEditor(null);
                 showAlert({

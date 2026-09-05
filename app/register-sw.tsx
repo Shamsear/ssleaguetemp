@@ -16,7 +16,7 @@ export default function RegisterServiceWorker() {
 
     const registerSW = () => {
       // Prevent registering if the document is being unloaded
-      if (document.readyState === 'uninitialized') return;
+      if ((document.readyState as string) === 'uninitialized') return;
 
       navigator.serviceWorker
         .register('/firebase-messaging-sw.js')

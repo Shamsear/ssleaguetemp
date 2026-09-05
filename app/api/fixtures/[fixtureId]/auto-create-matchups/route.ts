@@ -69,8 +69,8 @@ export async function POST(
             );
         }
 
-        const homeLineup = lineups.find(l => l.team_id === fixture.home_team_id);
-        const awayLineup = lineups.find(l => l.team_id === fixture.away_team_id);
+        const homeLineup = lineups.find((l: any) => l.team_id === fixture.home_team_id);
+        const awayLineup = lineups.find((l: any) => l.team_id === fixture.away_team_id);
 
         if (!homeLineup || !awayLineup) {
             return NextResponse.json(

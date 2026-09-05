@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
     console.log(`ℹ️ Creating round for season ${seasonId}. Concurrent rounds are permitted.`);
 
     // Generate readable round ID with retry logic
-    let roundId: string;
+    let roundId: string = '';
     let attempts = 0;
     const maxAttempts = 5;
     

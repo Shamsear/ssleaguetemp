@@ -598,14 +598,15 @@ export default function MyPlayerStatsPage() {
                                                                                      <th className="px-3 py-2">Opp. Cat</th>
                                                                                      <th className="px-3 py-2">Score</th>
                                                                                      <th className="px-3 py-2">GD</th>
-                                                                                     <th className="px-3 py-2">Points Breakdown</th>
+                                                     <th className="px-3 py-2">Points Breakdown</th>
                                                                                      <th className="px-3 py-2">Points</th>
                                                                                  </tr>
                                                                              </thead>
                                                                              <tbody className="divide-y divide-slate-100/50 bg-white/40">
                                                                                  {matchdayStats.get(player.id)!.map((match, idx) => {
-                                                                                     const oppCatName = (match.opponent_category || (match.player_side === 'home' ? match.away_category : match.home_category) || 'RED').toUpperCase();
-                                                                                     const ptsReason = match.points_reason || `${(match.goal_difference > 0 ? 'WIN' : match.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${match.points >= 0 ? '+' : ''}${match.points} Pts)`;
+                                                                                     const m = match as any;
+                                                                                     const oppCatName = (m.opponent_category || (m.player_side === 'home' ? m.away_category : m.home_category) || 'RED').toUpperCase();
+                                                                                     const ptsReason = m.points_reason || `${(m.goal_difference > 0 ? 'WIN' : m.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${m.points >= 0 ? '+' : ''}${m.points} Pts)`;
 
                                                                                      return (
                                                                                          <tr key={idx} className="hover:bg-slate-50/20 text-xs">

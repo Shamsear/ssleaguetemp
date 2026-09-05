@@ -173,7 +173,7 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              Duration: <strong className="text-slate-700">{((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</strong>
+              Duration: <strong className="text-slate-700">{(((round as any).duration_seconds || 0) / 3600).toFixed(1)} hrs</strong>
             </span>
             <span className="flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
@@ -317,7 +317,7 @@ function ScheduledRoundRow({ round, isActivatingRound, onActivate, onDelete, onU
                 <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Finalization Mode</label>
                 <select
                   value={editForm.finalization_mode}
-                  onChange={e => setEditForm(f => ({ ...f, finalization_mode: e.target.value }))}
+                  onChange={e => setEditForm(f => ({ ...f, finalization_mode: e.target.value as "auto" | "manual" }))}
                   className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
                 >
                   <option value="auto">Auto-Finalize (when timer ends)</option>
@@ -1181,7 +1181,7 @@ export default function RoundsManagementPage() {
     const action = currentStatus ? 'draft' : 'submit';
     const actionText = currentStatus ? 'revert to draft' : 'force submit';
     
-    showConfirm({
+    (showConfirm as any)({
       title: currentStatus ? 'Revert Submission?' : 'Force Submit Bids?',
       message: `Are you sure you want to ${actionText} this team's bids?`,
       onConfirm: async () => {
@@ -1200,7 +1200,7 @@ export default function RoundsManagementPage() {
               title: 'Success',
               message: currentStatus ? 'Submission unlocked and reverted to draft.' : 'Bids successfully forced to submitted.'
             });
-            
+
             // Fallback manual refresh (Firebase Realtime DB handles sync automatically)
             const subResponse = await fetchWithTokenRefresh(`/api/admin/rounds/${roundId}/submissions`);
             const subData = await subResponse.json();

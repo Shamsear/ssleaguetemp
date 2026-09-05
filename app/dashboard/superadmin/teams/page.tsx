@@ -239,8 +239,8 @@ export default function TeamsManagement() {
                           normalizeStr(team.owner_name).includes(normalizeStr(searchQuery));
     const matchesSeason = filterSeason === 'all' || team.season_id === filterSeason;
     const matchesStatus = filterStatus === 'all' || 
-                          (filterStatus === 'active' && team.is_active) ||
-                          (filterStatus === 'inactive' && !team.is_active);
+                          (filterStatus === 'active' && (team as any).is_active) ||
+                          (filterStatus === 'inactive' && !(team as any).is_active);
     return matchesSearch && matchesSeason && matchesStatus;
   });
 
@@ -453,43 +453,43 @@ export default function TeamsManagement() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">
                         <div className="text-slate-850 font-semibold">{team.owner_name || 'No Owner'}</div>
-                        <div className="text-slate-500">{team.owner_email || 'No Email'}</div>
+                        <div className="text-slate-500">{(team as any).owner_email || 'No Email'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-750 border border-purple-200">
-                          {team.season_name}
+                          {(team as any).season_name}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">
                         <button
-                          onClick={() => handleToggleStatus(team)}
+                          onClick={() => handleToggleStatus(team as any)}
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${
-                            team.is_active
+                            (team as any).is_active
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                               : 'bg-slate-100 text-slate-650 border-slate-200 hover:bg-slate-200'
                           }`}
                         >
-                          {team.is_active ? 'Active' : 'Inactive'}
+                          {(team as any).is_active ? 'Active' : 'Inactive'}
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-xs font-mono">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleViewTeamDetails(team)}
+                            onClick={() => handleViewTeamDetails(team as any)}
                             className="p-2 border border-slate-200 text-slate-650 hover:text-slate-950 bg-white hover:bg-slate-50 rounded-xl transition-all shadow-sm"
                             title="Details"
                           >
                             <Info className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleEditTeam(team)}
+                            onClick={() => handleEditTeam(team as any)}
                             className="p-2 border border-amber-200 text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all shadow-sm"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteTeam(team)}
+                            onClick={() => handleDeleteTeam(team as any)}
                             className="p-2 border border-rose-200 text-rose-600 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all shadow-sm"
                             title="Delete"
                           >
@@ -540,14 +540,14 @@ export default function TeamsManagement() {
                     </div>
 
                     <button
-                      onClick={() => handleToggleStatus(team)}
+                      onClick={() => handleToggleStatus(team as any)}
                       className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-all ${
-                        team.is_active
+                        (team as any).is_active
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : 'bg-slate-100 text-slate-650 border-slate-200'
                       }`}
                     >
-                      {team.is_active ? 'Active' : 'Inactive'}
+                      {(team as any).is_active ? 'Active' : 'Inactive'}
                     </button>
                   </div>
 
@@ -558,26 +558,26 @@ export default function TeamsManagement() {
                     </div>
                     <div>
                       <span className="text-slate-400 text-[10px] uppercase block mb-0.5">Season</span>
-                      <span className="text-slate-700 font-semibold">{team.season_name}</span>
+                      <span className="text-slate-700 font-semibold">{(team as any).season_name}</span>
                     </div>
                   </div>
 
                   <div className="flex gap-2 text-xs font-mono">
                     <button
-                      onClick={() => handleViewTeamDetails(team)}
+                      onClick={() => handleViewTeamDetails(team as any)}
                       className="flex-1 py-2 px-3 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 shadow-sm"
                     >
                       <Info className="w-4 h-4" /> View Details
                     </button>
                     <button
-                      onClick={() => handleEditTeam(team)}
+                      onClick={() => handleEditTeam(team as any)}
                       className="py-2 px-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 hover:bg-amber-100 transition-all flex items-center justify-center shadow-sm"
                       title="Edit Franchise"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteTeam(team)}
+                      onClick={() => handleDeleteTeam(team as any)}
                       className="py-2 px-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 hover:bg-rose-100 transition-all flex items-center justify-center shadow-sm"
                       title="Delete Franchise"
                     >

@@ -42,8 +42,8 @@ export async function GET(
       ORDER BY team_name
     `;
 
-    const assignedTeamIds = new Set(assignments.map(a => a.team_id));
-    const unassignedTeams = allTeams.filter(t => !assignedTeamIds.has(t.team_id));
+    const assignedTeamIds = new Set(assignments.map((a: any) => a.team_id));
+    const unassignedTeams = allTeams.filter((t: any) => !assignedTeamIds.has(t.team_id));
 
     return NextResponse.json({
       success: true,

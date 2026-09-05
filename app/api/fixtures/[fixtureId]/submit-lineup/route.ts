@@ -29,8 +29,8 @@ export async function POST(
         }
 
         // Count playing vs substitute players
-        const playingPlayers = players.filter(p => !p.is_substitute);
-        const substitutePlayers = players.filter(p => p.is_substitute);
+        const playingPlayers = players.filter((p: any) => !p.is_substitute);
+        const substitutePlayers = players.filter((p: any) => p.is_substitute);
 
         if (playingPlayers.length !== 5) {
             return NextResponse.json(
@@ -162,8 +162,8 @@ export async function POST(
                     throw new Error('Both team lineups not found');
                 }
 
-                const homeLineup = lineups.find(l => l.team_id === fixture.home_team_id);
-                const awayLineup = lineups.find(l => l.team_id === fixture.away_team_id);
+                const homeLineup = lineups.find((l: any) => l.team_id === fixture.home_team_id);
+                const awayLineup = lineups.find((l: any) => l.team_id === fixture.away_team_id);
 
                 if (!homeLineup || !awayLineup) {
                     throw new Error('Could not find lineups for both teams');
@@ -371,8 +371,8 @@ export async function GET(
       WHERE fixture_id = ${fixtureId}
     `;
 
-        const myLineup = lineups.find(l => l.team_id === teamId);
-        const opponentLineup = lineups.find(l => l.team_id !== teamId);
+        const myLineup = lineups.find((l: any) => l.team_id === teamId);
+        const opponentLineup = lineups.find((l: any) => l.team_id !== teamId);
 
         // Helper function to safely parse players (handles both string and already-parsed object)
         const parsePlayers = (players: any) => {

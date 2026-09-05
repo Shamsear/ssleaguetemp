@@ -35,7 +35,7 @@ export async function GET(
       .get();
 
     const playerPointsByRound = new Map<number, number>();
-    playerPointsSnap.docs.forEach(doc => {
+    playerPointsSnap.docs.forEach((doc: any) => {
       const data = doc.data();
       const current = playerPointsByRound.get(data.round_number) || 0;
       playerPointsByRound.set(data.round_number, current + data.total_points);
@@ -51,7 +51,7 @@ export async function GET(
     const teamBonusesByRound = new Map<number, number>();
     const teamBonusDetails: any[] = [];
     
-    teamBonusSnap.docs.forEach(doc => {
+    teamBonusSnap.docs.forEach((doc: any) => {
       const data = doc.data();
       const current = teamBonusesByRound.get(data.round_number) || 0;
       teamBonusesByRound.set(data.round_number, current + data.total_bonus);
@@ -69,7 +69,7 @@ export async function GET(
     const allRounds = new Set([...playerPointsByRound.keys(), ...teamBonusesByRound.keys()]);
     const roundBreakdown = Array.from(allRounds)
       .sort((a, b) => a - b)
-      .map(round => ({
+      .map((round: any) => ({
         round,
         player_points: playerPointsByRound.get(round) || 0,
         team_bonus: teamBonusesByRound.get(round) || 0,

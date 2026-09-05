@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     
     // Build map of season_id -> team count
     const teamCountsBySeasonId = new Map<string, number>();
-    allTeamsSnapshot.docs.forEach(teamDoc => {
+    allTeamsSnapshot.docs.forEach((teamDoc: any) => {
       const teamData = teamDoc.data();
       const seasons = teamData.seasons || [];
       // Deduplicate seasons list to avoid double-counting if duplicate IDs exist in the array

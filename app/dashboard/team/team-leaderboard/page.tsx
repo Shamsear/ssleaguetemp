@@ -144,7 +144,7 @@ export default function TeamLeaderboardPage() {
         ) : selectedTournamentId ? (
           <TournamentStandings 
             tournamentId={selectedTournamentId}
-            currentUserId={user.uid}
+            currentUserId={user?.uid}
           />
         ) : (
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 text-center shadow-sm font-mono">

@@ -70,22 +70,40 @@ export async function GET(
       playerData = results[0];
     }
     
-    // Fetch team name from Firebase team_seasons
-    let teamName = null;
+    // Fetch team name from Neon team_seasons (with Firestore fallback)
+    let teamName = playerData.team || null;
     if (playerData.team_id) {
       try {
-        const teamSeasonId = `${playerData.team_id}_${seasonId}`;
-        const teamSeasonDoc = await adminDb
-          .collection('team_seasons')
-          .doc(teamSeasonId)
-          .get();
-        
-        if (teamSeasonDoc.exists) {
-          const teamSeasonData = teamSeasonDoc.data();
-          teamName = teamSeasonData?.team_name;
+        const { getMainDb } = await import('@/lib/neon/main-config');
+        const mainSql = getMainDb();
+        const rows = await mainSql`
+          SELECT team_name FROM team_seasons
+          WHERE (team_id = ${playerData.team_id} OR id = ${`${playerData.team_id}_${seasonId}`})
+            AND season_id = ${seasonId}
+          LIMIT 1
+        `;
+        if (rows.length > 0 && rows[0].team_name) {
+          teamName = rows[0].team_name;
         }
       } catch (error) {
-        console.error('Error fetching team name:', error);
+        console.error('Error fetching team name from Neon:', error);
+      }
+
+      if (!teamName) {
+        try {
+          const teamSeasonId = `${playerData.team_id}_${seasonId}`;
+          const teamSeasonDoc = await adminDb
+            .collection('team_seasons')
+            .doc(teamSeasonId)
+            .get();
+          
+          if (teamSeasonDoc.exists) {
+            const teamSeasonData = teamSeasonDoc.data();
+            teamName = teamSeasonData?.team_name;
+          }
+        } catch (error) {
+          console.error('Error fetching team name from Firestore:', error);
+        }
       }
     }
 

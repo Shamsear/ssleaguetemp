@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     
     // Create a map of target season players for quick lookup
     const targetPlayersMap = new Map();
-    targetPlayers.forEach(player => {
+    targetPlayers.forEach((player: any) => {
       targetPlayersMap.set(player.player_id, player);
     });
 

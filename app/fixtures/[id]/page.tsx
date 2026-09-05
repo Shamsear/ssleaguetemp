@@ -351,7 +351,7 @@ export default function PublicFixtureDetailPage() {
                     <span className="text-slate-400 uppercase tracking-wide text-[9px]">Player Goals</span>
                     <span className="font-bold text-slate-800">{scores.homePlayerGoals}</span>
                   </div>
-                  {scores.awaySubPenalties > 0 && (
+                  {(scores.awaySubPenalties || 0) > 0 && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 uppercase tracking-wide text-[9px]">Opponent Sub Penalties</span>
                       <span className="font-bold text-emerald-600">+{scores.awaySubPenalties}</span>
@@ -380,7 +380,7 @@ export default function PublicFixtureDetailPage() {
                     <span className="text-slate-400 uppercase tracking-wide text-[9px]">Player Goals</span>
                     <span className="font-bold text-slate-800">{scores.awayPlayerGoals}</span>
                   </div>
-                  {scores.homeSubPenalties > 0 && (
+                  {(scores.homeSubPenalties || 0) > 0 && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 uppercase tracking-wide text-[9px]">Opponent Sub Penalties</span>
                       <span className="font-bold text-emerald-600">+{scores.homeSubPenalties}</span>

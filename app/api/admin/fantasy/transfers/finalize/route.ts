@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Group submissions by player_in_id to count requests
     const requestGroups: Record<string, any[]> = {};
-    submissions.forEach(sub => {
+    submissions.forEach((sub: any) => {
       const pInId = sub.player_in_id;
       if (!requestGroups[pInId]) {
         requestGroups[pInId] = [];

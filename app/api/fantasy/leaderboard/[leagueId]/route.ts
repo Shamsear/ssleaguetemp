@@ -65,20 +65,20 @@ export async function GET(
       LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
       WHERE ft.league_id = ${leagueId}
       GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.supported_team_id
-      ORDER BY ft.rank ASC NULLS LAST, ft.total_points DESC
+      ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
     `;
 
     // Get fantasy team logos from Firebase using fantasy team_id
     const fantasyTeamIds = leaderboard
-      .map(entry => entry.fantasy_team_id)
-      .filter(id => id != null && id !== '');
+      .map((entry: any) => entry.fantasy_team_id)
+      .filter((id: any) => id != null && id !== '');
     
     console.log('[Leaderboard API] Fetching logos for fantasy team IDs:', fantasyTeamIds);
     
     let teamLogos: Record<string, any> = {};
     if (fantasyTeamIds.length > 0) {
       // Fetch fantasy teams by document ID (fantasy team_id)
-      const teamPromises = fantasyTeamIds.map(teamId => 
+      const teamPromises = fantasyTeamIds.map((teamId: any) => 
         adminDb.collection('teams').doc(teamId).get()
       );
       
@@ -115,7 +115,7 @@ export async function GET(
 
     // Debug: Log team mappings
     console.log('[Leaderboard API] Team mappings:');
-    leaderboard.forEach(entry => {
+    leaderboard.forEach((entry: any) => {
       console.log(`  ${entry.team_name}: fantasy_team_id=${entry.fantasy_team_id}, logo=${teamLogos[entry.fantasy_team_id] || 'NOT FOUND'}`);
     });
 
@@ -128,7 +128,7 @@ export async function GET(
         season_id: league.season_id,
         status: league.is_active ? 'active' : 'inactive',
       },
-      leaderboard: leaderboard.map(entry => ({
+      leaderboard: leaderboard.map((entry: any) => ({
         id: entry.fantasy_team_id,
         rank: entry.rank || 999,
         fantasy_team_id: entry.fantasy_team_id,

@@ -66,7 +66,7 @@ export async function GET(
         const batch = uniquePlayerIds.slice(i, i + batchSize);
         const playersQuery = adminDb.collection('realplayers').where('player_id', 'in', batch);
         const playersSnapshot = await playersQuery.get();
-        playersSnapshot.docs.forEach(doc => {
+        playersSnapshot.docs.forEach((doc: any) => {
           const data = doc.data();
           playerDataMap.set(data.player_id, data);
         });
@@ -106,7 +106,7 @@ export async function GET(
     });
     
     // Process teams data
-    const rawTeams = teamsSnapshot.docs.map(doc => {
+    const rawTeams = teamsSnapshot.docs.map((doc: any) => {
       const teamData = doc.data();
       const teamStats = teamStatsMap.get(doc.id) || {};
       
@@ -192,7 +192,7 @@ export async function GET(
     const workbook = new ExcelJS.Workbook();
 
     // Teams Sheet (full structure with standings)
-    const teamsSheetData = teams.map(team => ({
+    const teamsSheetData = teams.map((team: any) => ({
       rank: team.rank,
       team: team.team_name || '',
       owner_name: team.owner_name || '',
@@ -224,10 +224,10 @@ export async function GET(
       { header: 'percentage', key: 'percentage', width: 10 },
       { header: 'cup', key: 'cup', width: 15 },
     ];
-    teamsSheetData.forEach(row => teamsSheet.addRow(row));
+    teamsSheetData.forEach((row: any) => teamsSheet.addRow(row));
 
     // Players Sheet
-    const playersSheetData = players.map(player => {
+    const playersSheetData = players.map((player: any) => {
       const totalMatches = player.matches_played || 0;
       const goalsScored = player.goals_scored || 0;
       const goalsConceded = player.goals_conceded || 0;
@@ -289,7 +289,7 @@ export async function GET(
       { header: 'base_points', key: 'base_points', width: 12 },
       { header: 'raw_points', key: 'raw_points', width: 12 },
     ];
-    playersSheetData.forEach(row => playersSheet.addRow(row));
+    playersSheetData.forEach((row: any) => playersSheet.addRow(row));
 
     // Generate Excel buffer
     const buffer = Buffer.from(await workbook.xlsx.writeBuffer());

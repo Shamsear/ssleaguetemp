@@ -226,7 +226,7 @@ export async function DELETE(
       roundId,
       round.season_id,
       allocationsCount,
-      auth.email
+      (auth as any).email
     );
 
     return NextResponse.json({

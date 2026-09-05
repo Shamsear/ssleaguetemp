@@ -399,7 +399,7 @@ export default function RealPlayersPlannerPage() {
                       Select SS Member
                     </label>
                     <button
-                      ref={(el) => (buttonRefs.current[index] = el)}
+                      ref={(el) => { buttonRefs.current[index] = el; }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenDropdownIndex(openDropdownIndex === index ? null : index);

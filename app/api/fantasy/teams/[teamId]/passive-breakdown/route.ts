@@ -95,7 +95,7 @@ export async function GET(
     console.log('📊 [Passive Breakdown] Admin bonuses found:', {
       count: adminBonuses.length,
       total: totalAdminBonus,
-      bonuses: adminBonuses.map(b => ({ reason: b.reason, points: b.points }))
+      bonuses: adminBonuses.map((b: any) => ({ reason: b.reason, points: b.points }))
     });
 
     console.log('📊 [Passive Breakdown] Passive rounds found:', bonusBreakdown.length);

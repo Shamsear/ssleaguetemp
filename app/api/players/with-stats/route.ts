@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const playerIds: string[] = [];
     const playerDataMap = new Map();
 
-    playersSnapshot.docs.forEach(playerDoc => {
+    playersSnapshot.docs.forEach((playerDoc: any) => {
       const playerData = playerDoc.data();
       const playerId = playerData.player_id || playerDoc.id;
       playerIds.push(playerId);
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       const statsMap = new Map();
       
       // Add old stats (S1-S15, no rating)
-      oldStats.forEach(stat => {
+      oldStats.forEach((stat: any) => {
         statsMap.set(stat.player_id, {
           player_id: stat.player_id,
           matches_played: parseInt(stat.matches_played) || 0,
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Add or merge S16/S17 stats (adjusted points)
-      s16s17Stats.forEach(stat => {
+      s16s17Stats.forEach((stat: any) => {
         const existing = statsMap.get(stat.player_id);
         if (existing) {
           existing.matches_played += parseInt(stat.matches_played) || 0;
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Add or merge future season stats (S18+, points as-is)
-      futureStats.forEach(stat => {
+      futureStats.forEach((stat: any) => {
         const existing = statsMap.get(stat.player_id);
         if (existing) {
           existing.matches_played += parseInt(stat.matches_played) || 0;
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
 
     // Create stats lookup map from combined stats
     const statsLookupMap = new Map();
-    allStats.forEach(stat => {
+    allStats.forEach((stat: any) => {
       statsLookupMap.set(stat.player_id, stat);
     });
 
@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
         `;
 
         const infoMap = new Map();
-        [...psInfo, ...rpsInfo].forEach(info => {
+        [...psInfo, ...rpsInfo].forEach((info: any) => {
           const existing = infoMap.get(info.player_id);
           if (!existing) {
             infoMap.set(info.player_id, info);
@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
         .collection('team_seasons')
         .get();
       
-      teamSeasonsSnapshot.docs.forEach(doc => {
+      teamSeasonsSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         const teamId = data.team_id || doc.id.split('_')[0];
         const name = data.team_name || data.team_code || 'Unknown Team';
@@ -290,7 +290,7 @@ export async function GET(request: NextRequest) {
 
     // Create season info lookup map
     const seasonMap = new Map();
-    seasonInfo.forEach(info => {
+    seasonInfo.forEach((info: any) => {
       seasonMap.set(info.player_id, {
         ...info,
         team_name: teamsMap.get(info.team_id) || null
@@ -298,7 +298,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Combine all data
-    const playersWithStats = playerIds.map(playerId => {
+    const playersWithStats = playerIds.map((playerId: any) => {
       const playerData = playerDataMap.get(playerId);
       const stats = statsLookupMap.get(playerId);
       const season = seasonMap.get(playerId);

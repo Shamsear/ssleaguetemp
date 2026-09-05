@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
           ORDER BY tp.acquired_at DESC
         `;
 
-    const players = playersResult.map(player => ({
+    const players = playersResult.map((player: any) => ({
       id: player.id,
       name: player.name || '',
       position: player.position || '',

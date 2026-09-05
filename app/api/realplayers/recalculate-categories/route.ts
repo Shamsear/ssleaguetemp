@@ -110,8 +110,8 @@ async function recalculateSeasonCategories(season_id: string) {
     
     await Promise.all(updatePromises);
     
-    const legendCount = updates.filter(u => u.newCategory === 'LEGEND').length;
-    const classicCount = updates.filter(u => u.newCategory === 'CLASSIC').length;
+    const legendCount = updates.filter((u: any) => u.newCategory === 'LEGEND').length;
+    const classicCount = updates.filter((u: any) => u.newCategory === 'CLASSIC').length;
     
     console.log(`✅ Categories updated: ${legendCount} Legend / ${classicCount} Classic`);
     

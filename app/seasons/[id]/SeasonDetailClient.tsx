@@ -1128,15 +1128,15 @@ export default function SeasonDetailPage() {
                     
                     if (isWinner) {
                       cardClass += ' fut-card-gold';
-                      positionLabel = award.award_position;
+                      positionLabel = award.award_position || 'WINNER';
                       positionClass = 'text-amber-700 font-extrabold';
                     } else if (isRunnerUp) {
                       cardClass += ' fut-card-silver';
-                      positionLabel = award.award_position;
+                      positionLabel = award.award_position || 'RUNNER-UP';
                       positionClass = 'text-slate-700 font-extrabold';
                     } else if (isThird) {
                       cardClass += ' fut-card-bronze';
-                      positionLabel = award.award_position;
+                      positionLabel = award.award_position || '3RD PLACE';
                       positionClass = 'text-amber-900 font-extrabold';
                     } else {
                       positionLabel = award.award_position || 'NOMINEE';

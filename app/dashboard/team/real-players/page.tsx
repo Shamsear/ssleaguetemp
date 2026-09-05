@@ -135,7 +135,7 @@ export default function RealPlayersPage() {
               if (photosResponse.ok) {
                 const photosData = await photosResponse.json();
                 if (photosData.success && photosData.players) {
-                  const photoMap = new Map(
+                  const photoMap = new Map<string, any>(
                     photosData.players.map((p: any) => [
                       p.player_id, 
                       {

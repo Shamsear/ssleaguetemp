@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       `;
     }
 
-    let players = playersResult.map(player => ({
+    let players = playersResult.map((player: any) => ({
       id: player.id,
       player_id: player.player_id,
       name: player.player_name || '',
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     // Fetch photo URLs from realplayers collection
     if (players.length > 0) {
       try {
-        const playerIds = players.map(p => p.player_id).filter(Boolean);
+        const playerIds = players.map((p: any) => p.player_id).filter(Boolean);
 
         if (playerIds.length > 0) {
           const photoPlayers: any[] = [];
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
               .where('player_id', 'in', batch)
               .get();
 
-            snapshot.docs.forEach(doc => {
+            snapshot.docs.forEach((doc: any) => {
               const data = doc.data();
               photoPlayers.push({
                 player_id: data.player_id,
@@ -151,10 +151,10 @@ export async function GET(request: NextRequest) {
           }
 
           const photoMap = new Map(
-            photoPlayers.map(p => [p.player_id, p.photo_url])
+            photoPlayers.map((p: any) => [p.player_id, p.photo_url])
           );
 
-          players = players.map(player => ({
+          players = players.map((player: any) => ({
             ...player,
             photo_url: photoMap.get(player.player_id) || null,
           }));

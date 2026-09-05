@@ -48,7 +48,7 @@ export default function RegisteredPlayersPage() {
           return
         }
         
-        setSeason({ id: seasonDoc.id, ...seasonDoc.data() } as Season)
+        setSeason({ id: (seasonDoc as any).id, ...seasonDoc.data() } as Season)
 
         // Fetch registered players
         const response = await fetch(`/api/stats/players?seasonId=${seasonId}&limit=1000`)

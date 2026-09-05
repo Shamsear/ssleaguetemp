@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Process in batches of 10 (Firestore IN query limit)
-    const teamIds = allTeams.map(t => t.team_id);
+    const teamIds = allTeams.map((t: any) => t.team_id);
     const firebaseTeamsMap = new Map<string, any>();
 
     for (let i = 0; i < teamIds.length; i += 10) {
@@ -51,14 +51,14 @@ export async function POST(request: NextRequest) {
           .get();
         // Also fetch by document ID
         const docs = await Promise.all(
-          batch.map(id => adminDb.collection('teams').doc(id).get())
+          batch.map((id: any) => adminDb.collection('teams').doc(id).get())
         );
-        docs.forEach(doc => {
+        docs.forEach((doc: any) => {
           if (doc.exists) {
             firebaseTeamsMap.set(doc.id, doc.data());
           }
         });
-        snap.docs.forEach(doc => {
+        snap.docs.forEach((doc: any) => {
           firebaseTeamsMap.set(doc.id, doc.data());
         });
       } catch (err: any) {

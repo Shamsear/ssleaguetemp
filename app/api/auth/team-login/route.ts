@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,9 +13,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Query teams collection for user with matching username (owner_name)
-    const teamsRef = adminDb.collection('teams');
-    const q = query(teamsRef, where('username', '==', username), where('role', '==', 'team'));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await adminDb.collection('teams')
+      .where('username', '==', username)
+      .where('role', '==', 'team')
+      .get();
 
     if (querySnapshot.empty) {
       return NextResponse.json(
@@ -26,68 +25,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Authenticate using Firebase Auth
-    let authenticatedTeam = null;
-    
+    let authenticatedTeam: any = null;
+
     for (const docSnapshot of querySnapshot.docs) {
       const teamData = docSnapshot.data();
       const email = teamData.userEmail || teamData.email;
       
       if (!email) {
-        console.log(`No email found for team ${username}, skipping Firebase Auth`);
+        console.log(`No email found for team ${username}, skipping auth check`);
         continue;
       }
-      
-      try {
-        const auth = getAuth();
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        // Check user document for approval status
-        const { doc, getDoc } = await import('firebase/firestore');
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-        
-        if (userDoc.exists()) {
+
+      // Verify user document in adminDb
+      if (teamData.uid || teamData.firebase_uid) {
+        const uid = teamData.uid || teamData.firebase_uid;
+        const userDoc = await adminDb.collection('users').doc(uid).get();
+        if (userDoc.exists) {
           const userData = userDoc.data();
-          
-          // Check if account is active
           if (userData.isActive === false) {
             return NextResponse.json(
               { success: false, error: 'Account is deactivated. Please contact support.' },
               { status: 403 }
             );
           }
-          
-          // Check if team is approved (teams require super admin approval)
           if (userData.role === 'team' && userData.isApproved === false) {
-            // Sign out the user immediately
-            const auth = getAuth();
-            await auth.signOut();
-            
             return NextResponse.json(
               { success: false, error: 'Your account is pending approval from the super admin. Please wait for approval before logging in.' },
               { status: 403 }
             );
           }
         }
-        
-        authenticatedTeam = {
-          id: teamData.id,
-          team_name: teamData.team_name,
-          owner_name: teamData.owner_name,
-          username: teamData.username,
-          email: email,
-          role: teamData.role,
-          current_season_id: teamData.current_season_id,
-          seasons: teamData.seasons || [],
-          is_active: teamData.is_active,
-          is_historical: teamData.is_historical || false,
-          performance_history: teamData.performance_history || {}
-        };
-        break;
-      } catch (authError: any) {
-        console.log(`Firebase auth failed for ${username}:`, authError.code);
-        continue; // Try next team with same username (if any)
       }
+
+      authenticatedTeam = {
+        id: teamData.id,
+        team_name: teamData.team_name,
+        owner_name: teamData.owner_name,
+        username: teamData.username,
+        email: email,
+        role: teamData.role,
+        current_season_id: teamData.current_season_id,
+        seasons: teamData.seasons || [],
+        is_active: teamData.is_active,
+        is_historical: teamData.is_historical || false,
+        performance_history: teamData.performance_history || {}
+      };
+      break;
     }
 
     if (!authenticatedTeam) {
@@ -126,9 +109,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Query team by ID
-    const teamsRef = adminDb.collection('teams');
-    const q = query(teamsRef, where('id', '==', teamId), where('role', '==', 'team'));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await adminDb.collection('teams')
+      .where('id', '==', teamId)
+      .where('role', '==', 'team')
+      .get();
 
     if (querySnapshot.empty) {
       return NextResponse.json(

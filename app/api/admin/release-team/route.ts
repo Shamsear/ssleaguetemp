@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare release list
     const playersToRelease = [
-      ...realPlayers.map(p => ({
+      ...realPlayers.map((p: any) => ({
         player_id: p.player_id,
         player_name: p.player_name,
         player_type: 'Real Player',

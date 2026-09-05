@@ -57,7 +57,7 @@ export default function PlayerLeaderboardPage() {
   
   // Use React Query hook for player stats from Neon
   const { data: playerStatsData, isLoading: statsLoading } = usePlayerStats({
-    tournamentId: showOverall ? undefined : selectedTournamentId,
+    tournamentId: showOverall ? undefined : (selectedTournamentId || undefined),
     seasonId: userSeasonId || ''
   });
   

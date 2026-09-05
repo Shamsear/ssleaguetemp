@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         // Build updates object with all fields to update
         const fieldsToUpdate: Record<string, any> = {};
         
-        Object.keys(update.updates).forEach(field => {
+        Object.keys(update.updates).forEach((field: any) => {
           const dbColumn = fieldMapping[field] || field;
           fieldsToUpdate[dbColumn] = update.updates[field];
         });

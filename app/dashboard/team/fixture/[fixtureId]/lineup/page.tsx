@@ -23,7 +23,7 @@ export default function FixtureLineupPage() {
   const [deadline, setDeadline] = useState<string | null>(null);
 
   // Auto-lock lineups when deadline passes
-  useAutoLockLineups(fixtureId, deadline);
+  useAutoLockLineups(fixtureId, deadline || undefined);
 
   useEffect(() => {
     if (user && fixtureId) {

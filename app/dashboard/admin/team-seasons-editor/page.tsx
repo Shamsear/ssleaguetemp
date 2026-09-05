@@ -55,7 +55,7 @@ export default function TeamSeasonsEditorPage() {
       const teamSeasonsSnapshot = await (await (await fetch('/api/team/all')).json()).data;
       const seasonIdsSet = new Set<string>();
       
-      teamSeasonsSnapshot.forEach((doc) => {
+      teamSeasonsSnapshot.forEach((doc: any) => {
         const data = doc.data();
         if (data.season_id) {
           seasonIdsSet.add(data.season_id);

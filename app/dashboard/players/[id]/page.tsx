@@ -197,7 +197,7 @@ export default function PlayerDetailPage() {
     
 
     // Check if user has permission (super_admin, committee_admin, or team)
-    if (!['super_admin', 'committee_admin', 'team'].includes(user.role)) {
+    if (!user || !['super_admin', 'committee_admin', 'team'].includes(user.role)) {
       router.push('/dashboard');
       return;
     }

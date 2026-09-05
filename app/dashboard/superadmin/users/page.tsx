@@ -62,6 +62,7 @@ function UsersManagementContent() {
       filtered = users.filter(u => u.isApproved);
     }
 
+    const normalizeStr = (str: any) => String(str || '').toLowerCase().trim();
     if (searchQuery.trim() !== '') {
       const q = searchQuery;
       filtered = filtered.filter(u => 
@@ -345,7 +346,7 @@ function UsersManagementContent() {
                 </div>
 
                 {/* Actions (Always visible for clarity/accessibility) */}
-                {user.uid !== u.uid && (
+                {user && user.uid !== u.uid && (
                   <div className="flex flex-wrap items-center gap-2">
                     {!u.isApproved ? (
                       <>

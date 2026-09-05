@@ -619,8 +619,8 @@ export default function TeamDetailPage() {
               )}
 
               {/* Trophies Section */}
-              {((selectedView === 'overall' && allSeasonData.some(s => s.trophies && s.trophies.length > 0)) || 
-                (selectedView === 'season' && currentSeasonData.trophies && currentSeasonData.trophies.length > 0)) && (
+              {((selectedView === 'overall' && allSeasonData.some(s => (s as any).trophies && (s as any).trophies.length > 0)) || 
+                (selectedView === 'season' && (currentSeasonData as any).trophies && (currentSeasonData as any).trophies.length > 0)) && (
                 <div className="bg-white/60 rounded-2xl p-6 shadow-md border border-white/20">
                   <h3 className="text-lg font-semibold text-dark mb-4 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -632,7 +632,7 @@ export default function TeamDetailPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {selectedView === 'overall' ? (
                       allSeasonData.flatMap(seasonData => 
-                        (seasonData.trophies || []).map((trophy: any) => ({
+                        ((seasonData as any).trophies || []).map((trophy: any) => ({
                           ...trophy,
                           season: seasonData.season_name
                         }))
@@ -658,7 +658,7 @@ export default function TeamDetailPage() {
                         </div>
                       ))
                     ) : (
-                      currentSeasonData.trophies?.map((trophy: any) => (
+                      (currentSeasonData as any).trophies?.map((trophy: any) => (
                         <div key={trophy.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-300 shadow-sm">
                           <div className="flex items-center gap-3">
                             <span className="text-3xl"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /></span>

@@ -142,18 +142,18 @@ export async function POST(request: NextRequest) {
 
     // Group by season
     const seasonStats: Record<string, any> = {};
-    updates.forEach(update => {
+    updates.forEach((update: any) => {
       if (!seasonStats[update.season_id]) {
         seasonStats[update.season_id] = {
           playerCount: 0,
           fieldChanges: {}
         };
-        statsFields.forEach(field => {
+        statsFields.forEach((field: any) => {
           seasonStats[update.season_id].fieldChanges[field] = 0;
         });
       }
       seasonStats[update.season_id].playerCount++;
-      Object.keys(update.updates).forEach(field => {
+      Object.keys(update.updates).forEach((field: any) => {
         seasonStats[update.season_id].fieldChanges[field] += update.updates[field].change;
       });
     });

@@ -867,9 +867,9 @@ export default function TeamTransfersPage() {
                     }`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {player.photo_url ? (
+                      {(player as any).photo_url ? (
                         <img
-                          src={player.photo_url}
+                          src={(player as any).photo_url}
                           alt={player.player_name}
                           className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
                         />
@@ -958,9 +958,9 @@ export default function TeamTransfersPage() {
                     }`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {player.photo_url ? (
+                      {(player as any).photo_url ? (
                         <img
-                          src={player.photo_url}
+                          src={(player as any).photo_url}
                           alt={player.player_name}
                           className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
                         />

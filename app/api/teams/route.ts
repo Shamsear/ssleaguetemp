@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
           .orderBy('team_name')
           .get();
 
-        return snapshot.docs.map(doc => ({
+        return snapshot.docs.map((doc: any) => ({
           id: doc.id,
           data: doc.data()
         }));
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get team IDs and map to user IDs
-    const teamIds = teamsData.map(t => t.id);
+    const teamIds = teamsData.map((t: any) => t.id);
     const userIdToTeamIdMap = new Map();
     const userIds: string[] = [];
 
@@ -65,10 +65,10 @@ export async function GET(request: NextRequest) {
         const userId = teamData.userId || teamData.user_id || teamData.owner_id;
         return { teamId: id, userId };
       })
-      .filter(item => item.userId);
+      .filter((item: any) => item.userId);
 
     if (teamsNeedingLogos.length > 0) {
-      const userIdsForLogos = teamsNeedingLogos.map(item => item.userId);
+      const userIdsForLogos = teamsNeedingLogos.map((item: any) => item.userId);
       const userLogoMap = new Map();
 
       // Firestore IN operator supports max 30 values - batch the queries with cache
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
               .where('__name__', 'in', batch)
               .get();
 
-            return snapshot.docs.map(doc => ({
+            return snapshot.docs.map((doc: any) => ({
               id: doc.id,
               logoUrl: doc.data().logoUrl
             }));
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
 
     // Create stats lookup map
     const statsMap = new Map();
-    teamStats.forEach(stat => {
+    teamStats.forEach((stat: any) => {
       statsMap.set(stat.team_id, {
         matches_played: parseInt(stat.total_matches) || 0,
         wins: parseInt(stat.total_wins) || 0,

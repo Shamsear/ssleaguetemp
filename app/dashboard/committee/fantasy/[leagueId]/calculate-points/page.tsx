@@ -1,5 +1,5 @@
 'use client';
-import { CheckCircle, Trophy, BarChart2, AlertTriangle, Unlock, ArrowLeft, Activity, ChevronDown, Zap } from 'lucide-react';
+import { CheckCircle, Trophy, BarChart2, AlertTriangle, Unlock, ArrowLeft, Activity, ChevronDown, Zap, RotateCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -191,9 +191,32 @@ export default function CalculatePointsPage() {
           </div>
           <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
+        </div>
+
+        {/* Full System Recalculate Banner */}
+        <div className="console-card bg-slate-900 border border-slate-800 rounded-3xl p-5 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 bg-slate-800 text-amber-400 rounded-2xl border border-slate-700 shrink-0">
+              <RotateCw className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-sm text-white uppercase tracking-wider">
+                Full-System Recalculation Utility
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Fix &amp; recalculate all real player points (including free agents), passive team bonuses, and league standings
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/committee/fantasy/recalculate"
+            className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono text-xs font-black uppercase tracking-wider transition-all shrink-0 shadow-sm"
+          >
+            Recalculate All &rarr;
+          </Link>
         </div>
 
         {error && (

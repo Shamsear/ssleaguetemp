@@ -265,7 +265,7 @@ function CategoriesPageContent() {
                             Priority {category.priority}
                           </span>
                           <span className="inline-flex text-[9px] font-black uppercase bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded mt-1">
-                            Max {category.max_players !== undefined ? category.max_players : (category.priority === 1 ? 2 : 1)} Per Team
+                            Max {(category as any).max_players !== undefined ? (category as any).max_players : (category.priority === 1 ? 2 : 1)} Per Team
                           </span>
                         </div>
                       </div>

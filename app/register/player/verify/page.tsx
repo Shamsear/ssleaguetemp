@@ -520,7 +520,7 @@ function PlayerVerifyContent() {
         const rpRes = await fetch('/api/realplayers')
         const rpJson = await rpRes.json()
         const playersSnapshot = { docs: (rpJson.data || []).map((r: any) => ({ data: () => r })) }
-        const maxId = playersSnapshot.docs.reduce((max, doc) => {
+        const maxId = playersSnapshot.docs.reduce((max: any, doc: any) => {
           const id = (doc.data() as any).player_id as string
           if (id && id.startsWith('sspslpsl')) {
             const numStr = id.replace('sspslpsl', '')

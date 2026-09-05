@@ -127,12 +127,12 @@ export default function LineupSubmission({
       
       if (data.success && data.players) {
         const activePlayers = data.players.filter((p: Player) => p.is_active);
-        console.log('🔍 LineupSubmission - Active players:', activePlayers.length, activePlayers.map(p => p.name));
+        console.log('🔍 LineupSubmission - Active players:', activePlayers.length, activePlayers.map((p: any) => p.name));
         setRoster(activePlayers);
         
         // Auto-select and auto-submit for teams with exactly 5 players (no choice needed)
         if (activePlayers.length === 5 && !existingLineup) {
-          const allPlayerIds = activePlayers.map(p => p.player_id);
+          const allPlayerIds = activePlayers.map((p: any) => p.player_id);
           setStartingXI(allPlayerIds);
           setSubstitutes([]);
           
@@ -161,7 +161,7 @@ export default function LineupSubmission({
         starting_xi: startingPlayers,
         substitutes: substitutePlayers,
         submitted_by: user?.uid,
-        submitted_by_name: user?.display_name || user?.email || 'Auto-submit',
+        submitted_by_name: (user as any)?.display_name || user?.email || 'Auto-submit',
         selected_by_opponent: isOpponentSelection,
         is_draft: false
       };
@@ -346,7 +346,7 @@ export default function LineupSubmission({
         starting_xi: startingXI,
         substitutes: substitutes,
         submitted_by: user?.uid,
-        submitted_by_name: user?.display_name || user?.email,
+        submitted_by_name: (user as any)?.display_name || user?.email,
         selected_by_opponent: isOpponentSelection,
         is_draft: isDraft
       };

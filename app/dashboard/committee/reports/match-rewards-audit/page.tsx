@@ -86,6 +86,7 @@ export default function MatchRewardsAuditPage() {
       );
 
       for (const team of teamsWithMissing) {
+        if (!team.missingMatches) continue;
         for (const match of team.missingMatches) {
           // First, handle duplicate transactions intelligently
           if (match.duplicateECoinTransactions && match.duplicateECoinTransactions.length > 0) {
@@ -421,7 +422,7 @@ export default function MatchRewardsAuditPage() {
             // Track both currencies
             if (eCoinAmount > 0) {
               allTransactionsByFixtureTemp[txnKey].push({
-                id: doc.id,
+                id: data.id || data.transaction_id || '',
                 teamId,
                 fixtureId,
                 currency: 'football',
@@ -431,7 +432,7 @@ export default function MatchRewardsAuditPage() {
             }
             if (sSCoinAmount > 0) {
               allTransactionsByFixtureTemp[txnKey].push({
-                id: doc.id,
+                id: data.id || data.transaction_id || '',
                 teamId,
                 fixtureId,
                 currency: 'real',
@@ -446,7 +447,7 @@ export default function MatchRewardsAuditPage() {
             matchAmounts.eCoin += amount;
             
             allTransactionsByFixtureTemp[txnKey].push({
-              id: doc.id,
+              id: data.id || data.transaction_id || '',
               teamId,
               fixtureId,
               currency: 'football',
@@ -460,7 +461,7 @@ export default function MatchRewardsAuditPage() {
             matchAmounts.sSCoin += amount;
             
             allTransactionsByFixtureTemp[txnKey].push({
-              id: doc.id,
+              id: data.id || data.transaction_id || '',
               teamId,
               fixtureId,
               currency: 'real',
@@ -470,7 +471,7 @@ export default function MatchRewardsAuditPage() {
           }
         } else {
           // If no fixture_id, still count in team totals (shouldn't happen for match rewards)
-          console.warn(`Transaction ${doc.id} for team ${teamId} has no fixture_id`);
+          console.warn(`Transaction ${data.id || data.transaction_id || ''} for team ${teamId} has no fixture_id`);
         }
       });
       

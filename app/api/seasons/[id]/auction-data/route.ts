@@ -32,7 +32,7 @@ export async function GET(
     `;
 
     // Fetch all bids for this season's rounds
-    const roundIds = rounds.map(r => r.id);
+    const roundIds = rounds.map((r: any) => r.id);
     let bids = [];
     let topBids = [];
     

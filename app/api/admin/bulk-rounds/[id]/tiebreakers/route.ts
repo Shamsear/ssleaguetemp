@@ -93,8 +93,8 @@ export async function GET(
     // Format response
     const formattedTiebreakers = tiebreakers.map(tb => {
       const teams = teamsByTiebreaker[tb.id] || [];
-      const activeTeams = teams.filter(t => t.status === 'active');
-      const teamsWithBids = teams.filter(t => t.bid_amount > 0);
+      const activeTeams = teams.filter((t: any) => t.status === 'active');
+      const teamsWithBids = teams.filter((t: any) => t.bid_amount > 0);
 
       return {
         id: tb.id,

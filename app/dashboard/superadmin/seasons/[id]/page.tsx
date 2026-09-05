@@ -140,7 +140,7 @@ export default function SeasonDetails() {
       }
       
       // For multi-season types (season 16+), fetch auction data from Neon
-      if (seasonData.type === 'multi') {
+      if (seasonJson.data.type === 'multi') {
         try {
           const auctionResponse = await fetchWithTokenRefresh(`/api/seasons/${seasonId}/auction-data`);
           if (auctionResponse.ok) {

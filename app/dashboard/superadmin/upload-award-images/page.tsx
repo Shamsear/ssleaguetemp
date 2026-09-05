@@ -127,13 +127,13 @@ export default function UploadAwardImagesPage() {
     const numericId = typeof selectedItemId === 'string' ? parseInt(selectedItemId, 10) : selectedItemId;
 
     if (awardType === 'award') {
-      const award = awards.find(a => a.id == numericId);
+      const award = awards.find(a => String(a.id) === String(numericId));
       return award?.instagram_link || null;
     } else if (awardType === 'player_award') {
-      const award = playerAwards.find(a => a.id == numericId);
+      const award = playerAwards.find(a => String(a.id) === String(numericId));
       return award?.instagram_link || null;
     } else if (awardType === 'trophy') {
-      const trophy = trophies.find(t => t.id == numericId);
+      const trophy = trophies.find(t => String(t.id) === String(numericId));
       return trophy?.instagram_link || null;
     }
     return null;
@@ -147,13 +147,13 @@ export default function UploadAwardImagesPage() {
     const numericId = typeof selectedItemId === 'string' ? parseInt(selectedItemId, 10) : selectedItemId;
 
     if (awardType === 'award') {
-      const award = awards.find(a => a.id == numericId);
+      const award = awards.find(a => String(a.id) === String(numericId));
       return award?.instagram_post_url || null;
     } else if (awardType === 'player_award') {
-      const award = playerAwards.find(a => a.id == numericId);
+      const award = playerAwards.find(a => String(a.id) === String(numericId));
       return award?.instagram_post_url || null;
     } else if (awardType === 'trophy') {
-      const trophy = trophies.find(t => t.id == numericId);
+      const trophy = trophies.find(t => String(t.id) === String(numericId));
       return trophy?.instagram_post_url || null;
     }
     return null;

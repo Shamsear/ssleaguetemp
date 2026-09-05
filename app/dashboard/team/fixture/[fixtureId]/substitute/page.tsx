@@ -43,7 +43,7 @@ export default function FixtureSubstitutePage() {
       setFixture(fixtureData.fixture);
 
       // Determine which team the user belongs to
-      const userTeamId = fixtureData.fixture.home_team_id === user?.team_id
+      const userTeamId = (fixtureData.fixture.home_team_id === (user as any)?.team_id || fixtureData.fixture.home_team_id === (user as any)?.teamId)
         ? fixtureData.fixture.home_team_id
         : fixtureData.fixture.away_team_id;
       

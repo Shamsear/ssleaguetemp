@@ -57,11 +57,11 @@ export async function GET(
       .where('seasons', 'array-contains', seasonId)
       .where('is_historical', '==', true);
     const teamsSnapshot = await teamsQuery.get();
-    const teamsDataRaw = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const teamsDataRaw = teamsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     
     // Deduplicate teams by id (in case multiple team documents exist for same team)
     const teamMap = new Map();
-    teamsDataRaw.forEach(team => {
+    teamsDataRaw.forEach((team: any) => {
       if (!teamMap.has(team.id)) {
         teamMap.set(team.id, team);
       }
@@ -79,8 +79,8 @@ export async function GET(
     console.log(`✅ Found ${teamStatsData.length} team stats records for this season`);
     
     // Merge permanent team data with season-specific stats
-    const teamsWithStats = teamsData.map(team => {
-      const seasonStats = teamStatsData.find(stats => stats.team_id === team.id);
+    const teamsWithStats = teamsData.map((team: any) => {
+      const seasonStats = teamStatsData.find((stats: any) => stats.team_id === team.id);
       return {
         ...team,
         season_stats: seasonStats || null
@@ -136,12 +136,12 @@ export async function GET(
       // This is more efficient than 'where...in' queries
       if (uniquePlayerIds.length <= 30) {
         // Single batch - use getAll for maximum efficiency
-        const docRefs = uniquePlayerIds.map(playerId => 
+        const docRefs = uniquePlayerIds.map((playerId: any) => 
           adminDb.collection('realplayers').doc(playerId)
         );
         const playerDocs = await adminDb.getAll(...docRefs);
         
-        playerDocs.forEach(doc => {
+        playerDocs.forEach((doc: any) => {
           if (doc.exists) {
             const data = doc.data();
             playerDataMap.set(doc.id, {
@@ -167,7 +167,7 @@ export async function GET(
             .where('player_id', 'in', batch);
           const playersSnapshot = await playersQuery.get();
           
-          playersSnapshot.docs.forEach(doc => {
+          playersSnapshot.docs.forEach((doc: any) => {
             const data = doc.data();
             playerDataMap.set(data.player_id, {
               id: doc.id,
@@ -248,7 +248,7 @@ export async function GET(
         .where('season_id', '==', seasonId)
         .where('is_historical', '==', true);
       const awardsSnapshot = await awardsQuery.get();
-      awardsData = awardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      awardsData = awardsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (awardsError: any) {
       console.warn('Awards collection might not exist:', awardsError.message);
     }
@@ -261,7 +261,7 @@ export async function GET(
         .where('season_id', '==', seasonId)
         .where('is_historical', '==', true);
       const matchesSnapshot = await matchesQuery.get();
-      matchesData = matchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      matchesData = matchesSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (matchesError: any) {
       console.warn('Matches collection might not exist:', matchesError.message);
     }
@@ -523,7 +523,7 @@ export async function DELETE(
     console.log(`🗑️ Deleting awards...`);
     
     const awardsBatch = adminDb.batch();
-    awardsSnapshot.docs.forEach(doc => {
+    awardsSnapshot.docs.forEach((doc: any) => {
       awardsBatch.delete(doc.ref);
     });
     await awardsBatch.commit();
@@ -537,7 +537,7 @@ export async function DELETE(
       .get();
     
     const teamsBatch = adminDb.batch();
-    teamsSnapshot.docs.forEach(doc => {
+    teamsSnapshot.docs.forEach((doc: any) => {
       teamsBatch.update(doc.ref, {
         seasons: FieldValue.arrayRemove(seasonId)
       });

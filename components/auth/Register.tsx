@@ -423,7 +423,7 @@ function RegisterContent() {
                 ? 'Verifying invitation code details...'
                 : invite?.type === 'team'
                 ? 'You are invited to register a team globally'
-                : invite && invite.type !== 'team'
+                : invite && (invite as any).type !== 'team'
                 ? `You're invited to manage ${invite.seasonName} (${invite.seasonYear})`
                 : 'Join Football Auction and start building your dream team'
               }

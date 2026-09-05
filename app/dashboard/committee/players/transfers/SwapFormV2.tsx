@@ -28,7 +28,7 @@ interface SwapFormV2Props {
 
 export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
   const { user, userSeasonId } = usePermissions();
-  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId);
+  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId || undefined);
 
   // Form state
   const [selectedPlayerAId, setSelectedPlayerAId] = useState('');
@@ -91,7 +91,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
           loadedPlayers.forEach(player => {
             if (!player.team_name) {
               const team = cachedTeams.find(t => t.id === player.team_id);
-              player.team_name = team?.name || 'Unknown Team';
+              player.team_name = (team as any)?.name || (team as any)?.team_name || 'Unknown Team';
             }
           });
         }
@@ -236,9 +236,8 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
   // Validate cash amount when it changes
   useEffect(() => {
     if (cashAmount > 0 && selectedPlayerA && selectedPlayerB) {
-      const maxPlayerValue = Math.max(selectedPlayerA.auction_value, selectedPlayerB.auction_value);
-      const validation = validateCashAmount(cashAmount, maxPlayerValue);
-      setCashValidation(validation);
+      const validation = validateCashAmount(cashAmount);
+      setCashValidation(validation as any);
     } else {
       setCashValidation(null);
     }
@@ -453,7 +452,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Player A Selection */}
         <SearchablePlayerSelect
-          players={players}
+          players={players as any}
           value={selectedPlayerAId}
           onChange={(id) => {
             setSelectedPlayerAId(id);
@@ -501,7 +500,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
         {/* Player B Selection */}
         {selectedPlayerA && (
           <SearchablePlayerSelect
-            players={availablePlayersForB}
+            players={availablePlayersForB as any}
             value={selectedPlayerBId}
             onChange={setSelectedPlayerBId}
             label="Team B Player (from different team)"

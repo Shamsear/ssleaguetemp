@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
     // Fetch Firestore categories to calculate category points dynamically
     const categoriesSnapshot = await adminDb.collection('categories').get();
     const categoriesMap = new Map();
-    categoriesSnapshot.docs.forEach(doc => {
+    categoriesSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       categoriesMap.set(doc.id.toLowerCase(), data);
       if (data.name) {
@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
     // Fetch Firestore realplayers collection to get their assigned categories
     const firebasePlayersSnapshot = await adminDb.collection('realplayers').get();
     const firebasePlayersMap = new Map();
-    firebasePlayersSnapshot.docs.forEach(doc => {
+    firebasePlayersSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       firebasePlayersMap.set(String(data.player_id), data);
     });
@@ -384,7 +384,7 @@ export async function GET(request: NextRequest) {
       console.log(`[Player Stats By Round] Retrieved ${playersSnapshot.size} players from Firestore`);
       
       const photoMap = new Map<string, string>();
-      playersSnapshot.docs.forEach(doc => {
+      playersSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         if (data.photo_url && data.player_id) {
           photoMap.set(data.player_id, data.photo_url);
@@ -401,7 +401,7 @@ export async function GET(request: NextRequest) {
       console.log(`[Player Stats By Round] Retrieved ${teamSeasonsSnapshot.size} team seasons`);
       
       const teamLogoMap = new Map<string, string>();
-      teamSeasonsSnapshot.docs.forEach(doc => {
+      teamSeasonsSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         const teamName = data.team_name;
         // Try multiple possible field names for the logo
@@ -426,7 +426,7 @@ export async function GET(request: NextRequest) {
       // Add photo_url and team_logo to each player
       let photosAdded = 0;
       let logosAdded = 0;
-      playerStats.forEach(player => {
+      playerStats.forEach((player: any) => {
         const photoUrl = photoMap.get(player.player_id);
         if (photoUrl) {
           player.photo_url = photoUrl;
@@ -488,7 +488,7 @@ export async function GET(request: NextRequest) {
       console.log(`[Player Stats By Round] Successfully added ${photosAdded} photos and ${logosAdded} team logos to ${playerStats.length} players`);
       
       // Debug: Log first 3 players with their team info
-      console.log('[Player Stats By Round] First 3 players team data:', playerStats.slice(0, 3).map(p => ({
+      console.log('[Player Stats By Round] First 3 players team data:', playerStats.slice(0, 3).map((p: any) => ({
         player_name: p.player_name,
         team_name: p.team_name,
         team_logo: (p as any).team_logo,

@@ -103,7 +103,7 @@ export default function TeamMatchesPage() {
 
           if (!resolvedTeamId) {
             resolvedTeamId = teamSeasonData.team_id || (user as any).team_id || user.uid;
-            setTeamId(resolvedTeamId);
+            setTeamId(resolvedTeamId || '');
             console.log('Team ID:', resolvedTeamId);
           }
 
@@ -131,7 +131,7 @@ export default function TeamMatchesPage() {
           console.log('All seasons completed, using latest:', currentSeasonId);
         }
 
-        setSeasonId(currentSeasonId);
+        setSeasonId(currentSeasonId || '');
 
         // Fetch tournaments for this season
         const tournamentsRes = await fetchWithTokenRefresh(`/api/tournaments?season_id=${currentSeasonId}`);
@@ -384,7 +384,7 @@ export default function TeamMatchesPage() {
               winner_id: fixture.result === 'home_win' ? fixture.home_team_id : fixture.result === 'away_win' ? fixture.away_team_id : undefined,
               round_status: roundData.status,
               leg: fixture.leg || 'first',
-              phase: phase,
+              phase: phase as any,
               phase_label: phase_label,
               home_deadline: home_deadline,
               away_deadline: away_deadline,

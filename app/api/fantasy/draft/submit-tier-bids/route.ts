@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
     console.log(`⏭️  Tiers skipped: ${tiersSkipped}`);
 
     // Verify all tiers exist and belong to this league
-    const tierIds = validatedBids.map(b => b.tier_id);
+    const tierIds = validatedBids.map((b: any) => b.tier_id);
     const tiers = await fantasySql`
       SELECT tier_id, league_id, player_ids
       FROM fantasy_draft_tiers
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
     for (const bid of validatedBids) {
       if (bid.is_skip) continue;
 
-      const tier = tiers.find(t => t.tier_id === bid.tier_id);
+      const tier = tiers.find((t: any) => t.tier_id === bid.tier_id);
       if (!tier) continue;
 
       const playerIds = tier.player_ids as string[];

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      transfers: transfers.map(t => ({
+      transfers: transfers.map((t: any) => ({
         transfer_id: t.transfer_id,
         window_id: t.window_id,
         player_out: t.player_out_name ? {

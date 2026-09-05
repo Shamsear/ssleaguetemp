@@ -88,7 +88,7 @@ export default function FixtureManagementPage() {
 
       const matchData = matchJson.fixture || matchJson.data;
       const matchObj: Match = {
-        id: matchDoc.id,
+        id: matchData.id || matchId,
         round_number: matchData.round_number,
         match_number: matchData.match_number,
         home_team_id: matchData.home_team_id,
@@ -342,7 +342,7 @@ export default function FixtureManagementPage() {
 
     try {
       const form = e.target as HTMLFormElement;
-      const matchupPayloads = [];
+      const batch: Promise<any>[] = [];
       let totalHomeGoals = 0;
       let totalAwayGoals = 0;
 
@@ -358,9 +358,14 @@ export default function FixtureManagementPage() {
           totalHomeGoals += homeGoals;
           totalAwayGoals += awayGoals;
 
-          // Update matchup via Neon tournament DB
-          const sql = getTournamentDb();
-          await sql`UPDATE matchups SET home_goals = ${homeGoals}, away_goals = ${awayGoals}, updated_at = NOW() WHERE id = ${matchup.id}`;
+          // Update matchup via API
+          batch.push(
+            fetch(`/api/matchups/${matchup.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ home_goals: homeGoals, away_goals: awayGoals })
+            })
+          );
         }
       }
 

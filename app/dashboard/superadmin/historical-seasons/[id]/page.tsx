@@ -806,9 +806,9 @@ export default function HistoricalSeasonDetailPage() {
   };
 
   // Handle editing preview data
-  const handlePreviewTeamChange = (index: number, field: keyof PreviewTeamData, value: string) => {
+  const handlePreviewTeamChange = (index: number, field: keyof PreviewTeamData, value: any) => {
     const newTeams = [...previewTeams];
-    newTeams[index][field] = value;
+    (newTeams[index] as any)[field] = value;
     setPreviewTeams(newTeams);
   };
 
@@ -818,9 +818,9 @@ export default function HistoricalSeasonDetailPage() {
         field === 'conceded_per_game' || field === 'net_goals' || field === 'cleansheets' || 
         field === 'points' || field === 'win' || field === 'draw' || field === 'loss' || 
         field === 'total_matches' || field === 'total_points') {
-      newPlayers[index][field] = typeof value === 'string' ? (parseFloat(value) || 0) : value;
+      (newPlayers[index] as any)[field] = typeof value === 'string' ? (parseFloat(value) || 0) : value;
     } else {
-      newPlayers[index][field] = value;
+      (newPlayers[index] as any)[field] = value;
     }
     setPreviewPlayers(newPlayers);
   };
@@ -1362,7 +1362,7 @@ export default function HistoricalSeasonDetailPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {teamStats.map((team, index) => (
+                        {teamStats.map((team: any, index) => (
                           <tr 
                             key={team.id} 
                             onClick={() => router.push(`/dashboard/teams/${team.id}`)}
@@ -1426,7 +1426,7 @@ export default function HistoricalSeasonDetailPage() {
 
                   {/* Mobile/Tablet Cards */}
                   <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {teamStats.map((team, index) => (
+                    {teamStats.map((team: any, index) => (
                       <div 
                         key={team.id} 
                         onClick={() => router.push(`/dashboard/teams/${team.id}`)}
@@ -2110,7 +2110,7 @@ export default function HistoricalSeasonDetailPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                           {teamStats
-                            .sort((a, b) => {
+                            .sort((a: any, b: any) => {
                               // Use rank from teamstats if available, otherwise sort by points, GD, GF
                               if (a.rank && b.rank) return a.rank - b.rank;
                               
@@ -2204,7 +2204,7 @@ export default function HistoricalSeasonDetailPage() {
                       {teamStats
                         .sort((a, b) => {
                           // Use rank from teamstats if available
-                          if (a.rank && b.rank) return a.rank - b.rank;
+                          if ((a as any).rank && (b as any).rank) return (a as any).rank - (b as any).rank;
                           
                           // Fallback: Sort by points, then goals
                           const pointsA = a.points || 0;
@@ -2566,7 +2566,7 @@ export default function HistoricalSeasonDetailPage() {
                             const val = e.target.value;
                             setAwardPlayerId(val);
                             const pObj = players.find(p => (p.player_id || p.id) === val);
-                            setAwardPlayerName(pObj ? (pObj.player_name || pObj.name || '') : '');
+                            setAwardPlayerName(pObj ? ((pObj as any).player_name || pObj.name || '') : '');
                           }}
                           className="w-full text-xs border border-slate-350 rounded-lg p-2 bg-white focus:outline-none focus:border-amber-400"
                           required
@@ -2574,7 +2574,7 @@ export default function HistoricalSeasonDetailPage() {
                           <option value="">Select Player...</option>
                           {players.map(p => (
                             <option key={p.player_id || p.id} value={p.player_id || p.id}>
-                              {p.player_name || p.name} ({p.team})
+                              {(p as any).player_name || p.name} ({p.team})
                             </option>
                           ))}
                         </select>
@@ -3482,7 +3482,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.goals_scored}
+                                      value={player.goals_scored ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'goals_scored', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3493,7 +3493,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.goals_per_game}
+                                      value={player.goals_per_game ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'goals_per_game', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3504,7 +3504,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.goals_conceded}
+                                      value={player.goals_conceded ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'goals_conceded', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3515,7 +3515,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.conceded_per_game}
+                                      value={player.conceded_per_game ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'conceded_per_game', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3526,7 +3526,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.net_goals}
+                                      value={player.net_goals ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'net_goals', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3537,7 +3537,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.cleansheets}
+                                      value={player.cleansheets ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'cleansheets', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3548,7 +3548,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.points}
+                                      value={player.points ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'points', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${
@@ -3599,7 +3599,7 @@ export default function HistoricalSeasonDetailPage() {
                                   <td className="px-2 py-3">
                                     <input
                                       type="number"
-                                      value={player.total_points}
+                                      value={player.total_points ?? ''}
                                       onChange={(e) => handlePreviewPlayerChange(index, 'total_points', parseFloat(e.target.value) || 0)}
                                       step="0.1"
                                       className={`w-16 bg-transparent border-none outline-none focus:bg-white/50 focus:border focus:border-amber-200 rounded px-1 py-1 text-xs ${

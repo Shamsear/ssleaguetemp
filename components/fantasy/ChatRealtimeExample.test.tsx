@@ -4,7 +4,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toBeInTheDocument(): void;
+  }
+}
 import ChatRealtimeExample from './ChatRealtimeExample';
 
 // Mock the hook

@@ -157,7 +157,7 @@ export default function TournamentRewardsViewPage() {
           // Create separate transactions for each currency type
           if (hasFootball) {
             allTransactions.push({
-              id: `${doc.id}_football`,
+              id: `${data.id || data.transaction_id || ''}_football`,
               team_id: data.team_id,
               team_name: teamName,
               season_id: data.season_id,
@@ -172,7 +172,7 @@ export default function TournamentRewardsViewPage() {
 
           if (hasReal) {
             allTransactions.push({
-              id: `${doc.id}_real`,
+              id: `${data.id || data.transaction_id || ''}_real`,
               team_id: data.team_id,
               team_name: teamName,
               season_id: data.season_id,
@@ -188,7 +188,7 @@ export default function TournamentRewardsViewPage() {
           // Fallback for old format (single currency_type field)
           if (!hasFootball && !hasReal && data.amount) {
             allTransactions.push({
-              id: doc.id,
+              id: data.id || data.transaction_id || '',
               team_id: data.team_id,
               team_name: teamName,
               season_id: data.season_id,
@@ -244,6 +244,10 @@ export default function TournamentRewardsViewPage() {
           grandTotal: 0,
         };
       });
+
+      const txRes = await fetch('/api/players/transfer-history');
+      const txJson = await txRes.json();
+      const allTxData = txJson.transactions || [];
 
       // Fetch all reward transactions
       for (const rewardType of rewardTypes) {

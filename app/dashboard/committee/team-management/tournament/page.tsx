@@ -2504,14 +2504,14 @@ export function TournamentDashboardPageContent() {
 
             {/* Fixtures List */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length > 0 && (
-              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">
-                    <ClipboardList className="w-4 h-4 text-slate-500" /> Fixtures ({fixturesForSelectedTournament.length})
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-slate-500" /> Fixtures ({fixturesForSelectedTournament.length})
                   </h3>
 
                   {/* Round Selector & Share Button */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                     {selectedRound > 0 && filteredFixtures.length > 0 && (
                       <RoundFixturesShareButton
                         roundNumber={selectedRound}
@@ -2519,12 +2519,12 @@ export function TournamentDashboardPageContent() {
                         tournamentName={selectedTournament?.tournament_name || "SSPS League"}
                       />
                     )}
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">Round:</label>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                      <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Round:</label>
                       <select
                         value={selectedRound}
                         onChange={(e) => handleRoundChange(parseInt(e.target.value))}
-                        className="px-3 py-1.5 bg-white/60 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70"
+                        className="px-3 py-1.5 bg-white/60 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 w-full sm:w-auto"
                       >
                         <option value={0}>All Rounds</option>
                         {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => (

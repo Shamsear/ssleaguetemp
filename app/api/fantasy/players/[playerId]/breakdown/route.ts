@@ -35,10 +35,11 @@ export async function GET(
       WHERE league_id = ${league_id} OR league_id = 'SSPSLFLS18'
       LIMIT 1
     `;
+    const targetSeasonId = leagues[0]?.season_id || 'SSPSLS18';
 
     const tournamentSql = getTournamentDb();
 
-    // Get all completed matchups for this player in SSPSLS18
+    // Get all completed matchups for this player
     const matchups = await tournamentSql`
       SELECT 
         m.fixture_id,
@@ -48,16 +49,18 @@ export async function GET(
         m.away_player_name,
         m.home_goals,
         m.away_goals,
-        m.home_category,
-        m.away_category,
+        rps_home.category as home_category,
+        rps_away.category as away_category,
         f.motm_player_id,
         f.round_number,
         f.home_team_name,
         f.away_team_name
       FROM matchups m
       JOIN fixtures f ON m.fixture_id = f.id
+      LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+      LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
       WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
-        AND (f.season_id = 'SSPSLS18' OR f.season_id LIKE 'SSPSLS18%')
+        AND (f.season_id = ${targetSeasonId} OR f.season_id LIKE ${targetSeasonId + '%'})
         AND f.status = 'completed'
         AND m.home_goals IS NOT NULL
         AND m.away_goals IS NOT NULL
@@ -107,34 +110,37 @@ export async function GET(
       const isMotm = m.motm_player_id === playerId;
 
       const fppData = fppMap.get(m.round_number);
-      const calculatedPts = getPointsForOpponentCategory(oppCat, res);
-      const basePts = fppData?.base_points !== undefined ? Number(fppData.base_points) : calculatedPts;
+      const calculatedResultPts = getPointsForOpponentCategory(oppCat, res);
 
       let pointsBreakdown = fppData?.points_breakdown || {};
       if (typeof pointsBreakdown === 'string') {
         try { pointsBreakdown = JSON.parse(pointsBreakdown); } catch { pointsBreakdown = {}; }
       }
 
-      // If points_breakdown is empty, dynamically construct full itemized breakdown
+      // If points_breakdown is empty, dynamically construct full itemized breakdown using standard fantasy scoring rules
       if (!pointsBreakdown || Object.keys(pointsBreakdown).length === 0) {
-        pointsBreakdown = {};
-        const catKey = (oppCat || 'RED').toLowerCase();
-        pointsBreakdown[`${res}_vs_${catKey}`] = calculatedPts;
+        const resultPts = res === 'win' ? 3 : (res === 'draw' ? 1 : 0);
+        const goalsPts = goalsScored * 2;
+        const cleanSheetPts = isCleanSheet ? 6 : 0;
+        const motmPts = isMotm ? 5 : 0;
+        const hatTrickPts = goalsScored >= 3 ? 5 : 0;
+        const concededPenalty = goalsConceded >= 4 ? -3 : 0;
 
-        if (goalsScored > 0) {
-          pointsBreakdown[`goals_scored_(${goalsScored})`] = goalsScored * 5;
-          if (goalsScored >= 3) pointsBreakdown['hat_trick_bonus'] = 5;
-        }
-        if (isCleanSheet) {
-          pointsBreakdown['clean_sheet_bonus'] = 4;
-        }
-        if (isMotm) {
-          pointsBreakdown['motm_award'] = 5;
-        }
-        if (goalsConceded >= 4) {
-          pointsBreakdown['concedes_4_plus_goals'] = -3;
-        }
+        pointsBreakdown = {
+          match_played: 1,
+          result: resultPts,
+          goals: goalsPts,
+          clean_sheet: cleanSheetPts,
+          motm: motmPts,
+          hat_trick: hatTrickPts,
+          concedes_4_plus: concededPenalty
+        };
       }
+
+      const calculatedTotalBasePts = Object.values(pointsBreakdown).reduce((a: any, b: any) => Number(a) + Number(b), 0);
+      const basePts = (fppData?.base_points !== undefined && Number(fppData.base_points) > 0)
+        ? Number(fppData.base_points)
+        : calculatedTotalBasePts;
 
       return {
         fixture_id: m.fixture_id,

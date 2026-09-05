@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     if (seasonId === 'all') {
       // For 'all' view, fetch all teams from the teams collection
       const teamsSnapshot = await adminDb.collection('teams').get();
-      teamSeasons = teamsSnapshot.docs.map(doc => {
+      teamSeasons = teamsSnapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           team_id: doc.id,
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
           .where('seasons', 'array-contains', seasonId)
           .get();
 
-        teamSeasons = teamsSnapshot.docs.map(doc => {
+        teamSeasons = teamsSnapshot.docs.map((doc: any) => {
           const data = doc.data();
           const historicalName = teamNamesMap.get(doc.id) || data.name || data.team_name || doc.id;
           return {
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
           .get();
           
         const registeredTeamIds = new Set(
-          teamSeasonsSnapshot.docs.map(doc => {
+          teamSeasonsSnapshot.docs.map((doc: any) => {
             const data = doc.data();
             return data.team_id || data.teamId || doc.id.split('_')[0];
           })
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         if (showAllTeams) {
           // For committee view, get all teams from the teams collection
           const teamsSnapshot = await adminDb.collection('teams').get();
-          teamSeasons = teamsSnapshot.docs.map(doc => {
+          teamSeasons = teamsSnapshot.docs.map((doc: any) => {
             const data = doc.data();
             const teamId = doc.id;
             return {
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
         } else {
           // For super admin filter view, get ONLY registered teams
           const teamsSnapshot = await adminDb.collection('teams').get();
-          const allTeams = teamsSnapshot.docs.map(doc => {
+          const allTeams = teamsSnapshot.docs.map((doc: any) => {
             const data = doc.data();
             const teamId = doc.id;
             return {
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
               is_registered: true
             };
           });
-          teamSeasons = allTeams.filter(t => registeredTeamIds.has(t.team_id));
+          teamSeasons = allTeams.filter((t: any) => registeredTeamIds.has(t.team_id));
         }
       }
     }
@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
           .where('seasons', 'array-contains', seasonId)
           .get();
 
-        teamsList = teamsSnapshot.docs.map(doc => {
+        teamsList = teamsSnapshot.docs.map((doc: any) => {
           const data = doc.data();
           const historicalName = teamNamesMap.get(doc.id) || data.name || data.team_name || doc.id;
           return {
@@ -364,7 +364,7 @@ export async function POST(request: NextRequest) {
           .where('status', '==', 'registered')
           .get();
 
-        teamsList = teamSeasonsSnapshot.docs.map(doc => ({
+        teamsList = teamSeasonsSnapshot.docs.map((doc: any) => ({
           team_id: doc.data().team_id || doc.data().teamId,
           team_name: doc.data().team_name || doc.data().teamName,
         }));
@@ -411,7 +411,7 @@ export async function POST(request: NextRequest) {
         const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
         let seasonsToProcess = [...joinedSeasons];
         if (seasonId && seasonId !== 'all') {
-          seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(seasonId));
+          seasonsToProcess = seasonsToProcess.filter((sid: any) => getSeasonNum(sid) <= getSeasonNum(seasonId));
           if (!seasonsToProcess.includes(seasonId)) {
             seasonsToProcess.push(seasonId);
           }
@@ -546,7 +546,7 @@ export async function POST(request: NextRequest) {
           .where('seasons', 'array-contains', seasonId)
           .get();
 
-        teamsList = teamsSnapshot.docs.map(doc => {
+        teamsList = teamsSnapshot.docs.map((doc: any) => {
           const data = doc.data();
           const historicalName = teamNamesMap.get(doc.id) || data.name || data.team_name || doc.id;
           return {
@@ -561,7 +561,7 @@ export async function POST(request: NextRequest) {
           .where('status', '==', 'registered')
           .get();
 
-        teamsList = teamSeasonsSnapshot.docs.map(doc => ({
+        teamsList = teamSeasonsSnapshot.docs.map((doc: any) => ({
           team_id: doc.data().team_id || doc.data().teamId,
           team_name: doc.data().team_name || doc.data().teamName,
         }));
@@ -632,7 +632,7 @@ export async function POST(request: NextRequest) {
           .where('seasons', 'array-contains', seasonId)
           .get();
 
-        teamsList = teamsSnapshot.docs.map(doc => {
+        teamsList = teamsSnapshot.docs.map((doc: any) => {
           const data = doc.data();
           const historicalName = teamNamesMap.get(doc.id) || data.name || data.team_name || doc.id;
           return {
@@ -647,7 +647,7 @@ export async function POST(request: NextRequest) {
           .where('status', '==', 'registered')
           .get();
 
-        teamsList = teamSeasonsSnapshot.docs.map(doc => ({
+        teamsList = teamSeasonsSnapshot.docs.map((doc: any) => ({
           team_id: doc.data().team_id || doc.data().teamId,
           team_name: doc.data().team_name || doc.data().teamName,
         }));
@@ -792,7 +792,7 @@ export async function POST(request: NextRequest) {
           const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
           let seasonsToProcess = [...joinedSeasons];
           if (seasonId && seasonId !== 'all') {
-            seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(seasonId));
+            seasonsToProcess = seasonsToProcess.filter((sid: any) => getSeasonNum(sid) <= getSeasonNum(seasonId));
             if (!seasonsToProcess.includes(seasonId)) {
               seasonsToProcess.push(seasonId);
             }

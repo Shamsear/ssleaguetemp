@@ -216,7 +216,7 @@ export async function POST(
       roundId,
       round.season_id,
       finalizationResult.allocations.length,
-      auth.email
+      (auth as any).email
     );
 
     // Calculate summary statistics for committee review

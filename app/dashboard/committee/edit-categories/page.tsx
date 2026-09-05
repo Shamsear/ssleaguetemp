@@ -370,7 +370,7 @@ export default function EditCategoriesPage() {
               return (
                 <div
                   key={player.id}
-                  className={`console-card bg-white border border-slate-200/60 border-l-4 ${style.border} rounded-xl shadow-sm transition-all ${isPending ? 'ring-2 ring-amber-400/30 bg-amber-50/30' : ''}`}
+                  className={`console-card !overflow-visible bg-white border border-slate-200/60 border-l-4 ${style.border} rounded-xl shadow-sm transition-all ${isPending ? 'ring-2 ring-amber-400/30 bg-amber-50/30' : ''}`}
                   style={{ position: 'relative', zIndex: isOpen ? 50 : 1 }}
                 >
                   <div className="flex items-center gap-3 p-3">

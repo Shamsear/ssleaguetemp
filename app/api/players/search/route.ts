@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
       const cleanTerm = normalizeStr(term);
       
-      allPlayers = allPlayersData.filter(player => 
+      allPlayers = allPlayersData.filter((player: any) => 
         (player.name && normalizeStr(player.name).includes(cleanTerm)) ||
         (player.player_id && normalizeStr(player.player_id).includes(cleanTerm))
       ).slice(0, limit);
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get player IDs for batch status check
-    const playerIds = allPlayers.map(p => p.player_id);
+    const playerIds = allPlayers.map((p: any) => p.player_id);
 
     // Check registration status in Neon player_seasons table (source of truth)
     const sql = getTournamentDb();
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Map players with status
-    const playersWithStatus = allPlayers.map(player => ({
+    const playersWithStatus = allPlayers.map((player: any) => ({
       ...player,
       status: registeredPlayerIds.has(player.player_id)
         ? 'registered_current'

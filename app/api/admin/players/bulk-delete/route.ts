@@ -21,9 +21,11 @@ export async function POST(request: NextRequest) {
 
     const sql = getTournamentDb();
     
-    // Single-season model: Only current season records need to be deleted
-    // (Historical data may have next season records, so we check both for safety)
+    const seasonMatch = season_id.match(/^([A-Za-z]+)(\d+)$/);
+    const seasonPrefix = seasonMatch ? seasonMatch[1] : 'S';
+    const seasonNumber = seasonMatch ? parseInt(seasonMatch[2]) : 0;
     const nextSeasonId = `${seasonPrefix}${seasonNumber + 1}`;
+    const isModern = ['S16', 'S17', 'S18'].includes(season_id) || seasonNumber >= 16;
 
     const deletedPlayers: any[] = [];
     const promotedPlayers: any[] = [];

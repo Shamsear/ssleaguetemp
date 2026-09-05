@@ -92,6 +92,19 @@ export async function POST(request: NextRequest) {
 
     console.log(`✓ Deleted ${deleted.length} fantasy point records for fixture ${fixture_id}`);
 
+    // Re-sync fantasy_players.total_points for all players in this league
+    await sql`
+      UPDATE fantasy_players fp
+      SET total_points = COALESCE((
+        SELECT SUM(base_points)
+        FROM fantasy_player_points fpp
+        WHERE fpp.real_player_id = fp.real_player_id
+          AND fpp.league_id = fp.league_id
+      ), 0),
+      updated_at = NOW()
+      WHERE fp.league_id = ${fantasy_league_id}
+    `;
+
     // Recalculate leaderboard ranks
     await recalculateLeaderboard(fantasy_league_id);
 
@@ -118,22 +131,19 @@ async function recalculateLeaderboard(fantasy_league_id: string) {
   try {
     const sql = getFantasyDb();
     
-    // Get all teams ordered by points
-    const teams = await sql`
-      SELECT id
-      FROM fantasy_teams
-      WHERE league_id = ${fantasy_league_id}
-      ORDER BY total_points DESC, id ASC
+    await sql`
+      WITH ranked_teams AS (
+        SELECT 
+          team_id,
+          ROW_NUMBER() OVER (ORDER BY total_points DESC, team_name ASC) as new_rank
+        FROM fantasy_teams
+        WHERE league_id = ${fantasy_league_id}
+      )
+      UPDATE fantasy_teams ft
+      SET rank = rt.new_rank, updated_at = NOW()
+      FROM ranked_teams rt
+      WHERE ft.team_id = rt.team_id
     `;
-
-    // Update ranks
-    for (let i = 0; i < teams.length; i++) {
-      await sql`
-        UPDATE fantasy_teams
-        SET rank = ${i + 1}, updated_at = NOW()
-        WHERE id = ${teams[i].id}
-      `;
-    }
 
     console.log(`✅ Leaderboard updated for league ${fantasy_league_id}`);
   } catch (error) {

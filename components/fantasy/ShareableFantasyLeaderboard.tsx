@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Trophy, Award } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { generateContainerPng, downloadPng, shareOrDownloadPng } from '@/lib/utils/export-image';
 
 interface FantasyTeam {
   rank: number;
@@ -31,20 +31,9 @@ export default function ShareableFantasyLeaderboard({
 
     try {
       setIsGenerating(true);
-      
-      const dataUrl = await toPng(leaderboardRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
-
-      const link = document.createElement('a');
-      link.download = `${leagueName.replace(/\s+/g, '-')}-fantasy-leaderboard.png`;
-      link.href = dataUrl;
-      link.click();
+      const dataUrl = await generateContainerPng(leaderboardRef.current);
+      const filename = `${leagueName.replace(/\s+/g, '-')}-fantasy-leaderboard.png`;
+      downloadPng(dataUrl, filename);
     } catch (error) {
       console.error('Error generating image:', error);
       alert('Failed to generate image. Please try again.');
@@ -58,31 +47,12 @@ export default function ShareableFantasyLeaderboard({
 
     try {
       setIsGenerating(true);
-      
-      const dataUrl = await toPng(leaderboardRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: false,
-        skipFontFace: true,
-        imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
-      });
-
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `${leagueName}-fantasy-leaderboard.png`, { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `${leagueName} - Fantasy Leaderboard`,
-          text: `Check out the current fantasy standings!`,
-          files: [file],
-        });
-      } else {
-        generateImage();
-      }
+      const dataUrl = await generateContainerPng(leaderboardRef.current);
+      const filename = `${leagueName.replace(/\s+/g, '-')}-fantasy-leaderboard.png`;
+      await shareOrDownloadPng(dataUrl, filename, `${leagueName} - Fantasy Leaderboard`);
     } catch (error) {
       console.error('Error sharing image:', error);
+      alert('Failed to share image. Downloading instead...');
       generateImage();
     } finally {
       setIsGenerating(false);
@@ -224,7 +194,6 @@ export default function ShareableFantasyLeaderboard({
                               src={team.team_logo} 
                               alt={`${team.team_name} logo`}
                               className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                              crossOrigin="anonymous"
                               style={{
                                 objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
                                 transform: `scale(${(team as any).logo_scale_circle ?? 1})`,

@@ -245,7 +245,7 @@ export async function POST(
           await broadcastSquadUpdate(seasonId, winnerTeamId, {
             player_id: tiebreaker.player_id,
             player_name: tiebreaker.player_name || 'Unknown Player',
-            action: 'released',
+            action: 'released' as any,
             price: winningAmount,
           });
 

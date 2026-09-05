@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
 
     // Add data rows
-    players.forEach(player => {
+    players.forEach((player: any) => {
       const rowData: any = {
         player_id: player.player_id,
         player_name: player.player_name,
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       ''
     ];
 
-    instructions.forEach(text => {
+    instructions.forEach((text: any) => {
       const row = instructionsSheet.addRow({ instruction: text });
       if (text.startsWith('📋') || text.startsWith('⚠️')) {
         row.font = { bold: true, size: 14 };

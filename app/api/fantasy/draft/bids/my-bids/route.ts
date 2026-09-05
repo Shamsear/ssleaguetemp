@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       league_id,
       budget_remaining: Number(budget_remaining),
       draft_submitted: !!draft_submitted,
-      bids: bids.map(b => ({
+      bids: bids.map((b: any) => ({
         id: b.id,
         bid_id: b.bid_id,
         slot_index: b.slot_index,

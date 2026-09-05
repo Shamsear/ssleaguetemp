@@ -79,13 +79,13 @@ export default function TeamPointsBreakdownPage() {
                 const data = await response.json();
 
                 if (data.success) {
-                    // Find the team owned by the current user
+                    const userTeamId = (user as any)?.team_id || (user as any)?.teamId;
                     const myTeam = data.teams?.find((t: any) =>
                         t.owner_uid === user.uid ||
-                        t.team_id === user.team_id ||
-                        t.real_team_id === user.team_id ||
-                        (t.team_id && user.team_id && String(t.team_id).replace(/_SSPSLS\d+/, '').toLowerCase() === String(user.team_id).replace(/_SSPSLS\d+/, '').toLowerCase()) ||
-                        (t.real_team_id && user.team_id && String(t.real_team_id).replace(/_SSPSLS\d+/, '').toLowerCase() === String(user.team_id).replace(/_SSPSLS\d+/, '').toLowerCase())
+                        (userTeamId && t.team_id === userTeamId) ||
+                        (userTeamId && t.real_team_id === userTeamId) ||
+                        (t.team_id && userTeamId && String(t.team_id).replace(/_SSPSLS\d+/, '').toLowerCase() === String(userTeamId).replace(/_SSPSLS\d+/, '').toLowerCase()) ||
+                        (t.real_team_id && userTeamId && String(t.real_team_id).replace(/_SSPSLS\d+/, '').toLowerCase() === String(userTeamId).replace(/_SSPSLS\d+/, '').toLowerCase())
                     );
 
                     const targetTeam = myTeam || (data.teams && data.teams.length > 0 ? data.teams[0] : null);

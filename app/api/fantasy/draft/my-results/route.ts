@@ -94,9 +94,9 @@ export async function GET(request: NextRequest) {
     `;
 
     // Calculate stats
-    const wonBids = bids.filter(b => b.status === 'won');
-    const lostBids = bids.filter(b => b.status === 'lost');
-    const skippedTiers = bids.filter(b => b.is_skip || b.status === 'skipped');
+    const wonBids = bids.filter((b: any) => b.status === 'won');
+    const lostBids = bids.filter((b: any) => b.status === 'lost');
+    const skippedTiers = bids.filter((b: any) => b.is_skip || b.status === 'skipped');
     
     const budgetSpent = parseFloat(team.budget || '100') - parseFloat(team.budget_remaining || '100');
 
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         budget_spent: budgetSpent,
         squad_size: team.squad_size || 0
       },
-      bids: bids.map(b => ({
+      bids: bids.map((b: any) => ({
         bid_id: b.bid_id,
         tier_id: b.tier_id,
         tier_number: b.tier_number,
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
         submitted_at: b.submitted_at,
         processed_at: b.processed_at
       })),
-      squad: squad.map(p => ({
+      squad: squad.map((p: any) => ({
         real_player_id: p.real_player_id,
         player_name: p.player_name,
         position: p.position,

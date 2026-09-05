@@ -154,12 +154,12 @@ export async function GET() {
     
     // Fetch photos from Firebase
     const allPlayerIds = new Set([
-      ...topScorers.map(p => p.player_id),
-      ...topAssisters.map(p => p.player_id),
-      ...cleanSheetKings.map(p => p.player_id),
-      ...mostAppearances.map(p => p.player_id),
-      ...mostPoints.map(p => p.player_id),
-      ...bestWinRate.map(p => p.player_id)
+      ...topScorers.map((p: any) => p.player_id),
+      ...topAssisters.map((p: any) => p.player_id),
+      ...cleanSheetKings.map((p: any) => p.player_id),
+      ...mostAppearances.map((p: any) => p.player_id),
+      ...mostPoints.map((p: any) => p.player_id),
+      ...bestWinRate.map((p: any) => p.player_id)
     ]);
 
     const photoUrls: Record<string, string> = {};
@@ -171,7 +171,7 @@ export async function GET() {
         const chunk = uniqueIds.slice(i, i + 30);
         try {
           const snap = await adminDb.collection('realplayers').where('__name__', 'in', chunk).get();
-          snap.forEach(doc => {
+          snap.forEach((doc: any) => {
             if (doc.data().photo_url) {
               photoUrls[doc.id] = doc.data().photo_url;
             }
@@ -182,7 +182,7 @@ export async function GET() {
       }
     }
 
-    const attachPhoto = (list: any[]) => list.map(p => ({ ...p, photo_url: photoUrls[p.player_id] || null }));
+    const attachPhoto = (list: any[]) => list.map((p: any) => ({ ...p, photo_url: photoUrls[p.player_id] || null }));
 
     return NextResponse.json({
       success: true,

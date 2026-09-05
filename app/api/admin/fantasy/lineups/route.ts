@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all squad members with lineup info for these teams
-    const teamIds = teams.map(t => t.team_id);
+    const teamIds = teams.map((t: any) => t.team_id);
     
     if (teamIds.length === 0) {
       console.log('No teams found, returning empty result');
@@ -98,12 +98,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Organize squads by team
-    const teamsWithLineups = teams.map(team => {
-      const teamSquad = squads.filter(s => s.team_id === team.team_id);
-      const starters = teamSquad.filter(p => p.is_starting);
-      const subs = teamSquad.filter(p => !p.is_starting);
-      const captain = teamSquad.find(p => p.is_captain);
-      const viceCaptain = teamSquad.find(p => p.is_vice_captain);
+    const teamsWithLineups = teams.map((team: any) => {
+      const teamSquad = squads.filter((s: any) => s.team_id === team.team_id);
+      const starters = teamSquad.filter((p: any) => p.is_starting);
+      const subs = teamSquad.filter((p: any) => !p.is_starting);
+      const captain = teamSquad.find((p: any) => p.is_captain);
+      const viceCaptain = teamSquad.find((p: any) => p.is_vice_captain);
 
       return {
         team_id: team.team_id,
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         has_captain: !!captain,
         has_vice_captain: !!viceCaptain,
         lineup_complete: starters.length === 5 && !!captain && !!viceCaptain,
-        starters: starters.map(p => ({
+        starters: starters.map((p: any) => ({
           player_id: p.real_player_id,
           player_name: p.player_name,
           position: p.position,
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
           is_captain: p.is_captain,
           is_vice_captain: p.is_vice_captain,
         })),
-        substitutes: subs.map(p => ({
+        substitutes: subs.map((p: any) => ({
           player_id: p.real_player_id,
           player_name: p.player_name,
           position: p.position,
@@ -148,11 +148,11 @@ export async function GET(request: NextRequest) {
     // Calculate summary stats
     const summary = {
       total_teams: teams.length,
-      teams_with_complete_lineup: teamsWithLineups.filter(t => t.lineup_complete).length,
-      teams_without_lineup: teamsWithLineups.filter(t => !t.lineup_complete).length,
-      teams_missing_captain: teamsWithLineups.filter(t => !t.has_captain).length,
-      teams_missing_vice_captain: teamsWithLineups.filter(t => !t.has_vice_captain).length,
-      teams_wrong_starters: teamsWithLineups.filter(t => t.starters_count !== 5).length,
+      teams_with_complete_lineup: teamsWithLineups.filter((t: any) => t.lineup_complete).length,
+      teams_without_lineup: teamsWithLineups.filter((t: any) => !t.lineup_complete).length,
+      teams_missing_captain: teamsWithLineups.filter((t: any) => !t.has_captain).length,
+      teams_missing_vice_captain: teamsWithLineups.filter((t: any) => !t.has_vice_captain).length,
+      teams_wrong_starters: teamsWithLineups.filter((t: any) => t.starters_count !== 5).length,
     };
 
     console.log(`Successfully fetched lineups for ${teams.length} teams`);

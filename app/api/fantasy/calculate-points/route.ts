@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     // Use default rules if none found
     const scoringRules = new Map();
     if (rules.length > 0) {
-      rules.forEach(rule => {
+      rules.forEach((rule: any) => {
         scoringRules.set(rule.rule_type, rule.points_value);
       });
     } else {
@@ -152,14 +152,14 @@ export async function POST(request: NextRequest) {
     const realPlayersMap = new Map<string, any>();
     try {
       const categoriesSnapshot = await adminDb.collection('categories').get();
-      categoriesSnapshot.docs.forEach(doc => {
+      categoriesSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         categoriesMap.set(doc.id.toLowerCase(), data);
         if (data.name) categoriesMap.set(data.name.toLowerCase(), data);
       });
 
       const realPlayersSnapshot = await adminDb.collection('realplayers').get();
-      realPlayersSnapshot.docs.forEach(doc => {
+      realPlayersSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         if (data.player_id) realPlayersMap.set(String(data.player_id), data);
       });
@@ -306,11 +306,15 @@ async function processPlayer(params: {
       AND real_player_id = ${player_id}
   `;
 
-  if (squads.length === 0) {
-    return; // Player not drafted by any team, skip
+  const isDrafted = squads.length > 0;
+  let targetSquads = squads;
+  if (!isDrafted) {
+    const validTeams = await sql`SELECT team_id FROM fantasy_teams WHERE league_id = ${fantasy_league_id} LIMIT 1`;
+    const fallbackTeamId = validTeams[0]?.team_id || 'SSPSLT0001';
+    targetSquads = [{ team_id: fallbackTeamId, is_captain: false, is_vice_captain: false }];
   }
 
-  console.log(`Player ${player_name} is owned by ${squads.length} team(s)`);
+  console.log(`Player ${player_name} is owned by ${squads.length} team(s) (isDrafted: ${isDrafted})`);
 
   // Check if points already calculated for this player in this fixture for ANY team
   const existingPoints = await sql`
@@ -369,8 +373,8 @@ async function processPlayer(params: {
 
   const total_points = Object.values(points_breakdown).reduce((sum, val) => sum + val, 0);
 
-  // Award points to EACH team that owns this player
-  for (const squad of squads) {
+  // Award points to EACH team that owns this player (or fallback team if free agent)
+  for (const squad of targetSquads) {
     const fantasy_team_id = squad.team_id;
 
     // Check if there is a captain window covering this round
@@ -385,7 +389,7 @@ async function processPlayer(params: {
     let isCaptain = false;
     let isViceCaptain = false;
 
-    if (windows.length > 0) {
+    if (isDrafted && windows.length > 0) {
       const windowId = windows[0].window_id;
       const selections = await sql`
         SELECT captain_player_id, vice_captain_player_id
@@ -410,7 +414,7 @@ async function processPlayer(params: {
         isCaptain = captainCheck.length > 0 && captainCheck[0].is_captain;
         isViceCaptain = captainCheck.length > 0 && captainCheck[0].is_vice_captain;
       }
-    } else {
+    } else if (isDrafted) {
       const captainCheck = await sql`
         SELECT is_captain, is_vice_captain
         FROM fantasy_squad
@@ -434,6 +438,15 @@ async function processPlayer(params: {
     }
 
     const final_points = Math.round(total_points * multiplier);
+
+    // Delete existing fantasy_player_points record for this player/team/round to avoid duplicate records
+    await sql`
+      DELETE FROM fantasy_player_points
+      WHERE league_id = ${fantasy_league_id}
+        AND team_id = ${fantasy_team_id}
+        AND real_player_id = ${player_id}
+        AND (round_number = ${round_number} OR fixture_id = ${fixture_id})
+    `;
 
     // Create fantasy_player_points record for this team
     await sql`
@@ -482,9 +495,20 @@ async function processPlayer(params: {
       )
     `;
 
-    // Track team points (with captain/vice-captain multiplier)
-    const currentTeamPoints = teamPointsMap.get(fantasy_team_id) || 0;
-    teamPointsMap.set(fantasy_team_id, currentTeamPoints + final_points);
+    if (isDrafted) {
+      // Track team points (with captain/vice-captain multiplier)
+      const currentTeamPoints = teamPointsMap.get(fantasy_team_id) || 0;
+      teamPointsMap.set(fantasy_team_id, currentTeamPoints + final_points);
+
+      // Update fantasy_squad with points for this team (with multiplier)
+      await sql`
+        UPDATE fantasy_squad
+        SET 
+          total_points = COALESCE(total_points, 0) + ${final_points}
+        WHERE team_id = ${fantasy_team_id}
+          AND real_player_id = ${player_id}
+      `;
+    }
 
     pointsCalculated.push({
       player_id,
@@ -499,22 +523,18 @@ async function processPlayer(params: {
     });
 
     console.log(`  ${player_name}: ${total_points} pts × ${multiplier} ${isCaptain ? '(C)' : isViceCaptain ? '(VC)' : ''} = ${final_points} pts`);
-
-    // Update fantasy_squad with points for this team (with multiplier)
-    await sql`
-      UPDATE fantasy_squad
-      SET 
-        total_points = COALESCE(total_points, 0) + ${final_points}
-      WHERE team_id = ${fantasy_team_id}
-        AND real_player_id = ${player_id}
-    `;
   }
 
   // Update fantasy_players with cumulative total_points (base points, no multiplier)
   await sql`
     UPDATE fantasy_players
     SET 
-      total_points = COALESCE(total_points, 0) + ${total_points},
+      total_points = COALESCE((
+        SELECT SUM(base_points)
+        FROM fantasy_player_points
+        WHERE real_player_id = ${player_id}
+          AND league_id = ${fantasy_league_id}
+      ), 0),
       updated_at = NOW()
     WHERE league_id = ${fantasy_league_id} 
       AND real_player_id = ${player_id}
@@ -526,22 +546,19 @@ async function recalculateLeaderboard(fantasy_league_id: string) {
   try {
     const sql = getFantasyDb();
     
-    // Get all teams ordered by points
-    const teams = await sql`
-      SELECT id
-      FROM fantasy_teams
-      WHERE league_id = ${fantasy_league_id}
-      ORDER BY total_points DESC, id ASC
+    await sql`
+      WITH ranked_teams AS (
+        SELECT 
+          team_id,
+          ROW_NUMBER() OVER (ORDER BY total_points DESC, team_name ASC) as new_rank
+        FROM fantasy_teams
+        WHERE league_id = ${fantasy_league_id}
+      )
+      UPDATE fantasy_teams ft
+      SET rank = rt.new_rank, updated_at = NOW()
+      FROM ranked_teams rt
+      WHERE ft.team_id = rt.team_id
     `;
-
-    // Update ranks
-    for (let i = 0; i < teams.length; i++) {
-      await sql`
-        UPDATE fantasy_teams
-        SET rank = ${i + 1}, updated_at = NOW()
-        WHERE id = ${teams[i].id}
-      `;
-    }
 
     console.log(`✅ Leaderboard updated for league ${fantasy_league_id}`);
   } catch (error) {

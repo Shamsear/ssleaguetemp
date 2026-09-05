@@ -41,7 +41,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      voters: voters.map(v => ({
+      voters: voters.map((v: any) => ({
         voter_name: v.voter_name,
         voted_at: v.voted_at,
         is_flagged: v.is_flagged,

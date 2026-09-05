@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   '/api/auth',
   '/api/realtime',
   '/api/public',
+  '/api/image-proxy',
   '/news',
   '/players',
   '/fixtures',
@@ -28,14 +29,14 @@ const PROTECTED_PREFIXES = [
   '/superadmin',
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for public paths, static files, and API routes
+  // Skip proxy for public paths, static files, and API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.includes('.') && !pathname.endsWith('.tsx') && !pathname.endsWith('.ts')
+    (pathname.includes('.') && !pathname.endsWith('.tsx') && !pathname.endsWith('.ts'))
   ) {
     return NextResponse.next();
   }
@@ -61,7 +62,6 @@ export function middleware(request: NextRequest) {
     }
     
     // Token exists - let the page handle role-based checks
-    // (We can't verify the token in middleware without Firebase Admin SDK overhead)
     return NextResponse.next();
   }
 

@@ -66,7 +66,7 @@ function PlayerRegistrationContent() {
           return
         }
 
-        const seasonData = { id: seasonDoc.id, ...seasonDoc.data() } as Season
+        const seasonData = { id: (seasonDoc as any).id, ...seasonDoc.data() } as Season
 
         if (!seasonData.is_player_registration_open) {
           setError('Player registration is currently closed for this season')

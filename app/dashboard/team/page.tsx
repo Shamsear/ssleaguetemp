@@ -73,7 +73,7 @@ export default function TeamDashboard() {
           
           if (tdId) setTeamDocId(tdId);
           if (teamLogo) setTeamLogoUrl(teamLogo);
-          else if (user.teamLogoUrl) setTeamLogoUrl(user.teamLogoUrl);
+          else if ((user as any)?.teamLogoUrl) setTeamLogoUrl((user as any).teamLogoUrl);
           
           console.log('[RegistrationStatus]', { hasActiveSeason, isRegistered, seasonId, teamDocId: tdId });
         } else {
@@ -295,7 +295,7 @@ export default function TeamDashboard() {
                     </div>
                   ) : (
                     <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-100 flex items-center justify-center group-hover:bg-amber-100 transition-all">
-                      <span className="text-2xl font-bold text-amber-600">{user.teamName?.[0]?.toUpperCase() || 'T'}</span>
+                      <span className="text-2xl font-bold text-amber-600">{(user as any)?.teamName?.[0]?.toUpperCase() || 'T'}</span>
                     </div>
                   )}
                 </label>
@@ -309,10 +309,10 @@ export default function TeamDashboard() {
               <div className="text-center sm:text-left">
                 <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">TEAM PROFILE</span>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-                  {user.teamName || 'My Team'}
+                  {(user as any)?.teamName || 'My Team'}
                 </h1>
                 <p className="text-xs text-slate-500 font-mono mt-1">
-                  Owner: <span className="font-bold text-slate-700">{ownerName || user.username || user.email?.split('@')[0] || 'Team Owner'}</span>
+                  Owner: <span className="font-bold text-slate-700">{ownerName || (user as any)?.username || user?.email?.split('@')[0] || 'Team Owner'}</span>
                 </p>
                 <div className="mt-3">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-50 border border-amber-200 text-amber-800 uppercase tracking-wide">

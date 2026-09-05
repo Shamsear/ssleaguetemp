@@ -29,7 +29,7 @@ export async function POST(
       );
     }
 
-    const team_ids = assignedTeams.map(t => t.team_id);
+    const team_ids = assignedTeams.map((t: any) => t.team_id);
 
     // Get tournament details with format settings
     const tournament = await sql`
@@ -125,15 +125,15 @@ export async function POST(
         }
 
         // Map teams to their groups
-        const teamGroupMap = new Map(groupAssignments.map(a => [a.team_id, a.group_name]));
+        const teamGroupMap = new Map(groupAssignments.map((a: any) => [a.team_id, a.group_name]));
 
         // Add group info to teams
-        teams.forEach(team => {
+        teams.forEach((team: any) => {
           team.group = teamGroupMap.get(team.id) || null;
         });
 
         // Check if all teams are assigned
-        if (teams.some(t => !t.group)) {
+        if (teams.some((t: any) => !t.group)) {
           return NextResponse.json(
             { success: false, error: 'Some teams are not assigned to any group. Please complete group assignments.' },
             { status: 400 }
@@ -205,7 +205,7 @@ export async function POST(
     }
 
     // Create round_deadlines for each round
-    const uniqueRounds = [...new Set(fixtures.map(f => `${f.round_number}_${f.leg}`))];
+    const uniqueRounds = [...new Set(fixtures.map((f: any) => `${f.round_number}_${f.leg}`))];
 
     for (const roundKey of uniqueRounds) {
       const [roundNumber, leg] = roundKey.split('_');
@@ -316,7 +316,7 @@ export async function GET(
       }
     }
 
-    const fixturesWithLogos = fixtures.map(f => ({
+    const fixturesWithLogos = fixtures.map((f: any) => ({
       ...f,
       home_team_logo: logosMap[f.home_team_id] || (f.home_team_name ? logosMap[f.home_team_name.toLowerCase()] : null) || null,
       away_team_logo: logosMap[f.away_team_id] || (f.away_team_name ? logosMap[f.away_team_name.toLowerCase()] : null) || null,
@@ -388,7 +388,7 @@ function generateRoundRobinFixtures(
 
   // Track home/away balance for each team
   const homeAwayBalance: { [teamId: string]: number } = {};
-  teamList.forEach(team => {
+  teamList.forEach((team: any) => {
     if (team.id !== 'bye') {
       homeAwayBalance[team.id] = 0; // 0 is balanced, positive means more home games, negative means more away
     }
@@ -462,7 +462,7 @@ function generateRoundRobinFixtures(
 
   // Generate second leg if needed - swap home/away from first leg
   if (isTwoLegged) {
-    const firstLegFixtures = fixtures.filter(f => f.leg === 'first');
+    const firstLegFixtures = fixtures.filter((f: any) => f.leg === 'first');
     const roundsInFirstLeg = numRounds;
 
     firstLegFixtures.forEach((firstLegFixture, index) => {
@@ -509,7 +509,7 @@ function generateGroupStageFixtures(
     // Group teams by their assigned group
     const groupMap = new Map<string, any[]>();
 
-    teams.forEach(team => {
+    teams.forEach((team: any) => {
       const groupName = team.group;
       if (!groupMap.has(groupName)) {
         groupMap.set(groupName, []);
@@ -519,7 +519,7 @@ function generateGroupStageFixtures(
 
     // Convert map to array, sorted by group name
     const sortedGroupNames = Array.from(groupMap.keys()).sort();
-    sortedGroupNames.forEach(groupName => {
+    sortedGroupNames.forEach((groupName: any) => {
       groups.push(groupMap.get(groupName)!);
     });
   } else {
@@ -549,7 +549,7 @@ function generateGroupStageFixtures(
 
     // Track home/away balance for each team in this group
     const homeAwayBalance: { [teamId: string]: number } = {};
-    teamList.forEach(team => {
+    teamList.forEach((team: any) => {
       if (team.id !== 'bye') {
         homeAwayBalance[team.id] = 0;
       }
@@ -619,7 +619,7 @@ function generateGroupStageFixtures(
 
     // Generate second leg if needed - swap home/away from first leg
     if (isTwoLegged) {
-      const groupFirstLegFixtures = fixtures.filter(f => f.leg === 'first' && f.group_name === groupName);
+      const groupFirstLegFixtures = fixtures.filter((f: any) => f.leg === 'first' && f.group_name === groupName);
       const roundsInFirstLeg = numRounds;
 
       groupFirstLegFixtures.forEach((firstLegFixture) => {
@@ -659,7 +659,7 @@ function generateKnockoutFixtures(
 
   // Ensure playoff teams is a power of 2 (2, 4, 8, 16...)
   const validSizes = [2, 4, 8, 16, 32];
-  const actualPlayoffTeams = validSizes.find(size => size >= Math.min(playoffTeams, teams.length)) || 2;
+  const actualPlayoffTeams = validSizes.find((size: any) => size >= Math.min(playoffTeams, teams.length)) || 2;
 
   // Take only the number of teams that fit the bracket
   const bracketTeams = teams.slice(0, actualPlayoffTeams);

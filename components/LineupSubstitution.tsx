@@ -111,7 +111,7 @@ export default function LineupSubstitution({
           player_in: selectedIn,
           player_in_name: playerIn?.name,
           made_by: user?.uid,
-          made_by_name: user?.display_name || user?.email,
+          made_by_name: (user as any)?.display_name || user?.email,
           notes: notes
         })
       });

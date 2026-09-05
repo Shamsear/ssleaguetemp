@@ -16,7 +16,8 @@ export default function TeamStatisticsPage() {
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
   const [viewMode, setViewMode] = useState<'all' | 'season' | 'tournament'>('all');
   
-  const { tournament: selectedTournament } = useTournament(selectedTournamentId);
+  const tournamentQuery = useTournament(selectedTournamentId);
+  const selectedTournament = (tournamentQuery as any).data || (tournamentQuery as any).tournament;
 
   useEffect(() => {
     if (selectedTournament) {
@@ -28,129 +29,123 @@ export default function TeamStatisticsPage() {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
-        <div className="text-center relative z-10 font-mono">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-extrabold font-mono">
-            Loading...
-          </p>
+        <div className="text-center font-mono relative z-10">
+          <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#D4AF37] text-sm uppercase tracking-wider font-bold">Loading Statistics...</p>
         </div>
       </div>
     );
   }
 
+  if (!user) return null;
 
   return (
     <AuthGuard requiredRole="team">
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Header */}
-        <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 border border-gray-100/20">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-4xl"><BarChart2 className="w-4 h-4 text-slate-500" /></span>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Team Statistics</h1>
-              <p className="text-sm text-gray-600">View your team's performance across tournaments and seasons</p>
-            </div>
-          </div>
-
-          {/* View Mode Selector */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-semibold text-gray-700">View:</span>
-            <button
-              onClick={() => {
-                setViewMode('all');
-                setSelectedTournamentId('');
-                setSelectedSeasonId('');
-              }}
-              className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                viewMode === 'all'
-                  ? 'bg-[#0066FF] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Globe className="w-4 h-4 text-slate-500" /> All Time
-            </button>
-            <button
-              onClick={() => setViewMode('season')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                viewMode === 'season'
-                  ? 'bg-[#0066FF] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Calendar className="w-4 h-4 text-slate-500" /> By Season
-            </button>
-            <button
-              onClick={() => setViewMode('tournament')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                viewMode === 'tournament'
-                  ? 'bg-[#0066FF] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> By Tournament
-            </button>
-          </div>
-        </div>
-
-        {/* Tournament Selector (only show when tournament mode is selected) */}
-        {viewMode === 'tournament' && (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Page Header */}
           <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 border border-gray-100/20">
             <div className="flex items-center gap-3 mb-4">
-              <Target className="w-6 h-6 text-rose-500" />
-              <h2 className="text-xl font-bold text-gray-900">Select Tournament</h2>
+              <span className="text-4xl"><BarChart2 className="w-8 h-8 text-blue-600" /></span>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Team Statistics</h1>
+                <p className="text-sm text-gray-600">View your team's performance across tournaments and seasons</p>
+              </div>
             </div>
-            <TournamentSelector
-              selectedTournamentId={selectedTournamentId}
-              onTournamentChange={setSelectedTournamentId}
-              label="Choose a tournament to view specific statistics"
-            />
+
+            {/* View Mode Selector */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-semibold text-gray-700">View:</span>
+              <button
+                onClick={() => {
+                  setViewMode('all');
+                  setSelectedTournamentId('');
+                  setSelectedSeasonId('');
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  viewMode === 'all'
+                    ? 'bg-[#0066FF] text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Globe className="w-4 h-4" /> All Time
+              </button>
+              <button
+                onClick={() => setViewMode('season')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  viewMode === 'season'
+                    ? 'bg-[#0066FF] text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Calendar className="w-4 h-4" /> By Season
+              </button>
+              <button
+                onClick={() => setViewMode('tournament')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  viewMode === 'tournament'
+                    ? 'bg-[#0066FF] text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> By Tournament
+              </button>
+            </div>
           </div>
-        )}
 
-        {/* Statistics Display */}
-        {viewMode === 'all' && (
-          <TeamStatistics 
-            teamId={user.uid}
-            seasonId={null}
-            tournamentId={null}
-          />
-        )}
+          {/* Tournament Selector (only show when tournament mode is selected) */}
+          {viewMode === 'tournament' && (
+            <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 border border-gray-100/20">
+              <div className="flex items-center gap-3 mb-4">
+                <Target className="w-6 h-6 text-rose-500" />
+                <h2 className="text-xl font-bold text-gray-900">Select Tournament</h2>
+              </div>
+              <TournamentSelector />
+            </div>
+          )}
 
-        {viewMode === 'season' && selectedSeasonId && (
-          <TeamStatistics 
-            teamId={user.uid}
-            seasonId={selectedSeasonId}
-            tournamentId={null}
-          />
-        )}
+          {/* Statistics Display */}
+          {viewMode === 'all' && (
+            <TeamStatistics 
+              teamId={user.uid}
+              seasonId={null}
+              tournamentId={null}
+            />
+          )}
 
-        {viewMode === 'tournament' && selectedTournamentId && (
-          <TeamStatistics 
-            teamId={user.uid}
-            seasonId={selectedSeasonId}
-            tournamentId={selectedTournamentId}
-          />
-        )}
+          {viewMode === 'season' && selectedSeasonId && (
+            <TeamStatistics 
+              teamId={user.uid}
+              seasonId={selectedSeasonId}
+              tournamentId={null}
+            />
+          )}
 
-        {/* Info Card */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl"><Lightbulb className="w-4 h-4 text-amber-500" /></span>
-            <div>
-              <h3 className="text-sm font-semibold text-blue-800 mb-2">About Statistics</h3>
-              <ul className="text-xs text-blue-700 space-y-1">
-                <li>• All Time: View your complete performance history</li>
-                <li>• By Season: Filter statistics for a specific season</li>
-                <li>• By Tournament: View detailed stats for individual tournaments</li>
-                <li>• Statistics are calculated from completed matches only</li>
-              </ul>
+          {viewMode === 'tournament' && selectedTournamentId && (
+            <TeamStatistics 
+              teamId={user.uid}
+              seasonId={selectedSeasonId}
+              tournamentId={selectedTournamentId}
+            />
+          )}
+
+          {/* Info Card */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl"><Lightbulb className="w-5 h-5 text-amber-500" /></span>
+              <div>
+                <h3 className="text-sm font-semibold text-blue-800 mb-2">About Statistics</h3>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• All Time: View your complete performance history</li>
+                  <li>• By Season: Filter statistics for a specific season</li>
+                  <li>• By Tournament: View detailed stats for individual tournaments</li>
+                  <li>• Statistics are calculated from completed matches only</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  
     </AuthGuard>
   );
 }

@@ -75,7 +75,7 @@ export default function PlayerLeaderboardPage() {
   const effectiveSeasonId = user?.role === 'team' ? seasonId : userSeasonId;
   
   const { data: playerStatsData, isLoading: statsLoading } = usePlayerStats({
-    tournamentId: showOverall ? undefined : selectedTournamentId,
+    tournamentId: showOverall ? undefined : (selectedTournamentId || undefined),
     seasonId: effectiveSeasonId || '',
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -597,7 +597,7 @@ export default function PlayerLeaderboardPage() {
                     onClick={() => handleSort('points')}
                   >
                     <div className="flex items-center justify-center gap-1.5">
-                      {activeTab === 'most-improved' ? 'PTS Change' : 'PTS'}
+                      {(activeTab as string) === 'most-improved' ? 'PTS Change' : 'PTS'}
                       <SortIcon field="points" />
                     </div>
                   </th>

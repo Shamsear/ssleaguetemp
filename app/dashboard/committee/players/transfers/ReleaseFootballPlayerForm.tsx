@@ -23,7 +23,7 @@ interface Player {
 
 export default function ReleaseFootballPlayerForm() {
   const { user, userSeasonId } = usePermissions();
-  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId);
+  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId || undefined);
 
   // Form state
   const [selectedPlayerId, setSelectedPlayerId] = useState('');
@@ -85,7 +85,7 @@ export default function ReleaseFootballPlayerForm() {
           loadedPlayers.forEach(player => {
             if (!player.team_name) {
               const team = cachedTeams.find(t => t.id === player.team_id);
-              player.team_name = team?.name || 'Unknown Team';
+              player.team_name = (team as any)?.name || (team as any)?.team_name || 'Unknown Team';
             }
           });
         }

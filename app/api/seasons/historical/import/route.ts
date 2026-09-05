@@ -389,7 +389,7 @@ async function batchLoadExistingEntities(
     // 1. Query for SPECIFIC teams (selective loading)
     // Firestore 'in' operator supports max 30 items, so chunk if needed
     if (teamNames.length > 0) {
-      const uniqueTeamNames = [...new Set(teamNames.filter(n => n).map(n => n.toLowerCase()))];
+      const uniqueTeamNames = [...new Set(teamNames.filter((n: any) => n).map((n: any) => n.toLowerCase()))];
       const teamChunks = chunkArray(uniqueTeamNames, 30); // Max 30 per 'in' query
 
       console.log(`   Querying ${uniqueTeamNames.length} specific teams in ${teamChunks.length} chunk(s)`);
@@ -397,9 +397,9 @@ async function batchLoadExistingEntities(
       teamChunks.forEach((chunk) => {
         queries.push(
           adminDb.collection('teams')
-            .where('team_name', 'in', chunk.map(name => {
+            .where('team_name', 'in', chunk.map((name: any) => {
               // Try both lowercase and original case
-              const originalName = teamNames.find(t => t && t.toLowerCase() === name);
+              const originalName = teamNames.find((t: any) => t && t.toLowerCase() === name);
               return originalName || name;
             }))
             .get()
@@ -458,8 +458,8 @@ async function batchLoadExistingEntities(
     const results = await Promise.all(queries);
 
     // Calculate result indices based on query structure
-    const teamChunkCount = teamNames.length > 0 ? Math.ceil([...new Set(teamNames.filter(n => n).map(n => n.toLowerCase()))].length / 30) : 0;
-    const playerChunkCount = playerNames.length > 0 ? Math.ceil([...new Set(playerNames.filter(n => n))].length / 30) : 0;
+    const teamChunkCount = teamNames.length > 0 ? Math.ceil([...new Set(teamNames.filter((n: any) => n).map((n: any) => n.toLowerCase()))].length / 30) : 0;
+    const playerChunkCount = playerNames.length > 0 ? Math.ceil([...new Set(playerNames.filter((n: any) => n))].length / 30) : 0;
 
     let resultIndex = 0;
 
@@ -613,7 +613,7 @@ function toTitleCase(text: string): string {
   return text
     .toLowerCase()
     .split(' ')
-    .map(word => {
+    .map((word: any) => {
       const upperWord = word.toUpperCase();
       // Check if this word is a known abbreviation
       if (abbreviations.includes(upperWord)) {
@@ -648,7 +648,7 @@ async function importTeams(
       // Use batch lookup instead of reading from Firebase
       // The linked team should already be in the batch lookup if it exists
       const linkedTeam = Array.from(batchLookup.existingTeams.values())
-        .find(t => t.teamId === team.linked_team_id);
+        .find((t: any) => t.teamId === team.linked_team_id);
 
       if (linkedTeam) {
         existingTeam = linkedTeam;
@@ -745,8 +745,8 @@ async function importTeams(
           const valueStr = String(value).trim();
           if (valueStr.includes(',')) {
             // Split by comma and process each trophy separately
-            const trophyNames = valueStr.split(',').map(t => t.trim()).filter(t => t);
-            trophyNames.forEach(trophyName => {
+            const trophyNames = valueStr.split(',').map((t: any) => t.trim()).filter((t: any) => t);
+            trophyNames.forEach((trophyName: any) => {
               const parsed = parseTrophyName(trophyName);
               if (parsed.name) {
                 teamTrophies.push({ type: 'cup', name: parsed.name, position: parsed.position });
@@ -988,8 +988,8 @@ async function importTeams(
             const valueStr = String(value).trim();
             if (valueStr.includes(',')) {
               // Split by comma and process each trophy separately
-              const trophyNames = valueStr.split(',').map(t => t.trim()).filter(t => t);
-              trophyNames.forEach(trophyName => {
+              const trophyNames = valueStr.split(',').map((t: any) => t.trim()).filter((t: any) => t);
+              trophyNames.forEach((trophyName: any) => {
                 const parsed = parseTrophyNameNew(trophyName);
                 if (parsed.name) {
                   teamTrophies2.push({ type: 'cup', name: parsed.name, position: parsed.position });
@@ -1267,7 +1267,7 @@ async function importPlayers(
   }>();
 
   // Initialize team stats map
-  teams.forEach(team => {
+  teams.forEach((team: any) => {
     if (team.team_name) {
       teamStatsMap.set(team.team_name.toLowerCase(), {
         playerCount: 0,
@@ -1509,11 +1509,11 @@ async function importPlayers(
 
       console.log(`  🏆 Total awards found for ${normalizedPlayerName}: ${playerAwards.length}`);
       if (playerAwards.length > 0) {
-        console.log(`  🏆 Awards: ${playerAwards.map(a => `${a.award_name} (${a.type})`).join(', ')}`);
+        console.log(`  🏆 Awards: ${playerAwards.map((a: any) => `${a.award_name} (${a.type})`).join(', ')}`);
       }
 
       // For backward compatibility, still store in trophies JSONB (but we'll use player_awards table as primary)
-      const trophiesJson = JSON.stringify(playerAwards.map(a => ({ type: a.type, name: a.award_name })));
+      const trophiesJson = JSON.stringify(playerAwards.map((a: any) => ({ type: a.type, name: a.award_name })));
 
       // Perform SQL insertions inside an async Promise block so we can run them in parallel
       const sqlPromise = (async () => {
@@ -1787,8 +1787,8 @@ async function processImport(importId: string, importData: ImportSeasonData) {
       progress: 12
     });
 
-    const teamNames = importData.teams.map(t => t.team_name);
-    const playerNames = importData.players.map(p => p.name);
+    const teamNames = importData.teams.map((t: any) => t.team_name);
+    const playerNames = importData.players.map((p: any) => p.name);
     const detection = await detectReimport(playerNames, teamNames);
 
     await updateProgress(importId, {

@@ -145,7 +145,7 @@ export default function TeamDetailsPage() {
   };
 
   const handleDownloadLogo = async () => {
-    const logoUrl = editForm.logoUrl || team.logo_url;
+    const logoUrl = editForm.logoUrl || team?.logo_url;
     if (!logoUrl) {
       alert('No logo available to download');
       return;
@@ -170,7 +170,7 @@ export default function TeamDetailsPage() {
       const pathname = urlObj.pathname;
       const extension = pathname.substring(pathname.lastIndexOf('.')) || '.png';
       
-      link.download = `${team.team_code}-logo${extension}`;
+      link.download = `${team?.team_code || 'team'}-logo${extension}`;
       document.body.appendChild(link);
       link.click();
       
@@ -184,7 +184,7 @@ export default function TeamDetailsPage() {
   };
 
   const openLogoAdjustModal = () => {
-    if (!team.logo_url && !editForm.logoUrl) {
+    if (!team?.logo_url && !editForm.logoUrl) {
       alert('Please upload a logo first before adjusting position');
       return;
     }

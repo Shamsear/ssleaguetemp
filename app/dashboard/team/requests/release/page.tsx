@@ -419,7 +419,7 @@ export default function TeamReleaseRequestPage() {
                     disabled={submitting}
                     label="Select Player"
                     placeholder="Search your roster..."
-                    color="red"
+                    color="orange"
                     playerType="football"
                   />
                   {players.length === 0 && (

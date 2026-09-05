@@ -640,9 +640,9 @@ export default function PlayerStatsByRoundPage() {
             players={filteredPlayers}
             roundOptions={Array.from({ length: maxRounds }, (_, i) => i + 1)}
             weekOptions={weekRanges.map(w => w.week)}
-            playerAwards={playerAwards}
-            tournamentId={selectedTournamentId}
-            seasonId={userSeasonId}
+            playerAwards={playerAwards as any}
+            tournamentId={selectedTournamentId || undefined}
+            seasonId={userSeasonId || undefined}
           />
         </div>
 

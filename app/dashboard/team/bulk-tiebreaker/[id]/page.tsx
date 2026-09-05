@@ -83,7 +83,7 @@ export default function TeamBulkTiebreakerPage() {
   } | null>(null);
   
   // Use ref to store fetchData to avoid dependency issues
-  const fetchDataRef = useRef<() => Promise<void>>();
+  const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   // Fetch data function (to be called on mount and WebSocket updates)
   const fetchData = useCallback(async () => {

@@ -166,7 +166,7 @@ export async function POST(
       console.log(`🔄 Auto-withdrawing all teams except highest bidder (${tiebreaker.current_highest_team_id})...`);
       
       // Withdraw all teams except the winner
-      const teamsToWithdraw = activeTeamIds.filter(id => id !== tiebreaker.current_highest_team_id);
+      const teamsToWithdraw = activeTeamIds.filter((id: any) => id !== tiebreaker.current_highest_team_id);
       
       if (teamsToWithdraw.length > 0) {
         await sql`
@@ -234,7 +234,7 @@ export async function POST(
               type: 'tiebreaker_finalized',
               tiebreaker_id: tiebreakerId,
               player_name: tiebreaker.player_name,
-              winner_team_id: finalizeResult.winner_team_id,
+              winner_team_id: finalizeResult.winner_team_id || '',
               winner_team_name: winnerTeamName,
               winning_amount: finalizeResult.winning_amount?.toString() || '0',
             }

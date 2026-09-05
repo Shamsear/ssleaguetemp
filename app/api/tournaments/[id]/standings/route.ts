@@ -149,7 +149,7 @@ export async function GET(
       });
     } else {
       // League format (or League + Knockout)
-      const leagueFixtures = fixtures.filter(f => !f.knockout_round);
+      const leagueFixtures = fixtures.filter((f: any) => !f.knockout_round);
       const standings = await calculateLeagueStandings(leagueFixtures, sql, tournamentId, tournament.season_id);
       
       // Get playoff teams from tournament settings
@@ -398,7 +398,7 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
   }
 
   // Filter only group stage fixtures
-  const groupFixtures = fixtures.filter(f => f.group_name);
+  const groupFixtures = fixtures.filter((f: any) => f.group_name);
 
   groupFixtures.forEach((fixture) => {
     const groupName = fixture.group_name;
@@ -479,7 +479,7 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
   // Fetch team logos and positioning adjustments from Firebase
   const allTeamIds = new Set<string>();
   Object.values(groups).forEach((group: any) => {
-    Object.keys(group).forEach(teamId => allTeamIds.add(teamId));
+    Object.keys(group).forEach((teamId: any) => allTeamIds.add(teamId));
   });
 
   if (allTeamIds.size > 0) {
@@ -540,10 +540,10 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
 }
 
 function getKnockoutFixtures(fixtures: any[]) {
-  const knockoutFixtures = fixtures.filter(f => f.knockout_round);
+  const knockoutFixtures = fixtures.filter((f: any) => f.knockout_round);
   
   // Get all knockout fixtures (including pending ones)
-  const allKnockoutFixtures = knockoutFixtures.map(f => ({
+  const allKnockoutFixtures = knockoutFixtures.map((f: any) => ({
     id: f.id,
     round: f.knockout_round,
     home_team: f.home_team_name,
@@ -556,7 +556,7 @@ function getKnockoutFixtures(fixtures: any[]) {
 
   // Group by round
   const rounds: Record<string, any[]> = {};
-  allKnockoutFixtures.forEach(fixture => {
+  allKnockoutFixtures.forEach((fixture: any) => {
     if (!rounds[fixture.round]) {
       rounds[fixture.round] = [];
     }

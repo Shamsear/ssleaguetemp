@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      teams: teams.map(team => ({
+      teams: teams.map((team: any) => ({
         id: team.id, // Team ID like SSPSLT0002
         firebase_uid: team.firebase_uid, // User's Firebase UID
         name: team.name,

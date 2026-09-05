@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ 
         success: true,
-        leagues: allLeagues.map(league => ({
+        leagues: allLeagues.map((league: any) => ({
           league_id: league.league_id,
           name: league.league_name,
           status: league.is_active ? 'active' : 'inactive',

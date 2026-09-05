@@ -49,21 +49,38 @@ export async function POST(request: NextRequest) {
       `;
     }
 
-    // 2. Fetch Team participate settings and update the team budget in Firestore
+    // 2. Update team budget in Neon Main DB & Firestore
+    try {
+      const { getMainDb } = await import('@/lib/neon/main-config');
+      const mainSql = getMainDb();
+      await mainSql`
+        UPDATE team_seasons
+        SET real_player_budget = COALESCE(real_player_budget, 1000) + ${Number(refundAmount)},
+            real_player_spent = GREATEST(0, COALESCE(real_player_spent, 0) - ${Number(refundAmount)}),
+            updated_at = NOW()
+        WHERE (team_id = ${teamId} OR id = ${`${teamId}_${seasonId}`}) AND season_id = ${seasonId}
+      `;
+    } catch (neonBudgetErr) {
+      console.error('[release-assigned-player] Error updating team budget in Neon:', neonBudgetErr);
+    }
+
     const teamSeasonId = `${teamId}_${seasonId}`;
     const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
-    const teamSeasonDoc = await teamSeasonRef.get();
+    try {
+      const teamSeasonDoc = await teamSeasonRef.get();
+      if (teamSeasonDoc.exists) {
+        const data = teamSeasonDoc.data() || {};
+        const currentBudget = data.real_player_budget || 0;
+        const currentSpent = data.real_player_spent || 0;
 
-    if (teamSeasonDoc.exists) {
-      const data = teamSeasonDoc.data() || {};
-      const currentBudget = data.real_player_budget || 0;
-      const currentSpent = data.real_player_spent || 0;
-
-      await teamSeasonRef.update({
-        real_player_budget: currentBudget + Number(refundAmount),
-        real_player_spent: Math.max(0, currentSpent - Number(refundAmount)),
-        updated_at: new Date(),
-      });
+        await teamSeasonRef.update({
+          real_player_budget: currentBudget + Number(refundAmount),
+          real_player_spent: Math.max(0, currentSpent - Number(refundAmount)),
+          updated_at: new Date(),
+        });
+      }
+    } catch (fbErr) {
+      console.error('[release-assigned-player] Error updating Firestore team_seasons:', fbErr);
     }
 
     // 3. Find and delete the original player assignment transaction

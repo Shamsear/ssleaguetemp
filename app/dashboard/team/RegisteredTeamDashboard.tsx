@@ -259,7 +259,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
   const timerRefs = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const bulkTimerRefs = useRef<{ [key: number]: NodeJS.Timeout }>({});
   const previousDataRef = useRef<string>('');
-  const fetchDashboardRef = useRef<(showLoader?: boolean, bustCache?: boolean) => Promise<void>>();
+  const fetchDashboardRef = useRef<((showLoader?: boolean, bustCache?: boolean) => Promise<void>) | null>(null);
   const [showManagerForm, setShowManagerForm] = useState(false);
   const [showOwnerForm, setShowOwnerForm] = useState(false);
 
@@ -453,8 +453,8 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
         if (hasScheduled) {
           const newScheduledRemaining: { [key: string]: number } = {};
           dashboardData!.scheduledRounds.forEach(round => {
-            if (round.start_time) {
-              const start = new Date(round.start_time).getTime();
+            if ((round as any).start_time) {
+              const start = new Date((round as any).start_time).getTime();
               const remaining = Math.max(0, Math.floor((start - now) / 1000));
               newScheduledRemaining[round.id] = remaining;
               if (remaining > 0) hasActiveTimers = true;
@@ -898,7 +898,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
             </div>
             <div className="space-y-2">
               {/* Quick Links to Active Auctions */}
-              {activeRounds.filter(r => r.round_type !== 'bulk').map(round => (
+              {activeRounds.filter((r: any) => r.round_type !== 'bulk').map(round => (
                 <Link
                   key={round.id}
                   href={`/dashboard/team/round/${round.id}`}
@@ -909,7 +909,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 </Link>
               ))}
 
-              {activeRounds.filter(r => r.round_type === 'bulk').map(round => (
+              {activeRounds.filter((r: any) => r.round_type === 'bulk').map(round => (
                 <Link
                   key={round.id}
                   href={`/dashboard/team/bulk-round/${round.id}`}
@@ -984,7 +984,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                 <div className="space-y-2 mt-2">
                   <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Next Scheduled Round</div>
                   {scheduledRounds.slice(0, 1).map(round => {
-                    const startDate = new Date(round.start_time);
+                    const startDate = new Date((round as any).start_time);
                     const remainingSeconds = scheduledTimeRemaining[round.id] !== undefined 
                       ? scheduledTimeRemaining[round.id] 
                       : Math.max(0, Math.floor((startDate.getTime() - Date.now()) / 1000));
@@ -1011,7 +1011,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         </div>
                         <div className="text-[10px] text-slate-500 font-mono space-y-1">
                           <div>Starts: {startDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</div>
-                          <div>Max Bids: {round.max_bids_per_team} • Duration: {((round.duration_seconds || 0) / 3600).toFixed(1)} hrs</div>
+                          <div>Max Bids: {round.max_bids_per_team} • Duration: {(((round as any).duration_seconds || 0) / 3600).toFixed(1)} hrs</div>
                         </div>
                         <button
                           onClick={() => handleTabChange('auctions')}
@@ -1380,7 +1380,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-mono font-bold">{scheduledRounds.length}</span>
                       </div>
                       {scheduledRounds.map(round => {
-                        const startDate = new Date(round.start_time);
+                        const startDate = new Date((round as any).start_time);
                         const remainingSeconds = scheduledTimeRemaining[round.id] !== undefined
                           ? scheduledTimeRemaining[round.id]
                           : Math.max(0, Math.floor((startDate.getTime() - Date.now()) / 1000));
@@ -1407,7 +1407,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                                   </span>
                                 </div>
                                 <p className="text-xs text-slate-500 font-mono mt-1">
-                                  {round.max_bids_per_team} bids per team • {((round.duration_seconds || 0) / 3600).toFixed(1)} hrs
+                                  {round.max_bids_per_team} bids per team • {(((round as any).duration_seconds || 0) / 3600).toFixed(1)} hrs
                                 </p>
                               </div>
                               <div className="text-right font-mono">
@@ -1439,9 +1439,9 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="text-lg font-extrabold text-slate-900">
-                              Round #{round.round_number}{round.round_type === 'bulk' ? ' - Bulk Bidding' : (round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : '')}
+                              Round #{round.round_number}{(round as any).round_type === 'bulk' ? ' - Bulk Bidding' : (round.position ? ` - ${round.position.includes(',') ? round.position.split(',').join(' + ') : round.position}` : '')}
                             </h3>
-                            {round.round_type === 'bulk' && (
+                            {(round as any).round_type === 'bulk' && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-bold uppercase">
                                 ⚡ BULK
                               </span>
@@ -1463,7 +1463,7 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                             )}
                           </div>
                           <p className="text-xs text-slate-400 font-sans mt-1">
-                            {round.round_type === 'bulk'
+                            {(round as any).round_type === 'bulk'
                               ? `${round.player_count || 0} players • Fixed price bidding`
                               : `Max ${round.max_bids_per_team || 0} bids per team`
                             }
@@ -1484,10 +1484,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                         )}
                       </div>
                       <Link
-                        href={round.round_type === 'bulk' ? `/dashboard/team/bulk-round/${round.id}` : `/dashboard/team/round/${round.id}`}
+                        href={(round as any).round_type === 'bulk' ? `/dashboard/team/bulk-round/${round.id}` : `/dashboard/team/round/${round.id}`}
                         className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider"
                       >
-                        {round.round_type === 'bulk' ? 'Enter Bulk Round →' : 'Enter Round →'}
+                        {(round as any).round_type === 'bulk' ? 'Enter Bulk Round →' : 'Enter Round →'}
                       </Link>
                     </div>
                   ))}

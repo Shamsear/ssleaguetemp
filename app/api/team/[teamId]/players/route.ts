@@ -72,7 +72,7 @@ export async function GET(
     // Fetch full realplayer details from Neon SQL and Firebase
     let enrichedRealPlayers: any[] = [];
     if (playerSeasons.length > 0) {
-      const playerIds = playerSeasons.map(ps => String(ps.player_id));
+      const playerIds = playerSeasons.map((ps: any) => String(ps.player_id));
       
       const neonPhotosMap = new Map();
       try {
@@ -95,7 +95,7 @@ export async function GET(
         const playerDocs = await adminDb.collection('realplayers')
           .where('player_id', 'in', playerIds)
           .get();
-        playerDocs.docs.forEach(doc => {
+        playerDocs.docs.forEach((doc: any) => {
           const data = doc.data();
           playerDetailsMap.set(String(data.player_id), data);
         });
@@ -104,7 +104,7 @@ export async function GET(
       }
 
       // Combine player_seasons data with Neon & Firebase player details
-      enrichedRealPlayers = playerSeasons.map(ps => {
+      enrichedRealPlayers = playerSeasons.map((ps: any) => {
         const details = playerDetailsMap.get(String(ps.player_id)) || {};
         const neonPhoto = neonPhotosMap.get(String(ps.player_id));
         return {
@@ -204,7 +204,7 @@ export async function GET(
       console.log(`[API] Sample team_players records:`, allTeamPlayers);
     }
 
-    const enrichedFootballPlayers = footballPlayers.map(fp => ({
+    const enrichedFootballPlayers = footballPlayers.map((fp: any) => ({
       id: fp.player_id,
       player_id: fp.player_id,
       name: fp.player_name,

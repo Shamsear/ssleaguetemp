@@ -35,7 +35,7 @@ export async function GET(
     console.log(`[Season Stats API] Found ${teamStats.length} teams`);
 
     // Fetch team logos from Firebase in parallel batches
-    const teamIds = teamStats.map(t => t.team_id);
+    const teamIds = teamStats.map((t: any) => t.team_id);
     const teamsMap = new Map();
     
     if (teamIds.length > 0) {
@@ -53,8 +53,8 @@ export async function GET(
       }
       
       const snapshots = await Promise.all(batches);
-      snapshots.forEach(snapshot => {
-        snapshot.docs.forEach(doc => {
+      snapshots.forEach((snapshot: any) => {
+        snapshot.docs.forEach((doc: any) => {
           const data = doc.data();
           teamsMap.set(doc.id, {
             logo_url: data.logo_url || null
@@ -158,7 +158,7 @@ export async function GET(
     }));
 
     // Format player stats
-    const players = playerStats.map(player => {
+    const players = playerStats.map((player: any) => {
       const basePoints = parseInt(player.base_points) || 0;
       const rawPoints = parseInt(player.points) || 0;
       const points = isAdjustedSeason ? (rawPoints - basePoints) : rawPoints;

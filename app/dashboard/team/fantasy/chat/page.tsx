@@ -169,7 +169,7 @@ export default function FantasyChatPage() {
     const message = messages.find(m => m.message_id === messageId);
     if (!message) return;
 
-    const reactions = { ...message.reactions } || {};
+    const reactions = { ...(message.reactions || {}) };
     const userIds = reactions[emoji] || [];
 
     // Toggle reaction

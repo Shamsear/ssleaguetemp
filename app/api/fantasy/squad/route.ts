@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      squad: squad.map(p => ({
+      squad: squad.map((p: any) => ({
         squad_id: p.squad_id,
         real_player_id: p.real_player_id,
         player_name: p.player_name,

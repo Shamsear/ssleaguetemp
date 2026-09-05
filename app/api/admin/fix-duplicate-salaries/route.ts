@@ -284,7 +284,7 @@ export async function POST(request: NextRequest) {
       console.log('🎉 Bulk reversal complete!');
       return NextResponse.json({
         success: true,
-        message: `Deleted ${results.length} duplicates and recalculated ${affectedTeams.size} team balances`,
+        message: `Deleted ${results.length} duplicates and recalculated ${affectedTeamSeasons.size} team balances`,
         deleted_transactions: deletedTransactions,
         updated_teams: updatedTeams
       });

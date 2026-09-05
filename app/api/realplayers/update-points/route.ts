@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Fetch Firestore categories to compute category-based points for S18+
     const categoriesSnapshot = await adminDb.collection('categories').get();
     const categoriesMap = new Map();
-    categoriesSnapshot.docs.forEach(doc => {
+    categoriesSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       categoriesMap.set(doc.id.toLowerCase(), data);
       if (data.name) {
@@ -481,7 +481,7 @@ export async function POST(request: NextRequest) {
         .limit(1000)
         .get();
 
-      const hasExistingForFixture = existingTxnsSnapshot.docs.some(doc => {
+      const hasExistingForFixture = existingTxnsSnapshot.docs.some((doc: any) => {
         const metadata = doc.data().metadata || {};
         return metadata.fixture_id === fixture_id;
       });
@@ -496,7 +496,7 @@ export async function POST(request: NextRequest) {
 
         // Group by team for balance updates
         const teamTotals = new Map<string, number>();
-        playerSalaries.forEach(p => {
+        playerSalaries.forEach((p: any) => {
           teamTotals.set(p.team_id, (teamTotals.get(p.team_id) || 0) + p.salary);
         });
 
@@ -593,7 +593,7 @@ export async function POST(request: NextRequest) {
 
         // Show breakdown by team
         const byTeam = new Map<string, number>();
-        salaryDeductions.forEach(d => {
+        salaryDeductions.forEach((d: any) => {
           byTeam.set(d.team_id, (byTeam.get(d.team_id) || 0) + d.salary);
         });
         console.log(`   🏢 Teams affected: ${byTeam.size}`);

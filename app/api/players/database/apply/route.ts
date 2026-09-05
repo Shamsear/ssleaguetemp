@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const activeIds = new Set(activeRows.map((r: any) => r.player_id?.toString()).filter(Boolean));
 
     // 3. Filter players based on apply settings
-    const playersToApply = tempPlayers.filter(p => {
+    const playersToApply = tempPlayers.filter((p: any) => {
       const exists = activeIds.has(p.player_id?.toString());
       if (exists) return true; // Always update existing
       return !!createNew;      // Only create new if createNew is enabled
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const queryParams: any[] = [];
     let paramIndex = 1;
 
-    playersToApply.forEach(p => {
+    playersToApply.forEach((p: any) => {
       const rowPlaceholders: string[] = [];
       const uuid = randomUUID();
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         'defensive_engagement', 'gk_awareness', 'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
       ];
 
-      statsFields.forEach(field => {
+      statsFields.forEach((field: any) => {
         rowPlaceholders.push(`$${paramIndex++}`);
         queryParams.push(p[field] !== undefined ? Number(p[field]) : 0);
       });
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         const chunkParams: any[] = [];
         let chunkParamIndex = 1;
 
-        chunk.forEach(p => {
+        chunk.forEach((p: any) => {
           const rowPlaceholders: string[] = [];
           const uuid = randomUUID();
 
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
             'defensive_engagement', 'gk_awareness', 'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
           ];
 
-          statsFields.forEach(field => {
+          statsFields.forEach((field: any) => {
             rowPlaceholders.push(`$${chunkParamIndex++}`);
             chunkParams.push(p[field] !== undefined ? Number(p[field]) : 0);
           });

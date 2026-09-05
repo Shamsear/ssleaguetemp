@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
         WHERE season_id = ${seasonId}
         ORDER BY player_name
       `;
+    } else {
       // S18+ — read from realplayerstats, fallback to adminDb if empty
       try {
         players = await sql`

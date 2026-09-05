@@ -13,7 +13,8 @@
     "test:integration": "vitest run tests/integration/**/*.test.ts",
     "test:e2e": "vitest run tests/e2e/**/*.test.ts",
     "test:performance": "vitest run tests/performance/**/*.test.ts",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "postinstall": "node scripts/patch-tailwind.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

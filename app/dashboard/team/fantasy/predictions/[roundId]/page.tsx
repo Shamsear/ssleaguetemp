@@ -384,7 +384,7 @@ export default function PredictionsPage() {
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => handlePredictionChange(fixture.fixture_id, 'predicted_winner', fixture.team_a_id)}
-                      disabled={isDisabled}
+                      disabled={Boolean(isDisabled)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         prediction.predicted_winner === fixture.team_a_id
                           ? 'bg-blue-600 text-white'
@@ -395,7 +395,7 @@ export default function PredictionsPage() {
                     </button>
                     <button
                       onClick={() => handlePredictionChange(fixture.fixture_id, 'predicted_winner', 'draw')}
-                      disabled={isDisabled}
+                      disabled={Boolean(isDisabled)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         prediction.predicted_winner === 'draw'
                           ? 'bg-blue-600 text-white'
@@ -406,7 +406,7 @@ export default function PredictionsPage() {
                     </button>
                     <button
                       onClick={() => handlePredictionChange(fixture.fixture_id, 'predicted_winner', fixture.team_b_id)}
-                      disabled={isDisabled}
+                      disabled={Boolean(isDisabled)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         prediction.predicted_winner === fixture.team_b_id
                           ? 'bg-blue-600 text-white'
@@ -430,7 +430,7 @@ export default function PredictionsPage() {
                       max="20"
                       value={prediction.predicted_score?.home || ''}
                       onChange={(e) => handleScoreChange(fixture.fixture_id, 'home', e.target.value)}
-                      disabled={isDisabled}
+                      disabled={Boolean(isDisabled)}
                       placeholder="0"
                       className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
@@ -441,7 +441,7 @@ export default function PredictionsPage() {
                       max="20"
                       value={prediction.predicted_score?.away || ''}
                       onChange={(e) => handleScoreChange(fixture.fixture_id, 'away', e.target.value)}
-                      disabled={isDisabled}
+                      disabled={Boolean(isDisabled)}
                       placeholder="0"
                       className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     />

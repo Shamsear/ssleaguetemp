@@ -276,7 +276,7 @@ export default function PlayersManagement() {
       
       // Recalculate seasons with players
       const seasonMap = new Map<string, { name: string; count: number }>();
-      allPlayers.forEach(player => {
+      allPlayers.forEach((player: any) => {
         if (player.season_id && player.season_name) {
           const existing = seasonMap.get(player.season_id);
           if (existing) {
@@ -341,7 +341,7 @@ export default function PlayersManagement() {
           // Header
           'player_id,name',
           // Data rows - all existing players
-          ...allPlayers.map(player => 
+          ...allPlayers.map((player: any) => 
             `${player.player_id},${player.name}`
           )
         ];
@@ -645,7 +645,7 @@ export default function PlayersManagement() {
                 });
                 
                 const seasonMap = new Map<string, { name: string; count: number }>();
-                allPlayers.forEach(player => {
+                allPlayers.forEach((player: any) => {
                   if (player.season_id && player.season_name) {
                     const existing = seasonMap.get(player.season_id);
                     if (existing) {

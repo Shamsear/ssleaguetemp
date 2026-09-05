@@ -848,7 +848,7 @@ export default function PendingResultsPage({ params }: { params: Promise<{ id: s
       />
       <ConfirmModal
         isOpen={confirmState.isOpen}
-        onConfirm={confirmState.onConfirm}
+        onConfirm={confirmState.onConfirm || (() => {})}
         onCancel={closeConfirm}
         title={confirmState.title}
         message={confirmState.message}

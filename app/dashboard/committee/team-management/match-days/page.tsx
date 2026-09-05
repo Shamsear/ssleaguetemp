@@ -642,7 +642,7 @@ export default function MatchDayManagementPage() {
             away_fixture_deadline_time: round.away_fixture_deadline_time || '17:00',
             result_entry_deadline_day_offset: round.result_entry_deadline_day_offset || 2,
             result_entry_deadline_time: round.result_entry_deadline_time || '00:30',
-            status: round.status || 'pending'
+            status: (round as any).status || 'pending'
           };
         })
         .filter(Boolean);

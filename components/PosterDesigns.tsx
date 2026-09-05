@@ -343,8 +343,6 @@ function PlayerOfWeekDesign({
           fontWeight: 400,
           fontStyle: 'italic',
           color: 'transparent',
-          WebkitTextStroke: '1px rgba(212,168,48,0.15)',
-          textStroke: '1px rgba(212,168,48,0.15)',
           letterSpacing: 8,
           lineHeight: 1.0,
           textTransform: 'uppercase',
@@ -440,7 +438,6 @@ function PlayerOfWeekDesign({
             fontStyle: 'italic',
             color: 'transparent',
             WebkitTextStroke: '1px rgba(212,168,48,0.15)',
-            textStroke: '1px rgba(212,168,48,0.15)',
             letterSpacing: 8,
             lineHeight: 1.0,
             textTransform: 'uppercase',
@@ -470,7 +467,6 @@ function PlayerOfWeekDesign({
             fontWeight: 400,
             color: 'transparent',
             WebkitTextStroke: '1px rgba(212,168,48,0.05)',
-            textStroke: '1px rgba(212,168,48,0.05)',
             zIndex: 1,
             pointerEvents: 'none',
             userSelect: 'none',
@@ -549,7 +545,7 @@ function PlayerOfWeekDesign({
                       objectPosition: `${logoPosition.x}% ${logoPosition.y}%`,
                       transform: `scale(${logoScale / 100})`,
                       transformOrigin: `${logoPosition.x}% ${logoPosition.y}%`,
-                      clipPath: `inset(${logoCrop.top || 0}% ${logoCrop.right || 0}% ${logoCrop.bottom || 0}% ${logoCrop.left || 0}%)`,
+                      clipPath: `inset(${(logoCrop as any).top || 0}% ${(logoCrop as any).right || 0}% ${(logoCrop as any).bottom || 0}% ${(logoCrop as any).left || 0}%)`,
                     }}
                     onError={handleImageError('Player of Week - Team Logo', player, 'team')}
                     onLoad={handleImageLoad('Player of Week - Team Logo', player, 'team')}
@@ -651,7 +647,6 @@ function PlayerOfWeekDesign({
             fontWeight: 400,
             color: 'transparent',
             WebkitTextStroke: '1px rgba(212,168,48,0.06)',
-            textStroke: '1px rgba(212,168,48,0.06)',
             zIndex: 1,
             pointerEvents: 'none',
             userSelect: 'none',
@@ -690,7 +685,6 @@ function PlayerOfWeekDesign({
             fontWeight: 400,
             color: 'transparent',
             WebkitTextStroke: '2px rgba(212,168,48,0.15)',
-            textStroke: '2px rgba(212,168,48,0.15)',
             zIndex: 1,
             pointerEvents: 'none',
             userSelect: 'none',
@@ -736,7 +730,7 @@ function PlayerOfWeekDesign({
                   transform: `translate(calc(-50% + ${(photoPosition.x - 50) * 0.5}px), calc(-50% + ${(photoPosition.y - 50) * 0.5}px)) scale(${photoScale / 100})`,
                   transformOrigin: 'center center',
                   filter: 'drop-shadow(0 10px 40px rgba(0,0,0,0.7))',
-                  clipPath: `inset(${photoCrop.top || 0}% ${photoCrop.right || 0}% ${photoCrop.bottom || 0}% ${photoCrop.left || 0}%)`,
+                  clipPath: `inset(${(photoCrop as any).top || 0}% ${(photoCrop as any).right || 0}% ${(photoCrop as any).bottom || 0}% ${(photoCrop as any).left || 0}%)`,
                 }}
                 onError={handleImageError('Player of Week - Main Photo', player, 'player')}
                 onLoad={handleImageLoad('Player of Week - Main Photo', player, 'player')}
@@ -781,7 +775,7 @@ function PlayerOfWeekDesign({
               transform: `translate(calc(-50% + ${(photoPosition.x - 50) * 0.5}px), calc(-50% + ${(photoPosition.y - 50) * 0.5}px)) scale(${photoScale / 100})`,
               transformOrigin: 'center center',
               filter: 'drop-shadow(0 10px 40px rgba(0,0,0,0.7))',
-              clipPath: `inset(${photoCrop.top || 0}% ${photoCrop.right || 0}% ${photoCrop.bottom || 0}% ${photoCrop.left || 0}%)`,
+              clipPath: `inset(${(photoCrop as any).top || 0}% ${(photoCrop as any).right || 0}% ${(photoCrop as any).bottom || 0}% ${(photoCrop as any).left || 0}%)`,
             }}
             onError={handleImageError('Player of Week - Overlay Photo', player, 'player')}
             onLoad={handleImageLoad('Player of Week - Overlay Photo', player, 'player')}
@@ -1298,7 +1292,6 @@ function PlayerOfDayDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.08)',
-        textStroke: '1px rgba(212,168,48,0.08)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -1317,7 +1310,6 @@ function PlayerOfDayDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.06)',
-        textStroke: '1px rgba(212,168,48,0.06)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -1336,7 +1328,6 @@ function PlayerOfDayDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.09)',
-        textStroke: '1px rgba(212,168,48,0.09)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -1634,12 +1625,12 @@ function PlayerOfDayDesign({
                   transformOrigin: 'center center',
                   filter: 'drop-shadow(0 15px 50px rgba(0,0,0,0.8))',
                   WebkitMaskImage: `
-                    linear-gradient(to right, transparent ${photoCrop.left || 0}%, black ${photoCrop.left || 0}%, black ${100 - (photoCrop.right || 0)}%, transparent ${100 - (photoCrop.right || 0)}%),
-                    linear-gradient(to bottom, transparent ${photoCrop.top || 0}%, black ${photoCrop.top || 0}%, black ${Math.max(40, 100 - (photoCrop.bottom || 0) - 60)}%, rgba(0,0,0,0.8) ${Math.max(70, 100 - (photoCrop.bottom || 0) - 30)}%, transparent ${100 - (photoCrop.bottom || 0)}%)
+                    linear-gradient(to right, transparent ${(photoCrop as any).left || 0}%, black ${(photoCrop as any).left || 0}%, black ${100 - ((photoCrop as any).right || 0)}%, transparent ${100 - ((photoCrop as any).right || 0)}%),
+                    linear-gradient(to bottom, transparent ${(photoCrop as any).top || 0}%, black ${(photoCrop as any).top || 0}%, black ${Math.max(40, 100 - ((photoCrop as any).bottom || 0) - 60)}%, rgba(0,0,0,0.8) ${Math.max(70, 100 - ((photoCrop as any).bottom || 0) - 30)}%, transparent ${100 - ((photoCrop as any).bottom || 0)}%)
                   `,
                   maskImage: `
-                    linear-gradient(to right, transparent ${photoCrop.left || 0}%, black ${photoCrop.left || 0}%, black ${100 - (photoCrop.right || 0)}%, transparent ${100 - (photoCrop.right || 0)}%),
-                    linear-gradient(to bottom, transparent ${photoCrop.top || 0}%, black ${photoCrop.top || 0}%, black ${Math.max(40, 100 - (photoCrop.bottom || 0) - 60)}%, rgba(0,0,0,0.8) ${Math.max(70, 100 - (photoCrop.bottom || 0) - 30)}%, transparent ${100 - (photoCrop.bottom || 0)}%)
+                    linear-gradient(to right, transparent ${(photoCrop as any).left || 0}%, black ${(photoCrop as any).left || 0}%, black ${100 - ((photoCrop as any).right || 0)}%, transparent ${100 - ((photoCrop as any).right || 0)}%),
+                    linear-gradient(to bottom, transparent ${(photoCrop as any).top || 0}%, black ${(photoCrop as any).top || 0}%, black ${Math.max(40, 100 - ((photoCrop as any).bottom || 0) - 60)}%, rgba(0,0,0,0.8) ${Math.max(70, 100 - ((photoCrop as any).bottom || 0) - 30)}%, transparent ${100 - ((photoCrop as any).bottom || 0)}%)
                   `,
                   WebkitMaskComposite: 'source-in',
                   maskComposite: 'intersect',
@@ -1728,7 +1719,7 @@ function PlayerOfDayDesign({
                   objectPosition: `${logoPosition.x}% ${logoPosition.y}%`,
                   transform: `scale(${logoScale / 100})`,
                   transformOrigin: `${logoPosition.x}% ${logoPosition.y}%`,
-                  clipPath: `inset(${logoCrop.top || 0}% ${logoCrop.right || 0}% ${logoCrop.bottom || 0}% ${logoCrop.left || 0}%)`,
+                  clipPath: `inset(${(logoCrop as any).top || 0}% ${(logoCrop as any).right || 0}% ${(logoCrop as any).bottom || 0}% ${(logoCrop as any).left || 0}%)`,
                 }}
                 onError={handleImageError('Player of Day - Team Logo', player, 'team')}
                 onLoad={handleImageLoad('Player of Day - Team Logo', player, 'team')}
@@ -1816,7 +1807,6 @@ export function TeamOfDayDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(0,229,255,0.08)',
-        textStroke: '1px rgba(0,229,255,0.08)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -1835,7 +1825,6 @@ export function TeamOfDayDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(0,229,255,0.06)',
-        textStroke: '1px rgba(0,229,255,0.06)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -1854,7 +1843,6 @@ export function TeamOfDayDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(0,229,255,0.09)',
-        textStroke: '1px rgba(0,229,255,0.09)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -2131,7 +2119,7 @@ export function TeamOfDayDesign({
                   objectPosition: `${logoPosition.x}% ${logoPosition.y}%`,
                   transform: `scale(${logoScale / 100})`,
                   transformOrigin: `${logoPosition.x}% ${logoPosition.y}%`,
-                  clipPath: `inset(${logoCrop.top || 0}% ${logoCrop.right || 0}% ${logoCrop.bottom || 0}% ${logoCrop.left || 0}%)`,
+                  clipPath: `inset(${(logoCrop as any).top || 0}% ${(logoCrop as any).right || 0}% ${(logoCrop as any).bottom || 0}% ${(logoCrop as any).left || 0}%)`,
                 }}
                 onError={(e) => {
                   console.error('Team of Day - Team Logo failed to load:', teamLogoUrl);
@@ -2461,7 +2449,6 @@ export function SinglePlayerDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.08)',
-        textStroke: '1px rgba(212,168,48,0.08)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -2482,7 +2469,6 @@ export function SinglePlayerDesign({
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.055)',
-        textStroke: '1px rgba(212,168,48,0.055)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -2503,7 +2489,6 @@ export function SinglePlayerDesign({
         fontWeight: 600,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.06)',
-        textStroke: '1px rgba(212,168,48,0.06)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -2912,7 +2897,6 @@ export function TableDesign({ players, theme, themeKey, week, LogoBranding, seas
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.07)',
-        textStroke: '1px rgba(212,168,48,0.07)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -2933,7 +2917,6 @@ export function TableDesign({ players, theme, themeKey, week, LogoBranding, seas
         fontWeight: 400,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.07)',
-        textStroke: '1px rgba(212,168,48,0.07)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -2954,7 +2937,6 @@ export function TableDesign({ players, theme, themeKey, week, LogoBranding, seas
         fontWeight: 600,
         color: 'transparent',
         WebkitTextStroke: '1px rgba(212,168,48,0.05)',
-        textStroke: '1px rgba(212,168,48,0.05)',
         zIndex: 1,
         pointerEvents: 'none',
         userSelect: 'none',
@@ -3088,7 +3070,7 @@ export function TableDesign({ players, theme, themeKey, week, LogoBranding, seas
               background: isTop3
                 ? 'rgba(212,168,48,0.045)'
                 : idx % 2 === 1 ? 'rgba(255,255,255,0.018)' : 'transparent',
-              borderLeft: isTop3 ? `2px solid ${rm.stripe}` : '2px solid transparent',
+              borderLeft: isTop3 && rm ? `2px solid ${rm.stripe}` : '2px solid transparent',
             }}>
               {/* Rank */}
               <div style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: rm ? rm.size : 14, color: rm ? rm.color : 'rgba(255,255,255,0.2)', textShadow: rm ? rm.shadow : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

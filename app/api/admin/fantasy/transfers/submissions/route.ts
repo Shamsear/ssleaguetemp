@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Group by requested player (player_in_id) to identify conflicts
     const playerRequests: Record<string, any[]> = {};
-    submissions.forEach(sub => {
+    submissions.forEach((sub: any) => {
       const pInId = sub.player_in_id;
       if (!playerRequests[pInId]) {
         playerRequests[pInId] = [];

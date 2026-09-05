@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Home, Info, Pencil, Save, Search, Star, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
+import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Home, Info, Pencil, Save, Search, Shield, Star, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -1550,8 +1550,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {/* Home Team */}
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
-                  {fixture.home_team_logo ? (
-                    <img src={fixture.home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
+                  {(fixture as any).home_team_logo ? (
+                    <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
                   ) : (
                     <Home className="w-5 h-5 text-slate-400" />
                   )}
@@ -1572,8 +1572,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               {/* Away Team */}
               <div className="flex items-center gap-2.5 min-w-0 flex-row-reverse text-right">
                 <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
-                  {fixture.away_team_logo ? (
-                    <img src={fixture.away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
+                  {(fixture as any).away_team_logo ? (
+                    <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
                   ) : (
                     <Plane className="w-5 h-5 text-slate-400" />
                   )}
@@ -1689,8 +1689,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
-                    {fixture.home_team_logo ? (
-                      <img src={fixture.home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
+                    {(fixture as any).home_team_logo ? (
+                      <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
                     ) : (
                       <Home className="w-6 h-6 text-slate-400" />
                     )}
@@ -1715,8 +1715,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
-                    {fixture.away_team_logo ? (
-                      <img src={fixture.away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
+                    {(fixture as any).away_team_logo ? (
+                      <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
                     ) : (
                       <Plane className="w-6 h-6 text-slate-400" />
                     )}
@@ -2089,7 +2089,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         const availableAway = [...awayStartingXI];
                         const updatedMatchups = matchups.map(m => {
                           const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
-                          const homeCat = (m.home_category || homeMatch?.category || '').toUpperCase();
+                          const homeCat = ((m as any).home_category || homeMatch?.category || '').toUpperCase();
                           let matchIdx = availableAway.findIndex(aP => (aP.category || '').toUpperCase() === homeCat);
                           if (matchIdx === -1) matchIdx = 0;
                           let selectedAway = availableAway[matchIdx];
@@ -2163,12 +2163,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         {/* Home Player */}
                         {(() => {
                           const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
-                          const homeCategory = matchup.home_category || homeMatch?.category;
+                          const homeCategory = (matchup as any).home_category || homeMatch?.category;
                           return (
                             <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-200/80 min-w-0">
                               <div className="flex items-center gap-2">
                                 <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
                                   playerName={matchup.home_player_name}
                                   size={32}
                                   shape="circle"
@@ -2350,8 +2350,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       awayTotalScore = awayPoints;
                     } else {
                       // Goal-based scoring (default): Sum of goals + opponent's sub penalties + fines
-                      const homeFinePenalties = (fixture?.home_fine_goals || 0);
-                      const awayFinePenalties = (fixture?.away_fine_goals || 0);
+                      const homeFinePenalties = ((fixture as any)?.home_fine_goals || 0);
+                      const awayFinePenalties = ((fixture as any)?.away_fine_goals || 0);
 
                       homeTotalScore = homePlayerGoals + awaySubPenalties + homeFinePenalties;
                       awayTotalScore = awayPlayerGoals + homeSubPenalties + awayFinePenalties;
@@ -2361,8 +2361,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const awayWonFixture = awayTotalScore > homeTotalScore;
                     const isDrawFixture = homeTotalScore === awayTotalScore;
 
-                    const homeFineGoals = (fixture?.home_fine_goals || 0);
-                    const awayPenaltyGoals = (fixture?.away_fine_goals || 0);
+                    const homeFineGoals = ((fixture as any)?.home_fine_goals || 0);
+                    const awayPenaltyGoals = ((fixture as any)?.away_fine_goals || 0);
 
                     return (
                       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm font-mono relative overflow-hidden">
@@ -2480,8 +2480,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
                       const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
 
-                      const homeCategory = matchup.home_category || homeMatch?.category;
-                      const awayCategory = matchup.away_category || awayMatch?.category;
+                      const homeCategory = (matchup as any).home_category || homeMatch?.category;
+                      const awayCategory = (matchup as any).away_category || awayMatch?.category;
 
                       return (
                         <div key={idx} className={`console-card bg-white border rounded-2xl p-4 transition-all font-mono hover:border-amber-400/40 duration-200 ${isPOTD ? 'border-amber-300 shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10' : 'border-slate-200/60 shadow-sm'
@@ -2548,7 +2548,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               }`}>
                               <div className="flex items-center gap-3">
                                 <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
                                   playerName={matchup.home_player_name}
                                   size={40}
                                   shape="circle"
@@ -2619,7 +2619,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               }`}>
                               <div className="flex items-center gap-3 flex-row-reverse sm:flex-row">
                                 <PlayerPhoto
-                                  photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                  photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
                                   playerName={matchup.away_player_name}
                                   size={40}
                                   shape="circle"
@@ -3005,11 +3005,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             {/* Home Player */}
                             {(() => {
                               const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
-                              const homeCategory = matchup.home_category || homeMatch?.category;
+                              const homeCategory = (matchup as any).home_category || homeMatch?.category;
                               return (
                                 <div className="flex items-center gap-2 p-2 bg-blue-50/70 border border-blue-200 rounded-xl min-w-0">
                                   <PlayerPhoto
-                                    photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                    photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
                                     playerName={matchup.home_player_name}
                                     size={32}
                                     shape="circle"
@@ -3035,11 +3035,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             {/* Away Player */}
                             {(() => {
                               const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
-                              const awayCategory = matchup.away_category || awayMatch?.category;
+                              const awayCategory = (matchup as any).away_category || awayMatch?.category;
                               return (
                                 <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl min-w-0">
                                   <PlayerPhoto
-                                    photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                    photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
                                     playerName={matchup.away_player_name}
                                     size={32}
                                     shape="circle"
@@ -3117,11 +3117,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {/* Home Player */}
                           {(() => {
                             const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
-                            const homeCategory = matchup.home_category || homeMatch?.category;
+                            const homeCategory = (matchup as any).home_category || homeMatch?.category;
                             return (
                               <div className="flex items-center gap-2 p-2 bg-blue-50/60 border border-blue-200/80 rounded-xl min-w-0">
                                 <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
                                   playerName={matchup.home_player_name}
                                   size={32}
                                   shape="circle"
@@ -3197,11 +3197,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {/* Away Player */}
                           {(() => {
                             const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
-                            const awayCategory = matchup.away_category || awayMatch?.category;
+                            const awayCategory = (matchup as any).away_category || awayMatch?.category;
                             return (
                               <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl min-w-0">
                                 <PlayerPhoto
-                                  photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                  photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
                                   playerName={matchup.away_player_name}
                                   size={32}
                                   shape="circle"
@@ -3340,17 +3340,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             });
                             
                             // Calculate scores for each player
-                            type BestPlayerType = { 
-                              id: string; 
-                              name: string; 
-                              goals: number; 
-                              conceded: number; 
-                              wins: number;
-                              draws: number;
-                              losses: number;
-                              score: number;
-                            };
-                            let bestPlayer: BestPlayerType | null = null;
+                            let bestPlayer: any = null;
                             let bestScore = -999;
                             
                             playerScores.forEach((player) => {
@@ -3384,8 +3374,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             });
                           } else {
                             // Regular matchup - calculate best player from individual matches
-                            type BestPlayerType = { id: string; name: string; goals: number; conceded: number; result: string };
-                            let bestPlayer: BestPlayerType | null = null;
+                            let bestPlayer: any = null;
                             let bestScore = -999;
 
                             matchups.forEach((m, idx) => {
@@ -3457,7 +3446,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             const goals = matchResults[idx]?.home_goals ?? 0;
                             const conceded = matchResults[idx]?.away_goals ?? 0;
                             const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
-                            const category = m.home_category || homeMatch?.category;
+                            const category = (m as any).home_category || homeMatch?.category;
 
                             return (
                               <div
@@ -3471,7 +3460,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <PlayerPhoto
-                                    photoUrl={homeMatch?.photo_url || m.home_photo_url}
+                                    photoUrl={homeMatch?.photo_url || (m as any).home_photo_url}
                                     playerName={m.home_player_name}
                                     size={36}
                                     shape="circle"
@@ -3518,7 +3507,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             const goals = matchResults[idx]?.away_goals ?? 0;
                             const conceded = matchResults[idx]?.home_goals ?? 0;
                             const awayMatch = awaySquadById.get(m.away_player_id) || awaySquadByName.get(m.away_player_name?.toLowerCase());
-                            const category = m.away_category || awayMatch?.category;
+                            const category = (m as any).away_category || awayMatch?.category;
 
                             return (
                               <div
@@ -3532,7 +3521,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <PlayerPhoto
-                                    photoUrl={awayMatch?.photo_url || m.away_photo_url}
+                                    photoUrl={awayMatch?.photo_url || (m as any).away_photo_url}
                                     playerName={m.away_player_name}
                                     size={36}
                                     shape="circle"
@@ -4210,8 +4199,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
                         const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
 
-                        const homeCategory = matchup.home_category || homeMatch?.category;
-                        const awayCategory = matchup.away_category || awayMatch?.category;
+                        const homeCategory = (matchup as any).home_category || homeMatch?.category;
+                        const awayCategory = (matchup as any).away_category || awayMatch?.category;
 
                         return (
                           <div key={idx} className={`console-card bg-white border rounded-2xl p-4 transition-all font-mono hover:border-amber-400/40 duration-200 ${isPOTD ? 'border-amber-300 shadow-sm bg-gradient-to-r from-amber-500/5 to-amber-500/10' : 'border-slate-200/60 shadow-sm'
@@ -4278,7 +4267,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 }`}>
                                 <div className="flex items-center gap-3">
                                   <PlayerPhoto
-                                    photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                    photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
                                     playerName={matchup.home_player_name}
                                     size={40}
                                     shape="circle"
@@ -4328,7 +4317,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 }`}>
                                 <div className="flex items-center gap-3 flex-row-reverse sm:flex-row text-right sm:text-left">
                                   <PlayerPhoto
-                                    photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                    photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
                                     playerName={matchup.away_player_name}
                                     size={40}
                                     shape="circle"
@@ -4350,6 +4339,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 </div>
                               </div>
                             </div>
+                            {/* Performance statistics line when result is recorded */}
+                            {hasResult && (
+                              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{matchup.home_player_name}:</span>
+                                  <span>{matchup.home_goals} goals</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{matchup.away_player_name}:</span>
+                                  <span>{matchup.away_goals} goals</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -4359,8 +4361,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     matchups.map((matchup, idx) => {
                       const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
                       const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
-                      const homeCategory = matchup.home_category || homeMatch?.category;
-                      const awayCategory = matchup.away_category || awayMatch?.category;
+                      const homeCategory = (matchup as any).home_category || homeMatch?.category;
+                      const awayCategory = (matchup as any).away_category || awayMatch?.category;
 
                       return (
                         <div key={idx} className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm transition-all font-mono hover:border-amber-400/40 duration-200">
@@ -4383,7 +4385,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             <div className="p-3 rounded-xl border bg-slate-50 border-slate-200">
                               <div className="flex items-center gap-3">
                                 <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || matchup.home_photo_url}
+                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
                                   playerName={matchup.home_player_name}
                                   size={40}
                                   shape="circle"
@@ -4416,7 +4418,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             <div className="p-3 rounded-xl border bg-slate-50 border-slate-200">
                               <div className="flex items-center gap-3 flex-row-reverse sm:flex-row text-right sm:text-left">
                                 <PlayerPhoto
-                                  photoUrl={awayMatch?.photo_url || matchup.away_photo_url}
+                                  photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
                                   playerName={matchup.away_player_name}
                                   size={40}
                                   shape="circle"

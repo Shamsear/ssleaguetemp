@@ -49,8 +49,8 @@ export default function SelectOpponentLineupPage() {
       setFixture(fixtureData.fixture);
 
       // Determine which team is the user's team and which is opponent
-      const isHomeTeam = fixtureData.fixture.home_team_id === user?.team_id;
-      const isAwayTeam = fixtureData.fixture.away_team_id === user?.team_id;
+      const isHomeTeam = fixtureData.fixture.home_team_id === (user as any)?.team_id || fixtureData.fixture.home_team_id === (user as any)?.teamId;
+      const isAwayTeam = fixtureData.fixture.away_team_id === (user as any)?.team_id || fixtureData.fixture.away_team_id === (user as any)?.teamId;
 
       if (!isHomeTeam && !isAwayTeam) {
         setError('You are not part of this fixture');

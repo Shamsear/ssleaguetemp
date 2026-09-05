@@ -177,14 +177,14 @@ export default function PenaltyHistoryModal({
                                                         <p className="text-2xl font-bold text-red-600">
                                                             -{penalty.points_deducted} points
                                                         </p>
-                                                        {(penalty.ecoin_fine > 0 || penalty.sscoin_fine > 0) && (
+                                                        {((penalty.ecoin_fine || 0) > 0 || (penalty.sscoin_fine || 0) > 0) && (
                                                             <div className="flex gap-3 mt-2">
-                                                                {penalty.ecoin_fine > 0 && (
+                                                                {(penalty.ecoin_fine || 0) > 0 && (
                                                                     <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
                                                                         {penalty.ecoin_fine} ECoin
                                                                     </span>
                                                                 )}
-                                                                {penalty.sscoin_fine > 0 && (
+                                                                {(penalty.sscoin_fine || 0) > 0 && (
                                                                     <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
                                                                         {penalty.sscoin_fine} SSCoin
                                                                     </span>
@@ -281,14 +281,14 @@ export default function PenaltyHistoryModal({
                                                         <p className="text-xl font-bold text-gray-600">
                                                             -{penalty.points_deducted} points <span className="text-sm font-normal">(REMOVED)</span>
                                                         </p>
-                                                        {(penalty.ecoin_fine > 0 || penalty.sscoin_fine > 0) && (
+                                                        {((penalty.ecoin_fine || 0) > 0 || (penalty.sscoin_fine || 0) > 0) && (
                                                             <div className="flex gap-3 mt-2">
-                                                                {penalty.ecoin_fine > 0 && (
+                                                                {(penalty.ecoin_fine || 0) > 0 && (
                                                                     <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-semibold">
                                                                         {penalty.ecoin_fine} ECoin
                                                                     </span>
                                                                 )}
-                                                                {penalty.sscoin_fine > 0 && (
+                                                                {(penalty.sscoin_fine || 0) > 0 && (
                                                                     <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-semibold">
                                                                         {penalty.sscoin_fine} SSCoin
                                                                     </span>

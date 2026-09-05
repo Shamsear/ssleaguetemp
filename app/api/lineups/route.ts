@@ -37,8 +37,7 @@ export async function GET(request: NextRequest) {
       `;
       if (fixtureRes.length > 0) {
         const fix = fixtureRes[0];
-        const teamsToEnsure = [fix.home_team_id, fix.away_team_id].filter(
-          id => id && id !== 'TBD' && id !== 'bye'
+        const teamsToEnsure = [fix.home_team_id, fix.away_team_id].filter((id: any) => id && id !== 'TBD' && id !== 'bye'
         );
 
         for (const tid of teamsToEnsure) {
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest) {
               `;
             }
 
-            const startingXi = players.map(p => ({
+            const startingXi = players.map((p: any) => ({
               player_id: String(p.player_id),
               player_name: p.player_name,
               category: p.category || 'realplayer'

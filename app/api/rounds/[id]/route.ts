@@ -59,7 +59,7 @@ export async function GET(
             ORDER BY tt.submitted DESC, tt.new_bid_amount DESC NULLS LAST
           `;
           
-          const submissions = tiebreakerDetails.map(tb => ({
+          const submissions = tiebreakerDetails.map((tb: any) => ({
             team_id: tb.team_id,
             team_name: tb.team_name,
             new_bid_amount: tb.new_bid_amount || 0,
@@ -607,7 +607,7 @@ export async function DELETE(
             .where('transaction_type', '==', 'auction_win')
             .get();
           
-          const deletePromises = transactionsSnapshot.docs.map(doc => doc.ref.delete());
+          const deletePromises = transactionsSnapshot.docs.map((doc: any) => doc.ref.delete());
           await Promise.all(deletePromises);
           console.log(`✅ Deleted ${transactionsSnapshot.size} transaction(s) for player ${bid.player_id}`);
         } catch (error) {
@@ -745,7 +745,7 @@ export async function DELETE(
             .where('transaction_type', '==', 'auction_win')
             .get();
           
-          const deletePromises = transactionsSnapshot.docs.map(doc => doc.ref.delete());
+          const deletePromises = transactionsSnapshot.docs.map((doc: any) => doc.ref.delete());
           await Promise.all(deletePromises);
           console.log(`✅ Deleted ${transactionsSnapshot.size} transaction(s) for player ${allocation.player_id}`);
         } catch (error) {

@@ -71,7 +71,7 @@ export default function NewsArticleClient() {
     }
     
     const enField = `${field}_en` as keyof NewsItem
-    return (news[enField] || news[field] || '') as string
+    return (news[enField] || (news as any)[field] || '') as string
   }
 
   useEffect(() => {

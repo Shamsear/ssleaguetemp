@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     // Fetch Firestore categories to compute category-based points for S18+
     const categoriesSnapshot = await adminDb.collection('categories').get();
     const categoriesMap = new Map();
-    categoriesSnapshot.docs.forEach(doc => {
+    categoriesSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       categoriesMap.set(doc.id.toLowerCase(), data);
       if (data.name) {

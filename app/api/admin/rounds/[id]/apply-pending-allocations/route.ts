@@ -209,7 +209,7 @@ export async function POST(
         allocations.length,
         false,
         applyResult.error || 'Failed to apply pending allocations',
-        auth.email
+        (auth as any).email
       );
       
       return NextResponse.json(
@@ -273,7 +273,7 @@ export async function POST(
       allocations.length,
       true,
       undefined,
-      auth.email
+      (auth as any).email
     );
 
     return NextResponse.json({
@@ -305,7 +305,7 @@ export async function POST(
           0,
           false,
           errorMessage,
-          auth.email
+          (auth as any).email
         );
       }
     } catch (auditError) {

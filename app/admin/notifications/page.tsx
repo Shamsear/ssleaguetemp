@@ -162,7 +162,7 @@ export default function AdminNotificationsPage() {
         setNotificationUsers(data.users || []);
         
         // Build a set of user IDs who have notifications enabled
-        const userIdsWithNotifications = new Set(
+        const userIdsWithNotifications = new Set<string>(
           (data.users || []).map((user: NotificationUser) => user.userId)
         );
         console.log('[Notification Users] User IDs with notifications:', Array.from(userIdsWithNotifications));

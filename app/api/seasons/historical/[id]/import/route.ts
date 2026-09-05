@@ -21,7 +21,7 @@ function toTitleCase(text: string): string {
   return text
     .toLowerCase()
     .split(' ')
-    .map(word => {
+    .map((word: any) => {
       const upperWord = word.toUpperCase();
       // Check if this word is a known abbreviation
       if (abbreviations.includes(upperWord)) {
@@ -229,7 +229,7 @@ export async function POST(
     const existingPlayerIds = new Set<string>();
     let maxPlayerNumber = 0;
 
-    allPlayersSnapshot.forEach(doc => {
+    allPlayersSnapshot.forEach((doc: any) => {
       const data = doc.data();
       if (data.name) {
         playersByName.set(data.name.toLowerCase(), { playerId: data.player_id, data });
@@ -254,14 +254,14 @@ export async function POST(
     if (teamsToImport.length > 0) {
       console.log('📊 Pre-loading teams...');
       // Use linked_team_id if available, otherwise fallback to id
-      const teamIds = teamsToImport.map(t => t.linked_team_id || t.id).filter(Boolean);
+      const teamIds = teamsToImport.map((t: any) => t.linked_team_id || t.id).filter(Boolean);
 
       if (teamIds.length > 0) {
         // Batch read teams (Firestore allows up to 10 per batch, but we'll read individually in batch)
-        const teamPromises = teamIds.map(id => adminDb.collection('teams').doc(id).get());
+        const teamPromises = teamIds.map((id: any) => adminDb.collection('teams').doc(id).get());
         const teamDocs = await Promise.all(teamPromises);
 
-        teamDocs.forEach(doc => {
+        teamDocs.forEach((doc: any) => {
           if (doc.exists) {
             teamsCache.set(doc.id, doc.data());
           }
@@ -482,7 +482,7 @@ export async function POST(
           const allAwards: Array<{ name: string; type: 'category' | 'individual' }> = [];
 
           // Check all possible column names for trophies
-          Object.keys(row).forEach(key => {
+          Object.keys(row).forEach((key: any) => {
             const lowerKey = key.toLowerCase();
             const value = row[key];
 
@@ -525,7 +525,7 @@ export async function POST(
 
           console.log(`  📊 Total awards found for ${normalizedPlayerName}: ${allAwards.length}`);
           if (allAwards.length > 0) {
-            console.log(`  🏆 Awards: ${allAwards.map(a => `${a.name} (${a.type})`).join(', ')}`);
+            console.log(`  🏆 Awards: ${allAwards.map((a: any) => `${a.name} (${a.type})`).join(', ')}`);
           }
 
           // Normalize team name: if it's a previous name, use the current name

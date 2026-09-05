@@ -629,8 +629,8 @@ export default function CommitteeMatchupCreator({
                     <h3 className="font-bold text-xs uppercase tracking-wider text-slate-550 mb-3">Created Matchups ({selectedMatchups.length})</h3>
                     <div className="space-y-3">
                         {selectedMatchups.map((matchup) => {
-                            const hp = homeLineup.players.find(p => p.player_id === matchup.home_player_id);
-                            const ap = awayLineup.players.find(p => p.player_id === matchup.away_player_id);
+                            const hp = homeLineup?.players?.find(p => p.player_id === matchup.home_player_id);
+                            const ap = awayLineup?.players?.find(p => p.player_id === matchup.away_player_id);
 
                             return (
                                 <div key={matchup.position} className="bg-slate-50/70 border border-slate-200/60 rounded-2xl p-4 hover:bg-slate-50 transition-all font-mono">

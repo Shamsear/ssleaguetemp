@@ -80,7 +80,7 @@ export default function TeamCashBalances() {
 
   // 1. Authenticate user
   useEffect(() => {
-    if (!user || (user.role !== 'team' && user.role !== 'superadmin')) return;
+    if (!user || (user.role !== 'team' && (user.role as string) !== 'superadmin' && user.role !== 'super_admin')) return;
 
     const loadSeasons = async () => {
       try {

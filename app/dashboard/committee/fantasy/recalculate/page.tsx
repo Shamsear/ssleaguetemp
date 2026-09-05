@@ -1,6 +1,5 @@
 'use client';
-import { Users, Trophy, Activity, BarChart2 } from 'lucide-react';
-
+import { ArrowLeft, RotateCw, CheckCircle2, AlertTriangle, ShieldCheck, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -13,18 +12,18 @@ export default function FantasyRecalculatePage() {
   const router = useRouter();
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [progress, setProgress] = useState<string>('');
-  const [logs, setLogs] = useState<string[]>([]);
+  const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const startRecalculation = async () => {
-    if (!confirm('Are you sure you want to recalculate all fantasy points? This will:\n\n1. Recalculate all player points\n2. Recalculate all passive team bonuses\n3. Update squad totals\n4. Update team totals and ranks\n\nThis may take a few minutes.')) {
+    if (!confirm('Are you sure you want to recalculate all fantasy points?\n\nThis will:\n1. Recalculate ALL player points (Drafted & Free Agents)\n2. Recalculate all passive team outcome bonuses\n3. Sync player cumulative base totals\n4. Update team standings & leaderboard ranks')) {
       return;
     }
 
     setIsRecalculating(true);
-    setProgress('Starting fantasy points recalculation...');
-    setLogs([]);
+    setProgress('Starting complete fantasy points recalculation...');
+    setResults(null);
     setError(null);
     setSuccess(false);
 
@@ -36,12 +35,12 @@ export default function FantasyRecalculatePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Recalculation failed');
+        throw new Error(errorData.error || errorData.details || 'Recalculation failed');
       }
 
       const data = await response.json();
-      setProgress('Fantasy points recalculation completed successfully!');
-      setLogs(data.logs || []);
+      setProgress('Complete fantasy points recalculation finished successfully!');
+      setResults(data.results || null);
       setSuccess(true);
     } catch (err) {
       console.error('Recalculation error:', err);
@@ -54,10 +53,10 @@ export default function FantasyRecalculatePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative font-mono">
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-wider">Loading console...</p>
         </div>
       </div>
     );
@@ -65,105 +64,124 @@ export default function FantasyRecalculatePage() {
 
   return (
     <AuthGuard requiredRole="committee_admin">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="mb-6">
-          <Link href="/dashboard/committee/fantasy" className="text-blue-600 hover:underline mb-2 inline-block">
-            &larr; Back to Fantasy Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Recalculate Fantasy Points</h1>
-          <p className="text-gray-600 mt-1">Recalculate fantasy points, multipliers, bonuses, and rankings</p>
-        </div>
-
-        {/* Warning Card */}
-        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-6">
-          <div className="flex items-start gap-3">
-            <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <h3 className="font-bold text-yellow-900 mb-2">Fantasy Points Recalculation</h3>
-              <ul className="text-sm text-yellow-800 space-y-1">
-                <li>• Recalculates match performance fantasy points for drafted players</li>
-                <li>• Applies captain (2x) and vice-captain (1.5x) multipliers</li>
-                <li>• Recalculates team passive outcome bonuses</li>
-                <li>• Updates fantasy leaderboards and team ranks</li>
-              </ul>
-            </div>
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto relative z-10 space-y-6 font-mono">
+          {/* Navigation */}
+          <div>
+            <Link
+              href="/dashboard/committee"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Committee Dashboard
+            </Link>
           </div>
-        </div>
 
-        {/* Action Button */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
-          <button
-            onClick={startRecalculation}
-            disabled={isRecalculating}
-            className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all ${
-              isRecalculating
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl'
-            }`}
-          >
-            {isRecalculating ? (
-              <span className="flex items-center justify-center gap-3">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                Recalculating Fantasy Points...
-              </span>
-            ) : (
-              'Start Fantasy Points Recalculation'
-            )}
-          </button>
-        </div>
-
-        {/* Progress */}
-        {progress && (
-          <div className={`rounded-xl p-4 mb-6 ${
-            success ? 'bg-green-50 border-2 border-green-300' :
-            error ? 'bg-red-50 border-2 border-red-300' :
-            'bg-blue-50 border-2 border-blue-300'
-          }`}>
-            <div className="flex items-center gap-3">
-              {success ? (
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              ) : error ? (
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              ) : (
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              )}
-              <p className={`font-semibold ${
-                success ? 'text-green-900' :
-                error ? 'text-red-900' :
-                'text-blue-900'
-              }`}>
-                {progress}
+          {/* Header Card */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div>
+              <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">FANTASY SYSTEM UTILITY</span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 uppercase">
+                Recalculate All Points
+              </h1>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                Full-system auto-repair &amp; point recalculation for all players, free agents &amp; teams
               </p>
             </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-6">
-            <p className="text-red-900 font-semibold mb-2">Error:</p>
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
-
-        {/* Logs */}
-        {logs.length > 0 && (
-          <div className="bg-gray-900 rounded-xl p-4 mb-6">
-            <h3 className="text-white font-bold mb-3">Recalculation Log</h3>
-            <div className="space-y-1 max-h-96 overflow-y-auto font-mono text-xs">
-              {logs.map((log, idx) => (
-                <div key={idx} className="text-green-400">{log}</div>
-              ))}
+            <div className="w-16 h-16 bg-slate-900 border border-slate-800 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+              <RotateCw className={`w-8 h-8 ${isRecalculating ? 'animate-spin' : ''}`} />
             </div>
           </div>
-        )}
+
+          {/* Recalculation Scope Info */}
+          <div className="console-card bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="p-2.5 bg-amber-500 text-slate-950 rounded-2xl shrink-0 mt-0.5">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wide">
+                  Complete System Recalculation Scope
+                </h3>
+                <ul className="text-xs text-slate-700 font-bold space-y-1.5 list-disc pl-4">
+                  <li><strong>All Real Players (Free Agents &amp; Drafted)</strong>: Recalculates match performance points for all players across completed fixtures.</li>
+                  <li><strong>Player Cumulative Sync</strong>: Updates <code className="bg-white/80 px-1 py-0.5 rounded text-amber-700">total_points</code> in <code className="bg-white/80 px-1 py-0.5 rounded text-amber-700">fantasy_players</code> for every player.</li>
+                  <li><strong>Squad Multipliers</strong>: Applies captain (2x) and vice-captain (1.5x) multipliers for team squad rosters.</li>
+                  <li><strong>Passive Team Bonuses</strong>: Recalculates team outcome bonuses (win, loss, scored 6+ goals, clean sheets) for all 8 fantasy teams.</li>
+                  <li><strong>Leaderboard Standings</strong>: Recalculates team totals and updates league ranks.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Trigger Button */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
+            <button
+              onClick={startRecalculation}
+              disabled={isRecalculating}
+              className={`w-full py-4 px-6 rounded-2xl font-mono font-extrabold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3 shadow-md ${
+                isRecalculating
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800'
+              }`}
+            >
+              {isRecalculating ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-400" />
+                  Recalculating System Points...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5 fill-amber-400 text-amber-400" /> Start Full System Recalculation
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Status Message */}
+          {progress && (
+            <div className={`console-card rounded-2xl p-4 border text-xs font-bold font-mono ${
+              success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+              error ? 'bg-rose-50 border-rose-200 text-rose-800' :
+              'bg-amber-50 border-amber-200 text-amber-800'
+            }`}>
+              <div className="flex items-center gap-3">
+                {success ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                ) : error ? (
+                  <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                ) : (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600 shrink-0" />
+                )}
+                <span>{progress}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Detailed Summary Results */}
+          {results && (
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Recalculation Summary</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Player Records</span>
+                  <span className="text-lg font-black text-slate-900">{results.playerPointsInserted ?? 0}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Passive Bonuses</span>
+                  <span className="text-lg font-black text-slate-900">{results.passiveBonusesAwarded ?? 0}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Squad Players</span>
+                  <span className="text-lg font-black text-slate-900">{results.squadPlayersUpdated ?? 0}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Teams Updated</span>
+                  <span className="text-lg font-black text-amber-600">{results.teamsUpdated ?? 0}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </AuthGuard>
   );

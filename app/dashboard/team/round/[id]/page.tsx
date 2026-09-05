@@ -109,7 +109,7 @@ export default function TeamRoundPage() {
     if (roundData && rawMyBids) {
       if (!isInitialized) {
         setLocalBids(rawMyBids.map((b: Bid) => ({
-          id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
+          id: b.id || `${(b as any).team_id || ''}_${roundId}_${b.player_id}`,
           player_id: b.player_id,
           amount: b.amount,
           round_id: roundId,
@@ -123,7 +123,7 @@ export default function TeamRoundPage() {
         const incomingIds = rawMyBids.map((b: Bid) => `${b.player_id}_${b.amount}`).sort().join(',');
         if (currentIds !== incomingIds) {
           setLocalBids(rawMyBids.map((b: Bid) => ({
-            id: b.id || `${b.team_id || ''}_${roundId}_${b.player_id}`,
+            id: b.id || `${(b as any).team_id || ''}_${roundId}_${b.player_id}`,
             player_id: b.player_id,
             amount: b.amount,
             round_id: roundId,
@@ -141,7 +141,7 @@ export default function TeamRoundPage() {
   // Draft bids do NOT deduct from the displayed balance.
   const teamBalance = initialBalance;
 
-  const teamName = roundData?.teamName || user?.displayName || 'Team';
+  const teamName = roundData?.teamName || (user as any)?.displayName || 'Team';
   const completedRounds = roundData?.completedRounds || 0;
   const totalRounds = roundData?.totalRounds || 0;
   const minBalancePerRound = roundData?.minBalancePerRound || 10;

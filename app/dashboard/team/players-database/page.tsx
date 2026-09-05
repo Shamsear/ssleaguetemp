@@ -549,9 +549,9 @@ export default function TeamPlayersPage() {
                           playerName={player.name}
                           size={56}
                         />
-                      ) : player.photo_url ? (
+                      ) : (player as any).photo_url ? (
                         <OptimizedImage
-                          src={player.photo_url}
+                          src={(player as any).photo_url}
                           alt={player.name}
                           width={56}
                           height={56}
@@ -712,9 +712,9 @@ export default function TeamPlayersPage() {
                                 playerName={player.name}
                                 size={48}
                               />
-                            ) : player.photo_url ? (
+                            ) : (player as any).photo_url ? (
                               <OptimizedImage
-                                src={player.photo_url}
+                                src={(player as any).photo_url}
                                 alt={player.name}
                                 width={48}
                                 height={48}

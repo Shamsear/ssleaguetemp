@@ -47,7 +47,7 @@ export default function PlayerAwardsPage() {
   
   // Use React Query hook for player stats from Neon - now tournament-aware
   const { data: playerStatsData, isLoading: statsLoading } = usePlayerStats({
-    tournamentId: selectedTournamentId,
+    tournamentId: selectedTournamentId || undefined,
     seasonId: userSeasonId || '' // Fallback for backward compatibility
   });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
-
+import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,22 +15,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let teamData = null;
+    let teamData: any = null;
 
     if (teamId) {
       // Get team by ID
-      const teamsRef = adminDb.collection('teams');
-      const q = query(teamsRef, where('id', '==', teamId));
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await adminDb.collection('teams').where('id', '==', teamId).get();
       
       if (!querySnapshot.empty) {
         teamData = querySnapshot.docs[0].data();
       }
     } else if (teamName) {
       // Get team by name
-      const teamsRef = adminDb.collection('teams');
-      const q = query(teamsRef, where('team_name', '==', teamName));
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await adminDb.collection('teams').where('team_name', '==', teamName).get();
       
       if (!querySnapshot.empty) {
         teamData = querySnapshot.docs[0].data();
@@ -45,14 +41,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get players for this team across all seasons
-    const playersRef = collection(db, 'real_players');
-    const playersQuery = query(playersRef, where('team_name', '==', teamData.team_name));
-    const playersSnapshot = await getDocs(playersQuery);
+    const playersSnapshot = await adminDb.collection('real_players').where('team_name', '==', teamData.team_name).get();
 
     const playersBySeasons = new Map();
     const playersList: any[] = [];
 
-    playersSnapshot.docs.forEach(playerDoc => {
+    playersSnapshot.docs.forEach((playerDoc: any) => {
       const playerData = playerDoc.data();
       playersList.push(playerData);
       
@@ -68,13 +62,14 @@ export async function GET(request: NextRequest) {
     const seasonDetails: any = {};
     for (const seasonId of teamData.seasons || []) {
       try {
-        const sql = getMainDb(); const seasonRows = await sql`SELECT * FROM seasons WHERE id = ${seasonId} LIMIT 1`; const seasonDoc = { exists: () => seasonRows.length > 0, data: () => seasonRows[0] };
-        if (seasonDoc.exists()) {
+        const sql = getTournamentDb();
+        const seasonRows = await sql`SELECT * FROM seasons WHERE id = ${seasonId} LIMIT 1`;
+        if (seasonRows.length > 0) {
           seasonDetails[seasonId] = {
-            name: seasonDoc.data().name,
-            short_name: seasonDoc.data().short_name,
-            status: seasonDoc.data().status,
-            created_at: seasonDoc.data().created_at?.toDate?.() || null
+            name: seasonRows[0].name,
+            short_name: seasonRows[0].short_name,
+            status: seasonRows[0].status,
+            created_at: seasonRows[0].created_at ? new Date(seasonRows[0].created_at) : null
           };
         }
       } catch (error) {
@@ -146,37 +141,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const teamsRef = adminDb.collection('teams');
-    let q;
+    let querySnapshot: any;
 
     if (teamIds && teamIds.length > 0) {
-      q = query(teamsRef, where('id', 'in', teamIds));
+      querySnapshot = await adminDb.collection('teams').where('id', 'in', teamIds).get();
     } else {
-      q = query(teamsRef, where('team_name', 'in', teamNames));
+      querySnapshot = await adminDb.collection('teams').where('team_name', 'in', teamNames).get();
     }
 
-    const querySnapshot = await getDocs(q);
     const teamsPerformance = [];
 
     for (const teamDoc of querySnapshot.docs) {
       const teamData = teamDoc.data();
       
-      // Get players for this specific team and season (if specified)
-      const playersRef = collection(db, 'real_players');
-      let playersQuery;
+      let playersSnapshot: any;
       
       if (seasonId) {
-        playersQuery = query(
-          playersRef, 
-          where('team_name', '==', teamData.team_name),
-          where('season_id', '==', seasonId)
-        );
+        playersSnapshot = await adminDb.collection('real_players')
+          .where('team_name', '==', teamData.team_name)
+          .where('season_id', '==', seasonId)
+          .get();
       } else {
-        playersQuery = query(playersRef, where('team_name', '==', teamData.team_name));
+        playersSnapshot = await adminDb.collection('real_players')
+          .where('team_name', '==', teamData.team_name)
+          .get();
       }
       
-      const playersSnapshot = await getDocs(playersQuery);
-      const players = playersSnapshot.docs.map(doc => doc.data());
+      const players = playersSnapshot.docs.map((doc: any) => doc.data());
 
       teamsPerformance.push({
         team: {

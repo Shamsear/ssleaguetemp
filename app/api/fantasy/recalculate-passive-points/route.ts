@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         `;
 
         logs.push(`✅ Found ${leagues.length} active league(s)`);
-        leagues.forEach(league => {
+        leagues.forEach((league: any) => {
             logs.push(`   - League: ${league.league_id}`);
         });
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
                     { type: 'team_of_the_week', pts: 10 },
                     { type: 'team_of_the_day', pts: 5 }
                 ];
-                fallbacks.forEach(fb => {
+                fallbacks.forEach((fb: any) => {
                     teamScoringRules.set(fb.type, fb.pts);
                     logs.push(`   ${fb.type}: ${fb.pts > 0 ? '+' : ''}${fb.pts} pts`);
                 });

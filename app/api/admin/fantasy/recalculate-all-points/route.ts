@@ -102,6 +102,10 @@ export async function POST(request: NextRequest) {
       FROM fantasy_squad
     `;
 
+    const validTeams = await fantasyDb`SELECT team_id FROM fantasy_teams`;
+    const validTeamIds = new Set(validTeams.map((t: any) => t.team_id));
+    const fallbackTeamId = Array.from(validTeamIds)[0] || 'SSPSLT0001';
+
     const playerTeamsMap = new Map();
     squadData.forEach((row: any) => {
       if (!playerTeamsMap.has(row.real_player_id)) {
@@ -154,14 +158,21 @@ export async function POST(request: NextRequest) {
           (goalsScored >= 3 && SCORING_RULES.hat_trick ? SCORING_RULES.hat_trick : 0) +
           (goalsConceded >= 4 && SCORING_RULES.concedes_4_plus_goals ? SCORING_RULES.concedes_4_plus_goals : 0);
 
-        const playerTeams = playerTeamsMap.get(playerId) || [];
+        const playerTeams = playerTeamsMap.get(playerId) || [
+          {
+            teamId: fallbackTeamId,
+            isCaptain: false,
+            isViceCaptain: false,
+            playerName: playerName
+          }
+        ];
         
         for (const teamInfo of playerTeams) {
           try {
             const teamInfo_full = await fantasyDb`
               SELECT league_id FROM fantasy_teams WHERE team_id = ${teamInfo.teamId} LIMIT 1
             `;
-            const league_id = teamInfo_full[0]?.league_id;
+            const league_id = teamInfo_full[0]?.league_id || 'SSPSLFLS18';
 
             let isCap = false;
             let isVc = false;
@@ -354,6 +365,22 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================================================
+    // STEP 3.5: Recalculate fantasy_players Cumulative Totals for ALL Players
+    // ============================================================================
+    console.log('📊 STEP 3.5: Syncing fantasy_players Cumulative Totals for ALL Players');
+    await fantasyDb`
+      UPDATE fantasy_players fp
+      SET total_points = COALESCE((
+        SELECT SUM(base_points)
+        FROM fantasy_player_points fpp
+        WHERE fpp.real_player_id = fp.real_player_id
+          AND fpp.league_id = fp.league_id
+      ), 0),
+      updated_at = NOW()
+      WHERE fp.league_id = 'SSPSLFLS18'
+    `;
+
+    // ============================================================================
     // STEP 4: Recalculate Fantasy Team Totals and Ranks
     // ============================================================================
     console.log('📊 STEP 4: Recalculating Fantasy Team Totals and Ranks');
@@ -454,11 +481,12 @@ async function awardTeamBonus(params: {
     fantasyDb,
   } = params;
 
+  const pattern = `${real_team_id}%`;
   const fantasyTeams = await fantasyDb`
     SELECT team_id, team_name, supported_team_id, supported_team_name
     FROM fantasy_teams
     WHERE league_id = ${fantasy_league_id}
-      AND supported_team_id LIKE ${real_team_id + '_%'}
+      AND (supported_team_id = ${real_team_id} OR supported_team_id LIKE ${pattern})
   `;
 
   if (fantasyTeams.length === 0) return 0;
@@ -471,28 +499,19 @@ async function awardTeamBonus(params: {
   const bonus_breakdown: any = {};
   let total_bonus = 0;
 
-  // Apply S16 team scoring rules dynamically
+  // Apply team scoring rules dynamically
   teamScoringRules.forEach((points, ruleType) => {
     let applies = false;
     switch (ruleType) {
-      case 'win':
-        applies = won;
-        break;
-      case 'draw':
-        applies = draw;
-        break;
-      case 'loss':
-        applies = lost;
-        break;
-      case 'clean_sheet':
-        applies = clean_sheet;
-        break;
-      case 'scored_6_plus_goals':
-        applies = goals_scored >= 6;
-        break;
-      case 'concedes_15_plus_goals':
-        applies = goals_conceded >= 15;
-        break;
+      case 'win': applies = won; break;
+      case 'draw': applies = draw; break;
+      case 'loss': applies = lost; break;
+      case 'clean_sheet': applies = clean_sheet; break;
+      case 'scored_4_plus_goals': applies = goals_scored >= 4; break;
+      case 'scored_6_plus_goals': applies = goals_scored >= 6; break;
+      case 'scored_8_plus_goals': applies = goals_scored >= 8; break;
+      case 'concedes_4_plus_goals': applies = goals_conceded >= 4; break;
+      case 'concedes_15_plus_goals': applies = goals_conceded >= 15; break;
     }
     if (applies) {
       bonus_breakdown[ruleType] = points;

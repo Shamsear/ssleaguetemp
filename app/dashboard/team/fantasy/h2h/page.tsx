@@ -1,6 +1,6 @@
 'use client';
 
-import { Info, Trophy } from 'lucide-react';
+import { Info, Trophy, Swords } from 'lucide-react';
 /**
  * Fantasy H2H (Head-to-Head) Page
  * View H2H standings, current matchup, and fixture history

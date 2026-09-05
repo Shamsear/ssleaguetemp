@@ -134,7 +134,7 @@ export async function GET(
     const playerTeamId = playerData.team_id;
 
     // Fetch fixture details to get opponent information
-    const fixtureIds = playerPoints.map(p => p.fixture_id).filter(Boolean);
+    const fixtureIds = playerPoints.map((p: any) => p.fixture_id).filter(Boolean);
     const fixturesMap = new Map();
     
     if (fixtureIds.length > 0) {
@@ -145,7 +145,7 @@ export async function GET(
           WHERE fixture_id = ANY(${fixtureIds})
         `;
         
-        fixtures.forEach(fixture => {
+        fixtures.forEach((fixture: any) => {
           fixturesMap.set(fixture.fixture_id, fixture);
         });
       } catch (fixtureError) {
@@ -154,7 +154,7 @@ export async function GET(
       }
     }
 
-    const matchHistory = playerPoints.map(data => {
+    const matchHistory = playerPoints.map((data: any) => {
       const fixture = fixturesMap.get(data.fixture_id);
       
       let opponent = 'Unknown';
@@ -187,11 +187,11 @@ export async function GET(
     const averagePoints = matchesPlayed > 0 ? totalPoints / matchesPlayed : 0;
     const totalGoals = matchHistory.reduce((sum, m) => sum + m.goals_scored, 0);
     const totalConceded = matchHistory.reduce((sum, m) => sum + m.goals_conceded, 0);
-    const motmCount = matchHistory.filter(m => m.is_motm).length;
-    const cleanSheets = matchHistory.filter(m => m.is_clean_sheet).length;
-    const wins = matchHistory.filter(m => m.result === 'win').length;
-    const draws = matchHistory.filter(m => m.result === 'draw').length;
-    const losses = matchHistory.filter(m => m.result === 'loss').length;
+    const motmCount = matchHistory.filter((m: any) => m.is_motm).length;
+    const cleanSheets = matchHistory.filter((m: any) => m.is_clean_sheet).length;
+    const wins = matchHistory.filter((m: any) => m.result === 'win').length;
+    const draws = matchHistory.filter((m: any) => m.result === 'draw').length;
+    const losses = matchHistory.filter((m: any) => m.result === 'loss').length;
 
     return NextResponse.json({
       success: true,

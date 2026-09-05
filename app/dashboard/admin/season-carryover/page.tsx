@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { ClipboardList, Flame, Gem, Star } from 'lucide-react';
+import { ClipboardList, Flame, Gem, Star, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import AuthGuard from '@/components/auth/AuthGuard';
 

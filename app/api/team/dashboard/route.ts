@@ -236,7 +236,7 @@ export async function GET(request: NextRequest) {
     `;
     console.log('✅ Found active rounds:', activeRoundsResult.length);
     if (activeRoundsResult.length > 0) {
-      console.log('   Round details:', activeRoundsResult.map(r => ({ id: r.id, position: r.position, status: r.status })));
+      console.log('   Round details:', activeRoundsResult.map((r: any) => ({ id: r.id, position: r.position, status: r.status })));
       
       // Auto-finalize any expired rounds (lazy finalization)
       for (const round of activeRoundsResult) {
@@ -263,7 +263,7 @@ export async function GET(request: NextRequest) {
     console.log('✅ Found pending rounds:', pendingRoundsResult.length);
     
     // Format pending rounds (no tiebreakers needed, just basic info)
-    const pendingRounds = pendingRoundsResult.map(round => ({
+    const pendingRounds = pendingRoundsResult.map((round: any) => ({
       id: round.id,
       season_id: round.season_id,
       round_number: round.round_number,
@@ -307,7 +307,7 @@ export async function GET(request: NextRequest) {
       
       // Collect all team IDs from all tiebreakers
       const allTeamIds = new Set<string>();
-      roundTiebreakersResult.forEach(tb => {
+      roundTiebreakersResult.forEach((tb: any) => {
         const teamsData = tb.teams_data || [];
         teamsData.forEach((t: any) => {
           if (t.team_id) allTeamIds.add(t.team_id);
@@ -318,7 +318,7 @@ export async function GET(request: NextRequest) {
       const teamNamesMap: Record<string, string> = {};
       if (allTeamIds.size > 0) {
         // Batch fetch team_seasons
-        const teamSeasonIds = Array.from(allTeamIds).map(teamId => `${teamId}_${seasonId}`);
+        const teamSeasonIds = Array.from(allTeamIds).map((teamId: any) => `${teamId}_${seasonId}`);
         const teamSeasonsMap = await batchGetFirebaseFields<{ team_name: string }>(
           'team_seasons',
           teamSeasonIds,
@@ -327,7 +327,7 @@ export async function GET(request: NextRequest) {
         
         // Map team_season data to team IDs
         const teamsWithoutSeasonData: string[] = [];
-        Array.from(allTeamIds).forEach(teamId => {
+        Array.from(allTeamIds).forEach((teamId: any) => {
           const tsId = `${teamId}_${seasonId}`;
           const tsData = teamSeasonsMap.get(tsId);
           if (tsData?.team_name) {
@@ -345,7 +345,7 @@ export async function GET(request: NextRequest) {
             ['teamName']
           );
           
-          teamsWithoutSeasonData.forEach(teamId => {
+          teamsWithoutSeasonData.forEach((teamId: any) => {
             const userData = usersMap.get(teamId);
             teamNamesMap[teamId] = userData?.teamName || 'Unknown Team';
           });
@@ -353,7 +353,7 @@ export async function GET(request: NextRequest) {
       }
       
       // Map tiebreakers and add team names
-      const roundTiebreakers = roundTiebreakersResult.map(tb => {
+      const roundTiebreakers = roundTiebreakersResult.map((tb: any) => {
         const teamsData = tb.teams_data || [];
         const teamsWithNames = teamsData.map((t: any) => ({
           ...t,
@@ -402,7 +402,7 @@ export async function GET(request: NextRequest) {
     // dbTeamId already retrieved earlier and used in teamData.id
     
     // Fetch team's current bids from SQL/Neon (where they're actually stored)
-    const activeRoundIds = activeRounds.map(r => r.id);
+    const activeRoundIds = activeRounds.map((r: any) => r.id);
     
     // Fetch bid submission status for active rounds
     const submissionStatusMap = new Map<string, any>();
@@ -429,7 +429,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Add submission status to each active round
-    activeRounds.forEach(round => {
+    activeRounds.forEach((round: any) => {
       const submission = submissionStatusMap.get(round.id);
       round.submission_status = submission || {
         submitted: false,
@@ -463,7 +463,7 @@ export async function GET(request: NextRequest) {
         ORDER BY b.created_at DESC
       `;
       
-      activeBids = bidsResult.map(bid => {
+      activeBids = bidsResult.map((bid: any) => {
         // Decrypt the bid amount if it's null (blind bidding)
         let decryptedAmount = bid.amount;
         if (bid.amount === null && bid.encrypted_bid_data) {
@@ -518,7 +518,7 @@ export async function GET(request: NextRequest) {
       ORDER BY tp.acquired_at DESC
     ` : [];
     
-    const players = playersResult.map(player => ({
+    const players = playersResult.map((player: any) => ({
       id: player.id,
       name: player.name,
       position: player.position,
@@ -567,10 +567,10 @@ export async function GET(request: NextRequest) {
     ` : [];
     console.log(`✅ Found ${tiebreakersResult.length} tiebreaker(s) for team ${dbTeamId}`);
     if (tiebreakersResult.length > 0) {
-      console.log('   Tiebreaker details:', tiebreakersResult.map(t => ({ id: t.id, player: t.player_name, status: t.status })));
+      console.log('   Tiebreaker details:', tiebreakersResult.map((t: any) => ({ id: t.id, player: t.player_name, status: t.status })));
     }
     
-    const tiebreakers = tiebreakersResult.map(tiebreaker => ({
+    const tiebreakers = tiebreakersResult.map((tiebreaker: any) => ({
       id: tiebreaker.id,
       round_id: tiebreaker.round_id,
       round_type: tiebreaker.round_type,
@@ -616,7 +616,7 @@ export async function GET(request: NextRequest) {
       ORDER BY bt.created_at DESC
     ` : [];
     
-    const bulkTiebreakers = bulkTiebreakersResult.map(bt => ({
+    const bulkTiebreakers = bulkTiebreakersResult.map((bt: any) => ({
       id: bt.id,
       bulk_round_id: bt.bulk_round_id,
       player_id: bt.player_id,
@@ -640,7 +640,7 @@ export async function GET(request: NextRequest) {
       .where('season_id', '==', seasonId)
       .where('status', '==', 'active')
       .get();
-    const activeBulkRounds = bulkRoundsSnapshot.docs.map(doc => ({
+    const activeBulkRounds = bulkRoundsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data(),
     }));
@@ -726,7 +726,7 @@ export async function GET(request: NextRequest) {
             ORDER BY player_name ASC
           `;
         }
-        realPlayers = realPlayersResult.map(p => ({
+        realPlayers = realPlayersResult.map((p: any) => ({
           id: p.id,
           player_id: p.player_id,
           name: p.player_name,
@@ -773,7 +773,7 @@ export async function GET(request: NextRequest) {
       LIMIT 50
     ` : [];
     
-    const roundResults = roundResultsQuery.map(result => {
+    const roundResults = roundResultsQuery.map((result: any) => {
       // Decrypt the bid amount if it's null (blind bidding)
       let decryptedAmount = result.amount;
       if (result.amount === null && result.encrypted_bid_data) {

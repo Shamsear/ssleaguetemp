@@ -57,9 +57,13 @@ export async function POST(request: NextRequest) {
       SELECT 
         m.*,
         f.season_id,
-        f.round_number
+        f.round_number,
+        rps_home.category as home_category,
+        rps_away.category as away_category
       FROM matchups m
       JOIN fixtures f ON m.fixture_id = f.id
+      LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+      LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
       WHERE f.status = 'completed'
         AND m.home_goals IS NOT NULL
         AND m.away_goals IS NOT NULL
@@ -82,6 +86,7 @@ export async function POST(request: NextRequest) {
         goalsConceded: number;
         isMotm: boolean;
         fixtureId: string;
+        opponentCat: string;
       }>;
       processedFixtures: string[];
     }
@@ -116,6 +121,7 @@ export async function POST(request: NextRequest) {
           goalsConceded: Number(m.away_goals) || 0,
           isMotm: fixtureMotmMap.get(m.fixture_id) === pId,
           fixtureId: m.fixture_id,
+          opponentCat: m.away_category || '',
         });
         if (!acc.processedFixtures.includes(m.fixture_id)) {
           acc.processedFixtures.push(m.fixture_id);
@@ -146,6 +152,7 @@ export async function POST(request: NextRequest) {
           goalsConceded: Number(m.home_goals) || 0,
           isMotm: fixtureMotmMap.get(m.fixture_id) === pId,
           fixtureId: m.fixture_id,
+          opponentCat: m.home_category || '',
         });
         if (!acc.processedFixtures.includes(m.fixture_id)) {
           acc.processedFixtures.push(m.fixture_id);

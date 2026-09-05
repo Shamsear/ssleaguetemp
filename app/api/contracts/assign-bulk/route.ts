@@ -59,14 +59,25 @@ export async function POST(request: NextRequest) {
           WHERE id IN (${incomingIds}) AND season_id = ${seasonId}
         `;
 
-        const categoriesSnapshot = await adminDb.collection('categories').orderBy('priority', 'asc').get();
-        const categories = categoriesSnapshot.docs.map((doc, idx) => {
-          const data = doc.data();
-          return {
-            name: data.name,
-            max_players: data.max_players !== undefined ? Number(data.max_players) : (idx === 0 ? 2 : 1)
-          };
-        });
+        let categories: any[] = [];
+        try {
+          const { getMainDb } = await import('@/lib/neon/main-config');
+          const mainSql = getMainDb();
+          const catRows = await mainSql`SELECT name, max_players FROM categories ORDER BY priority ASC, name ASC`;
+          categories = catRows.map((cat: any, idx: number) => ({
+            name: cat.name,
+            max_players: cat.max_players !== undefined ? Number(cat.max_players) : (idx === 0 ? 2 : 1)
+          }));
+        } catch (catErr) {
+          const categoriesSnapshot = await adminDb.collection('categories').orderBy('priority', 'asc').get();
+          categories = categoriesSnapshot.docs.map((doc, idx) => {
+            const data = doc.data();
+            return {
+              name: data.name,
+              max_players: data.max_players !== undefined ? Number(data.max_players) : (idx === 0 ? 2 : 1)
+            };
+          });
+        }
 
         const categoryMap = new Map<string, string>();
         incomingPlayerDetails.forEach((row: any) => {
@@ -113,20 +124,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch team name mapping from Firestore team_seasons first
+    // Fetch team name mapping from Neon team_seasons first
     const teamNameMap = new Map<string, string>();
     try {
-      const teamSeasonsSnap = await adminDb.collection('team_seasons')
-        .where('season_id', '==', seasonId)
-        .get();
-      teamSeasonsSnap.docs.forEach(doc => {
-        const data = doc.data();
-        const tId = data.team_id || doc.id.split('_')[0];
-        const tName = data.team_name || data.team_code || 'Unknown Team';
+      const { getMainDb } = await import('@/lib/neon/main-config');
+      const mainSql = getMainDb();
+      const rows = await mainSql`SELECT team_id, id, team_name FROM team_seasons WHERE season_id = ${seasonId}`;
+      rows.forEach((row: any) => {
+        const tId = row.team_id || row.id.split('_')[0];
+        const tName = row.team_name || 'Unknown Team';
         teamNameMap.set(tId, tName.toUpperCase());
       });
     } catch (e) {
-      console.error('Error fetching team names from Firestore:', e);
+      console.error('Error fetching team names from Neon:', e);
+    }
+
+    if (teamNameMap.size === 0) {
+      try {
+        const teamSeasonsSnap = await adminDb.collection('team_seasons')
+          .where('season_id', '==', seasonId)
+          .get();
+        teamSeasonsSnap.docs.forEach(doc => {
+          const data = doc.data();
+          const tId = data.team_id || doc.id.split('_')[0];
+          const tName = data.team_name || data.team_code || 'Unknown Team';
+          teamNameMap.set(tId, tName.toUpperCase());
+        });
+      } catch (e) {
+        console.error('Error fetching team names from Firestore:', e);
+      }
     }
 
     // Update all players in parallel (SQL operations) with capitalized team names
@@ -163,6 +189,24 @@ export async function POST(request: NextRequest) {
       const currentChange = teamBudgetChanges.get(player.teamId) || 0;
       teamBudgetChanges.set(player.teamId, currentChange + player.auctionValue);
     });
+
+    // Update team budgets in Neon Main DB
+    try {
+      const { getMainDb } = await import('@/lib/neon/main-config');
+      const mainSql = getMainDb();
+      for (const [teamId, totalSpent] of teamBudgetChanges.entries()) {
+        const teamSeasonId = `${teamId}_${seasonId}`;
+        await mainSql`
+          UPDATE team_seasons
+          SET real_player_budget = COALESCE(real_player_budget, 1000) - ${totalSpent},
+              real_player_spent = COALESCE(real_player_spent, 0) + ${totalSpent},
+              updated_at = NOW()
+          WHERE (team_id = ${teamId} OR id = ${teamSeasonId}) AND season_id = ${seasonId}
+        `;
+      }
+    } catch (neonBudgetErr) {
+      console.error('Error updating team budget in Neon:', neonBudgetErr);
+    }
 
     // Prepare all Firestore operations
     // We need to read team budgets first (unavoidable for accuracy)

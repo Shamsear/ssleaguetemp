@@ -28,7 +28,7 @@ interface TransferFormV2Props {
 
 export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2Props) {
   const { user, userSeasonId } = usePermissions();
-  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId);
+  const { data: cachedTeams, isLoading: teamsLoading } = useCachedTeams(userSeasonId || undefined);
 
   // Form state
   const [selectedPlayerId, setSelectedPlayerId] = useState('');
@@ -87,7 +87,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
           loadedPlayers.forEach(player => {
             if (!player.team_name) {
               const team = cachedTeams.find(t => t.id === player.team_id);
-              player.team_name = team?.name || 'Unknown Team';
+              player.team_name = (team as any)?.name || (team as any)?.team_name || 'Unknown Team';
             }
           });
         }
@@ -228,16 +228,17 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
     if (!selectedPlayer || !newTeamId || !user || !userSeasonId) return;
 
     // Confirm transfer
-    const buyingTeam = availableTeams.find(t => t.id === newTeamId);
+    const buyingTeam = availableTeams.find((t: any) => t.id === newTeamId) as any;
     if (!buyingTeam) return;
 
+    const buyingTeamTitle = buyingTeam.team_name || buyingTeam.name || 'Team';
     const confirmMessage = calculation 
-      ? `Transfer ${selectedPlayer.player_name} to ${buyingTeam.name}?\n\n` +
+      ? `Transfer ${selectedPlayer.player_name} to ${buyingTeamTitle}?\n\n` +
         `New Value: $${calculation.newValue.toFixed(2)}\n` +
-        `${buyingTeam.name} pays: $${calculation.buyingTeamPays.toFixed(2)}\n` +
+        `${buyingTeamTitle} pays: $${calculation.buyingTeamPays.toFixed(2)}\n` +
         `${sellingTeamName} receives: $${calculation.sellingTeamReceives.toFixed(2)}\n` +
         `Committee fee: $${calculation.committeeFee.toFixed(2)}`
-      : `Transfer ${selectedPlayer.player_name} to ${buyingTeam.name}?`;
+      : `Transfer ${selectedPlayer.player_name} to ${buyingTeamTitle}?`;
 
     if (!confirm(confirmMessage)) return;
 
@@ -288,12 +289,12 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
 
       // Build detailed success message
       const calc = result.calculation;
-      let successMessage = `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} successfully transferred to ${buyingTeam.name}!`;
+      let successMessage = `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} successfully transferred to ${buyingTeamTitle}!`;
       
       if (calc) {
         successMessage += `\n\nTransaction Details:`;
         successMessage += `\n• New Value: $${calc.newValue.toFixed(2)}`;
-        successMessage += `\n• ${buyingTeam.name} paid: $${calc.buyingTeamPays.toFixed(2)}`;
+        successMessage += `\n• ${buyingTeamTitle} paid: $${calc.buyingTeamPays.toFixed(2)}`;
         successMessage += `\n• ${sellingTeamName} received: $${calc.sellingTeamReceives.toFixed(2)}`;
         successMessage += `\n• Committee fee: $${calc.committeeFee.toFixed(2)}`;
         
@@ -336,7 +337,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
   // Get selling team transfer limit
   const sellingTeamLimit = selectedPlayer ? transferLimits[selectedPlayer.team_id] : undefined;
   const sellingTeamName = selectedPlayer?.team_name || 'Team';
-  const buyingTeamName = availableTeams.find(t => t.id === newTeamId)?.name || 'Team';
+  const buyingTeamName = (availableTeams.find((t: any) => t.id === newTeamId) as any)?.team_name || (availableTeams.find((t: any) => t.id === newTeamId) as any)?.name || 'Team';
   if (loadingPlayers || teamsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -440,7 +441,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
                 required
               >
                 <option value="">-- Select Target Team --</option>
-                {availableTeams.map(team => (
+                {availableTeams.map((team: any) => (
                   <option key={team.id} value={team.id}>
                     {team.team_name || team.name}
                   </option>

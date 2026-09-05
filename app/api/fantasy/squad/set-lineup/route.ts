@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       WHERE team_id = ${team_id}
     `
 
-    const squadPlayerIds = squadPlayers.map(p => p.real_player_id)
+    const squadPlayerIds = squadPlayers.map((p: any) => p.real_player_id)
     
     for (const playerId of starting_player_ids) {
       if (!squadPlayerIds.includes(playerId)) {

@@ -461,7 +461,7 @@ export default function TeamDetailPage() {
 
                           <CardWrapper
                             key={player.id}
-                            {...cardProps}
+                            {...(cardProps as any)}
                             className={`console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between ${
                               player.is_real_player ? 'cursor-pointer' : ''
                             }`}

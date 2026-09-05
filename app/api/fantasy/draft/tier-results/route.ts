@@ -112,9 +112,9 @@ export async function GET(request: NextRequest) {
           })
         );
 
-        const wonBids = enrichedResults.filter(r => r.status === 'won');
-        const lostBids = enrichedResults.filter(r => r.status === 'lost');
-        const skippedBids = enrichedResults.filter(r => r.status === 'skipped');
+        const wonBids = enrichedResults.filter((r: any) => r.status === 'won');
+        const lostBids = enrichedResults.filter((r: any) => r.status === 'lost');
+        const skippedBids = enrichedResults.filter((r: any) => r.status === 'skipped');
 
         return {
           tier_id: `slot_${slotIdx}`,
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
           skipped_bids: skippedBids.length,
           results: wonBids,
           lost_bids: lostBids,
-          skipped_teams: skippedBids.map(b => ({
+          skipped_teams: skippedBids.map((b: any) => ({
             team_name: b.winning_team,
             team_id: b.team_id
           }))

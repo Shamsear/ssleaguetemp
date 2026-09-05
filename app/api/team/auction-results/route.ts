@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
       `;
 
       // Decrypt all bids
-      const allBidsDecrypted = allBidsRaw.map(bid => {
+      const allBidsDecrypted = allBidsRaw.map((bid: any) => {
         let bidAmount = bid.amount;
         if (bid.amount === null && bid.encrypted_bid_data) {
           try {
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
 
       // Group bids by player
       const playerBidsMap = new Map<string, any[]>();
-      allBidsDecrypted.forEach(bid => {
+      allBidsDecrypted.forEach((bid: any) => {
         if (!playerBidsMap.has(bid.player_id)) {
           playerBidsMap.set(bid.player_id, []);
         }
@@ -140,8 +140,8 @@ export async function GET(request: NextRequest) {
       });
 
       // Get team names in batch (include both bid teams and synthetic allocation teams)
-      const bidTeamIds = allBidsDecrypted.map(b => b.team_id);
-      const syntheticTeamIds = syntheticAllocations.map(s => s.team_id);
+      const bidTeamIds = allBidsDecrypted.map((b: any) => b.team_id);
+      const syntheticTeamIds = syntheticAllocations.map((s: any) => s.team_id);
       const uniqueTeamIds = [...new Set([...bidTeamIds, ...syntheticTeamIds])];
       const teamNamesMap = new Map<string, string>();
       
@@ -158,14 +158,14 @@ export async function GET(request: NextRequest) {
       const players = Array.from(playerBidsMap.entries()).map(([playerId, bids]) => {
         const sortedBids = bids.sort((a, b) => b.decrypted_amount - a.decrypted_amount);
         // Find the actual winning bid - must have status 'won' OR have final_amount set (from team_players)
-        const winningBid = sortedBids.find(b => b.status === 'won' || b.final_amount !== null);
+        const winningBid = sortedBids.find((b: any) => b.status === 'won' || b.final_amount !== null);
         
         if (!winningBid) {
           console.error(`No winning bid found for player ${playerId}, bids:`, sortedBids);
           return null; // Skip this player if no winner found
         }
         
-        const myBid = sortedBids.find(b => b.team_id === dbTeamId);
+        const myBid = sortedBids.find((b: any) => b.team_id === dbTeamId);
         
         // Determine phase
         let phase = 'phase1'; // Regular auction
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
               ? (winningBid.final_amount || winningBid.decrypted_amount) - myBid.decrypted_amount 
               : 0,
           } : null,
-          all_bids: sortedBids.map(bid => ({
+          all_bids: sortedBids.map((bid: any) => ({
             team_id: bid.team_id,
             team_name: teamNamesMap.get(bid.team_id) || bid.team_id,
             amount: bid.decrypted_amount,
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
           })),
           total_bids: bids.length,
         };
-      }).filter(p => p !== null); // Remove any players without valid winners
+      }).filter((p: any) => p !== null); // Remove any players without valid winners
 
       // Add synthetic allocations (Phase 3)
       for (const synthetic of syntheticAllocations) {
@@ -254,9 +254,9 @@ export async function GET(request: NextRequest) {
         created_at: round.created_at,
         players,
         total_players: players.length,
-        your_wins: players.filter(p => p.your_bid?.won).length,
-        your_losses: players.filter(p => p.your_bid && !p.your_bid.won).length,
-        no_bids: players.filter(p => !p.your_bid).length,
+        your_wins: players.filter((p: any) => p.your_bid?.won).length,
+        your_losses: players.filter((p: any) => p.your_bid && !p.your_bid.won).length,
+        no_bids: players.filter((p: any) => !p.your_bid).length,
       };
     }));
 

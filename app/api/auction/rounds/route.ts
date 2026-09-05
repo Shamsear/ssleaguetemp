@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     // Trigger news for auction start if active
     if (status === 'active') {
       try {
-        await triggerNews('auction_start', {
+        await triggerNews('auction_start' as any, {
           season_id,
           position,
           round_number,

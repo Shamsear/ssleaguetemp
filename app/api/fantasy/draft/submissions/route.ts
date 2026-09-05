@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
       GROUP BY team_id
     `;
 
-    const bidCountsMap = new Map(bidCounts.map(b => [b.team_id, Number(b.count)]));
+    const bidCountsMap = new Map(bidCounts.map((b: any) => [b.team_id, Number(b.count)]));
 
     // 3. Fetch full bid details for submitted teams
-    const submittedTeamIds = teams.filter(t => t.draft_submitted).map(t => t.team_id);
+    const submittedTeamIds = teams.filter((t: any) => t.draft_submitted).map((t: any) => t.team_id);
     const teamBidsMap = new Map<string, any[]>();
 
     if (submittedTeamIds.length > 0) {
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Combine data
-    const submissionStatuses = teams.map(t => ({
+    const submissionStatuses = teams.map((t: any) => ({
       team_id: t.team_id,
       team_name: t.team_name,
       owner_name: t.owner_name,
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
       success: true,
       teams: submissionStatuses,
       total_teams: teams.length,
-      submitted_count: teams.filter(t => t.draft_submitted).length,
+      submitted_count: teams.filter((t: any) => t.draft_submitted).length,
       slot_names: Object.fromEntries(slotNameMap)
     });
   } catch (error) {
