@@ -905,13 +905,13 @@ export default function PlayerStatsPage() {
                                           <th className="px-3 py-2">Score</th>
                                           <th className="px-3 py-2">GD</th>
                                           <th className="px-3 py-2">Points Breakdown</th>
-                                          <th className="px-3 py-2">Points</th>
+                          <th className="px-3 py-2">Points</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-100/50 bg-white/40">
                                         {matchdayStats.get(player.id)!.map((match, idx) => {
-                                          const oppCatName = (match.opponent_category || (match.player_side === 'home' ? match.away_category : match.home_category) || 'RED').toUpperCase();
-                                          const ptsReason = match.points_reason || `${(match.goal_difference > 0 ? 'WIN' : match.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${match.points >= 0 ? '+' : ''}${match.points} Pts)`;
+                                          const oppCatName = ((match as any).opponent_category || ((match as any).player_side === 'home' ? (match as any).away_category : (match as any).home_category) || 'RED').toUpperCase();
+                                          const ptsReason = (match as any).points_reason || `${(match.goal_difference > 0 ? 'WIN' : match.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${match.points >= 0 ? '+' : ''}${match.points} Pts)`;
 
                                           return (
                                             <tr key={idx} className="hover:bg-slate-50/20 text-xs">

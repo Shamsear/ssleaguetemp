@@ -50,7 +50,7 @@ export default function LineupHistoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user && user.role === 'committee') {
+    if (user && ((user.role as string) === 'committee_admin' || (user.role as string) === 'super_admin')) {
       fetchSeasons();
     }
   }, [user]);

@@ -219,17 +219,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update fantasy team totals (player points only)
-    for (const [teamId, additionalPoints] of teamPointsMap.entries()) {
+    // Update fantasy team totals (recalculate from fantasy_squad and passive_points)
+    for (const teamId of teamPointsMap.keys()) {
       await sql`
         UPDATE fantasy_teams
         SET 
-          player_points = COALESCE(player_points, 0) + ${additionalPoints},
-          total_points = COALESCE(total_points, 0) + ${additionalPoints},
+          player_points = COALESCE((
+            SELECT SUM(total_points)
+            FROM fantasy_squad
+            WHERE team_id = ${teamId} AND league_id = ${fantasy_league_id}
+          ), 0),
+          total_points = COALESCE((
+            SELECT SUM(total_points)
+            FROM fantasy_squad
+            WHERE team_id = ${teamId} AND league_id = ${fantasy_league_id}
+          ), 0) + COALESCE(passive_points, 0),
           updated_at = NOW()
         WHERE team_id = ${teamId}
       `;
-      console.log(`✓ Updated team ${teamId}: +${additionalPoints} points`);
+      console.log(`✓ Recalculated team totals for ${teamId}`);
     }
 
     // Calculate team affiliation bonuses
@@ -312,23 +320,6 @@ async function processPlayer(params: {
     const validTeams = await sql`SELECT team_id FROM fantasy_teams WHERE league_id = ${fantasy_league_id} LIMIT 1`;
     const fallbackTeamId = validTeams[0]?.team_id || 'SSPSLT0001';
     targetSquads = [{ team_id: fallbackTeamId, is_captain: false, is_vice_captain: false }];
-  }
-
-  console.log(`Player ${player_name} is owned by ${squads.length} team(s) (isDrafted: ${isDrafted})`);
-
-  // Check if points already calculated for this player in this fixture for ANY team
-  const existingPoints = await sql`
-    SELECT id
-    FROM fantasy_player_points
-    WHERE league_id = ${fantasy_league_id}
-      AND real_player_id = ${player_id}
-      AND fixture_id = ${fixture_id}
-    LIMIT 1
-  `;
-
-  if (existingPoints.length > 0) {
-    console.log(`Points already calculated for player ${player_name} in fixture ${fixture_id}`);
-    return; // Already calculated
   }
 
   // --- Fantasy League Result Points (Flat Win=3, Draw=1, Loss=0 per official point system) ---
@@ -500,11 +491,17 @@ async function processPlayer(params: {
       const currentTeamPoints = teamPointsMap.get(fantasy_team_id) || 0;
       teamPointsMap.set(fantasy_team_id, currentTeamPoints + final_points);
 
-      // Update fantasy_squad with points for this team (with multiplier)
+      // Update fantasy_squad with points for this team (recalculate from fantasy_player_points)
       await sql`
         UPDATE fantasy_squad
         SET 
-          total_points = COALESCE(total_points, 0) + ${final_points}
+          total_points = COALESCE((
+            SELECT SUM(fpp.total_points)
+            FROM fantasy_player_points fpp
+            WHERE fpp.real_player_id = ${player_id}
+              AND fpp.team_id = ${fantasy_team_id}
+              AND fpp.league_id = ${fantasy_league_id}
+          ), 0)
         WHERE team_id = ${fantasy_team_id}
           AND real_player_id = ${player_id}
       `;

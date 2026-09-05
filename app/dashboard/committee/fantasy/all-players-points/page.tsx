@@ -512,9 +512,9 @@ export default function CommitteeAllPlayersPointsPage() {
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-3">
-                        {player.photo_url ? (
+                        {(player as any).photo_url ? (
                           <img
-                            src={player.photo_url}
+                            src={(player as any).photo_url}
                             alt={player.player_name}
                             className="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-sm shrink-0"
                           />
@@ -698,9 +698,9 @@ export default function CommitteeAllPlayersPointsPage() {
                               {/* Player */}
                               <td className="px-5 py-3.5">
                                 <div className="flex items-center gap-3">
-                                  {player.photo_url ? (
+                                  {(player as any).photo_url ? (
                                     <img
-                                      src={player.photo_url}
+                                      src={(player as any).photo_url}
                                       alt={player.player_name}
                                       className="w-8 h-8 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
                                     />

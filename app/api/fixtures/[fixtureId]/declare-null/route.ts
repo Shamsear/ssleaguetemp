@@ -95,6 +95,23 @@ export async function POST(
       console.error('Failed to send declare-null notification:', notifErr);
     }
 
+    // Revert fantasy points for this cancelled fixture
+    try {
+      const host = request.headers.get('host');
+      const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
+      await fetch(`${baseUrl}/api/fantasy/revert-fixture-points`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fixture_id: fixtureId,
+          season_id: fixture.season_id,
+        })
+      });
+    } catch (fantasyErr) {
+      console.error('Failed to revert fantasy points on declare-null:', fantasyErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Match successfully declared NULL',

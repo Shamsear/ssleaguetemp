@@ -619,10 +619,10 @@ export async function PATCH(
       console.error('⚠️  Failed to delete old fantasy bonus points:', bonusError);
     }
 
-    // Step 7.6: Revert old fantasy points
-    console.log('Reverting old fantasy points...');
+    // Step 7.6: Revert old fantasy points (if any exist)
+    console.log('Reverting old fantasy points if present...');
     try {
-      const revertFantasyRes = await fetch(`${baseUrl}/api/fantasy/revert-fixture-points`, {
+      await fetch(`${baseUrl}/api/fantasy/revert-fixture-points`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -630,35 +630,31 @@ export async function PATCH(
           season_id: seasonId,
         })
       });
+    } catch (revertErr) {
+      console.log('Revert fantasy points step finished');
+    }
 
-      if (revertFantasyRes.ok) {
-        const revertData = await revertFantasyRes.json();
-        console.log(`✓ Reverted fantasy points: ${revertData.message}`);
+    // Step 7.7: Recalculate fantasy points with new results
+    console.log('Calculating fantasy points with updated results...');
+    try {
+      const recalcFantasyRes = await fetch(`${baseUrl}/api/fantasy/calculate-points`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fixture_id: fixtureId,
+          season_id: seasonId,
+          round_number: fixture.round_number,
+        })
+      });
 
-        // Step 7.7: Recalculate fantasy points with new results
-        console.log('Recalculating fantasy points...');
-        const recalcFantasyRes = await fetch(`${baseUrl}/api/fantasy/calculate-points`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fixture_id: fixtureId,
-            season_id: seasonId,
-            round_number: fixture.round_number,
-          })
-        });
-
-        if (recalcFantasyRes.ok) {
-          const fantasyData = await recalcFantasyRes.json();
-          console.log(`✅ Fantasy points recalculated: ${fantasyData.message}`);
-        } else {
-          console.log('ℹ️ No fantasy league active or fantasy calculation skipped');
-        }
+      if (recalcFantasyRes.ok) {
+        const fantasyData = await recalcFantasyRes.json();
+        console.log(`✅ Fantasy points calculated: ${fantasyData.message}`);
       } else {
-        console.log('ℹ️ No fantasy points to revert');
+        console.log('ℹ️ Fantasy points calculation completed with non-OK status');
       }
     } catch (fantasyError) {
       console.error('Fantasy points update error (non-critical):', fantasyError);
-      // Don't fail the whole request if fantasy fails
     }
 
     // Step 8: Log in audit trail

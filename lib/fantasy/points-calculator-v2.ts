@@ -476,7 +476,8 @@ async function updateTeamTotalPoints(teamId: string, leagueId: string) {
   await fantasySql`
     UPDATE fantasy_teams
     SET 
-      total_points = ${totalPoints},
+      player_points = ${totalPoints},
+      total_points = ${totalPoints} + COALESCE(passive_points, 0),
       updated_at = NOW()
     WHERE team_id = ${teamId}
   `;

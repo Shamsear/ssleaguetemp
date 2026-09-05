@@ -948,7 +948,7 @@ export default function CommitteePlayersPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <h3 className="font-extrabold text-slate-800 text-sm truncate uppercase tracking-wide">{player.name}</h3>
-                        {player.retired ? (
+                        {(player as any).retired ? (
                           <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-slate-700 text-white border border-slate-650 uppercase tracking-wider">
                             RET
                           </span>
@@ -999,15 +999,15 @@ export default function CommitteePlayersPage() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => handleToggleRetired(player.id, player.name, player.retired)}
+                        onClick={() => handleToggleRetired(player.id, player.name, (player as any).retired)}
                         className={`p-2 rounded-xl border transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm ${
-                          player.retired
+                          (player as any).retired
                             ? 'bg-emerald-50 border-emerald-250 text-emerald-600 hover:bg-emerald-500 hover:text-white'
                             : 'bg-orange-50 border-orange-250 text-orange-600 hover:bg-orange-500 hover:text-white'
                         }`}
-                        title={player.retired ? 'Activate Player' : 'Retire Player'}
+                        title={(player as any).retired ? 'Activate Player' : 'Retire Player'}
                       >
-                        {player.retired ? '♻️' : '💤'}
+                        {(player as any).retired ? '♻️' : '💤'}
                       </button>
                       <button
                         type="button"
@@ -1060,7 +1060,7 @@ export default function CommitteePlayersPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">{player.name}</span>
-                        {player.retired ? (
+                        {(player as any).retired ? (
                           <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-extrabold bg-slate-700 text-white border border-slate-650 uppercase tracking-wider">
                             Retired
                           </span>
@@ -1110,15 +1110,15 @@ export default function CommitteePlayersPage() {
                         </Link>
                         <button
                           type="button"
-                          onClick={() => handleToggleRetired(player.id, player.name, player.retired)}
+                          onClick={() => handleToggleRetired(player.id, player.name, (player as any).retired)}
                           className={`p-1.5 rounded-lg border transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm ${
-                            player.retired
+                            (player as any).retired
                               ? 'bg-emerald-50 border-emerald-250 text-emerald-600 hover:bg-emerald-500 hover:text-white'
                               : 'bg-orange-50 border-orange-250 text-orange-600 hover:bg-orange-500 hover:text-white'
                           }`}
-                          title={player.retired ? 'Activate Player' : 'Retire Player'}
+                          title={(player as any).retired ? 'Activate Player' : 'Retire Player'}
                         >
-                          {player.retired ? '♻️' : '💤'}
+                          {(player as any).retired ? '♻️' : '💤'}
                         </button>
                         <button
                           type="button"

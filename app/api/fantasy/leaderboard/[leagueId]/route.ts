@@ -52,11 +52,12 @@ export async function GET(
           (
             SELECT SUM(fpp.total_points)
             FROM fantasy_player_points fpp
-            WHERE fpp.team_id = ft.team_id
+            JOIN fantasy_squad fs ON fpp.real_player_id = fs.real_player_id AND fs.team_id = ft.team_id
+            WHERE fpp.league_id = ft.league_id
               AND fpp.round_number = (
                 SELECT MAX(round_number)
                 FROM fantasy_player_points
-                WHERE team_id = ft.team_id
+                WHERE league_id = ft.league_id
               )
           ),
           0

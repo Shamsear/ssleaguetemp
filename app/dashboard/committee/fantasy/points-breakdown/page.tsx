@@ -591,7 +591,7 @@ export default function FantasyPointsBreakdownPage() {
                                                     gradientClass = 'from-yellow-500 to-orange-500';
                                                     bgClass = 'from-yellow-50 to-orange-50';
                                                 } else if (awardType.includes('POTD')) {
-                                                    awardIcon = <Activity className="w-3.5 h-3.5 text-red-500 inline-block" />;
+                                                    awardIcon = '<Activity className="w-3.5 h-3.5 text-red-500 inline-block" />';
                                                     gradientClass = 'from-green-500 to-emerald-500';
                                                     bgClass = 'from-green-50 to-emerald-50';
                                                 } else if (awardType.includes('POTW')) {

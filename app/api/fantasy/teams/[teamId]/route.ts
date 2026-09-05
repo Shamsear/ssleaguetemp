@@ -107,12 +107,12 @@ export async function GET(
     // Get recent points by round (last 5 rounds)
     const recentPoints = await fantasySql`
       SELECT 
-        round_number,
-        SUM(total_points) as points
-      FROM fantasy_player_points
-      WHERE team_id = ${teamId}
-      GROUP BY round_number
-      ORDER BY round_number DESC
+        fpp.round_number,
+        SUM(fpp.total_points) as points
+      FROM fantasy_player_points fpp
+      JOIN fantasy_squad fs ON fpp.real_player_id = fs.real_player_id AND fs.team_id = ${teamId}
+      GROUP BY fpp.round_number
+      ORDER BY fpp.round_number DESC
       LIMIT 5
     `;
 

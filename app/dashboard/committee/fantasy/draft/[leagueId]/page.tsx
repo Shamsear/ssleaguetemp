@@ -39,7 +39,7 @@ interface TierResult {
   avg_points: number;
   total_bids: number;
   won_bids: number;
-  lost_bids: number;
+  lost_bids_count: number;
   skipped_bids: number;
   results: Array<{
     bid_id: string;

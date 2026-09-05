@@ -89,7 +89,7 @@ export default function PlayerEligibilityPage() {
                 // Extract unique teams
                 const uniqueTeams = Array.from(
                     new Set(data.players.map((p: PlayerEligibility) => JSON.stringify({ id: p.team_id, name: p.team_name })))
-                ).map(t => JSON.parse(t));
+                ).map((t: any) => JSON.parse(t));
                 setTeams(uniqueTeams);
             }
         } catch (error) {

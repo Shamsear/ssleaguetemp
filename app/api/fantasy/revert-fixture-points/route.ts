@@ -70,19 +70,6 @@ export async function POST(request: NextRequest) {
       teamPointsMap.set(record.team_id, currentTotal + record.total_points);
     }
 
-    // Subtract points from each team's total
-    for (const [teamId, pointsToSubtract] of teamPointsMap.entries()) {
-      await sql`
-        UPDATE fantasy_teams
-        SET 
-          player_points = GREATEST(0, COALESCE(player_points, 0) - ${pointsToSubtract}),
-          total_points = GREATEST(0, COALESCE(total_points, 0) - ${pointsToSubtract}),
-          updated_at = NOW()
-        WHERE team_id = ${teamId}
-      `;
-      console.log(`✓ Reverted ${pointsToSubtract} points from team ${teamId}`);
-    }
-
     // Delete fantasy_player_points records for this fixture
     const deleted = await sql`
       DELETE FROM fantasy_player_points
@@ -91,6 +78,37 @@ export async function POST(request: NextRequest) {
     `;
 
     console.log(`✓ Deleted ${deleted.length} fantasy point records for fixture ${fixture_id}`);
+
+    // Re-sync fantasy_squad.total_points for all squad players in this league
+    await sql`
+      UPDATE fantasy_squad fs
+      SET total_points = COALESCE((
+        SELECT SUM(fpp.total_points)
+        FROM fantasy_player_points fpp
+        WHERE fpp.real_player_id = fs.real_player_id
+          AND fpp.team_id = fs.team_id
+          AND fpp.league_id = fs.league_id
+      ), 0)
+      WHERE fs.league_id = ${fantasy_league_id}
+    `;
+
+    // Re-sync fantasy_teams player_points and total_points
+    await sql`
+      UPDATE fantasy_teams ft
+      SET 
+        player_points = COALESCE((
+          SELECT SUM(fs.total_points)
+          FROM fantasy_squad fs
+          WHERE fs.team_id = ft.team_id AND fs.league_id = ft.league_id
+        ), 0),
+        total_points = COALESCE((
+          SELECT SUM(fs.total_points)
+          FROM fantasy_squad fs
+          WHERE fs.team_id = ft.team_id AND fs.league_id = ft.league_id
+        ), 0) + COALESCE(ft.passive_points, 0),
+        updated_at = NOW()
+      WHERE ft.league_id = ${fantasy_league_id}
+    `;
 
     // Re-sync fantasy_players.total_points for all players in this league
     await sql`

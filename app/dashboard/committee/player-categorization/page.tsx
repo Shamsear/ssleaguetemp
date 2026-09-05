@@ -604,7 +604,7 @@ export default function PlayerCategorizationPage() {
 
       const row: { [key: string]: any } = {
         'Player Name': p.player_name,
-        'Smart Assist?': smartAssistLabel(p.used_smart_assist),
+        'Smart Assist?': smartAssistLabel((p as any).used_smart_assist),
         'Final Category': finalCategory,
         'Base Price': basePriceVal > 0 ? `${basePriceVal} COINS` : '—',
         'AI Proposed': proposed || 'N/A',
@@ -1187,7 +1187,7 @@ export default function PlayerCategorizationPage() {
                           {/* Smart Assist */}
                           <td className="px-6 py-4 text-center">
                             {(() => {
-                              const v = (player.used_smart_assist || '').toLowerCase();
+                              const v = ((player as any).used_smart_assist || '').toLowerCase();
                               if (v === 'yes') return (
                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800 font-mono">✓ Yes</span>
                               );

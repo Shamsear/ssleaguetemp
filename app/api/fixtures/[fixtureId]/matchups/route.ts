@@ -866,6 +866,25 @@ export async function PATCH(
       // Don't fail the entire request if fantasy calculation fails
     }
 
+    // Update real player stats in realplayerstats table
+    try {
+      console.log('⚽ Updating real player stats...');
+      const host = request.headers.get('host');
+      const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
+      await fetch(`${baseUrl}/api/realplayers/update-points`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fixture_id: fixtureId,
+          season_id: season_id,
+          matchups: results
+        })
+      });
+    } catch (rpsError) {
+      console.error('Failed to update realplayerstats:', rpsError);
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Results saved successfully',

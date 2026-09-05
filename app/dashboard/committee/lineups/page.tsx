@@ -40,7 +40,7 @@ export default function CommitteeLineupMonitoringPage() {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    if (user && user.role === 'committee') {
+    if (user && ((user.role as string) === 'committee_admin' || (user.role as string) === 'super_admin')) {
       fetchSeasons();
     }
   }, [user]);
@@ -75,7 +75,7 @@ export default function CommitteeLineupMonitoringPage() {
       const response = await fetchWithTokenRefresh(`/api/rounds?season_id=${seasonId}`);
       const data = await response.json();
       if (data.success && data.rounds) {
-        const roundNumbers = [...new Set(data.rounds.map((r: any) => r.round_number))].sort((a, b) => a - b);
+        const roundNumbers: number[] = Array.from(new Set(data.rounds.map((r: any) => Number(r.round_number)))).sort((a: number, b: number) => a - b);
         setRounds(roundNumbers);
         if (roundNumbers.length > 0 && !selectedRound) {
           setSelectedRound(roundNumbers[0]);
@@ -155,7 +155,7 @@ export default function CommitteeLineupMonitoringPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           locked_by: user?.uid,
-          locked_by_name: user?.display_name || user?.email
+          locked_by_name: (user as any)?.display_name || (user as any)?.displayName || user?.email
         })
       });
 

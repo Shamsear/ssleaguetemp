@@ -561,10 +561,10 @@ export default function FantasyTeamsPage() {
                                 <div className="flex items-center gap-2">
                                   <p className="font-bold text-xs uppercase text-slate-800">{player.player_name}</p>
                                   {player.is_captain && (
-                                    <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" title="Captain (2x points)" />
+                                    <span title="Captain (2x points)"><Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /></span>
                                   )}
                                   {player.is_vice_captain && (
-                                    <Star className="w-3.5 h-3.5 text-amber-405 fill-amber-405" title="Vice-Captain (1.5x points)" />
+                                    <span title="Vice-Captain (1.5x points)"><Star className="w-3.5 h-3.5 text-amber-405 fill-amber-405" /></span>
                                   )}
                                 </div>
                                 <p className="text-[9px] text-slate-400 font-bold uppercase">
