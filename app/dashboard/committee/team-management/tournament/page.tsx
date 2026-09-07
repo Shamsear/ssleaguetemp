@@ -2505,32 +2505,100 @@ export function TournamentDashboardPageContent() {
             {/* Fixtures List */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length > 0 && (
               <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-slate-500" /> Fixtures ({fixturesForSelectedTournament.length})
-                  </h3>
+                
+                {/* Header & Controls */}
+                <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-slate-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <ClipboardList className="w-5 h-5 text-blue-600" />
+                      <span>Fixtures ({fixturesForSelectedTournament.length})</span>
+                    </h3>
 
-                  {/* Round Selector & Share Button */}
-                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                     {selectedRound > 0 && filteredFixtures.length > 0 && (
-                      <RoundFixturesShareButton
-                        roundNumber={selectedRound}
-                        fixtures={filteredFixtures}
-                        tournamentName={selectedTournament?.tournament_name || "SSPS League"}
-                      />
+                      <div className="shrink-0">
+                        <RoundFixturesShareButton
+                          roundNumber={selectedRound}
+                          fixtures={filteredFixtures}
+                          tournamentName={selectedTournament?.tournament_name || "SSPS League"}
+                        />
+                      </div>
                     )}
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
-                      <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Round:</label>
-                      <select
-                        value={selectedRound}
-                        onChange={(e) => handleRoundChange(parseInt(e.target.value))}
-                        className="px-3 py-1.5 bg-white/60 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 w-full sm:w-auto"
-                      >
-                        <option value={0}>All Rounds</option>
+                  </div>
+
+                  {/* Round Filter Section - Mobile & Desktop Optimized */}
+                  <div className="bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-slate-200/70 space-y-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                      {/* Round Selector Dropdown + Prev/Next Controls */}
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleRoundChange(selectedRound > 1 ? selectedRound - 1 : maxRounds)}
+                          className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
+                          title="Previous Round"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+
+                        <div className="relative flex-1 sm:w-56">
+                          <label className="sr-only">Select Round</label>
+                          <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs">
+                            <Calendar className="w-4 h-4 text-blue-600 mr-2 shrink-0" />
+                            <select
+                              value={selectedRound}
+                              onChange={(e) => handleRoundChange(parseInt(e.target.value))}
+                              className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer"
+                            >
+                              <option value={0}>All Rounds ({fixturesForSelectedTournament.length} matches)</option>
+                              {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => {
+                                const count = fixturesForSelectedTournament.filter(f => f.round_number === round).length;
+                                return (
+                                  <option key={round} value={round}>
+                                    Round {round} ({count} {count === 1 ? 'match' : 'matches'})
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRoundChange(selectedRound > 0 && selectedRound < maxRounds ? selectedRound + 1 : 1)}
+                          className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
+                          title="Next Round"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Quick Round Pills (Scrollable on small screens) */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-none w-full sm:max-w-md">
+                        <button
+                          type="button"
+                          onClick={() => handleRoundChange(0)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                            selectedRound === 0
+                              ? 'bg-blue-600 text-white shadow-xs'
+                              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                          }`}
+                        >
+                          All
+                        </button>
                         {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => (
-                          <option key={round} value={round}>Round {round}</option>
+                          <button
+                            key={round}
+                            type="button"
+                            onClick={() => handleRoundChange(round)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                              selectedRound === round
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                            }`}
+                          >
+                            R{round}
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   </div>
                 </div>
