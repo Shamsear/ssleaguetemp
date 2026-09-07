@@ -409,6 +409,38 @@ async function awardTeamBonus(params: {
       )
     `;
 
+    // Record bonus in fantasy_team_bonus_points for real team directly (so all real teams have passive history)
+    await fantasySql`
+      DELETE FROM fantasy_team_bonus_points
+      WHERE league_id = ${fantasy_league_id}
+        AND team_id = ${real_team_id}
+        AND fixture_id = ${fixture_id}
+    `;
+
+    await fantasySql`
+      INSERT INTO fantasy_team_bonus_points (
+        league_id,
+        team_id,
+        real_team_id,
+        real_team_name,
+        fixture_id,
+        round_number,
+        bonus_breakdown,
+        total_bonus,
+        calculated_at
+      ) VALUES (
+        ${fantasy_league_id},
+        ${real_team_id},
+        ${real_team_id},
+        ${realTeamName},
+        ${fixture_id},
+        ${round_number},
+        ${JSON.stringify(bonus_breakdown)},
+        ${total_bonus},
+        NOW()
+      )
+    `;
+
     // Recalculate passive points and total points directly from database records (no accumulators)
     await fantasySql`
       UPDATE fantasy_teams ft
@@ -418,11 +450,15 @@ async function awardTeamBonus(params: {
           FROM fantasy_team_bonus_points ftbp 
           WHERE ftbp.team_id = ft.team_id AND ftbp.league_id = ft.league_id
         ), 0),
-        total_points = COALESCE((
-          SELECT SUM(fpp.total_points)
+        player_points = COALESCE((
+          SELECT SUM(total_points)
           FROM fantasy_player_points fpp
-          INNER JOIN fantasy_squad fs ON fpp.player_id = fs.real_player_id AND fs.fantasy_team_id = ft.id
-          WHERE fs.league_id = ft.league_id
+          WHERE fpp.team_id = ft.team_id AND fpp.league_id = ft.league_id
+        ), 0),
+        total_points = COALESCE((
+          SELECT SUM(total_points)
+          FROM fantasy_player_points fpp
+          WHERE fpp.team_id = ft.team_id AND fpp.league_id = ft.league_id
         ), 0) + COALESCE((
           SELECT SUM(total_bonus) 
           FROM fantasy_team_bonus_points ftbp 

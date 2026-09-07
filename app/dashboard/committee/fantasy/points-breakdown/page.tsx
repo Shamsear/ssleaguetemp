@@ -67,6 +67,7 @@ interface TeamBreakdown {
     owner_name: string;
     supported_team_id: string;
     supported_team_name: string;
+    real_team_name?: string;
     players: Player[];
     passive_breakdown: PassiveRound[];
     round_totals: RoundTotal[];
@@ -88,6 +89,8 @@ export default function FantasyPointsBreakdownPage() {
     const { isCommitteeAdmin } = usePermissions();
     const [teams, setTeams] = useState<TeamBreakdown[]>([]);
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [passiveRealTeams, setPassiveRealTeams] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'fantasy' | 'passive_real'>('fantasy');
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTeam, setSelectedTeam] = useState<string>('all');
     const [maxRounds, setMaxRounds] = useState(0);
@@ -106,6 +109,15 @@ export default function FantasyPointsBreakdownPage() {
                     setTeams(data.teams || []);
                     setTournaments(data.tournaments || []);
                     setMaxRounds(data.maxRounds || 0);
+                }
+
+                // Fetch passive breakdown for all real tournament teams
+                const passiveRes = await fetchWithTokenRefresh('/api/fantasy/passive-teams-breakdown');
+                if (passiveRes.ok) {
+                    const passiveData = await passiveRes.json();
+                    if (passiveData.teams) {
+                        setPassiveRealTeams(passiveData.teams);
+                    }
                 }
             } catch (error: any) {
                 console.error('Error fetching fantasy points breakdown:', error);
@@ -162,50 +174,77 @@ export default function FantasyPointsBreakdownPage() {
                     </Link>
 
                     <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                        🎯 Fantasy Points Breakdown
+                        🎯 Fantasy & Passive Points Breakdown
                     </h1>
-                    <p className="text-gray-600">Detailed round-by-round breakdown of active (player) and passive (team) points</p>
+                    <p className="text-gray-600">Detailed round-by-round breakdown of active player points and real team passive bonuses</p>
                 </div>
 
-                {/* Filters */}
-                <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                        <div className="flex-1 w-full sm:w-auto">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Select Team</label>
-                            <select
-                                value={selectedTeam}
-                                onChange={(e) => setSelectedTeam(e.target.value)}
-                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="all">All Teams</option>
-                                {teams.map(team => (
-                                    <option key={team.team_id} value={team.team_id}>
-                                        {team.team_name} ({team.owner_name})
-                                    </option>
-                                ))}
-                            </select>
+                {/* View Mode Tab Switcher */}
+                <div className="flex gap-2 mb-6 p-1.5 bg-slate-200/70 rounded-2xl max-w-md">
+                    <button
+                        onClick={() => setActiveTab('fantasy')}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all ${
+                            activeTab === 'fantasy'
+                                ? 'bg-white text-blue-700 shadow-md'
+                                : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                        Drafted Fantasy Teams
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('passive_real')}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all ${
+                            activeTab === 'passive_real'
+                                ? 'bg-white text-indigo-700 shadow-md'
+                                : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                        All Real Teams (Passive)
+                    </button>
+                </div>
+
+                {/* Filters (Fantasy Teams tab) */}
+                {activeTab === 'fantasy' && (
+                    <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                            <div className="flex-1 w-full sm:w-auto">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Select Team</label>
+                                <select
+                                    value={selectedTeam}
+                                    onChange={(e) => setSelectedTeam(e.target.value)}
+                                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="all">All Teams</option>
+                                    {teams.map(team => (
+                                        <option key={team.team_id} value={team.team_id}>
+                                            {team.team_name} ({team.owner_name})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
-                {/* Teams Breakdown */}
-                {filteredTeams.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                        <p className="text-gray-500 text-lg">No fantasy teams found</p>
-                    </div>
-                ) : (
-                    <div className="space-y-8">
+                {/* Drafted Fantasy Teams View */}
+                {activeTab === 'fantasy' && (
+                    <div className="space-y-6">
                         {filteredTeams.map(team => (
-                            <div key={team.team_id} className="bg-white rounded-xl shadow-xl overflow-hidden">
-                                {/* Team Header */}
-                                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
-                                    <h2 className="text-2xl font-bold mb-1">{team.team_name}</h2>
-                                    <p className="text-blue-100 text-sm mb-3">Owner: {team.owner_name}</p>
-                                    {team.supported_team_name && (
-                                        <p className="text-blue-100 text-sm mb-3">
-                                            <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Supporting: <span className="font-semibold">{team.supported_team_name}</span>
-                                        </p>
-                                    )}
+                            <div key={team.team_id} className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 overflow-hidden">
+                                <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white p-6">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                                        <div>
+                                            <h2 className="text-2xl md:text-3xl font-extrabold flex items-center gap-2">
+                                                🏆 {team.team_name}
+                                            </h2>
+                                            <p className="text-blue-200 text-sm mt-1">
+                                                Owner: <span className="font-semibold text-white">{team.owner_name}</span>
+                                                {team.real_team_name && (
+                                                    <span className="ml-2 text-indigo-300">• Supported Real Team: <strong className="text-white">{team.real_team_name}</strong></span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-3 gap-4 text-center">
                                         <div>
                                             <p className="text-xs text-blue-200">Active Points</p>
@@ -693,8 +732,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                     {type}: {count}
                                                                 </span>
                                                             </div>
-
-  );
+                                                        );
                                                     })}
                                                 </div>
                                             </div>

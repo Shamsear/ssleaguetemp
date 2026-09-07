@@ -21,7 +21,8 @@ export async function GET(
       );
     }
 
-    // Get team info
+    // Get team info from fantasy_teams or fallback to tournament teams
+    let team: any = null;
     const teamInfo = await fantasySql`
       SELECT 
         team_id,
@@ -36,27 +37,46 @@ export async function GET(
       LIMIT 1
     `;
 
-    if (teamInfo.length === 0) {
-      console.log('❌ [Passive Breakdown] Team not found:', teamId);
+    if (teamInfo.length > 0) {
+      team = teamInfo[0];
+    } else {
+      // Look up real tournament team in tournament database
+      const { getTournamentDb } = await import('@/lib/neon/tournament-config');
+      const tourneySql = getTournamentDb();
+      const realTeamRes = await tourneySql`
+        SELECT id, team_name FROM teams WHERE id = ${teamId} LIMIT 1
+      `;
+      if (realTeamRes.length > 0) {
+        const rt = realTeamRes[0];
+        // Calculate passive points total for this real team from fantasy_team_bonus_points
+        const bonusSumRes = await fantasySql`
+          SELECT COALESCE(SUM(total_bonus), 0) as total_passive
+          FROM fantasy_team_bonus_points
+          WHERE real_team_id = ${teamId} OR team_id = ${teamId}
+        `;
+        team = {
+          team_id: rt.id,
+          team_name: rt.team_name,
+          owner_name: 'Tournament Team',
+          supported_team_id: rt.id,
+          supported_team_name: rt.team_name,
+          passive_points: bonusSumRes[0]?.total_passive || 0,
+          league_id: 'SSPSLFLS18'
+        };
+      }
+    }
+
+    if (!team) {
+      console.log('❌ [Passive Breakdown] Team not found in fantasy or tournament DB:', teamId);
       return NextResponse.json(
-        { error: 'Fantasy team not found' },
+        { error: 'Team not found' },
         { status: 404 }
       );
     }
 
-    const team = teamInfo[0];
-    console.log('✅ [Passive Breakdown] Team found:', {
-      team_id: team.team_id,
-      team_name: team.team_name,
-      supported_team_id: team.supported_team_id,
-      supported_team_name: team.supported_team_name,
-      passive_points: team.passive_points,
-      league_id: team.league_id
-    });
-
-    // Get passive points breakdown by round
+    // Get passive points breakdown by round (checking both team_id and real_team_id)
     const bonusBreakdown = await fantasySql`
-      SELECT 
+      SELECT DISTINCT ON (fixture_id, round_number)
         fixture_id,
         round_number,
         real_team_id,
@@ -65,7 +85,7 @@ export async function GET(
         total_bonus,
         calculated_at
       FROM fantasy_team_bonus_points
-      WHERE team_id = ${teamId}
+      WHERE team_id = ${teamId} OR real_team_id = ${teamId}
       ORDER BY round_number DESC, calculated_at DESC
     `;
 

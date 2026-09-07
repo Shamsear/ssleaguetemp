@@ -219,36 +219,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update fantasy team totals (recalculate from fantasy_squad and passive_points)
-    for (const teamId of teamPointsMap.keys()) {
-      await sql`
-        UPDATE fantasy_teams ft
-        SET 
-          player_points = COALESCE((
-            SELECT SUM(total_points)
-            FROM fantasy_squad
-            WHERE team_id = ${teamId} AND league_id = ${fantasy_league_id}
-          ), 0),
-          passive_points = COALESCE((
-            SELECT SUM(total_bonus)
-            FROM fantasy_team_bonus_points
-            WHERE team_id = ${teamId} AND league_id = ${fantasy_league_id}
-          ), 0),
-          total_points = COALESCE((
-            SELECT SUM(total_points)
-            FROM fantasy_squad
-            WHERE team_id = ${teamId} AND league_id = ${fantasy_league_id}
-          ), 0) + COALESCE((
-            SELECT SUM(total_bonus)
-            FROM fantasy_team_bonus_points
-            WHERE team_id = ${teamId} AND league_id = ${fantasy_league_id}
-          ), 0),
-          updated_at = NOW()
-        WHERE ft.team_id = ${teamId}
-      `;
-      console.log(`✓ Recalculated team totals for ${teamId}`);
-    }
-
     // Calculate team affiliation bonuses
     console.log('🎁 Calculating team affiliation bonuses...');
     try {
@@ -267,8 +237,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole request if bonus calculation fails
     }
 
-    // Recalculate ranks
-    await recalculateLeaderboard(fantasy_league_id);
+    // Fully synchronize ALL fantasy team totals with itemized breakdown scores & recalculate ranks
+    await syncAllFantasyTeamTotals(fantasy_league_id);
 
     return NextResponse.json({
       success: true,
@@ -545,6 +515,68 @@ async function processPlayer(params: {
     WHERE league_id = ${fantasy_league_id} 
       AND real_player_id = ${player_id}
   `;
+}
+
+/**
+ * Synchronize fantasy team total scores with breakdown records.
+ * Sums player_points from fantasy_player_points and passive_points from fantasy_team_bonus_points
+ * for ALL fantasy teams in the league, then recalculates leaderboard ranks.
+ */
+export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
+  try {
+    const sql = getFantasyDb();
+    
+    // Recalculate player_points, passive_points, and total_points for ALL fantasy teams in the league
+    await sql`
+      WITH player_totals AS (
+        SELECT 
+          team_id,
+          COALESCE(SUM(total_points), 0) as calc_player_points
+        FROM fantasy_player_points
+        WHERE league_id = ${fantasy_league_id}
+        GROUP BY team_id
+      ),
+      passive_totals AS (
+        SELECT 
+          team_id,
+          COALESCE(SUM(total_bonus), 0) as calc_passive_points
+        FROM fantasy_team_bonus_points
+        WHERE league_id = ${fantasy_league_id}
+        GROUP BY team_id
+      )
+      UPDATE fantasy_teams ft
+      SET 
+        player_points = COALESCE(pt.calc_player_points, 0),
+        passive_points = COALESCE(pas.calc_passive_points, 0),
+        total_points = COALESCE(pt.calc_player_points, 0) + COALESCE(pas.calc_passive_points, 0),
+        updated_at = NOW()
+      FROM fantasy_teams ft_inner
+      LEFT JOIN player_totals pt ON ft_inner.team_id = pt.team_id
+      LEFT JOIN passive_totals pas ON ft_inner.team_id = pas.team_id
+      WHERE ft.team_id = ft_inner.team_id
+        AND ft.league_id = ${fantasy_league_id};
+    `;
+
+    // Recalculate ranks based on updated total_points
+    await sql`
+      WITH ranked_teams AS (
+        SELECT 
+          team_id,
+          ROW_NUMBER() OVER (ORDER BY total_points DESC, team_name ASC) as new_rank
+        FROM fantasy_teams
+        WHERE league_id = ${fantasy_league_id}
+      )
+      UPDATE fantasy_teams ft
+      SET rank = rt.new_rank, updated_at = NOW()
+      FROM ranked_teams rt
+      WHERE ft.team_id = rt.team_id
+        AND ft.league_id = ${fantasy_league_id};
+    `;
+
+    console.log(`✅ Fully synchronized fantasy team totals & ranks for league ${fantasy_league_id}`);
+  } catch (error: any) {
+    console.error('Error synchronizing fantasy team totals:', error);
+  }
 }
 
 // Helper function to recalculate leaderboard ranks

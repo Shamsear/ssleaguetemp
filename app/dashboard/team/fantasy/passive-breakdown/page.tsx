@@ -46,43 +46,85 @@ export default function PassiveBreakdownPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<PassiveBreakdownData | null>(null);
+  const [allTeamsList, setAllTeamsList] = useState<Array<{ real_team_id: string; team_name: string }>>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadBreakdown = async () => {
+    const loadInitialData = async () => {
       if (!user) return;
-
+      setIsLoading(true);
       try {
-        // First get the team ID
-        const teamResponse = await fetchWithTokenRefresh(`/api/fantasy/teams/my-team?user_id=${user.uid}`);
-        if (!teamResponse.ok) {
-          throw new Error('Failed to load fantasy team');
+        // Load all passive real teams list
+        const passiveAllRes = await fetchWithTokenRefresh('/api/fantasy/passive-teams-breakdown');
+        if (passiveAllRes.ok) {
+          const passiveAllData = await passiveAllRes.json();
+          if (passiveAllData.teams) {
+            setAllTeamsList(passiveAllData.teams.map((t: any) => ({
+              real_team_id: t.real_team_id,
+              team_name: t.team_name,
+            })));
+          }
         }
 
-        const teamData = await teamResponse.json();
-        const teamId = teamData.team.id;
-
-        // Then get the breakdown
-        const breakdownResponse = await fetchWithTokenRefresh(`/api/fantasy/teams/${teamId}/passive-breakdown`);
-        if (!breakdownResponse.ok) {
-          throw new Error('Failed to load passive breakdown');
+        // Try getting user's fantasy team ID first
+        let teamId: string | null = null;
+        try {
+          const teamResponse = await fetchWithTokenRefresh(`/api/fantasy/teams/my-team?user_id=${user.uid}`);
+          if (teamResponse.ok) {
+            const teamData = await teamResponse.json();
+            teamId = teamData.team?.id || teamData.team?.team_id || null;
+          }
+        } catch (e) {
+          console.log('No fantasy team found for user, will fall back to real team');
         }
 
-        const breakdownData = await breakdownResponse.json();
-        setData(breakdownData);
+        // If no fantasy team, fallback to first real team or teamId
+        if (!teamId && (user as any)?.teamId) {
+          teamId = (user as any).teamId;
+        }
+
+        if (!teamId && allTeamsList.length > 0) {
+          teamId = allTeamsList[0].real_team_id;
+        }
+
+        setSelectedTeamId(teamId || 'SSPSLT0001');
       } catch (err: any) {
-        console.error('Error loading breakdown:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load data');
+        console.error('Error loading initial breakdown data:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (user) {
-      loadBreakdown();
+      loadInitialData();
     }
   }, [user]);
+
+  // Load selected team's passive breakdown whenever selectedTeamId changes
+  useEffect(() => {
+    const fetchTeamBreakdown = async () => {
+      if (!selectedTeamId) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const breakdownResponse = await fetchWithTokenRefresh(`/api/fantasy/teams/${selectedTeamId}/passive-breakdown`);
+        if (!breakdownResponse.ok) {
+          throw new Error('Failed to load passive breakdown for selected team');
+        }
+        const breakdownData = await breakdownResponse.json();
+        setData(breakdownData);
+      } catch (err: any) {
+        console.error('Error loading passive breakdown:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load team data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeamBreakdown();
+  }, [selectedTeamId]);
 
   if (loading || isLoading) {
     return (
@@ -120,16 +162,38 @@ export default function PassiveBreakdownPage() {
     <AuthGuard requiredRole="team">
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/dashboard/team/fantasy/my-team"
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-4"
-          >
-            ← Back to My Team
-          </Link>
-          <h1 className="text-3xl font-bold text-slate-900">Passive Points Breakdown</h1>
-          <p className="text-slate-500 mt-1">Detailed breakdown of all passive points earned</p>
+        {/* Header with Team Switcher */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <Link
+              href="/dashboard/team/fantasy/my-team"
+              className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors mb-2"
+            >
+              ← Back to My Team
+            </Link>
+            <h1 className="text-3xl font-bold text-slate-900">Passive Points Breakdown</h1>
+            <p className="text-slate-500 mt-1">Detailed breakdown of all passive team points earned across rounds</p>
+          </div>
+
+          {/* Team Selector Dropdown */}
+          {allTeamsList.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm min-w-[220px]">
+              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
+                Select Team
+              </label>
+              <select
+                value={selectedTeamId || ''}
+                onChange={(e) => setSelectedTeamId(e.target.value)}
+                className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+              >
+                {allTeamsList.map((t) => (
+                  <option key={t.real_team_id} value={t.real_team_id}>
+                    {t.team_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
       {/* Team Info */}

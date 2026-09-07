@@ -1,5 +1,5 @@
 'use client';
-import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft } from 'lucide-react';
+import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft, Star } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -24,6 +24,10 @@ interface Matchup {
   home_goals: number | null;
   away_goals: number | null;
   position: number;
+  home_sub_penalty?: number;
+  away_sub_penalty?: number;
+  home_substituted?: boolean;
+  away_substituted?: boolean;
 }
 
 interface Fixture {
@@ -44,6 +48,8 @@ interface Fixture {
   result?: string;
   motm_player_id?: string;
   motm_player_name?: string;
+  home_penalty_goals?: number;
+  away_penalty_goals?: number;
   match_status_reason?: string;
   created_at?: string;
   created_by_name?: string;
@@ -66,6 +72,11 @@ export default function CommitteeFixtureDetailPage() {
   const [showLineupEditor, setShowLineupEditor] = useState<'home' | 'away' | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedScores, setEditedScores] = useState<{ [key: number]: { home: number, away: number } }>({});
+  const [editedSubPenalties, setEditedSubPenalties] = useState<{ [key: number]: { home: number, away: number } }>({});
+  const [motmPlayerId, setMotmPlayerId] = useState<string | null>(null);
+  const [motmPlayerName, setMotmPlayerName] = useState<string | null>(null);
+  const [homePenaltyGoals, setHomePenaltyGoals] = useState<number>(0);
+  const [awayPenaltyGoals, setAwayPenaltyGoals] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingRoundRobin, setIsGeneratingRoundRobin] = useState(false);
   const [knockoutFormat, setKnockoutFormat] = useState<string | null>(null);
@@ -101,6 +112,10 @@ export default function CommitteeFixtureDetailPage() {
       if (fixtureData.fixture) {
         setFixture(fixtureData.fixture);
         setKnockoutFormat(fixtureData.fixture.knockout_format || null);
+        setMotmPlayerId(fixtureData.fixture.motm_player_id || null);
+        setMotmPlayerName(fixtureData.fixture.motm_player_name || null);
+        setHomePenaltyGoals(fixtureData.fixture.home_penalty_goals || 0);
+        setAwayPenaltyGoals(fixtureData.fixture.away_penalty_goals || 0);
       }
 
       // Fetch matchups
@@ -110,15 +125,21 @@ export default function CommitteeFixtureDetailPage() {
       if (matchupsData.matchups) {
         setMatchups(matchupsData.matchups);
 
-        // Initialize edited scores
+        // Initialize edited scores and sub penalties
         const scores: { [key: number]: { home: number, away: number } } = {};
+        const subPenalties: { [key: number]: { home: number, away: number } } = {};
         matchupsData.matchups.forEach((m: Matchup) => {
           scores[m.position] = {
             home: m.home_goals ?? 0,
             away: m.away_goals ?? 0
           };
+          subPenalties[m.position] = {
+            home: m.home_sub_penalty ?? 0,
+            away: m.away_sub_penalty ?? 0
+          };
         });
         setEditedScores(scores);
+        setEditedSubPenalties(subPenalties);
       }
     } catch (error: any) {
       console.error('Error fetching fixture data:', error);
@@ -288,7 +309,7 @@ export default function CommitteeFixtureDetailPage() {
       defaultValue: ''
     });
 
-    if (!reason) return; // User cancelled
+    if (reason === null) return; // User cancelled prompt modal
 
     const confirmed = await showConfirm({
       type: 'warning',
@@ -302,7 +323,22 @@ export default function CommitteeFixtureDetailPage() {
 
     setIsSaving(true);
     try {
-      // Prepare edited matchups
+      // Find selected MOTM player name if set
+      let selMotmName = motmPlayerName;
+      if (motmPlayerId) {
+        for (const m of matchups) {
+          if (m.home_player_id === motmPlayerId) {
+            selMotmName = m.home_player_name;
+            break;
+          }
+          if (m.away_player_id === motmPlayerId) {
+            selMotmName = m.away_player_name;
+            break;
+          }
+        }
+      }
+
+      // Prepare edited matchups with scores and sub penalties
       const editedMatchups = matchups.map(m => ({
         position: m.position,
         home_player_id: m.home_player_id,
@@ -311,6 +347,8 @@ export default function CommitteeFixtureDetailPage() {
         away_player_name: m.away_player_name,
         home_goals: editedScores[m.position]?.home ?? m.home_goals ?? 0,
         away_goals: editedScores[m.position]?.away ?? m.away_goals ?? 0,
+        home_sub_penalty: editedSubPenalties[m.position]?.home ?? m.home_sub_penalty ?? 0,
+        away_sub_penalty: editedSubPenalties[m.position]?.away ?? m.away_sub_penalty ?? 0,
       }));
 
       const response = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/edit-result`, {
@@ -318,6 +356,10 @@ export default function CommitteeFixtureDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           matchups: editedMatchups,
+          motm_player_id: motmPlayerId,
+          motm_player_name: selMotmName,
+          home_penalty_goals: homePenaltyGoals,
+          away_penalty_goals: awayPenaltyGoals,
           edited_by: user?.uid,
           edited_by_name: (user as any)?.displayName || user?.email,
           edit_reason: reason || 'Result corrected by committee admin'
@@ -509,6 +551,16 @@ export default function CommitteeFixtureDetailPage() {
               </div>
             </div>
 
+            {/* MOTM Badge in View Mode */}
+            {fixture.motm_player_name && !isEditMode && (
+              <div className="mt-2 mb-4 flex items-center justify-center">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-250 rounded-xl text-xs font-extrabold text-amber-800 shadow-2xs">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  Man of the Match: {fixture.motm_player_name}
+                </div>
+              </div>
+            )}
+
             {fixture.match_status_reason && (
               <div className={`p-4 rounded-2xl mb-4 ${fixture.match_status_reason.includes('wo') ? 'bg-orange-50 border border-orange-200 text-orange-850' :
                 'bg-slate-50 border border-slate-200 text-slate-750'
@@ -588,6 +640,76 @@ export default function CommitteeFixtureDetailPage() {
               )}
             </div>
 
+            {/* MOTM & Fine Penalty Controls in Edit Mode */}
+            {isEditMode && (
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> Man of the Match (MOTM)
+                  </label>
+                  <select
+                    value={motmPlayerId || ''}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      setMotmPlayerId(selectedId || null);
+                      if (!selectedId) {
+                        setMotmPlayerName(null);
+                      } else {
+                        const allPlayersMap = new Map(
+                          matchups.flatMap(m => [
+                            [m.home_player_id, m.home_player_name],
+                            [m.away_player_id, m.away_player_name]
+                          ])
+                        );
+                        setMotmPlayerName(allPlayersMap.get(selectedId) || null);
+                      }
+                    }}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
+                  >
+                    <option value="">-- None Selected --</option>
+                    {Array.from(
+                      new Map(
+                        matchups.flatMap(m => [
+                          [m.home_player_id, `${m.home_player_name} (${fixture.home_team_name})`],
+                          [m.away_player_id, `${m.away_player_name} (${fixture.away_team_name})`]
+                        ])
+                      )
+                    ).map(([id, name]) => (
+                      <option key={id} value={id}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Team Fine / Penalty Goals */}
+                <div className="pt-3 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">
+                      {fixture.home_team_name} Fine Penalty Goals
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={homePenaltyGoals}
+                      onChange={(e) => setHomePenaltyGoals(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">
+                      {fixture.away_team_name} Fine Penalty Goals
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={awayPenaltyGoals}
+                      onChange={(e) => setAwayPenaltyGoals(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               {matchups.map((matchup) => (
                 <div key={matchup.id} className="bg-slate-50/60 border border-slate-100 rounded-2xl p-4 hover:bg-slate-50 transition-all">
@@ -630,6 +752,99 @@ export default function CommitteeFixtureDetailPage() {
                       <p className="font-bold text-slate-800 text-sm truncate">{matchup.away_player_name}</p>
                     </div>
                   </div>
+
+                  {/* Sub Penalty Controls in Edit Mode */}
+                  {isEditMode && (
+                    <div className="mt-3 pt-3 border-t border-slate-200/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-slate-500">Home Sub Penalty:</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditedSubPenalties(prev => ({
+                              ...prev,
+                              [matchup.position]: { ...prev[matchup.position], home: Math.max(0, (prev[matchup.position]?.home ?? 0) - 1) }
+                            }))}
+                            className="w-6 h-6 rounded-md bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={editedSubPenalties[matchup.position]?.home ?? 0}
+                            onChange={(e) => setEditedSubPenalties(prev => ({
+                              ...prev,
+                              [matchup.position]: { ...prev[matchup.position], home: Math.max(0, parseInt(e.target.value) || 0) }
+                            }))}
+                            className="w-12 text-center font-bold bg-white border border-slate-200 rounded-md py-0.5"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEditedSubPenalties(prev => ({
+                              ...prev,
+                              [matchup.position]: { ...prev[matchup.position], home: (prev[matchup.position]?.home ?? 0) + 1 }
+                            }))}
+                            className="w-6 h-6 rounded-md bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-slate-500">Away Sub Penalty:</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditedSubPenalties(prev => ({
+                              ...prev,
+                              [matchup.position]: { ...prev[matchup.position], away: Math.max(0, (prev[matchup.position]?.away ?? 0) - 1) }
+                            }))}
+                            className="w-6 h-6 rounded-md bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={editedSubPenalties[matchup.position]?.away ?? 0}
+                            onChange={(e) => setEditedSubPenalties(prev => ({
+                              ...prev,
+                              [matchup.position]: { ...prev[matchup.position], away: Math.max(0, parseInt(e.target.value) || 0) }
+                            }))}
+                            className="w-12 text-center font-bold bg-white border border-slate-200 rounded-md py-0.5"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEditedSubPenalties(prev => ({
+                              ...prev,
+                              [matchup.position]: { ...prev[matchup.position], away: (prev[matchup.position]?.away ?? 0) + 1 }
+                            }))}
+                            className="w-6 h-6 rounded-md bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sub Penalty Badges in View Mode */}
+                  {!isEditMode && ((matchup.home_sub_penalty || 0) > 0 || (matchup.away_sub_penalty || 0) > 0) && (
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-2 justify-center text-[10px]">
+                      {(matchup.home_sub_penalty || 0) > 0 && (
+                        <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-extrabold">
+                          +{matchup.home_sub_penalty} Sub Goal to {fixture.away_team_name}
+                        </span>
+                      )}
+                      {(matchup.away_sub_penalty || 0) > 0 && (
+                        <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-extrabold">
+                          +{matchup.away_sub_penalty} Sub Goal to {fixture.home_team_name}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

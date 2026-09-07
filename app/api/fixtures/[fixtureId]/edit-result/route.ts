@@ -379,27 +379,37 @@ export async function PATCH(
       throw new Error('Failed to revert points');
     }
 
-    // Step 3: Update matchups with new scores
+    // Step 3: Update matchups with new scores and sub penalties
     console.log('Updating matchups...');
     for (const matchup of matchups) {
+      const hasHomeSubPenalty = matchup.home_sub_penalty !== undefined;
+      const hasAwaySubPenalty = matchup.away_sub_penalty !== undefined;
+
       await sql`
         UPDATE matchups
         SET 
           home_goals = ${matchup.home_goals},
           away_goals = ${matchup.away_goals},
+          home_sub_penalty = ${hasHomeSubPenalty ? matchup.home_sub_penalty : sql`home_sub_penalty`},
+          away_sub_penalty = ${hasAwaySubPenalty ? matchup.away_sub_penalty : sql`away_sub_penalty`},
           updated_at = NOW()
         WHERE fixture_id = ${fixtureId}
           AND position = ${matchup.position}
       `;
     }
 
+    // Fetch updated matchups to get fresh sub penalties
+    const updatedMatchupsRes = await sql`
+      SELECT home_sub_penalty, away_sub_penalty FROM matchups WHERE fixture_id = ${fixtureId}
+    `;
+
     // Step 4: Calculate new fixture totals
     const matchupHomeGoals = matchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
     const matchupAwayGoals = matchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
 
-    // Get sub penalties from oldMatchups (which won't change)
-    const totalHomeSubPenalty = oldMatchups.reduce((sum: number, m: any) => sum + (Number(m.home_sub_penalty) || 0), 0);
-    const totalAwaySubPenalty = oldMatchups.reduce((sum: number, m: any) => sum + (Number(m.away_sub_penalty) || 0), 0);
+    // Get sub penalties from updated matchups
+    const totalHomeSubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.home_sub_penalty) || 0), 0);
+    const totalAwaySubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.away_sub_penalty) || 0), 0);
 
     // Get fine penalty goals
     const homePenaltyGoalsVal = home_penalty_goals !== undefined ? Number(home_penalty_goals) || 0 : Number(fixture.home_penalty_goals) || 0;

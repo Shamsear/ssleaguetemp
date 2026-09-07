@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Home, Info, Pencil, Save, Search, Shield, Star, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
+import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Home, Info, Pencil, Save, Search, Shield, Star, Swords, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -1626,10 +1626,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <h1 className="text-2xl font-mono font-bold text-slate-800 uppercase tracking-wide">
                       {fixture.knockout_round ? (
                         <>
-                          {fixture.knockout_round === 'quarter_finals' && '<Swords className="w-4 h-4 text-rose-500" /> Quarter Finals'}
-                          {fixture.knockout_round === 'semi_finals' && '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Semi Finals'}
-                          {fixture.knockout_round === 'finals' && '<Crown className="w-4 h-4 text-amber-500 fill-amber-500" /> Finals'}
-                          {fixture.knockout_round === 'third_place' && '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" /> Third Place'}
+                          {fixture.knockout_round === 'quarter_finals' && <span className="inline-flex items-center gap-1.5"><Swords className="w-5 h-5 text-rose-500" /> Quarter Finals</span>}
+                          {fixture.knockout_round === 'semi_finals' && <span className="inline-flex items-center gap-1.5"><Trophy className="w-5 h-5 text-amber-500 fill-amber-500" /> Semi Finals</span>}
+                          {fixture.knockout_round === 'finals' && <span className="inline-flex items-center gap-1.5"><Crown className="w-5 h-5 text-amber-500 fill-amber-500" /> Finals</span>}
+                          {fixture.knockout_round === 'third_place' && <span className="inline-flex items-center gap-1.5"><Trophy className="w-5 h-5 text-amber-700 fill-amber-700" /> Third Place</span>}
                         </>
                       ) : (
                         `Round ${fixture.round_number}`
@@ -2237,6 +2237,45 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           />
                         </div>
                       </div>
+
+                      {/* Sub Penalty Adjuster Controls in Edit Mode */}
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                        <div className="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200/80 px-2.5 py-1 rounded-xl">
+                          <span className="text-[10px] font-bold text-orange-900 uppercase tracking-wider">
+                            Home Sub Penalty:
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={matchup.home_sub_penalty ?? 0}
+                            onChange={(e) => {
+                              const newMatchups = [...matchups];
+                              newMatchups[idx].home_sub_penalty = Math.max(0, parseInt(e.target.value) || 0);
+                              setMatchups(newMatchups);
+                            }}
+                            className="w-12 px-1 py-0.5 bg-white border border-orange-300 rounded-lg text-center font-bold text-xs text-orange-900 focus:ring-1 focus:ring-orange-500"
+                          />
+                          <span className="text-[10px] font-bold text-orange-700">goals to away</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200/80 px-2.5 py-1 rounded-xl">
+                          <span className="text-[10px] font-bold text-orange-900 uppercase tracking-wider">
+                            Away Sub Penalty:
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={matchup.away_sub_penalty ?? 0}
+                            onChange={(e) => {
+                              const newMatchups = [...matchups];
+                              newMatchups[idx].away_sub_penalty = Math.max(0, parseInt(e.target.value) || 0);
+                              setMatchups(newMatchups);
+                            }}
+                            className="w-12 px-1 py-0.5 bg-white border border-orange-300 rounded-lg text-center font-bold text-xs text-orange-900 focus:ring-1 focus:ring-orange-500"
+                          />
+                          <span className="text-[10px] font-bold text-orange-700">goals to home</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
 
@@ -2701,7 +2740,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       }}
                       className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
                     >
-                      {matchups.some(m => m.home_goals !== null) ? '<Pencil className="w-4 h-4 text-slate-500" /> Edit Results' : '✅ Enter Results'}
+                      {matchups.some(m => m.home_goals !== null) ? (
+                        <span className="flex items-center justify-center gap-1.5">
+                          <Pencil className="w-4 h-4 text-slate-300" /> Edit Results
+                        </span>
+                      ) : '✅ Enter Results'}
                     </button>
                   )}
 
@@ -2882,7 +2925,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           : 'bg-slate-800 hover:bg-slate-700 text-white'
                           }`}
                       >
-                        {swapMode ? '<XCircle className="w-4 h-4 text-rose-500" /> Cancel' : '🔄 Enable'}
+                        {swapMode ? (
+                          <span className="flex items-center justify-center gap-1.5">
+                            <XCircle className="w-4 h-4 text-rose-500" /> Cancel
+                          </span>
+                        ) : '🔄 Enable'}
                       </button>
                     </div>
                   </div>
@@ -3627,8 +3674,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 <p className="text-sm font-semibold text-yellow-900">
                                   {isHome ? selectedPlayer?.home_player_name : selectedPlayer?.away_player_name}
                                 </p>
-                                <p className="text-xs text-yellow-700 mt-1">
-                                  {goals} goals scored • {conceded} conceded • {won ? '<Check className="w-4 h-4 text-emerald-500" /> Won' : draw ? '◆ Draw' : '✗ Lost'}
+                                <p className="text-xs text-yellow-700 mt-1 flex items-center gap-1">
+                                  {goals} goals scored • {conceded} conceded • {won ? <span className="inline-flex items-center gap-1 text-emerald-600 font-bold"><Check className="w-4 h-4 text-emerald-500" /> Won</span> : draw ? '◆ Draw' : '✗ Lost'}
                                 </p>
                               </div>
                               <span className="text-2xl"><Star className="w-4 h-4 text-amber-400 fill-amber-400" /></span>
@@ -3824,10 +3871,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           if (teamStatsResponse.ok) {
                             const teamStatsData = await teamStatsResponse.json();
-                            console.log('<Check className="w-4 h-4 text-emerald-500" /> Team stats updated:', teamStatsData.updates);
+                            console.log('✅ Team stats updated:', teamStatsData.updates);
                           } else {
                             const errorData = await teamStatsResponse.json();
-                            console.error('<XCircle className="w-4 h-4 text-rose-500" /> Team stats update failed:', errorData);
+                            console.error('❌ Team stats update failed:', errorData);
                             showAlert({
                               type: 'warning',
                               title: 'Team Stats Warning',
@@ -3837,7 +3884,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           // Calculate fantasy points (auto-trigger)
                           try {
-                            console.log('<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Calculating fantasy points...');
+                            console.log('🏆 Calculating fantasy points...');
                             const fantasyResponse = await fetchWithTokenRefresh('/api/fantasy/calculate-points', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
@@ -3852,7 +3899,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const fantasyData = await fantasyResponse.json();
                               console.log('✅ Fantasy points calculated:', fantasyData);
                             } else {
-                              console.log('<Info className="w-4 h-4 text-blue-500" /> No fantasy league active or fantasy calculation skipped');
+                              console.log('ℹ️ No fantasy league active or fantasy calculation skipped');
                             }
                           } catch (fantasyError) {
                             console.error('Fantasy points calculation error (non-critical):', fantasyError);
@@ -3884,7 +3931,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const newsData = await newsResponse.json();
                               console.log('✅ Match result news generated:', newsData);
                             } else {
-                              console.log('<Info className="w-4 h-4 text-blue-500" /> News generation skipped or failed');
+                              console.log('ℹ️ News generation skipped or failed');
                             }
                           } catch (newsError) {
                             console.error('News generation error (non-critical):', newsError);
@@ -3893,7 +3940,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           // Record player participation from lineups (auto-trigger)
                           try {
-                            console.log('<ClipboardList className="w-4 h-4 text-slate-500" /> Recording player participation...');
+                            console.log('📋 Recording player participation...');
                             const participationResponse = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/record-participation`, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
@@ -3903,7 +3950,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const participationData = await participationResponse.json();
                               console.log('✅ Player participation recorded:', participationData.message);
                             } else {
-                              console.log('<Info className="w-4 h-4 text-blue-500" /> Player participation recording skipped');
+                              console.log('ℹ️ Player participation recording skipped');
                             }
                           } catch (participationError) {
                             console.error('Participation recording error (non-critical):', participationError);
@@ -3913,7 +3960,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           showAlert({
                             type: 'success',
                             title: 'Success!',
-                            message: '<Check className="w-4 h-4 text-emerald-500" /> Results submitted successfully!\n\nFixture marked as COMPLETED.\nPlayer and team stats have been updated.'
+                            message: '✅ Results submitted successfully!\n\nFixture marked as COMPLETED.\nPlayer and team stats have been updated.'
                           });
 
                           setIsResultMode(false);
@@ -3947,7 +3994,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           showAlert({
                             type: 'error',
                             title: 'Incomplete Results',
-                            message: '<XCircle className="w-4 h-4 text-rose-500" /> Please enter goals for all matches before saving as draft.'
+                            message: '⚠️ Please enter goals for all matches before saving as draft.'
                           });
                           return;
                         }
@@ -4011,7 +4058,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       disabled={isSaving}
                       className="flex-1 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
                     >
-                      {isSaving ? 'Saving...' : '<Save className="w-4 h-4 text-slate-500" /> Save as Draft'}
+                      {isSaving ? 'Saving...' : (
+                        <span className="flex items-center justify-center gap-1.5">
+                          <Save className="w-4 h-4 text-blue-600" /> Save as Draft
+                        </span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -4590,12 +4641,37 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </div>
               {subNewPlayerId && (
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]"><AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Sub Penalty</span>
-                    <span className="text-sm font-black text-orange-600 bg-white border border-orange-200 px-2 py-0.5 rounded-lg">+{subPenaltyAmount} Goals</span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]">
+                      <AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Extra Goals to Opponent
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSubPenaltyAmount(Math.max(0, subPenaltyAmount - 1))}
+                        className="w-7 h-7 bg-white border border-orange-300 text-orange-900 rounded-lg font-extrabold hover:bg-orange-100 transition-all flex items-center justify-center text-sm shadow-2xs cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        value={subPenaltyAmount}
+                        onChange={(e) => setSubPenaltyAmount(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-12 px-1 py-1 bg-white border border-orange-300 rounded-lg text-center font-black text-sm text-orange-900 focus:ring-2 focus:ring-orange-500/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSubPenaltyAmount(subPenaltyAmount + 1)}
+                        className="w-7 h-7 bg-white border border-orange-300 text-orange-900 rounded-lg font-extrabold hover:bg-orange-100 transition-all flex items-center justify-center text-sm shadow-2xs cursor-pointer"
+                      >
+                        +
+                      </button>
+                      <span className="text-[10px] font-bold text-orange-700 ml-1">Goals</span>
+                    </div>
                   </div>
                   <p className="text-[9px] text-orange-500 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
-                    Penalty: +2 goals base +1 for each level up if subbing a lower priority player for an upper priority player.
+                    You can edit/decrease this extra goals penalty (e.g. 0, 1, 2, etc.).
                   </p>
                 </div>
               )}

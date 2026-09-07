@@ -309,6 +309,10 @@ export async function GET(request: NextRequest) {
                 awarded_at: b.awarded_at
             }));
 
+            const grandTotalActive = Array.from(playerMap.values()).reduce((sum, p) => sum + (p.total_points || 0), 0);
+            const grandTotalPassive = roundTotals.reduce((sum, r) => sum + (r.passive_points || 0), 0);
+            const grandTotal = grandTotalActive + grandTotalPassive;
+
             return {
                 team_id: team.team_id,
                 team_name: team.team_name,
@@ -324,9 +328,9 @@ export async function GET(request: NextRequest) {
                 passive_breakdown: passiveByTournamentRound,
                 round_totals: roundTotals,
                 admin_bonuses: teamAdminBonuses,
-                grand_total_active: team.player_points || 0,
-                grand_total_passive: team.passive_points || 0,
-                grand_total: team.total_points || 0,
+                grand_total_active: grandTotalActive,
+                grand_total_passive: grandTotalPassive,
+                grand_total: grandTotal,
             };
         });
 
