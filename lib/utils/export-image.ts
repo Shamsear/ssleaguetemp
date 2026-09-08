@@ -41,7 +41,7 @@ async function forceDecodeImage(img: HTMLImageElement): Promise<void> {
         const onDone = () => resolve();
         img.addEventListener('load', onDone, { once: true });
         img.addEventListener('error', onDone, { once: true });
-        setTimeout(onDone, 300);
+        setTimeout(onDone, 500);
       });
     }
   } catch {
@@ -50,141 +50,163 @@ async function forceDecodeImage(img: HTMLImageElement): Promise<void> {
 }
 
 /**
- * Preloads all <img> tags inside a DOM node and converts images to base64 Data URLs.
- * Uses /api/image-proxy server-side fetch to bypass CORS and forces GPU decoding for mobile compatibility.
+ * Fetches an image src and returns a Base64 data URL. Tries proxy first, then direct, then canvas.
  */
-export async function inlineContainerImages(container: HTMLElement): Promise<void> {
-  const images = Array.from(container.querySelectorAll('img'));
-  
-  // Wait for any images currently loading to finish or timeout
-  await Promise.all(
-    images.map(async (img) => {
-      if (!img.complete && img.src && !img.src.startsWith('data:')) {
-        await new Promise<void>((resolve) => {
-          const onDone = () => resolve();
-          img.addEventListener('load', onDone, { once: true });
-          img.addEventListener('error', onDone, { once: true });
-          setTimeout(onDone, 1000);
-        });
+async function srcToDataUrl(src: string, liveImg?: HTMLImageElement): Promise<string | null> {
+  if (!src) return null;
+  if (src.startsWith('data:')) return src;
+
+  // Proxy fetch (bypasses CORS — works on both mobile and desktop)
+  if (src.startsWith('http://') || src.startsWith('https://')) {
+    try {
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+      const res = await fetch(proxyUrl, { cache: 'no-store' });
+      if (res.ok) return await blobToDataUrl(await res.blob());
+    } catch { /* proxy failed */ }
+
+    // Direct CORS fetch fallback
+    try {
+      const res = await fetch(src, { mode: 'cors', cache: 'no-store' });
+      if (res.ok) return await blobToDataUrl(await res.blob());
+    } catch { /* direct failed */ }
+  }
+
+  // Relative URL
+  if (src.startsWith('/')) {
+    try {
+      const res = await fetch(src, { cache: 'no-store' });
+      if (res.ok) return await blobToDataUrl(await res.blob());
+    } catch { /* relative failed */ }
+  }
+
+  // Canvas fallback: only works if the live img is already loaded (same-origin or CORS-ok)
+  if (liveImg && liveImg.naturalWidth && liveImg.naturalHeight) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = liveImg.naturalWidth;
+      canvas.height = liveImg.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(liveImg, 0, 0);
+        return canvas.toDataURL('image/png');
       }
-    })
-  );
+    } catch { /* canvas tainted */ }
+  }
 
-  await Promise.all(
-    images.map(async (img) => {
-      const src = img.src;
-      if (!src) return;
-
-      let targetDataUrl: string | null = null;
-
-      if (src.startsWith('data:')) {
-        targetDataUrl = src;
-      } else if (src.startsWith('http://') || src.startsWith('https://')) {
-        // 1. Try proxy fetch via /api/image-proxy for http/https URLs
-        try {
-          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
-          const response = await fetch(proxyUrl);
-          if (response.ok) {
-            const blob = await response.blob();
-            targetDataUrl = await blobToDataUrl(blob);
-          }
-        } catch (err) {
-          console.warn('Proxy fetch failed for image:', src, err);
-        }
-
-        // 2. Direct fetch fallback if proxy failed
-        if (!targetDataUrl) {
-          try {
-            const response = await fetch(src, { mode: 'cors' });
-            if (response.ok) {
-              const blob = await response.blob();
-              targetDataUrl = await blobToDataUrl(blob);
-            }
-          } catch {
-            // Direct fetch failed
-          }
-        }
-      } else if (src.startsWith('/')) {
-        // Relative origin URL
-        try {
-          const response = await fetch(src);
-          if (response.ok) {
-            const blob = await response.blob();
-            targetDataUrl = await blobToDataUrl(blob);
-          }
-        } catch {
-          // Relative fetch failed
-        }
-      }
-
-      // 3. Fallback: Canvas conversion if image is loaded in DOM
-      if (!targetDataUrl && img.naturalWidth && img.naturalHeight) {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            targetDataUrl = canvas.toDataURL('image/png');
-          }
-        } catch (err) {
-          console.warn('Canvas conversion failed for image:', src, err);
-        }
-      }
-
-      if (targetDataUrl && targetDataUrl.length > 100) {
-        img.src = targetDataUrl;
-        await forceDecodeImage(img);
-      }
-    })
-  );
-
-  // Extra 150ms buffer for mobile Safari/Chrome GPU rendering pass
-  await new Promise((resolve) => setTimeout(resolve, 150));
+  return null;
 }
 
 /**
- * Generates a PNG data URL from a DOM container cleanly with full height/width calculation.
+ * Wait two animation frames to guarantee the browser has composited the latest paint.
+ */
+function waitForPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
+/**
+ * Generates a PNG data URL from a DOM container.
+ *
+ * Strategy:
+ * 1. Wait for live images to load.
+ * 2. Measure live container dimensions.
+ * 3. Deep-clone into a hidden off-screen wrapper.
+ * 4. Inline ALL images in the clone as data: URLs (via proxy → direct → canvas).
+ * 5. Run html-to-image on the clone — it never sees an external URL.
+ * 6. Remove the clone and return the PNG.
  */
 export async function generateContainerPng(container: HTMLElement): Promise<string> {
-  await inlineContainerImages(container);
-  
-  // Calculate explicit full width and height to prevent viewport clipping
+  // Step 1 — wait for any currently loading images in the live element
+  const liveImages = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
+  await Promise.all(
+    liveImages.map((img) =>
+      img.complete
+        ? Promise.resolve()
+        : new Promise<void>((resolve) => {
+            img.addEventListener('load', () => resolve(), { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+            setTimeout(resolve, 1500);
+          })
+    )
+  );
+
+  // Step 2 — measure before cloning (clone has no layout yet)
   const targetWidth = container.scrollWidth || container.offsetWidth || 1200;
   const targetHeight = container.scrollHeight || container.offsetHeight || 800;
 
-  const options = {
-    quality: 0.95,
-    pixelRatio: 1.5,
-    width: targetWidth,
-    height: targetHeight,
-    backgroundColor: '#ffffff',
-    cacheBust: false,
-    fontEmbedCSS: '',
-    skipFontFace: true,
-    filter: (node: HTMLElement) => {
-      if (node.tagName === 'SCRIPT' || node.tagName === 'NOSCRIPT' || node.tagName === 'IFRAME') {
-        return false;
-      }
-      return true;
-    }
-  };
+  // Step 3 — clone into an off-screen wrapper with a fixed pixel width
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = [
+    'position:fixed',
+    'left:-99999px',
+    'top:0',
+    `width:${targetWidth}px`,
+    'height:auto',
+    'overflow:visible',
+    'pointer-events:none',
+    'z-index:-1',
+  ].join(';');
+  const clone = container.cloneNode(true) as HTMLElement;
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
 
   try {
-    return await toPng(container, options);
-  } catch (err) {
-    console.warn('Initial toPng failed, trying secondary fallback options...', err);
-    return await toPng(container, {
-      ...options,
-      pixelRatio: 1.0,
-      cacheBust: true,
-    });
+    // Step 4 — inline images in the clone
+    const cloneImages = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
+    await Promise.all(
+      cloneImages.map(async (cloneImg, i) => {
+        const originalSrc = cloneImg.getAttribute('src') || '';
+        if (!originalSrc || originalSrc.startsWith('data:')) return;
+
+        // Use the corresponding live image for canvas fallback
+        const liveImg = liveImages[i];
+        const dataUrl = await srcToDataUrl(originalSrc, liveImg);
+        if (dataUrl && dataUrl.length > 100) {
+          cloneImg.setAttribute('src', dataUrl);
+          cloneImg.src = dataUrl;
+          await forceDecodeImage(cloneImg);
+        }
+      })
+    );
+
+    // Step 5 — flush paint pass so browser composites the decoded images
+    await waitForPaint();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await waitForPaint();
+
+    // Step 6 — measure clone's true rendered dimensions
+    const cloneWidth = clone.scrollWidth || clone.offsetWidth || targetWidth;
+    const cloneHeight = clone.scrollHeight || clone.offsetHeight || targetHeight;
+
+    const options = {
+      quality: 0.95,
+      pixelRatio: 2,
+      width: cloneWidth,
+      height: cloneHeight,
+      backgroundColor: '#ffffff',
+      cacheBust: false,
+      fontEmbedCSS: '',
+      skipFontFace: true,
+      filter: (node: HTMLElement) => {
+        const tag = (node as Element).tagName;
+        return tag !== 'SCRIPT' && tag !== 'NOSCRIPT' && tag !== 'IFRAME';
+      },
+    };
+
+    try {
+      return await toPng(clone, options);
+    } catch (err) {
+      console.warn('toPng pass 1 failed, retrying at pixelRatio 1...', err);
+      return await toPng(clone, { ...options, pixelRatio: 1, cacheBust: true });
+    }
+  } finally {
+    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
   }
 }
 
 /**
- * Downloads a PNG file directly to the user's computer or device safely without page refresh.
+ * Downloads a PNG file directly to the user's device without causing page refresh.
  */
 export function downloadPng(dataUrl: string, filename: string): void {
   try {
@@ -206,12 +228,8 @@ export function downloadPng(dataUrl: string, filename: string): void {
     link.click();
 
     setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-      if (isCreatedBlobUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      if (document.body.contains(link)) document.body.removeChild(link);
+      if (isCreatedBlobUrl) URL.revokeObjectURL(objectUrl);
     }, 4000);
   } catch (err) {
     console.error('Download PNG failed:', err);
@@ -227,16 +245,12 @@ export async function shareOrDownloadPng(dataUrl: string, filename: string, titl
     const file = new File([blob], filename, { type: 'image/png' });
 
     if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title,
-        files: [file],
-      });
+      await navigator.share({ title, files: [file] });
       return;
     }
   } catch (shareErr) {
     console.warn('Web Share not supported or cancelled, falling back to download:', shareErr);
   }
 
-  // Fallback to direct download
   downloadPng(dataUrl, filename);
 }
