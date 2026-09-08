@@ -36,9 +36,11 @@ export async function GET(request: NextRequest) {
         is_active,
         start_round,
         end_round,
+        COALESCE(window_type, 'all') as window_type,
         CASE
+          WHEN is_active = true THEN 'active'
+          WHEN NOW() BETWEEN opens_at AND closes_at THEN 'active'
           WHEN NOW() < opens_at THEN 'upcoming'
-          WHEN NOW() BETWEEN opens_at AND closes_at AND is_active THEN 'active'
           ELSE 'closed'
         END as status
       FROM fantasy_transfer_windows
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { league_id, window_name, opens_at, closes_at, start_round, end_round } = body;
+    const { league_id, window_name, opens_at, closes_at, start_round, end_round, window_type } = body;
 
     // Validate required fields
     if (!league_id || !window_name || !opens_at || !closes_at) {
@@ -99,30 +101,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for overlapping windows
-    const overlapping = await fantasySql`
-      SELECT window_id, window_name
-      FROM fantasy_transfer_windows
-      WHERE league_id = ${league_id}
-        AND (
-          (opens_at <= ${opens_at} AND closes_at >= ${opens_at})
-          OR (opens_at <= ${closes_at} AND closes_at >= ${closes_at})
-          OR (opens_at >= ${opens_at} AND closes_at <= ${closes_at})
-        )
-    `;
-
-    if (overlapping.length > 0) {
-      return NextResponse.json(
-        { 
-          error: `Transfer window overlaps with existing window: ${overlapping[0].window_name}`,
-          overlapping_window: overlapping[0]
-        },
-        { status: 400 }
-      );
-    }
-
     // Create the transfer window
     const windowId = `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const validWindowType = ['all', 'release', 'draft', 'swap'].includes(window_type) ? window_type : 'all';
     
     await fantasySql`
       INSERT INTO fantasy_transfer_windows (
@@ -130,13 +111,15 @@ export async function POST(request: NextRequest) {
         opens_at, closes_at,
         start_time, end_time,
         is_active,
-        start_round, end_round
+        start_round, end_round,
+        window_type
       ) VALUES (
         ${windowId}, ${league_id}, ${window_name},
         ${opens_at}, ${closes_at},
         ${opens_at}, ${closes_at},
         false,
-        ${start_round || null}, ${end_round || null}
+        ${start_round || null}, ${end_round || null},
+        ${validWindowType}
       )
     `;
 

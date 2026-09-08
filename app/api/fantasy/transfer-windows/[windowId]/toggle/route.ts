@@ -47,25 +47,6 @@ export async function POST(
 
     // If opening the window, close all other windows in the same league
     if (newStatus) {
-      // Check if window is within valid time range
-      const now = new Date();
-      const opensAt = new Date(window.opens_at);
-      const closesAt = new Date(window.closes_at);
-
-      if (now < opensAt) {
-        return NextResponse.json(
-          { error: 'Cannot open window before its start time' },
-          { status: 400 }
-        );
-      }
-
-      if (now > closesAt) {
-        return NextResponse.json(
-          { error: 'Cannot open window after its end time' },
-          { status: 400 }
-        );
-      }
-
       // Close all other windows in the league
       await fantasySql`
         UPDATE fantasy_transfer_windows
