@@ -74,20 +74,38 @@ export async function GET(
       );
     }
 
-    // Get passive points breakdown by round (checking both team_id and real_team_id)
-    const bonusBreakdown = await fantasySql`
-      SELECT DISTINCT ON (fixture_id, round_number)
-        fixture_id,
-        round_number,
-        real_team_id,
-        real_team_name,
-        bonus_breakdown,
-        total_bonus,
-        calculated_at
-      FROM fantasy_team_bonus_points
-      WHERE team_id = ${teamId} OR real_team_id = ${teamId}
-      ORDER BY fixture_id, round_number, calculated_at DESC
-    `;
+    const isFantasyTeam = teamInfo.length > 0;
+
+    // Get passive points breakdown by round:
+    // If this is a fantasy team, filter strictly by team_id (its earned passive points).
+    // If it's a real tournament team, filter strictly by real_team_id (its performance bonuses).
+    const bonusBreakdown = isFantasyTeam
+      ? await fantasySql`
+          SELECT 
+            fixture_id,
+            round_number,
+            real_team_id,
+            real_team_name,
+            bonus_breakdown,
+            total_bonus,
+            calculated_at
+          FROM fantasy_team_bonus_points
+          WHERE team_id = ${teamId}
+          ORDER BY round_number ASC, calculated_at DESC
+        `
+      : await fantasySql`
+          SELECT 
+            fixture_id,
+            round_number,
+            real_team_id,
+            real_team_name,
+            bonus_breakdown,
+            total_bonus,
+            calculated_at
+          FROM fantasy_team_bonus_points
+          WHERE real_team_id = ${teamId} OR real_team_id LIKE ${teamId + '_%'}
+          ORDER BY round_number ASC, calculated_at DESC
+        `;
 
     // Get admin bonus points for this team
     console.log('🔍 [Passive Breakdown] Querying admin bonuses for:', {
