@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           0, 0, 0, 0, 0, 0,
           (NOW() AT TIME ZONE 'UTC')::timestamp, (NOW() AT TIME ZONE 'UTC')::timestamp
         )
-        ON CONFLICT (id) DO NOTHING
+        ON CONFLICT (player_id, season_id) DO NOTHING
         RETURNING id
       `;
       
@@ -304,10 +304,6 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: dbError.message || 'Registration failed due to database error',
-          code: dbError.code,
-          detail: dbError.detail,
-          hint: dbError.hint,
-          stack: dbError.stack,
         },
         { status: 500 }
       );
