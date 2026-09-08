@@ -155,20 +155,19 @@ export default function CommitteeAllPlayersPointsPage() {
   const toggleExpand = async (playerId: string) => {
     if (expandedPlayer === playerId) { setExpandedPlayer(null); return; }
     setExpandedPlayer(playerId);
-    if (breakdownCache[playerId]) return; // already loaded
+    if (breakdownCache[playerId] && breakdownCache[playerId].length > 0) return;
     setBreakdownLoading(playerId);
     try {
+      const effLeagueId = selectedLeague || 'SSPSLFLS18';
       const res = await fetchWithTokenRefresh(
-        `/api/fantasy/players/${playerId}/breakdown?league_id=${selectedLeague}`
+        `/api/fantasy/players/${playerId}/breakdown?league_id=${effLeagueId}`
       );
       if (res.ok) {
         const data = await res.json();
         setBreakdownCache(prev => ({ ...prev, [playerId]: data.matches || [] }));
-      } else {
-        setBreakdownCache(prev => ({ ...prev, [playerId]: [] }));
       }
-    } catch {
-      setBreakdownCache(prev => ({ ...prev, [playerId]: [] }));
+    } catch (err) {
+      console.error('Error fetching player breakdown:', err);
     } finally {
       setBreakdownLoading(null);
     }

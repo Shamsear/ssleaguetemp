@@ -22,17 +22,12 @@ export async function GET(
       );
     }
 
-    if (!league_id) {
-      return NextResponse.json(
-        { error: 'league_id query parameter is required' },
-        { status: 400 }
-      );
-    }
+    const targetLeagueId = league_id || 'SSPSLFLS18';
 
     // Get fantasy league to get season_id
     const leagues = await fantasySql`
       SELECT * FROM fantasy_leagues
-      WHERE league_id = ${league_id} OR league_id = 'SSPSLFLS18'
+      WHERE league_id = ${targetLeagueId} OR league_id = 'SSPSLFLS18'
       LIMIT 1
     `;
     const targetSeasonId = leagues[0]?.season_id || 'SSPSLS18';
@@ -79,7 +74,7 @@ export async function GET(
         base_points,
         points_breakdown
       FROM fantasy_player_points
-      WHERE (league_id = ${league_id} OR league_id = 'SSPSLFLS18')
+      WHERE (league_id = ${targetLeagueId} OR league_id = 'SSPSLFLS18')
         AND real_player_id = ${playerId}
     `;
 
