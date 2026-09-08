@@ -420,6 +420,13 @@ export default function CommitteeFixtureDetailPage() {
     );
   }
 
+  const displayMotmName = fixture?.motm_player_name || motmPlayerName || (
+    (fixture?.motm_player_id || motmPlayerId) ? matchups.flatMap(m => [
+      { id: m.home_player_id, name: m.home_player_name },
+      { id: m.away_player_id, name: m.away_player_name }
+    ]).find(p => p.id === (fixture?.motm_player_id || motmPlayerId))?.name : null
+  );
+
   return (
     <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 px-4 sm:px-6">
@@ -551,14 +558,42 @@ export default function CommitteeFixtureDetailPage() {
               </div>
             </div>
 
-            {/* MOTM Badge in View Mode */}
-            {fixture.motm_player_name && !isEditMode && (
-              <div className="mt-2 mb-4 flex items-center justify-center">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-250 rounded-xl text-xs font-extrabold text-amber-800 shadow-2xs">
-                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  Man of the Match: {fixture.motm_player_name}
+            {/* MOTM Banner */}
+            {displayMotmName ? (
+              <div className="mt-4 mb-4 p-3.5 bg-gradient-to-r from-amber-500/15 via-yellow-400/25 to-amber-500/15 border-2 border-amber-400/80 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black shadow-sm shrink-0">
+                    <Star className="w-5 h-5 fill-white text-white" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono font-black uppercase text-amber-800 tracking-wider block">⭐ MAN OF THE MATCH</span>
+                    <span className="text-base font-black text-slate-900">{displayMotmName}</span>
+                  </div>
                 </div>
+                {!isEditMode && (
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit MOTM
+                  </button>
+                )}
               </div>
+            ) : (
+              !isEditMode && fixture.status === 'completed' && (
+                <div className="mt-4 mb-4 p-3 bg-slate-50 border border-dashed border-amber-300 rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-800">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+                    <span>No Man of the Match assigned for this fixture.</span>
+                  </div>
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold font-mono rounded-xl transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1"
+                  >
+                    <Star className="w-3.5 h-3.5 fill-white" /> Assign MOTM
+                  </button>
+                </div>
+              )
             )}
 
             {fixture.match_status_reason && (
@@ -721,47 +756,65 @@ export default function CommitteeFixtureDetailPage() {
             )}
 
             <div className="space-y-3">
-              {matchups.map((matchup) => (
-                <div key={matchup.id} className="bg-slate-50/60 border border-slate-100 rounded-2xl p-4 hover:bg-slate-50 transition-all">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-800 text-sm truncate">{matchup.home_player_name}</p>
+              {matchups.map((matchup) => {
+                const isHomeMotm = (fixture?.motm_player_id && matchup.home_player_id === fixture.motm_player_id) || (displayMotmName && matchup.home_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase());
+                const isAwayMotm = (fixture?.motm_player_id && matchup.away_player_id === fixture.motm_player_id) || (displayMotmName && matchup.away_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase());
+
+                return (
+                  <div key={matchup.id} className={`rounded-2xl p-4 transition-all ${
+                    isHomeMotm || isAwayMotm 
+                      ? 'bg-amber-50/40 border-2 border-amber-300 shadow-xs' 
+                      : 'bg-slate-50/60 border border-slate-100 hover:bg-slate-50'
+                  }`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                        <p className="font-bold text-slate-800 text-sm truncate">{matchup.home_player_name}</p>
+                        {isHomeMotm && (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
+                            <Star className="w-3 h-3 fill-white" /> MOTM
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mx-2 shrink-0">
+                        {isEditMode ? (
+                          <>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editedScores[matchup.position]?.home ?? 0}
+                              onChange={(e) => setEditedScores(prev => ({
+                                ...prev,
+                                [matchup.position]: { ...prev[matchup.position], home: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            />
+                            <span className="text-slate-400 font-bold">-</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editedScores[matchup.position]?.away ?? 0}
+                              onChange={(e) => setEditedScores(prev => ({
+                                ...prev,
+                                [matchup.position]: { ...prev[matchup.position], away: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            />
+                          </>
+                        ) : (
+                          <span className="px-4 py-1.5 bg-white border border-slate-150 rounded-xl text-sm font-black text-slate-800 font-mono shadow-sm">
+                            {matchup.home_goals ?? '-'} : {matchup.away_goals ?? '-'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 text-right min-w-0 flex items-center justify-end gap-1.5">
+                        {isAwayMotm && (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
+                            <Star className="w-3 h-3 fill-white" /> MOTM
+                          </span>
+                        )}
+                        <p className="font-bold text-slate-800 text-sm truncate">{matchup.away_player_name}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 mx-2 shrink-0">
-                      {isEditMode ? (
-                        <>
-                          <input
-                            type="number"
-                            min="0"
-                            value={editedScores[matchup.position]?.home ?? 0}
-                            onChange={(e) => setEditedScores(prev => ({
-                              ...prev,
-                              [matchup.position]: { ...prev[matchup.position], home: parseInt(e.target.value) || 0 }
-                            }))}
-                            className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                          />
-                          <span className="text-slate-400 font-bold">-</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={editedScores[matchup.position]?.away ?? 0}
-                            onChange={(e) => setEditedScores(prev => ({
-                              ...prev,
-                              [matchup.position]: { ...prev[matchup.position], away: parseInt(e.target.value) || 0 }
-                            }))}
-                            className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                          />
-                        </>
-                      ) : (
-                        <span className="px-4 py-1.5 bg-white border border-slate-150 rounded-xl text-sm font-black text-slate-800 font-mono shadow-sm">
-                          {matchup.home_goals ?? '-'} : {matchup.away_goals ?? '-'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 text-right min-w-0">
-                      <p className="font-bold text-slate-800 text-sm truncate">{matchup.away_player_name}</p>
-                    </div>
-                  </div>
 
                   {/* Sub Penalty Controls in Edit Mode */}
                   {isEditMode && (
@@ -951,9 +1004,20 @@ export default function CommitteeFixtureDetailPage() {
                 <span className="text-slate-400">Fixture ID</span>
                 <span className="font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200/50 shadow-2xs truncate max-w-[180px]" title={fixture.id}>{fixture.id}</span>
               </div>
-              <div className="flex justify-between items-center py-1.5">
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
                 <span className="text-slate-400">Matchups Count</span>
                 <span className="font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200/50 shadow-2xs">{matchups.length}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-slate-400">Man of Match</span>
+                <span className={`font-bold px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1 shadow-2xs ${
+                  displayMotmName 
+                    ? 'bg-amber-50 text-amber-900 border-amber-300' 
+                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                }`}>
+                  <Star className={`w-3.5 h-3.5 ${displayMotmName ? 'text-amber-500 fill-amber-500' : 'text-slate-400'}`} />
+                  {displayMotmName || 'None'}
+                </span>
               </div>
             </div>
           </div>
