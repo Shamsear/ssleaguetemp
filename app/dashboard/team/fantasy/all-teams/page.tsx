@@ -536,7 +536,7 @@ function PassiveBreakdown({ team, show, data, isLoading, onToggle }: {
                           </span>
                           <p className="text-slate-800 truncate">{r.real_team_name}</p>
                         </div>
-                        <span className="text-xs font-black text-emerald-600 shrink-0">+{r.total_bonus} pts</span>
+                        <span className="text-xs font-black text-emerald-600 shrink-0">{r.total_bonus > 0 ? '+' : ''}{r.total_bonus} pts</span>
                       </div>
                     ))}
                   </div>

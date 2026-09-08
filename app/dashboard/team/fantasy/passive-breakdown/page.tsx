@@ -320,7 +320,7 @@ export default function PassiveBreakdownPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold text-green-600">+{round.total_bonus}</p>
+                      <p className="text-3xl font-bold text-green-600">{round.total_bonus > 0 ? '+' : ''}{round.total_bonus}</p>
                       <p className="text-xs text-gray-500">bonus pts</p>
                     </div>
                   </div>
@@ -332,7 +332,7 @@ export default function PassiveBreakdownPage() {
                         {bonusTypes.map((type) => (
                           <div key={type} className="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-green-200 text-sm">
                             <span className="text-gray-700 capitalize">{type.replace(/_/g, ' ')}</span>
-                            <span className="font-bold text-green-600">+{breakdown[type]}</span>
+                            <span className="font-bold text-green-600">{breakdown[type] > 0 ? '+' : ''}{breakdown[type]}</span>
                           </div>
                         ))}
                       </div>

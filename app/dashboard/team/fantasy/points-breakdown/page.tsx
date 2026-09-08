@@ -255,7 +255,7 @@ export default function TeamPointsBreakdownPage() {
                                                                             <span className="text-xs text-gray-500">({match.home_away})</span>
                                                                         </div>
                                                                         <span className="text-lg font-bold text-blue-600">
-                                                                            +{match.bonus_points} pts
+                                                                            {match.bonus_points > 0 ? '+' : ''}{match.bonus_points} pts
                                                                         </span>
                                                                     </div>
                                                                     {Object.keys(match.breakdown).length > 0 && (
