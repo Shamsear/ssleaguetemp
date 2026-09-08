@@ -5,11 +5,30 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { AlertCircle, Calendar, Check, Search, Star, Users, X, XCircle, Shield, ArrowLeft, Trash2, Send } from 'lucide-react';
+import { AlertCircle, Calendar, Check, Search, Star, Users, X, XCircle, Shield, ArrowLeft, Trash2, Send, Clock, Timer } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
 import AuthGuard from '@/components/auth/AuthGuard';
+
+const formatToIST = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  try {
+    const str = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+    const zStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+    return new Date(zStr).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }) + ' IST';
+  } catch (e) {
+    return new Date(dateStr).toLocaleString() + ' IST';
+  }
+};
 
 interface Player {
   squad_id?: string;
@@ -65,6 +84,7 @@ export default function TeamTransfersPage() {
   const [teamInfo, setTeamInfo] = useState<TeamInfo | null>(null);
   const [transferWindow, setTransferWindow] = useState<TransferWindow | null>(null);
   const [transfersUsed, setTransfersUsed] = useState(0);
+  const [countdown, setCountdown] = useState<string>('');
   
   // Selection states for pending submit
   const [selectedSquadIds, setSelectedSquadIds] = useState<string[]>([]);
@@ -76,6 +96,40 @@ export default function TeamTransfersPage() {
   const [leagueId, setLeagueId] = useState<string>('');
 
   const { alertState, showAlert, closeAlert } = useModal();
+
+  useEffect(() => {
+    if (!transferWindow?.closes_at) return;
+
+    const updateTimer = () => {
+      const closesStr = transferWindow.closes_at;
+      const str = closesStr.includes('T') ? closesStr : closesStr.replace(' ', 'T');
+      const zStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+      const closeTime = new Date(zStr).getTime();
+      const diff = closeTime - Date.now();
+
+      if (diff <= 0) {
+        setCountdown('Deadline Passed');
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      if (days > 0) {
+        setCountdown(`${days}d ${hours}h ${minutes}m`);
+      } else if (hours > 0) {
+        setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setCountdown(`${minutes}m ${seconds}s`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [transferWindow?.closes_at]);
 
   const loadTransferData = useCallback(async () => {
     if (!user) return;
@@ -393,8 +447,8 @@ export default function TeamTransfersPage() {
         </div>
 
         {/* Top Banner (Window Status & Stats Grid) */}
-        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
+        <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] uppercase bg-amber-500 border border-amber-600 text-slate-900 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
@@ -410,14 +464,47 @@ export default function TeamTransfersPage() {
 
             <Link
               href="/dashboard/team/fantasy/captain-selection"
-              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-900 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-900 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               <Star className="w-4 h-4" /> Captain & VC Window →
             </Link>
           </div>
 
+          {/* Start Time & Deadline Badge Bar */}
+          <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-bold">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[9px] text-slate-400 uppercase font-black">Window Start Time</p>
+                <p className="text-xs font-black text-slate-850">{formatToIST(transferWindow.opens_at)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[9px] text-rose-500 uppercase font-black">Deadline (Closes At)</p>
+                <p className="text-xs font-black text-rose-900">{formatToIST(transferWindow.closes_at)}</p>
+              </div>
+            </div>
+
+            {countdown && (
+              <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-emerald-200 text-emerald-800 shadow-sm">
+                <Timer className="w-4 h-4 text-emerald-600 animate-pulse shrink-0" />
+                <div>
+                  <p className="text-[8px] text-slate-400 uppercase font-black">Time Remaining</p>
+                  <p className="text-xs font-black font-mono text-emerald-700">{countdown}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Stats Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
               <p className="text-[9px] text-slate-400 uppercase font-black">Budget</p>
               <p className="text-lg font-black mt-1 text-emerald-650">
@@ -434,6 +521,12 @@ export default function TeamTransfersPage() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
               <p className="text-[9px] text-slate-400 uppercase font-black">Releases Left</p>
               <p className="text-lg font-black text-amber-650 mt-1">{transfersRemaining}</p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+              <p className="text-[9px] text-slate-400 uppercase font-black">Deadline</p>
+              <p className="text-xs font-black text-rose-600 mt-1 truncate">{formatToIST(transferWindow.closes_at)}</p>
+              <p className="text-[9px] text-emerald-600 font-black uppercase mt-0.5">⏱ {countdown || 'Active'}</p>
             </div>
           </div>
         </div>
