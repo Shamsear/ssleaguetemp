@@ -497,10 +497,10 @@ function PassiveBreakdown({ team, show, data, isLoading, onToggle }: {
             <div className="space-y-3">
               {/* Stats grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <MiniCard label="Total Passive" value={data.stats.total_passive_points} color="text-emerald-600" />
-                <MiniCard label="Team Bonuses" value={data.rounds.reduce((s: number, r: any) => s + (r.total_bonus || 0), 0)} />
-                <MiniCard label="Admin Adj." value={data.admin_bonuses?.reduce((s: number, b: any) => s + (b.points || 0), 0) || 0} />
-                <MiniCard label="Avg/Round" value={data.stats.average_per_round} />
+                <MiniCard label="Total Passive" value={Number(data.stats?.total_passive_points || 0)} color="text-emerald-600" />
+                <MiniCard label="Team Bonuses" value={data.stats?.total_match_bonus !== undefined ? Number(data.stats.total_match_bonus) : data.rounds.reduce((s: number, r: any) => s + (Number(r.total_bonus) || 0), 0)} />
+                <MiniCard label="Admin Adj." value={data.stats?.total_admin_bonus !== undefined ? Number(data.stats.total_admin_bonus) : (data.admin_bonuses?.reduce((s: number, b: any) => s + (Number(b.points) || 0), 0) || 0)} />
+                <MiniCard label="Avg/Round" value={data.stats?.average_per_round || '0.0'} />
               </div>
 
               {/* Admin bonuses */}
@@ -803,7 +803,7 @@ function MatchCard({ match, scoringRules }: { match: any; scoringRules: any }) {
 
 /* ── Small helper components ───────────────────────────────────────────────── */
 
-function MiniCard({ label, value, color = 'text-slate-800' }: { label: string; value: number; color?: string }) {
+function MiniCard({ label, value, color = 'text-slate-800' }: { label: string; value: number | string; color?: string }) {
   return (
     <div className="bg-white border border-slate-200 p-2 rounded-xl text-center">
       <p className="text-[8px] text-slate-400 uppercase font-bold">{label}</p>
