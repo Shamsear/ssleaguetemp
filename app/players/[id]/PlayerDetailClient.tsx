@@ -137,19 +137,18 @@ export default function PlayerDetailPage() {
         }
       }
 
-      // Fetch from Firebase if no cache, expired, or bypassed
-      const seasonsRef = (await (await fetch('/api/seasons')).json()).data;
-      const seasonsSnapshot = await getDocs(seasonsRef);
-      const seasonsData = seasonsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...(doc.data() || {})
-      }));
+      // Fetch from API
+      const res = await fetch('/api/seasons');
+      if (!res.ok) throw new Error('Failed to fetch seasons');
+      const data = await res.json();
+      const seasonsData = data.seasons || data.data || [];
 
       // Cache the results
-      localStorage.setItem('seasons_cache', JSON.stringify(seasonsData));
-      localStorage.setItem('seasons_cache_time', Date.now().toString());
-
-      setFirebaseSeasons(seasonsData);
+      if (Array.isArray(seasonsData) && seasonsData.length > 0) {
+        localStorage.setItem('seasons_cache', JSON.stringify(seasonsData));
+        localStorage.setItem('seasons_cache_time', Date.now().toString());
+        setFirebaseSeasons(seasonsData);
+      }
     } catch (error: any) {
       console.error('Error fetching seasons:', error);
     }

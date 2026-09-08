@@ -12,8 +12,26 @@ async function getPlayerData(id: string) {
       .limit(1)
       .get();
 
-    if (playersSnapshot.empty) return null;
-    return playersSnapshot.docs[0].data();
+    if (!playersSnapshot.empty) return playersSnapshot.docs[0].data();
+
+    // Fallback 1: document ID lookup
+    const docSnapshot = await adminDb.collection('realplayers').doc(id).get();
+    if (docSnapshot.exists) return docSnapshot.data();
+
+    // Fallback 2: Neon realplayerstats lookup
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
+    const sql = getTournamentDb();
+    const rows = await sql`
+      SELECT player_id, player_name as name, category
+      FROM realplayerstats
+      WHERE player_id = ${id}
+      LIMIT 1
+    `;
+    if (rows.length > 0) {
+      return { player_id: rows[0].player_id, name: rows[0].name, category: rows[0].category };
+    }
+
+    return null;
   } catch (error: any) {
     console.error('Error fetching player data for metadata:', error);
     return null;
@@ -35,9 +53,10 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${player.name} - Player Profile`;
-  const description = `${player.name} (${player.category || 'Player'}) profile on SS League. View player stats, ratings, match performance, and awards.`;
+  const title = `${player.name || 'Player'} - Player Profile`;
+  const description = `${player.name || 'Player'} (${player.category || 'Player'}) profile on SS League. View player stats, ratings, match performance, and awards.`;
   const imageUrl = player.photo_url || '/logo.png';
+  const nameParts = (player.name || 'Player').split(' ');
 
   return {
     title,
@@ -50,8 +69,8 @@ export async function generateMetadata({
       description,
       images: [imageUrl],
       type: 'profile',
-      firstName: player.name.split(' ')[0],
-      lastName: player.name.split(' ').slice(1).join(' '),
+      firstName: nameParts[0],
+      lastName: nameParts.slice(1).join(' '),
     },
     twitter: {
       card: 'summary_large_image',
