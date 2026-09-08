@@ -54,7 +54,24 @@ export async function GET(request: NextRequest) {
     for (const r of releases) {
       const catName = r.is_passive_team ? 'Passive Team' : (r.category || 'Uncategorized');
       const count = parseInt(r.count || '0');
+
+      // Exact category
       eligibleCategories[catName] = (eligibleCategories[catName] || 0) + count;
+
+      if (!r.is_passive_team && catName) {
+        // Base category family (e.g. RED-1 -> RED, RED-2 -> RED, RED 1 -> RED)
+        const baseFamily = catName.replace(/[-_ ]?\d+$/i, '').trim();
+        if (baseFamily && baseFamily !== catName) {
+          eligibleCategories[baseFamily] = (eligibleCategories[baseFamily] || 0) + count;
+          
+          // Also allow sub-groups under the same base family (e.g. RED-1, RED-2)
+          eligibleCategories[`${baseFamily}-1`] = (eligibleCategories[`${baseFamily}-1`] || 0) + count;
+          eligibleCategories[`${baseFamily}-2`] = (eligibleCategories[`${baseFamily}-2`] || 0) + count;
+          eligibleCategories[`${baseFamily} 1`] = (eligibleCategories[`${baseFamily} 1`] || 0) + count;
+          eligibleCategories[`${baseFamily} 2`] = (eligibleCategories[`${baseFamily} 2`] || 0) + count;
+        }
+      }
+
       totalCount += count;
     }
 
