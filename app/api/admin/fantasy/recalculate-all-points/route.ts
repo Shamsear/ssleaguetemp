@@ -238,12 +238,15 @@ export async function POST(request: NextRequest) {
             
             const totalPoints = Math.round(basePoints * multiplier);
 
-            // Check if record already exists to prevent duplicates
+            // Check if this specific matchup already exists (per fixture + score, not just fixture)
+            // This allows multiple matchups per player per fixture (e.g. player played 2 games in same round)
             const existing = await fantasyDb`
               SELECT id FROM fantasy_player_points
               WHERE team_id = ${teamInfo.teamId}
                 AND real_player_id = ${playerId}
                 AND fixture_id = ${matchup.fixture_id}
+                AND goals_scored = ${goalsScored}
+                AND goals_conceded = ${goalsConceded}
               LIMIT 1
             `;
 

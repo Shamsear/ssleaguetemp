@@ -442,13 +442,16 @@ async function processPlayer(params: {
 
     const final_points = Math.round(total_points * multiplier);
 
-    // Delete existing fantasy_player_points record for this player/team/round to avoid duplicate records
+    // Delete ONLY the existing record for this specific matchup (by opponent)
+    // Using opponent_player_id prevents erasing other matchups the player had in the same round
     await sql`
       DELETE FROM fantasy_player_points
       WHERE league_id = ${fantasy_league_id}
         AND team_id = ${fantasy_team_id}
         AND real_player_id = ${player_id}
-        AND (round_number = ${round_number} OR fixture_id = ${fixture_id})
+        AND fixture_id = ${fixture_id}
+        AND goals_scored = ${goals_scored}
+        AND goals_conceded = ${goals_conceded}
     `;
 
     // Create fantasy_player_points record for this team
