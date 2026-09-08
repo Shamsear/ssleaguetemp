@@ -38,7 +38,11 @@ export async function DELETE(request: NextRequest) {
     const activeWindows = await fantasySql`
       SELECT * FROM fantasy_transfer_windows
       WHERE league_id = ${leagueId}
-        AND is_active = true
+        AND (
+          is_active = true
+          OR (NOW() >= opens_at AND NOW() <= closes_at)
+        )
+      ORDER BY is_active DESC, opens_at DESC
       LIMIT 1
     `;
 

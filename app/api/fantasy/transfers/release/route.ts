@@ -136,24 +136,26 @@ export async function POST(request: NextRequest) {
       const opensAt = window.opens_at ? new Date(window.opens_at) : null;
       const closesAt = window.closes_at ? new Date(window.closes_at) : null;
 
-      if (closesAt && now > closesAt) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Transfer window has closed' 
-          },
-          { status: 400 }
-        );
-      }
+      if (!window.is_active) {
+        if (closesAt && now > closesAt) {
+          return NextResponse.json(
+            { 
+              success: false,
+              error: 'Transfer window has closed' 
+            },
+            { status: 400 }
+          );
+        }
 
-      if (opensAt && now < opensAt) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Transfer window is not yet open' 
-          },
-          { status: 400 }
-        );
+        if (opensAt && now < opensAt) {
+          return NextResponse.json(
+            { 
+              success: false,
+              error: 'Transfer window is not yet open' 
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 

@@ -102,25 +102,19 @@ export async function POST(request: NextRequest) {
       // Use ON CONFLICT to detect race condition duplicates
       const insertResult = await sql`
         INSERT INTO realplayerstats (
-          id, player_id, season_id, tournament_id, player_name,
+          id, player_id, season_id, player_name,
           category,
           points,
-          matches_played, matches_won, matches_lost, matches_drawn,
-          goals_scored, goals_conceded, assists, clean_sheets, own_goals, saves, penalties_saved,
-          wins, draws, losses, motm_awards,
-          trophies,
-          used_smart_assist,
+          matches_played, goals_scored, goals_conceded,
+          wins, draws, losses, clean_sheets, assists, motm_awards,
           created_at, updated_at
         )
         VALUES (
-          ${registrationId}, ${player_id}, ${season_id}, ${tournament_id}, ${player_data?.name || ''},
+          ${registrationId}, ${player_id}, ${season_id}, ${player_data?.name || ''},
           ${player_data?.category || 'A'},
           0,
-          0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0,
-          '[]'::jsonb,
-          ${used_smart_assist || null},
+          0, 0, 0,
+          0, 0, 0, 0, 0, 0,
           (NOW() AT TIME ZONE 'UTC')::timestamp, (NOW() AT TIME ZONE 'UTC')::timestamp
         )
         ON CONFLICT (id) DO NOTHING
@@ -194,21 +188,11 @@ export async function POST(request: NextRequest) {
           INSERT INTO fantasy_players (
             real_player_id,
             league_id,
-            player_name,
-            real_team_id,
-            real_team_name,
-            position,
-            category,
             draft_price,
             is_available
           ) VALUES (
             ${player_id},
             ${league.league_id},
-            ${player_data?.name || ''},
-            '',
-            '',
-            'Unknown',
-            ${category},
             ${draftPrice},
             true
           )

@@ -68,13 +68,15 @@ export async function POST(request: NextRequest) {
     const minSquadSize = Number(league.min_squad_size || 11);
     const maxSquadSize = Number(league.max_squad_size || 15);
 
-    // Check if transfer window is open
+    // Check if transfer window is open (either explicitly is_active = true or current time within range)
     const activeWindows = await fantasySql`
       SELECT * FROM fantasy_transfer_windows
       WHERE league_id = ${leagueId}
-        AND (is_active = true OR (NOW() BETWEEN opens_at AND closes_at))
-        AND closes_at >= NOW()
-      ORDER BY opens_at DESC
+        AND (
+          is_active = true
+          OR (NOW() >= opens_at AND NOW() <= closes_at)
+        )
+      ORDER BY is_active DESC, opens_at DESC
       LIMIT 1
     `;
 
