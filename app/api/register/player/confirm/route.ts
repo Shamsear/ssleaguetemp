@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
           ${used_smart_assist || null},
           (NOW() AT TIME ZONE 'UTC')::timestamp, (NOW() AT TIME ZONE 'UTC')::timestamp
         )
-        ON CONFLICT (player_id, season_id) DO NOTHING
+        ON CONFLICT (id) DO NOTHING
         RETURNING id
       `;
       

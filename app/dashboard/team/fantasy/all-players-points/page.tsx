@@ -265,6 +265,17 @@ export default function AllPlayersPointsPage() {
     let result = [...players];
     if (filterStatus === 'available') result = result.filter(p => p.is_available);
     else if (filterStatus === 'drafted') result = result.filter(p => !p.is_available);
+
+    if (filterCategory !== 'all') {
+      const target = filterCategory.toUpperCase().replace(/[\s\-_]+/g, '');
+      result = result.filter((p) => {
+        const listLbl = getPlayerListLabel(p.real_player_id, p.category).toUpperCase().replace(/[\s\-_]+/g, '');
+        const pCat = (p.category || '').toUpperCase().replace(/[\s\-_]+/g, '');
+        if (target === 'RED' && (pCat.startsWith('RED') || listLbl.startsWith('RED'))) return true;
+        return pCat === target || listLbl === target;
+      });
+    }
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p =>
@@ -490,6 +501,32 @@ export default function AllPlayersPointsPage() {
                 Drafted ({totalDrafted})
               </button>
             </div>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 border-t border-slate-100">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 mr-1">Category:</span>
+            {[
+              { id: 'all', label: 'All Categories' },
+              { id: 'RED', label: 'RED (All)' },
+              { id: 'RED-1', label: 'RED-1' },
+              { id: 'RED-2', label: 'RED-2' },
+              { id: 'BLUE', label: 'BLUE' },
+              { id: 'WHITE', label: 'WHITE' },
+              { id: 'BLACK', label: 'BLACK' }
+            ].map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCategory(cat.id)}
+                className={`px-3 py-1 rounded-lg text-xs font-mono font-extrabold uppercase transition-all shrink-0 border ${
+                  filterCategory === cat.id
+                    ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
 
           {/* View Mode Toggle */}

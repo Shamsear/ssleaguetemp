@@ -103,6 +103,16 @@ export default function FantasyPlayersPage() {
   useEffect(() => {
     let filtered = [...players];
 
+    // Filter by category
+    if (filterCategory !== 'all') {
+      filtered = filtered.filter((p) => {
+        const pCat = (p.category || '').toUpperCase().replace(/[\s\-_]+/g, '');
+        const target = filterCategory.toUpperCase().replace(/[\s\-_]+/g, '');
+        if (target === 'RED' && pCat.startsWith('RED')) return true;
+        return pCat === target;
+      });
+    }
+
     // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(
@@ -121,7 +131,7 @@ export default function FantasyPlayersPage() {
     });
 
     setFilteredPlayers(filtered);
-  }, [searchQuery, sortBy, players]);
+  }, [searchQuery, sortBy, filterCategory, players]);
 
   const loadMatchBreakdown = async (playerId: string) => {
     if (matchBreakdowns[playerId]) {
@@ -185,7 +195,7 @@ export default function FantasyPlayersPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search Players</label>
               <input
@@ -195,6 +205,22 @@ export default function FantasyPlayersPage() {
                 placeholder="Search by name or team..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category Filter</label>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
+              >
+                <option value="all">All Categories</option>
+                <option value="RED">RED (All Red Slots)</option>
+                <option value="RED-1">RED-1 / Red Slot 1</option>
+                <option value="RED-2">RED-2 / Red Slot 2</option>
+                <option value="BLUE">BLUE</option>
+                <option value="WHITE">WHITE</option>
+                <option value="BLACK">BLACK</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>

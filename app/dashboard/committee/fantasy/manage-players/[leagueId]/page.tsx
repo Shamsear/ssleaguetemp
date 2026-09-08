@@ -48,6 +48,7 @@ export default function ManagePlayersPage() {
   const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [activeAction, setActiveAction] = useState<'add' | 'transfer' | 'swap' | 'remove' | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<DraftedPlayer | AvailablePlayer | null>(null);
   const [targetTeam, setTargetTeam] = useState<string>('');
@@ -279,10 +280,21 @@ export default function ManagePlayersPage() {
     setSwapPlayer(null);
   };
 
-  const filteredDrafted = draftedPlayers.filter(p =>
-    normalizeStr(p.player_name).includes(normalizeStr(searchQuery)) ||
-    normalizeStr(p.team_name).includes(normalizeStr(searchQuery))
-  );
+  const filteredDrafted = draftedPlayers.filter(p => {
+    if (filterCategory !== 'all') {
+      const pCat = ((p as any).category || '').toUpperCase().replace(/[\s\-_]+/g, '');
+      const target = filterCategory.toUpperCase().replace(/[\s\-_]+/g, '');
+      if (target === 'RED' && pCat.startsWith('RED')) {
+        // match
+      } else if (pCat && pCat !== target) {
+        return false;
+      }
+    }
+    return (
+      normalizeStr(p.player_name).includes(normalizeStr(searchQuery)) ||
+      normalizeStr(p.team_name).includes(normalizeStr(searchQuery))
+    );
+  });
 
   if (loading || isLoading) {
     return (
@@ -520,17 +532,32 @@ export default function ManagePlayersPage() {
         )}
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
             <h2 className="text-xl font-bold text-gray-900">
               {activeAction === 'remove' ? 'Drafted Players - Click to Remove' : 'All Drafted Players'}
             </h2>
-            <input
-              type="text"
-              placeholder="Search players..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
-            />
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white"
+              >
+                <option value="all">All Categories</option>
+                <option value="RED">RED (All)</option>
+                <option value="RED-1">RED-1</option>
+                <option value="RED-2">RED-2</option>
+                <option value="BLUE">BLUE</option>
+                <option value="WHITE">WHITE</option>
+                <option value="BLACK">BLACK</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Search players..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
           </div>
 
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
