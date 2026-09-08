@@ -127,11 +127,15 @@ export async function POST(request: NextRequest) {
     await fantasySql`
       INSERT INTO fantasy_transfer_windows (
         window_id, league_id, window_name,
-        opens_at, closes_at, is_active,
+        opens_at, closes_at,
+        start_time, end_time,
+        is_active,
         start_round, end_round
       ) VALUES (
         ${windowId}, ${league_id}, ${window_name},
-        ${opens_at}, ${closes_at}, false,
+        ${opens_at}, ${closes_at},
+        ${opens_at}, ${closes_at},
+        false,
         ${start_round || null}, ${end_round || null}
       )
     `;
