@@ -203,7 +203,6 @@ export default function ShareableFantasyLeaderboard({
                               <img 
                                 src={team.team_logo} 
                                 alt={`${team.team_name} logo`}
-                                crossOrigin="anonymous"
                                 style={{
                                   width: '100%',
                                   height: '100%',

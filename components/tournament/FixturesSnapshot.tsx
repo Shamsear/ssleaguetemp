@@ -134,7 +134,6 @@ export function FixturesSnapshot({
                       <img 
                         src={match.homeTeam.team.logoUrl} 
                         alt="" 
-                        crossOrigin="anonymous"
                         style={{ 
                           width: '100%', 
                           height: '100%', 
@@ -174,7 +173,6 @@ export function FixturesSnapshot({
                       <img 
                         src={match.awayTeam.team.logoUrl} 
                         alt="" 
-                        crossOrigin="anonymous"
                         style={{ 
                           width: '100%', 
                           height: '100%', 

@@ -139,7 +139,6 @@ export function LeaderboardSnapshot({
                             <img
                               src={row.seasonTeam.team.logoUrl}
                               alt={row.seasonTeam.team.name}
-                              crossOrigin="anonymous"
                               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                               loading="eager"
                             />
