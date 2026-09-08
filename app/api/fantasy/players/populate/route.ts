@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17;
+    const isModern = seasonNum >= 16;
 
     const sql = getTournamentDb();
 
