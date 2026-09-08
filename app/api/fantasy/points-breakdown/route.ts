@@ -258,6 +258,39 @@ export async function GET(request: NextRequest) {
                 }
             });
 
+            // Collect bonus records that were NOT matched to any tournament/round above.
+            // This happens when a fixture_id doesn't exist in the fixtures table, belongs
+            // to a non-completed fixture, or its round_number exceeds a tournament's max_round.
+            const matchedFixtureIds = new Set(
+                passiveByTournamentRound.flatMap((p: any) => p.matches.map((m: any) => m.fixture_id))
+            );
+            const unmatchedBonuses = teamBonusPoints.filter((tb: any) =>
+                tb.team_id === team.team_id && !matchedFixtureIds.has(tb.fixture_id)
+            );
+            if (unmatchedBonuses.length > 0) {
+                const unmatchedTotal = unmatchedBonuses.reduce((sum: number, b: any) => sum + (b.total_bonus || 0), 0);
+                passiveByTournamentRound.push({
+                    tournament_id: 'other',
+                    tournament_name: 'Other / Admin Bonuses',
+                    round: 0,
+                    total_passive: unmatchedTotal,
+                    matches: unmatchedBonuses.map((bonus: any) => {
+                        const breakdown = typeof bonus.bonus_breakdown === 'string'
+                            ? JSON.parse(bonus.bonus_breakdown)
+                            : (bonus.bonus_breakdown || {});
+                        return {
+                            fixture_id: bonus.fixture_id,
+                            supported_team: bonus.real_team_name || 'N/A',
+                            opponent: 'N/A',
+                            score: 'N/A',
+                            home_away: 'N/A',
+                            bonus_points: bonus.total_bonus || 0,
+                            breakdown,
+                        };
+                    }),
+                });
+            }
+
             // Calculate round totals by tournament (active + passive)
             const roundTotals: any[] = [];
             tournaments.forEach((tournament: any) => {
@@ -310,7 +343,11 @@ export async function GET(request: NextRequest) {
             }));
 
             const grandTotalActive = Array.from(playerMap.values()).reduce((sum, p) => sum + (p.total_points || 0), 0);
-            const grandTotalPassive = roundTotals.reduce((sum, r) => sum + (r.passive_points || 0), 0);
+            // Sum ALL bonus records for this team directly — matches the stored passive_points column.
+            // Using roundTotals would silently drop bonuses whose fixtures aren't in the tournament grid.
+            const grandTotalPassive = teamBonusPoints
+                .filter((tb: any) => tb.team_id === team.team_id)
+                .reduce((sum: number, tb: any) => sum + (tb.total_bonus || 0), 0);
             const grandTotal = grandTotalActive + grandTotalPassive;
 
             return {
