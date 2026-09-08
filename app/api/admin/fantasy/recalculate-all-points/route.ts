@@ -381,17 +381,27 @@ export async function POST(request: NextRequest) {
     // STEP 3.5: Recalculate fantasy_players Cumulative Totals for ALL Players
     // ============================================================================
     console.log('📊 STEP 3.5: Syncing fantasy_players Cumulative Totals for ALL Players');
-    await fantasyDb`
-      UPDATE fantasy_players fp
-      SET total_points = COALESCE((
-        SELECT SUM(base_points)
-        FROM fantasy_player_points fpp
-        WHERE fpp.real_player_id = fp.real_player_id
-          AND fpp.league_id = fp.league_id
-      ), 0),
-      updated_at = NOW()
-      WHERE fp.league_id = 'SSPSLFLS18'
+
+    // Fetch all leagues once — used in step 3.5 and step 4 ranks
+    const allLeagues = await fantasyDb`
+      SELECT DISTINCT league_id FROM fantasy_teams
     `;
+
+    // Sync fantasy_players.total_points per league
+    // Must use SUM(fpp.total_points) — includes captain/VC multipliers
+    for (const league of allLeagues as any[]) {
+      await fantasyDb`
+        UPDATE fantasy_players fp
+        SET total_points = COALESCE((
+          SELECT SUM(fpp.total_points)
+          FROM fantasy_player_points fpp
+          WHERE fpp.real_player_id = fp.real_player_id
+            AND fpp.league_id = fp.league_id
+        ), 0),
+        updated_at = NOW()
+        WHERE fp.league_id = ${league.league_id}
+      `;
+    }
 
     // ============================================================================
     // STEP 4: Recalculate Fantasy Team Totals and Ranks
@@ -432,11 +442,7 @@ export async function POST(request: NextRequest) {
       results.teamsUpdated++;
     }
 
-    // Recalculate ranks
-    const allLeagues = await fantasyDb`
-      SELECT DISTINCT league_id FROM fantasy_teams
-    `;
-
+    // Recalculate ranks (reuse allLeagues from above)
     for (const league of allLeagues as any[]) {
       await fantasyDb`
         WITH ranked_teams AS (

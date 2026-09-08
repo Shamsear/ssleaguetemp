@@ -590,6 +590,20 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
         AND ft.league_id = ${fantasy_league_id};
     `;
 
+    // Sync fantasy_players.total_points = SUM(fpp.total_points) per player
+    // This includes captain/VC multipliers so the all-players leaderboard is correct
+    await sql`
+      UPDATE fantasy_players fp
+      SET total_points = COALESCE((
+        SELECT SUM(fpp.total_points)
+        FROM fantasy_player_points fpp
+        WHERE fpp.real_player_id = fp.real_player_id
+          AND fpp.league_id = fp.league_id
+      ), 0),
+      updated_at = NOW()
+      WHERE fp.league_id = ${fantasy_league_id}
+    `;
+
     // Recalculate ranks based on updated total_points
     await sql`
       WITH ranked_teams AS (
@@ -606,7 +620,7 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
         AND ft.league_id = ${fantasy_league_id};
     `;
 
-    console.log(`✅ Fully synchronized fantasy team totals & ranks for league ${fantasy_league_id}`);
+    console.log(`✅ Fully synchronized fantasy team totals, player totals & ranks for league ${fantasy_league_id}`);
   } catch (error: any) {
     console.error('Error synchronizing fantasy team totals:', error);
   }
