@@ -1,7 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { Trophy, Award } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
 import { generateContainerPng, downloadPng, shareOrDownloadPng } from '@/lib/utils/export-image';
 
 interface FantasyTeam {
@@ -22,6 +21,25 @@ interface ShareableFantasyLeaderboardProps {
   leagueName: string;
 }
 
+async function fetchLogoAsDataUrl(url: string): Promise<string> {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+  try {
+    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl, { cache: 'no-store' });
+    if (res.ok) {
+      const blob = await res.blob();
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch { /* ignore */ }
+  return url; // fallback to original URL
+}
+
 export default function ShareableFantasyLeaderboard({ 
   teams, 
   leagueName
@@ -29,6 +47,23 @@ export default function ShareableFantasyLeaderboard({
   const leaderboardRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  // Pre-fetched logo data URLs keyed by original logo URL
+  const [logoDataUrls, setLogoDataUrls] = useState<Record<string, string>>({});
+
+  // Pre-fetch all logos as data: URLs on mount so they're ready for export
+  useEffect(() => {
+    const uniqueLogos = [...new Set(teams.map((t) => t.team_logo).filter(Boolean))] as string[];
+    if (uniqueLogos.length === 0) return;
+
+    Promise.all(
+      uniqueLogos.map(async (url) => {
+        const dataUrl = await fetchLogoAsDataUrl(url);
+        return [url, dataUrl] as [string, string];
+      })
+    ).then((entries) => {
+      setLogoDataUrls(Object.fromEntries(entries));
+    });
+  }, [teams]);
 
   const generateImage = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
@@ -210,7 +245,7 @@ export default function ShareableFantasyLeaderboard({
                           <div style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)' }}>
                             {team.team_logo ? (
                               <img 
-                                src={team.team_logo} 
+                                src={logoDataUrls[team.team_logo] || team.team_logo}
                                 alt={`${team.team_name} logo`}
                                 style={{
                                   width: '100%',
