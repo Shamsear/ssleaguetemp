@@ -1,9 +1,7 @@
 # Firebase Functions (deployed separately to Firebase)
 firebase-functions/
 
-# Scripts
-scripts/
-!scripts/patch-tailwind.js
+# Scripts (patch-tailwind.js is needed at build time - do NOT ignore scripts/)
 
 # Documentation
 *.md
