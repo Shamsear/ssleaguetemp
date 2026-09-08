@@ -140,6 +140,19 @@ export async function POST(request: NextRequest) {
       )
     `;
 
+    await fantasySql`
+      INSERT INTO transfer_windows (
+        window_id, league_id, window_name,
+        opens_at, closes_at,
+        is_active, max_transfers_per_window
+      ) VALUES (
+        ${windowId}, ${league_id}, ${window_name},
+        ${opens_at}, ${closes_at},
+        false, ${parsedReleases}
+      )
+      ON CONFLICT (window_id) DO NOTHING
+    `;
+
     console.log(`✅ Created transfer window: ${window_name} for league ${league_id}`);
 
     return NextResponse.json({
