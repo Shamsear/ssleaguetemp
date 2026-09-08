@@ -319,12 +319,11 @@ async function processPlayer(params: {
   `;
 
   const isDrafted = squads.length > 0;
-  let targetSquads = squads;
   if (!isDrafted) {
-    const validTeams = await sql`SELECT team_id FROM fantasy_teams WHERE league_id = ${fantasy_league_id} LIMIT 1`;
-    const fallbackTeamId = validTeams[0]?.team_id || 'SSPSLT0001';
-    targetSquads = [{ team_id: fallbackTeamId, is_captain: false, is_vice_captain: false }];
+    console.log(`⏭️  Player ${player_name} (${player_id}) is not drafted in any fantasy team squad, skipping team points.`);
+    return;
   }
+  const targetSquads = squads;
 
   // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
   const getCategoryResultPts = (oppCat: string, outcome: string): number => {

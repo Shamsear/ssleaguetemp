@@ -171,14 +171,8 @@ export async function POST(request: NextRequest) {
           (goalsScored >= 3 && SCORING_RULES.hat_trick ? SCORING_RULES.hat_trick : 0) +
           (goalsConceded >= 4 && SCORING_RULES.concedes_4_plus_goals ? SCORING_RULES.concedes_4_plus_goals : 0);
 
-        const playerTeams = playerTeamsMap.get(playerId) || [
-          {
-            teamId: fallbackTeamId,
-            isCaptain: false,
-            isViceCaptain: false,
-            playerName: playerName
-          }
-        ];
+        const playerTeams = playerTeamsMap.get(playerId) || [];
+        if (playerTeams.length === 0) continue;
         
         for (const teamInfo of playerTeams) {
           try {
