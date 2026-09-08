@@ -590,12 +590,14 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
         AND ft.league_id = ${fantasy_league_id};
     `;
 
-    // Sync fantasy_players.total_points = SUM(fpp.total_points) per player
-    // This includes captain/VC multipliers so the all-players leaderboard is correct
+    // Sync fantasy_players.total_points = SUM(fpp.base_points) per player
+    // Uses base_points (player's own performance), NOT total_points which includes
+    // team-specific captain/VC multipliers. The all-players leaderboard shows
+    // player performance; team multipliers only affect fantasy_teams.player_points.
     await sql`
       UPDATE fantasy_players fp
       SET total_points = COALESCE((
-        SELECT SUM(fpp.total_points)
+        SELECT SUM(fpp.base_points)
         FROM fantasy_player_points fpp
         WHERE fpp.real_player_id = fp.real_player_id
           AND fpp.league_id = fp.league_id

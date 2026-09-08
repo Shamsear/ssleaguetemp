@@ -388,12 +388,13 @@ export async function POST(request: NextRequest) {
     `;
 
     // Sync fantasy_players.total_points per league
-    // Must use SUM(fpp.total_points) — includes captain/VC multipliers
+    // Uses SUM(base_points) = player's own performance (NOT multiplied by cap/VC).
+    // Captain/VC multipliers only affect fantasy_teams.player_points (step 4 below).
     for (const league of allLeagues as any[]) {
       await fantasyDb`
         UPDATE fantasy_players fp
         SET total_points = COALESCE((
-          SELECT SUM(fpp.total_points)
+          SELECT SUM(fpp.base_points)
           FROM fantasy_player_points fpp
           WHERE fpp.real_player_id = fp.real_player_id
             AND fpp.league_id = fp.league_id
