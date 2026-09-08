@@ -97,12 +97,16 @@ export async function POST(request: NextRequest) {
         // Generate change ID
         const changeId = `stc_${teamId}_${Date.now()}`;
 
+        const supportedTeamPrice = Number(team.supported_team_price || 0);
+
         // Update the fantasy team's supported team
         if (is_release) {
           await fantasySql`
             UPDATE fantasy_teams
             SET supported_team_id = NULL,
                 supported_team_name = NULL,
+                supported_team_price = 0,
+                budget_remaining = budget_remaining + ${supportedTeamPrice},
                 updated_at = NOW()
             WHERE team_id = ${teamId}
           `;
@@ -118,34 +122,34 @@ export async function POST(request: NextRequest) {
 
         // Record the change
         await fantasySql`
-      INSERT INTO supported_team_changes (
-        change_id, league_id, team_id, window_id,
-        old_supported_team_id, old_supported_team_name,
-        new_supported_team_id, new_supported_team_name,
-        changed_by, reason
-      ) VALUES (
-        ${changeId}, ${leagueId}, ${teamId}, ${window.window_id},
-        ${oldSupportedTeamId}, ${oldSupportedTeamName},
-        ${new_supported_team_id || null}, ${new_supported_team_name || null},
-        ${user_id}, ${reason || (is_release ? 'Released supported team' : 'Team preference change')}
-      )
-    `;
+          INSERT INTO supported_team_changes (
+            change_id, league_id, team_id, window_id,
+            old_supported_team_id, old_supported_team_name,
+            new_supported_team_id, new_supported_team_name,
+            changed_by, reason
+          ) VALUES (
+            ${changeId}, ${leagueId}, ${teamId}, ${window.window_id},
+            ${oldSupportedTeamId}, ${oldSupportedTeamName},
+            ${new_supported_team_id || null}, ${new_supported_team_name || null},
+            ${user_id}, ${reason || (is_release ? 'Released supported team' : 'Team preference change')}
+          )
+        `;
 
         // Log passive team release in fantasy_releases
         const releaseId = `release_st_${teamId}_${Date.now()}`;
         await fantasySql`
-      INSERT INTO fantasy_releases (
-        release_id, league_id, team_id, window_id,
-        real_player_id, player_name, category,
-        is_passive_team, purchase_price, refund_amount, refund_percentage,
-        released_at, created_at
-      ) VALUES (
-        ${releaseId}, ${leagueId}, ${teamId}, ${window.window_id},
-        ${oldSupportedTeamId || null}, ${oldSupportedTeamName || 'Passive Team'}, 'Passive Team',
-        true, 0, 0, 0,
-        NOW(), NOW()
-      )
-    `;
+          INSERT INTO fantasy_releases (
+            release_id, league_id, team_id, window_id,
+            real_player_id, player_name, category,
+            is_passive_team, purchase_price, refund_amount, refund_percentage,
+            released_at, created_at
+          ) VALUES (
+            ${releaseId}, ${leagueId}, ${teamId}, ${window.window_id},
+            ${oldSupportedTeamId || null}, ${oldSupportedTeamName || 'Passive Team'}, 'Passive Team',
+            true, ${supportedTeamPrice}, ${supportedTeamPrice}, 100,
+            NOW(), NOW()
+          )
+        `;
 
         console.log(`✅ Supported team changed: ${oldSupportedTeamName || 'None'} → ${new_supported_team_name}`);
 

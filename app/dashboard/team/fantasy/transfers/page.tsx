@@ -74,6 +74,7 @@ interface TeamInfo {
   total_points: number;
   supported_team_id?: string | null;
   supported_team_name?: string | null;
+  supported_team_price?: number;
 }
 
 export default function TeamTransfersPage() {
@@ -197,6 +198,7 @@ export default function TeamTransfersPage() {
           total_points: Number(teamDetails.total_points || team.total_points || 0),
           supported_team_id: team.supported_team_id || teamDetails.supported_team_id || null,
           supported_team_name: team.supported_team_name || teamDetails.supported_team_name || null,
+          supported_team_price: Number(teamDetails.supported_team_price || team.supported_team_price || 0),
         });
       }
 
@@ -251,7 +253,8 @@ export default function TeamTransfersPage() {
   };
 
   const selectedPlayersList = mySquad.filter(p => p.squad_id && selectedSquadIds.includes(p.squad_id));
-  const totalRefundAmount = selectedPlayersList.reduce((acc, p) => acc + (p.purchase_price || 0), 0);
+  const passiveTeamRefund = releasePassiveTeam ? Number(teamInfo?.supported_team_price || 0) : 0;
+  const totalRefundAmount = selectedPlayersList.reduce((acc, p) => acc + (p.purchase_price || 0), 0) + passiveTeamRefund;
 
   const executeBatchRelease = async () => {
     if (selectedSquadIds.length === 0 && !releasePassiveTeam) {
@@ -601,7 +604,7 @@ export default function TeamTransfersPage() {
                     <span className="font-black uppercase text-slate-900">Supported Team: {teamInfo.supported_team_name}</span>
                     <span className="text-[9px] text-slate-400 uppercase ml-2">(Passive Team)</span>
                   </div>
-                  <span className="font-black text-slate-500">Release Supported Team</span>
+                  <span className="font-black text-emerald-650">+{teamInfo.supported_team_price || 0} Cr Refund</span>
                 </div>
               )}
             </div>
