@@ -500,7 +500,7 @@ export default function FantasyTeamsPage() {
                                                 </div>
                                               </div>
                                               <div className="text-right">
-                                                <p className="text-sm font-black text-emerald-650">+{round.total_bonus}</p>
+                                                <p className="text-sm font-black text-emerald-650">{round.total_bonus > 0 ? '+' : ''}{round.total_bonus}</p>
                                                 <p className="text-[9px] text-slate-400 font-bold uppercase">bonus pts</p>
                                               </div>
                                             </div>
@@ -511,7 +511,7 @@ export default function FantasyTeamsPage() {
                                                 {bonusTypes.map((type) => (
                                                   <div key={type} className="flex items-center justify-between px-2.5 py-1 bg-white border border-slate-100 rounded-lg text-slate-650">
                                                     <span>{type.replace(/_/g, ' ')}</span>
-                                                    <span className="text-emerald-650 font-black">+{breakdown[type]}</span>
+                                                    <span className="text-emerald-650 font-black">{breakdown[type] > 0 ? '+' : ''}{breakdown[type]}</span>
                                                   </div>
                                                 ))}
                                               </div>
