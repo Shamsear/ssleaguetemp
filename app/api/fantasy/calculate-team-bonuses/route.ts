@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
     // Award bonuses for home team
     await awardTeamBonus({
       fantasy_league_id,
+      season_id,
       real_team_id: fixture.home_team_id,
       fixture_id,
       round_number,
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
     // Award bonuses for away team
     await awardTeamBonus({
       fantasy_league_id,
+      season_id,
       real_team_id: fixture.away_team_id,
       fixture_id,
       round_number,
@@ -157,6 +159,7 @@ export async function POST(request: NextRequest) {
  */
 async function awardTeamBonus(params: {
   fantasy_league_id: string;
+  season_id: string;
   real_team_id: string;
   fixture_id: string;
   round_number: number;
@@ -169,6 +172,7 @@ async function awardTeamBonus(params: {
 }) {
   const {
     fantasy_league_id,
+    season_id,
     real_team_id,
     fixture_id,
     round_number,
@@ -331,6 +335,7 @@ async function awardTeamBonus(params: {
           WHERE (award_type = 'TOD' OR award_type = 'Team of the Day')
             AND team_id = ${real_team_id}
             AND round_number = ${round_number}
+            AND season_id = ${season_id}
           LIMIT 1
         `;
         applies = tod.length > 0;
@@ -341,6 +346,8 @@ async function awardTeamBonus(params: {
           SELECT id FROM awards
           WHERE (award_type = 'TOW' OR award_type = 'Team of the Week')
             AND team_id = ${real_team_id}
+            AND round_number = ${round_number}
+            AND season_id = ${season_id}
           LIMIT 1
         `;
         applies = tow.length > 0;
