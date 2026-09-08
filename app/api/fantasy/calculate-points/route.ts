@@ -167,16 +167,39 @@ export async function POST(request: NextRequest) {
       console.warn('Could not load category data from Firestore, using flat scoring rules for result points:', err);
     }
 
+    // Fetch player categories from realplayerstats for category-based result points
+    const tournamentSqlDb = getTournamentDb();
+    const playerIds = matchups.flatMap((m: any) => [m.home_player_id, m.away_player_id]).filter(Boolean);
+    let playerCategoryMap = new Map<string, string>();
+    if (playerIds.length > 0) {
+      try {
+        const categoryRows = await tournamentSqlDb`
+          SELECT player_id, category FROM realplayerstats
+          WHERE season_id = ${season_id}
+            AND player_id = ANY(${playerIds})
+        `;
+        categoryRows.forEach((r: any) => {
+          if (r.player_id && r.category) playerCategoryMap.set(r.player_id, r.category);
+        });
+      } catch (e) {
+        console.warn('Could not fetch player categories for result points:', e);
+      }
+    }
+
     // Process each player in the matchups
     const pointsCalculated: any[] = [];
     const teamPointsMap = new Map<string, number>();
 
     for (const matchup of matchups) {
+      const homeCat = playerCategoryMap.get(matchup.home_player_id) || 'Red';
+      const awayCat = playerCategoryMap.get(matchup.away_player_id) || 'Red';
+
       // Process home player
       await processPlayer({
         player_id: matchup.home_player_id,
         player_name: matchup.home_player_name,
         opponent_player_id: matchup.away_player_id,
+        opponent_category: awayCat,
         goals_scored: matchup.home_goals || 0,
         goals_conceded: matchup.away_goals || 0,
         result: matchup.home_goals > matchup.away_goals ? 'win' : 
@@ -200,6 +223,7 @@ export async function POST(request: NextRequest) {
         player_id: matchup.away_player_id,
         player_name: matchup.away_player_name,
         opponent_player_id: matchup.home_player_id,
+        opponent_category: homeCat,
         goals_scored: matchup.away_goals || 0,
         goals_conceded: matchup.home_goals || 0,
         result: matchup.away_goals > matchup.home_goals ? 'win' : 
@@ -262,6 +286,7 @@ async function processPlayer(params: {
   player_id: string;
   player_name: string;
   opponent_player_id: string;
+  opponent_category: string;
   goals_scored: number;
   goals_conceded: number;
   result: 'win' | 'draw' | 'loss';
@@ -279,7 +304,7 @@ async function processPlayer(params: {
   teamPointsMap: Map<string, number>;
 }) {
   const {
-    player_id, player_name, opponent_player_id, goals_scored, goals_conceded, result,
+    player_id, player_name, opponent_player_id, opponent_category, goals_scored, goals_conceded, result,
     is_motm, fine_goals, substitution_penalty, fantasy_league_id,
     fixture_id, round_number, scoringRules, categoriesMap, realPlayersMap,
     sql, pointsCalculated, teamPointsMap
@@ -301,9 +326,17 @@ async function processPlayer(params: {
     targetSquads = [{ team_id: fallbackTeamId, is_captain: false, is_vice_captain: false }];
   }
 
-  // --- Fantasy League Result Points (Flat Win=3, Draw=1, Loss=0 per official point system) ---
-  const resultPoints: number = scoringRules.get(result) ?? (result === 'win' ? 3 : result === 'draw' ? 1 : 0);
-  console.log(`📊 [Fantasy Result] ${player_name} [${result}] → ${resultPoints} pts`);
+  // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
+  const getCategoryResultPts = (oppCat: string, outcome: string): number => {
+    const cat = (oppCat || '').toLowerCase();
+    if (cat.includes('red') || cat === 'r')   return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3);
+    if (cat.includes('black'))                 return outcome === 'win' ? 7 : (outcome === 'draw' ? 3 : -4);
+    if (cat.includes('blue') || cat === 'b')  return outcome === 'win' ? 6 : (outcome === 'draw' ? 2 : -5);
+    if (cat.includes('white') || cat === 'w') return outcome === 'win' ? 5 : (outcome === 'draw' ? 1 : -6);
+    return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3); // default = Red
+  };
+  const resultPoints: number = getCategoryResultPts(opponent_category, result);
+  console.log(`📊 [Fantasy Result] ${player_name} [${result}] vs [${opponent_category}] → ${resultPoints} pts`);
   // --------------------------------------------------------------------------
 
   // Calculate points breakdown (same for all teams)

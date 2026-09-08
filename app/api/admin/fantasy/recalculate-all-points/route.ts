@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       ORDER BY f.round_number
     `;
 
-    // Get matchups
+    // Get matchups with player categories for category-based result points
     const matchups = await tournamentDb`
       SELECT 
         m.fixture_id,
@@ -83,9 +83,13 @@ export async function POST(request: NextRequest) {
         m.away_player_id,
         m.away_player_name,
         m.home_goals,
-        m.away_goals
+        m.away_goals,
+        COALESCE(rps_home.category, 'Red') as home_category,
+        COALESCE(rps_away.category, 'Red') as away_category
       FROM matchups m
       JOIN fixtures f ON m.fixture_id = f.id
+      LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+      LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
       WHERE f.status = 'completed'
         AND m.home_goals IS NOT NULL
         AND m.away_goals IS NOT NULL
@@ -144,9 +148,18 @@ export async function POST(request: NextRequest) {
         const cleanSheet = goalsConceded === 0;
         const isMotm = fixture.motm_player_id === playerId;
 
-        // --- Fantasy League Result Points (Flat Win=3, Draw=1, Loss=0 per official point system) ---
+        // --- Category-Based Result Points (based on opponent's category) ---
+        const oppCategory = playerSide === 'home' ? matchup.away_category : matchup.home_category;
+        const getCategoryResultPts = (oppCat: string, outcome: string): number => {
+          const cat = (oppCat || '').toLowerCase();
+          if (cat.includes('red') || cat === 'r')   return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3);
+          if (cat.includes('black'))                 return outcome === 'win' ? 7 : (outcome === 'draw' ? 3 : -4);
+          if (cat.includes('blue') || cat === 'b')  return outcome === 'win' ? 6 : (outcome === 'draw' ? 2 : -5);
+          if (cat.includes('white') || cat === 'w') return outcome === 'win' ? 5 : (outcome === 'draw' ? 1 : -6);
+          return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3);
+        };
         const result = won ? 'win' : draw ? 'draw' : 'loss';
-        const resultPoints = won ? (SCORING_RULES.win ?? 3) : draw ? (SCORING_RULES.draw ?? 1) : 0;
+        const resultPoints = getCategoryResultPts(oppCategory, result);
         // --------------------------------------------------------------------------
 
         const basePoints = 
