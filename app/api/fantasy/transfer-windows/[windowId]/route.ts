@@ -28,7 +28,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { window_name, opens_at, closes_at, start_round, end_round, window_type } = body;
+    const { window_name, opens_at, closes_at, start_round, end_round, window_type, max_releases, max_swaps } = body;
 
     if (!window_name || !opens_at || !closes_at) {
       return NextResponse.json(
@@ -47,6 +47,8 @@ export async function PUT(
     }
 
     const validWindowType = ['all', 'release', 'draft', 'swap'].includes(window_type) ? window_type : 'all';
+    const parsedReleases = max_releases !== undefined && max_releases !== null && max_releases !== '' ? parseInt(max_releases) : 1;
+    const parsedSwaps = max_swaps !== undefined && max_swaps !== null && max_swaps !== '' ? parseInt(max_swaps) : 1;
 
     const result = await fantasySql`
       UPDATE fantasy_transfer_windows
@@ -59,6 +61,8 @@ export async function PUT(
         start_round = ${start_round ? parseInt(start_round) : null},
         end_round = ${end_round ? parseInt(end_round) : null},
         window_type = ${validWindowType},
+        max_releases = ${parsedReleases},
+        max_swaps = ${parsedSwaps},
         updated_at = NOW()
       WHERE window_id = ${windowId}
       RETURNING *

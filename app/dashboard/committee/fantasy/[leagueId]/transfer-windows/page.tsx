@@ -18,6 +18,8 @@ interface TransferWindow {
   start_round: number | null;
   end_round: number | null;
   window_type?: 'all' | 'release' | 'draft' | 'swap';
+  max_releases?: number | null;
+  max_swaps?: number | null;
 }
 
 // ── IST Timezone Helpers ──────────────────────────────────────────────────
@@ -104,6 +106,8 @@ export default function TransferWindowsPage() {
   const [newStartRound, setNewStartRound] = useState('');
   const [newEndRound, setNewEndRound] = useState('');
   const [newWindowType, setNewWindowType] = useState<'all' | 'release' | 'draft' | 'swap'>('all');
+  const [newMaxReleases, setNewMaxReleases] = useState('1');
+  const [newMaxSwaps, setNewMaxSwaps] = useState('1');
 
   // Edit modal state
   const [editingWindow, setEditingWindow] = useState<TransferWindow | null>(null);
@@ -113,6 +117,8 @@ export default function TransferWindowsPage() {
   const [editStartRound, setEditStartRound] = useState('');
   const [editEndRound, setEditEndRound] = useState('');
   const [editWindowType, setEditWindowType] = useState<'all' | 'release' | 'draft' | 'swap'>('all');
+  const [editMaxReleases, setEditMaxReleases] = useState('1');
+  const [editMaxSwaps, setEditMaxSwaps] = useState('1');
 
   useEffect(() => {
     if (user && leagueId) {
@@ -153,6 +159,8 @@ export default function TransferWindowsPage() {
           start_round: newStartRound ? parseInt(newStartRound) : null,
           end_round: newEndRound ? parseInt(newEndRound) : null,
           window_type: newWindowType,
+          max_releases: newMaxReleases ? parseInt(newMaxReleases) : 1,
+          max_swaps: newMaxSwaps ? parseInt(newMaxSwaps) : 1,
         }),
       });
 
@@ -168,6 +176,8 @@ export default function TransferWindowsPage() {
       setNewStartRound('');
       setNewEndRound('');
       setNewWindowType('all');
+      setNewMaxReleases('1');
+      setNewMaxSwaps('1');
       loadWindows();
     } catch (error: any) {
       console.error('Error creating window:', error);
@@ -185,6 +195,8 @@ export default function TransferWindowsPage() {
     setEditStartRound(window.start_round !== null ? String(window.start_round) : '');
     setEditEndRound(window.end_round !== null ? String(window.end_round) : '');
     setEditWindowType(window.window_type || 'all');
+    setEditMaxReleases(window.max_releases !== undefined && window.max_releases !== null ? String(window.max_releases) : '1');
+    setEditMaxSwaps(window.max_swaps !== undefined && window.max_swaps !== null ? String(window.max_swaps) : '1');
   };
 
   const saveEditWindow = async () => {
@@ -205,6 +217,8 @@ export default function TransferWindowsPage() {
           start_round: editStartRound ? parseInt(editStartRound) : null,
           end_round: editEndRound ? parseInt(editEndRound) : null,
           window_type: editWindowType,
+          max_releases: editMaxReleases ? parseInt(editMaxReleases) : 1,
+          max_swaps: editMaxSwaps ? parseInt(editMaxSwaps) : 1,
         }),
       });
 
@@ -346,6 +360,38 @@ export default function TransferWindowsPage() {
                 </select>
               </div>
 
+              {(newWindowType === 'all' || newWindowType === 'release') && (
+                <div>
+                  <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
+                    Max Releases Count
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newMaxReleases}
+                    onChange={(e) => setNewMaxReleases(e.target.value)}
+                    placeholder="e.g. 1"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 outline-none text-xs font-bold uppercase"
+                  />
+                </div>
+              )}
+
+              {(newWindowType === 'all' || newWindowType === 'swap') && (
+                <div>
+                  <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
+                    Max Swaps Count
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newMaxSwaps}
+                    onChange={(e) => setNewMaxSwaps(e.target.value)}
+                    placeholder="e.g. 1"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 outline-none text-xs font-bold uppercase"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider mb-2">
                   Rounds Allowed (Start - End)
@@ -456,6 +502,20 @@ export default function TransferWindowsPage() {
                           <span className={`px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${typeColor}`}>
                             {typeLabel}
                           </span>
+
+                          {/* Max Release Count Badge */}
+                          {(window.window_type === 'all' || window.window_type === 'release') && (
+                            <span className="px-2 py-0.5 rounded-lg border border-rose-200 bg-rose-50/50 text-rose-800 text-[9px] font-bold uppercase">
+                              Max Releases: {window.max_releases ?? 1}
+                            </span>
+                          )}
+
+                          {/* Max Swap Count Badge */}
+                          {(window.window_type === 'all' || window.window_type === 'swap') && (
+                            <span className="px-2 py-0.5 rounded-lg border border-purple-200 bg-purple-50/50 text-purple-800 text-[9px] font-bold uppercase">
+                              Max Swaps: {window.max_swaps ?? 1}
+                            </span>
+                          )}
                         </div>
 
                         {/* Details */}
@@ -560,6 +620,36 @@ export default function TransferWindowsPage() {
                       <option value="swap">🔁 Swap / Trade Only</option>
                     </select>
                   </div>
+
+                  {(editWindowType === 'all' || editWindowType === 'release') && (
+                    <div>
+                      <label className="block text-[10px] text-slate-450 font-bold uppercase mb-1">
+                        Max Releases Count
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editMaxReleases}
+                        onChange={(e) => setEditMaxReleases(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  )}
+
+                  {(editWindowType === 'all' || editWindowType === 'swap') && (
+                    <div>
+                      <label className="block text-[10px] text-slate-450 font-bold uppercase mb-1">
+                        Max Swaps Count
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editMaxSwaps}
+                        onChange={(e) => setEditMaxSwaps(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>

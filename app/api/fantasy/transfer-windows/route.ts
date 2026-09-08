@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
         start_round,
         end_round,
         COALESCE(window_type, 'all') as window_type,
+        COALESCE(max_releases, 1) as max_releases,
+        COALESCE(max_swaps, 1) as max_swaps,
         CASE
           WHEN is_active = true THEN 'active'
           WHEN NOW() BETWEEN opens_at AND closes_at THEN 'active'
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { league_id, window_name, opens_at, closes_at, start_round, end_round, window_type } = body;
+    const { league_id, window_name, opens_at, closes_at, start_round, end_round, window_type, max_releases, max_swaps } = body;
 
     // Validate required fields
     if (!league_id || !window_name || !opens_at || !closes_at) {
@@ -104,6 +106,8 @@ export async function POST(request: NextRequest) {
     // Create the transfer window
     const windowId = `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const validWindowType = ['all', 'release', 'draft', 'swap'].includes(window_type) ? window_type : 'all';
+    const parsedReleases = max_releases !== undefined && max_releases !== null && max_releases !== '' ? parseInt(max_releases) : 1;
+    const parsedSwaps = max_swaps !== undefined && max_swaps !== null && max_swaps !== '' ? parseInt(max_swaps) : 1;
     
     await fantasySql`
       INSERT INTO fantasy_transfer_windows (
@@ -112,14 +116,17 @@ export async function POST(request: NextRequest) {
         start_time, end_time,
         is_active,
         start_round, end_round,
-        window_type
+        window_type,
+        max_releases, max_swaps
       ) VALUES (
         ${windowId}, ${league_id}, ${window_name},
         ${opens_at}, ${closes_at},
         ${opens_at}, ${closes_at},
         false,
         ${start_round || null}, ${end_round || null},
-        ${validWindowType}
+        ${validWindowType},
+        ${parsedReleases},
+        ${parsedSwaps}
       )
     `;
 
