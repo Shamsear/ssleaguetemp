@@ -481,6 +481,7 @@ export async function PATCH(
         home_score = ${totalHomeScore},
         away_score = ${totalAwayScore},
         result = ${newResult},
+        status = 'completed',
         home_penalty_goals = ${homePenaltyGoalsVal},
         away_penalty_goals = ${awayPenaltyGoalsVal},
         updated_at = NOW()

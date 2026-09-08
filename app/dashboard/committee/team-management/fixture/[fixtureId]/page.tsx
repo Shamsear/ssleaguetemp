@@ -606,13 +606,23 @@ export default function CommitteeFixtureDetailPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-black text-gray-900 tracking-tight">Individual Matchups</h3>
-              {!isEditMode && fixture.status === 'completed' && (
-                <button
-                  onClick={() => setIsEditMode(true)}
-                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Pencil className="w-3.5 h-3.5" /> Edit Results
-                </button>
+              {!isEditMode && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowMatchupCreator(true)}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all border border-slate-200 shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Swords className="w-3.5 h-3.5 text-slate-500" /> {matchups.length === 0 ? 'Create Matchups' : 'Manage Matchups'}
+                  </button>
+                  {matchups.length > 0 && (
+                    <button
+                      onClick={() => setIsEditMode(true)}
+                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Edit Results
+                    </button>
+                  )}
+                </div>
               )}
               {isEditMode && (
                 <div className="flex gap-2">
@@ -869,14 +879,14 @@ export default function CommitteeFixtureDetailPage() {
                 <ClipboardList className="w-4 h-4 text-white" /> View Complete Timeline
               </button>
 
-              {/* Create Matchups Button - Only show if matchups don't exist */}
-              {matchups.length === 0 && fixture.status !== 'completed' && (
+              {/* Create / Manage Matchups Button */}
+              {fixture.status !== 'completed' && (
                 <>
                   <button
                     onClick={() => setShowMatchupCreator(true)}
                     className="w-full px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Swords className="w-4 h-4 text-white" /> Create Matchups
+                    <Swords className="w-4 h-4 text-white" /> {matchups.length === 0 ? 'Create Matchups' : 'Manage / Edit Matchups'}
                   </button>
                   
                   {/* Round Robin Auto-Generate Button */}
