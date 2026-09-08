@@ -343,6 +343,7 @@ async function processPlayer(params: {
   const is_clean_sheet = goals_conceded === 0;
 
   const points_breakdown: any = {
+    opponent_player_id: opponent_player_id || '',
     goals: goals_scored * (scoringRules.get('goals_scored') || 0),
     conceded: goals_conceded * (scoringRules.get('goals_conceded') || 0),
     result: resultPoints,  // ← Category-based, not flat scoring rule
@@ -374,7 +375,9 @@ async function processPlayer(params: {
   // Match played bonus (always awarded if player participated)
   points_breakdown.match_played = scoringRules.get('match_played') || 0;
 
-  const total_points = Object.values(points_breakdown).reduce((sum: number, val: any) => sum + (Number(val) || 0), 0);
+  const total_points = Object.keys(points_breakdown)
+    .filter(k => k !== 'opponent_player_id')
+    .reduce((sum: number, key: string) => sum + (Number(points_breakdown[key]) || 0), 0);
 
   // Award points to EACH team that owns this player (or fallback team if free agent)
   for (const squad of targetSquads) {
@@ -442,16 +445,18 @@ async function processPlayer(params: {
 
     const final_points = Math.round(total_points * multiplier);
 
-    // Delete ONLY the existing record for this specific matchup (by opponent)
-    // Using opponent_player_id prevents erasing other matchups the player had in the same round
+    // Delete existing record for this specific matchup (by opponent ID or score)
+    // Using opponent_player_id ensures editing a result replaces the old record cleanly without touching other matchups
     await sql`
       DELETE FROM fantasy_player_points
       WHERE league_id = ${fantasy_league_id}
         AND team_id = ${fantasy_team_id}
         AND real_player_id = ${player_id}
         AND fixture_id = ${fixture_id}
-        AND goals_scored = ${goals_scored}
-        AND goals_conceded = ${goals_conceded}
+        AND (
+          (points_breakdown->>'opponent_player_id' IS NOT NULL AND points_breakdown->>'opponent_player_id' = ${opponent_player_id})
+          OR (goals_scored = ${goals_scored} AND goals_conceded = ${goals_conceded})
+        )
     `;
 
     // Create fantasy_player_points record for this team
