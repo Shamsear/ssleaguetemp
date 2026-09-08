@@ -909,8 +909,9 @@ export default function CommitteeFixtureDetailPage() {
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
           </div>
         </div>
 
