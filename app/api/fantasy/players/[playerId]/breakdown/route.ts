@@ -22,15 +22,33 @@ export async function GET(
       );
     }
 
-    const targetLeagueId = league_id || 'SSPSLFLS18';
+    let targetLeagueId = league_id;
+    let targetSeasonId = 'SSPSLS18';
 
-    // Get fantasy league to get season_id
-    const leagues = await fantasySql`
-      SELECT * FROM fantasy_leagues
-      WHERE league_id = ${targetLeagueId} OR league_id = 'SSPSLFLS18'
-      LIMIT 1
-    `;
-    const targetSeasonId = leagues[0]?.season_id || 'SSPSLS18';
+    if (targetLeagueId) {
+      const leagues = await fantasySql`
+        SELECT league_id, season_id FROM fantasy_leagues
+        WHERE league_id = ${targetLeagueId}
+        LIMIT 1
+      `;
+      if (leagues.length > 0) {
+        targetSeasonId = leagues[0].season_id;
+      }
+    } else {
+      const activeLeagues = await fantasySql`
+        SELECT league_id, season_id FROM fantasy_leagues
+        WHERE is_active = true
+        ORDER BY created_at DESC
+        LIMIT 1
+      `;
+      if (activeLeagues.length > 0) {
+        targetLeagueId = activeLeagues[0].league_id;
+        targetSeasonId = activeLeagues[0].season_id;
+      } else {
+        targetLeagueId = 'SSPSLFLS18';
+        targetSeasonId = 'SSPSLS18';
+      }
+    }
 
     const tournamentSql = getTournamentDb();
 
@@ -74,7 +92,7 @@ export async function GET(
         base_points,
         points_breakdown
       FROM fantasy_player_points
-      WHERE (league_id = ${targetLeagueId} OR league_id = 'SSPSLFLS18')
+      WHERE league_id = ${targetLeagueId}
         AND real_player_id = ${playerId}
     `;
 
