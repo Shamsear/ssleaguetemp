@@ -431,13 +431,13 @@ export default function FantasyTeamsPage() {
                                   </div>
                                   <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
                                     <p className="text-base font-black text-slate-800">
-                                      {passiveData.rounds.reduce((sum: number, r: any) => sum + (r.total_bonus || 0), 0)}
+                                      {passiveData.stats?.total_match_bonus !== undefined ? Number(passiveData.stats.total_match_bonus) : passiveData.rounds.reduce((sum: number, r: any) => sum + (Number(r.total_bonus) || 0), 0)}
                                     </p>
                                     <p className="text-[9px] uppercase font-bold text-slate-450">Team Bonuses</p>
                                   </div>
                                   <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
                                     <p className="text-base font-black text-slate-800">
-                                      {passiveData.admin_bonuses?.reduce((sum: number, b: any) => sum + (b.points || 0), 0) || 0}
+                                      {passiveData.stats?.total_admin_bonus !== undefined ? Number(passiveData.stats.total_admin_bonus) : (passiveData.admin_bonuses?.reduce((sum: number, b: any) => sum + (Number(b.points) || 0), 0) || 0)}
                                     </p>
                                     <p className="text-[9px] uppercase font-bold text-slate-450">Admin Bonuses</p>
                                   </div>
@@ -496,7 +496,9 @@ export default function FantasyTeamsPage() {
                                                 </div>
                                                 <div>
                                                   <p className="font-bold text-xs uppercase text-slate-805">Round {round.round_number}</p>
-                                                  <p className="text-[9px] text-slate-400 font-bold uppercase">{round.real_team_name}</p>
+                                                  <p className="text-[9px] text-slate-400 font-bold uppercase">
+                                                    {round.real_team_name} {round.opponent_name ? `vs ${round.opponent_name}` : ''} {round.score ? `(${round.score})` : ''}
+                                                  </p>
                                                 </div>
                                               </div>
                                               <div className="text-right">
