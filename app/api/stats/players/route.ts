@@ -402,6 +402,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all season stats for a specific player (player details page) - OPTIMIZED
+    // Get all season stats for a specific player (player details page) - OPTIMIZED
     if (playerId && !seasonId) {
       // Query BOTH tables and combine results
       const [modernSeasons, historicalSeasons] = await Promise.all([
@@ -426,7 +427,7 @@ export async function GET(request: NextRequest) {
           WHERE player_id = ${playerId}
           ORDER BY season_id DESC
         `,
-        // Historical seasons (1-15) from realplayerstats
+        // Historical and active seasons from realplayerstats
         sql`
           SELECT 
             id, player_id, player_name, season_id, tournament_id,
@@ -440,45 +441,51 @@ export async function GET(request: NextRequest) {
             'historical' as data_source
           FROM realplayerstats 
           WHERE player_id = ${playerId}
-          ORDER BY season_id DESC, tournament_id DESC
+          ORDER BY season_id DESC
         `
       ]);
 
-      // Combine and sort by season
-      const allSeasons = [...modernSeasons, ...historicalSeasons].sort((a: any, b: any) => {
+      // Combine and deduplicate by season_id (preferring modern/player_seasons if both exist)
+      const seenSeasons = new Set<string>();
+      const combinedSeasons: any[] = [];
+
+      for (const s of [...modernSeasons, ...historicalSeasons]) {
+        if (s.season_id && !seenSeasons.has(s.season_id)) {
+          seenSeasons.add(s.season_id);
+          combinedSeasons.push(s);
+        }
+      }
+
+      combinedSeasons.sort((a: any, b: any) => {
         const aNum = parseInt(a.season_id.replace(/\D/g, '')) || 0;
         const bNum = parseInt(b.season_id.replace(/\D/g, '')) || 0;
         return bNum - aNum; // Descending order
       });
       
-      stats = allSeasons;
+      stats = combinedSeasons;
     }
     // Get specific player stats for a season - OPTIMIZED
     else if (playerId && seasonId) {
-      let result;
-      
-      if (isModernSeason(seasonId)) {
-        // Season 16+: Query player_seasons table
-        result = await sql`
-          SELECT 
-            id, player_id, player_name, season_id,
-            team, team_id, category,
-            matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-            clean_sheets, motm_awards, 
-            CASE 
-              WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
-              THEN points - COALESCE(base_points, 0)
-              ELSE points
-            END as points,
-            base_points,
-            star_rating,
-            contract_id, contract_start_season, contract_end_season,
-            is_auto_registered, registration_date
-          FROM player_seasons 
-          WHERE player_id = ${playerId} AND season_id = ${seasonId}
-        `;
-      } else {
-        // Season 1-15: Query realplayerstats table
+      let result = await sql`
+        SELECT 
+          id, player_id, player_name, season_id,
+          team, team_id, category,
+          matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
+          clean_sheets, motm_awards, 
+          CASE 
+            WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
+            THEN points - COALESCE(base_points, 0)
+            ELSE points
+          END as points,
+          base_points,
+          star_rating,
+          contract_id, contract_start_season, contract_end_season,
+          is_auto_registered, registration_date
+        FROM player_seasons 
+        WHERE player_id = ${playerId} AND season_id = ${seasonId}
+      `;
+
+      if (result.length === 0) {
         result = await sql`
           SELECT 
             id, player_id, player_name, season_id, tournament_id,
@@ -488,7 +495,10 @@ export async function GET(request: NextRequest) {
             NULL as base_points,
             NULL as star_rating
           FROM realplayerstats 
-          WHERE player_id = ${playerId} AND tournament_id = ${tournamentId}
+          WHERE player_id = ${playerId} 
+            AND (season_id = ${seasonId} OR tournament_id = ${tournamentId} OR tournament_id IS NULL)
+          ORDER BY season_id DESC
+          LIMIT 1
         `;
       }
       
