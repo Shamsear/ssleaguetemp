@@ -62,9 +62,11 @@ export async function POST(request: NextRequest) {
 
     // Check if transfer window is open
     const activeWindows = await fantasySql`
-      SELECT * FROM transfer_windows
+      SELECT * FROM fantasy_transfer_windows
       WHERE league_id = ${leagueId}
-        AND is_active = true
+        AND (is_active = true OR (NOW() BETWEEN opens_at AND closes_at))
+        AND closes_at >= NOW()
+      ORDER BY opens_at DESC
       LIMIT 1
     `;
 

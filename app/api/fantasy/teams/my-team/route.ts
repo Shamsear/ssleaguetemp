@@ -169,8 +169,6 @@ export async function GET(request: NextRequest) {
     try {
       const pRows = await tournamentSql`
         SELECT player_id, photo_url FROM player_seasons WHERE photo_url IS NOT NULL AND photo_url != ''
-        UNION
-        SELECT player_id, photo_url FROM realplayerstats WHERE photo_url IS NOT NULL AND photo_url != ''
       `;
       pRows.forEach((r: any) => {
         if (r.player_id && r.photo_url) playerPhotosMap[r.player_id] = r.photo_url;

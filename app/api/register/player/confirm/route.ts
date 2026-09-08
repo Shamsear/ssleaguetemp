@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
 
         await fantasySql`
           INSERT INTO fantasy_players (
-            player_id,
+            real_player_id,
             league_id,
             player_name,
             real_team_id,
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
             ${draftPrice},
             true
           )
-          ON CONFLICT (player_id, league_id) DO NOTHING
+          ON CONFLICT (league_id, real_player_id) DO NOTHING
         `;
 
         console.log(`✅ Added ${player_data?.name || player_id} to fantasy league ${league.league_id} with category ${category}`);
@@ -320,6 +320,10 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: dbError.message || 'Registration failed due to database error',
+          code: dbError.code,
+          detail: dbError.detail,
+          hint: dbError.hint,
+          stack: dbError.stack,
         },
         { status: 500 }
       );

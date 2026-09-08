@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     // Check if transfer window is active (if provided)
     if (transfer_window_id) {
       const [window] = await fantasySql`
-        SELECT window_id, status, end_time
+        SELECT window_id, opens_at, closes_at, is_active
         FROM fantasy_transfer_windows
         WHERE window_id = ${transfer_window_id}
           AND league_id = ${league_id}
@@ -132,23 +132,25 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (window.status !== 'active') {
+      const now = new Date();
+      const opensAt = window.opens_at ? new Date(window.opens_at) : null;
+      const closesAt = window.closes_at ? new Date(window.closes_at) : null;
+
+      if (closesAt && now > closesAt) {
         return NextResponse.json(
           { 
             success: false,
-            error: 'Transfer window is not active' 
+            error: 'Transfer window has closed' 
           },
           { status: 400 }
         );
       }
 
-      const now = new Date();
-      const endTime = new Date(window.end_time);
-      if (now > endTime) {
+      if (opensAt && now < opensAt) {
         return NextResponse.json(
           { 
             success: false,
-            error: 'Transfer window has closed' 
+            error: 'Transfer window is not yet open' 
           },
           { status: 400 }
         );
