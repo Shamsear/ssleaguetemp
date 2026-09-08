@@ -62,6 +62,7 @@ export default function FantasyPlayersPage() {
   const [matchBreakdowns, setMatchBreakdowns] = useState<Record<string, MatchBreakdown[]>>({});
   const [loadingBreakdown, setLoadingBreakdown] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState<'points' | 'name' | 'matches'>('points');
 
   useEffect(() => {
