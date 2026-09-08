@@ -73,6 +73,9 @@ interface OtherTeam {
   team_name: string;
   owner_name: string;
   total_points: number;
+  player_points?: number;
+  passive_points?: number;
+  supported_team_name?: string;
   player_count: number;
   rank: number;
 }
@@ -936,14 +939,18 @@ export default function MyFantasyTeamPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-6 text-xs font-mono">
+                    <div className="flex gap-4 sm:gap-6 text-xs font-mono items-center">
                       <div className="text-center">
-                        <span className="text-[8px] text-slate-400 font-bold uppercase block">Points</span>
-                        <span className="text-xs font-black text-amber-600 mt-0.5 block">{team.total_points}</span>
+                        <span className="text-[8px] text-blue-600 font-bold uppercase block">Player Pts</span>
+                        <span className="text-xs font-bold text-blue-600 mt-0.5 block">{team.player_points || 0}</span>
                       </div>
                       <div className="text-center">
-                        <span className="text-[8px] text-slate-400 font-bold uppercase block">Squad</span>
-                        <span className="text-xs font-bold text-slate-700 mt-0.5 block">{team.player_count}</span>
+                        <span className="text-[8px] text-emerald-600 font-bold uppercase block">Passive Pts</span>
+                        <span className="text-xs font-bold text-emerald-600 mt-0.5 block">+{team.passive_points || 0}</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-[8px] text-slate-400 font-bold uppercase block">Total</span>
+                        <span className="text-xs sm:text-sm font-black text-amber-600 mt-0.5 block">{team.total_points}</span>
                       </div>
                     </div>
                   </div>

@@ -83,7 +83,8 @@ export default function ShareableTeamCard({
   return (
     <div className="relative">
       <button
-        onClick={generateTextShare}
+        type="button"
+        onClick={(e) => { e.preventDefault(); generateTextShare(); }}
         disabled={isGenerating}
         className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
       >

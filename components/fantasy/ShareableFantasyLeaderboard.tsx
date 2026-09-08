@@ -7,8 +7,12 @@ import { generateContainerPng, downloadPng, shareOrDownloadPng } from '@/lib/uti
 interface FantasyTeam {
   rank: number;
   team_name: string;
+  owner_name?: string;
   total_points: number;
-  player_count: number;
+  player_points?: number;
+  passive_points?: number;
+  supported_team_name?: string;
+  player_count?: number;
   last_round_points?: number;
   team_logo?: string;
 }
@@ -26,7 +30,8 @@ export default function ShareableFantasyLeaderboard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  const generateImage = async () => {
+  const generateImage = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!leaderboardRef.current) return;
 
     try {
@@ -42,7 +47,8 @@ export default function ShareableFantasyLeaderboard({
     }
   };
 
-  const shareImage = async () => {
+  const shareImage = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!leaderboardRef.current) return;
 
     try {
@@ -60,14 +66,15 @@ export default function ShareableFantasyLeaderboard({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-mono">
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => setShowPreview(!showPreview)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-md"
+          type="button"
+          onClick={(e) => { e.preventDefault(); setShowPreview(!showPreview); }}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-colors shadow-md cursor-pointer"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
@@ -75,18 +82,19 @@ export default function ShareableFantasyLeaderboard({
         </button>
 
         <button
-          onClick={generateImage}
+          type="button"
+          onClick={(e) => generateImage(e)}
           disabled={isGenerating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               Generating...
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Download Image
@@ -95,18 +103,19 @@ export default function ShareableFantasyLeaderboard({
         </button>
 
         <button
-          onClick={shareImage}
+          type="button"
+          onClick={(e) => shareImage(e)}
           disabled={isGenerating}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               Generating...
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               Share Image
@@ -125,7 +134,7 @@ export default function ShareableFantasyLeaderboard({
       }}>
         <div 
           ref={leaderboardRef}
-          className="bg-white"
+          className="bg-white font-mono"
           style={{ width: '1200px' }}
         >
           {/* Header with Gradient Background */}
@@ -134,13 +143,13 @@ export default function ShareableFantasyLeaderboard({
               {leagueName}
             </h1>
             <p className="text-2xl text-yellow-300 font-bold uppercase tracking-wide">
-              ⚡ FANTASY LEAGUE ⚡
+              ⚡ FANTASY LEAGUE STANDINGS ⚡
             </p>
           </div>
 
           {/* Leaderboard Title */}
           <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-4 text-center">
-            <h2 className="text-3xl font-bold uppercase tracking-wide flex items-center justify-center gap-2"><Trophy className="w-8 h-8 text-amber-500" /> STANDINGS <Trophy className="w-8 h-8 text-amber-500" /></h2>
+            <h2 className="text-3xl font-bold uppercase tracking-wide flex items-center justify-center gap-2"><Trophy className="w-8 h-8 text-amber-500" /> LEADERBOARD <Trophy className="w-8 h-8 text-amber-500" /></h2>
           </div>
 
           {/* Table */}
@@ -149,9 +158,9 @@ export default function ShareableFantasyLeaderboard({
               <thead>
                 <tr className="bg-gradient-to-r from-purple-100 to-indigo-100 text-gray-800 text-sm font-bold uppercase">
                   <th className="py-4 px-3 text-center border-2 border-purple-300">Rank</th>
-                  <th className="py-4 px-6 text-left border-2 border-purple-300">Team Name</th>
-                  <th className="py-4 px-4 text-center border-2 border-purple-300">Players</th>
-                  <th className="py-4 px-4 text-center border-2 border-purple-300">Last Round</th>
+                  <th className="py-4 px-6 text-left border-2 border-purple-300">Team / Owner</th>
+                  <th className="py-4 px-4 text-center border-2 border-purple-300">Player Points</th>
+                  <th className="py-4 px-4 text-center border-2 border-purple-300">Supported Team</th>
                   <th className="py-4 px-4 text-center border-2 border-purple-300">Total Points</th>
                 </tr>
               </thead>
@@ -205,30 +214,36 @@ export default function ShareableFantasyLeaderboard({
                               {team.team_name.charAt(0).toUpperCase()}
                             </div>
                           )}
-                          <span className={`font-bold uppercase text-lg ${isTop3 ? 'text-gray-900' : 'text-gray-800'}`}>
-                            {team.team_name?.toUpperCase()}
-                          </span>
+                          <div>
+                            <span className={`font-bold uppercase text-lg block ${isTop3 ? 'text-gray-900' : 'text-gray-800'}`}>
+                              {team.team_name?.toUpperCase()}
+                            </span>
+                            {team.owner_name && (
+                              <span className="text-xs text-gray-500 font-bold uppercase block">
+                                Owner: {team.owner_name}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       
-                      {/* Players */}
+                      {/* Player Points */}
                       <td className="py-4 px-4 text-center border-2 border-purple-200">
-                        <span className="inline-block bg-blue-500 text-white font-bold px-4 py-2 rounded-lg text-base">
-                          {team.player_count}
+                        <span className="inline-block bg-blue-600 text-white font-black px-4 py-2 rounded-lg text-lg">
+                          {team.player_points || 0} PTS
                         </span>
                       </td>
                       
-                      {/* Last Round */}
+                      {/* Supported Team & Passive Points */}
                       <td className="py-4 px-4 text-center border-2 border-purple-200">
-                        <span className={`font-bold text-lg ${
-                          (team.last_round_points || 0) > 0 ? 'text-green-600' : 
-                          (team.last_round_points || 0) < 0 ? 'text-red-600' : 
-                          'text-gray-600'
-                        }`}>
-                          {team.last_round_points !== undefined && team.last_round_points !== 0
-                            ? `${team.last_round_points > 0 ? '+' : ''}${team.last_round_points}`
-                            : '-'}
-                        </span>
+                        <div className="flex flex-col items-center">
+                          <span className="text-sm font-extrabold text-emerald-700 uppercase">
+                            {team.supported_team_name || 'N/A'}
+                          </span>
+                          <span className="inline-block bg-emerald-600 text-white font-black px-3 py-1 rounded-md text-xs mt-1">
+                            +{team.passive_points || 0} PTS
+                          </span>
+                        </div>
                       </td>
                       
                       {/* Total Points */}
@@ -247,7 +262,7 @@ export default function ShareableFantasyLeaderboard({
           {/* Footer */}
           <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white px-6 py-4 text-center">
             <p className="text-lg font-bold uppercase tracking-wide">
-              🎮 {teams.length} Teams Competing • Fantasy League
+              🎮 {teams.length} Teams Competing • Fantasy League Standings
             </p>
           </div>
         </div>

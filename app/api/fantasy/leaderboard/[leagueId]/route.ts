@@ -45,8 +45,19 @@ export async function GET(
         ft.team_name,
         ft.owner_name,
         ft.total_points,
+        COALESCE(ft.passive_points, 0) as passive_points,
+        COALESCE(
+          ft.player_points,
+          (
+            SELECT COALESCE(SUM(fs.total_points), 0)
+            FROM fantasy_squad fs
+            WHERE fs.team_id = ft.team_id
+          ),
+          0
+        ) as player_points,
         ft.rank,
         ft.supported_team_id,
+        ft.supported_team_name,
         COUNT(DISTINCT fs.real_player_id) as player_count,
         COALESCE(
           (
@@ -65,7 +76,7 @@ export async function GET(
       FROM fantasy_teams ft
       LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
       WHERE ft.league_id = ${leagueId}
-      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.supported_team_id, ft.league_id
+      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.passive_points, ft.player_points, ft.rank, ft.supported_team_id, ft.supported_team_name, ft.league_id
       ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
     `;
 
@@ -136,8 +147,12 @@ export async function GET(
         team_name: entry.team_name,
         owner_name: entry.owner_name,
         total_points: Number(entry.total_points) || 0,
+        player_points: Number(entry.player_points) || 0,
+        passive_points: Number(entry.passive_points) || 0,
         player_count: Number(entry.player_count) || 0,
         last_round_points: Number(entry.last_round_points) || 0,
+        supported_team_id: entry.supported_team_id || null,
+        supported_team_name: entry.supported_team_name || null,
         team_logo: teamLogos[entry.fantasy_team_id]?.logo_url || null,
         logo_position_x_circle: teamLogos[entry.fantasy_team_id]?.logo_position_x_circle,
         logo_position_y_circle: teamLogos[entry.fantasy_team_id]?.logo_position_y_circle,
@@ -145,7 +160,6 @@ export async function GET(
         logo_position_x_square: teamLogos[entry.fantasy_team_id]?.logo_position_x_square,
         logo_position_y_square: teamLogos[entry.fantasy_team_id]?.logo_position_y_square,
         logo_scale_square: teamLogos[entry.fantasy_team_id]?.logo_scale_square,
-        supported_team_id: entry.supported_team_id, // Include for debugging
       })),
       total_teams: leaderboard.length,
     });

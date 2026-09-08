@@ -14,6 +14,9 @@ interface LeaderboardEntry {
   team_name: string;
   owner_name: string;
   total_points: number;
+  player_points: number;
+  passive_points: number;
+  supported_team_name?: string;
   player_count: number;
   last_round_points: number;
   team_logo?: string;
@@ -121,7 +124,7 @@ export default function FantasyLeaderboardPage() {
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto relative z-10 space-y-6">
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6">
         {/* Navigation */}
         <div className="flex justify-between items-center">
           <Link
@@ -203,78 +206,92 @@ export default function FantasyLeaderboardPage() {
 
           {/* Full Rankings list */}
           <div className="p-4 sm:p-6">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-1.5">
-              Standings Board
-            </h3>
-            <div className="space-y-2">
-              {leaderboard.map((entry) => (
-                <div
-                  key={entry.fantasy_team_id}
-                  className={`flex items-center justify-between p-3 sm:p-4 rounded-2xl border transition-all ${
-                    entry.fantasy_team_id === myTeamId
-                      ? 'bg-amber-50/20 border-amber-400 shadow-sm'
-                      : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 min-w-0">
-                    {/* Rank Badge */}
-                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border font-black text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-sm ${getRankBadgeClass(entry.rank)}`}>
-                      {entry.rank >= 999 ? '—' : entry.rank}
-                    </div>
-
-                    {/* Logo/Fallback circle */}
-                    {entry.team_logo ? (
-                      <img 
-                        src={entry.team_logo} 
-                        alt={`${entry.team_name} logo`}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 border border-slate-250 bg-white"
-                        style={{
-                          objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
-                          transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
-                          transformOrigin: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
-                        }}
-                      />
-                    ) : (
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-900 text-amber-400 font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-sm">
-                        {entry.team_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-black uppercase truncate ${entry.fantasy_team_id === myTeamId ? 'text-amber-700' : 'text-slate-800'}`}>
-                        {entry.team_name}
-                        {entry.fantasy_team_id === myTeamId && (
-                          <span className="ml-2 text-[8px] bg-amber-500 border border-amber-600 text-slate-900 px-2 py-0.5 rounded font-black tracking-wider uppercase">
-                            YOU
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                League Standings Table
+              </h3>
+              <span className="text-[10px] text-slate-400 font-bold uppercase">{leaderboard.length} Teams</span>
+            </div>
+            
+            <div className="overflow-x-auto border border-slate-100 rounded-2xl">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100 font-mono text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="px-4 py-3.5 text-center w-14">Rank</th>
+                    <th className="px-4 py-3.5 text-left">Team / Owner</th>
+                    <th className="px-4 py-3.5 text-center text-blue-600 font-bold">Player Pts</th>
+                    <th className="px-4 py-3.5 text-center text-emerald-600 font-bold">Supported Team</th>
+                    <th className="px-4 py-3.5 text-center text-amber-600 font-black">Total Pts</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {leaderboard.map((entry) => (
+                    <tr
+                      key={entry.fantasy_team_id}
+                      className={`transition-all hover:bg-slate-50/50 ${
+                        entry.fantasy_team_id === myTeamId
+                          ? 'bg-amber-50/30 font-bold'
+                          : ''
+                      }`}
+                    >
+                      <td className="px-4 py-3.5 text-center">
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 mx-auto rounded-lg border font-black text-[10px] sm:text-xs flex items-center justify-center shadow-sm ${getRankBadgeClass(entry.rank)}`}>
+                          {entry.rank >= 999 ? '—' : entry.rank}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          {entry.team_logo ? (
+                            <img 
+                              src={entry.team_logo} 
+                              alt={`${entry.team_name} logo`}
+                              className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white"
+                              style={{
+                                objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
+                                transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
+                                transformOrigin: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
+                              }}
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-900 text-amber-400 font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                              {entry.team_name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className={`text-xs font-black uppercase truncate ${entry.fantasy_team_id === myTeamId ? 'text-amber-700' : 'text-slate-800'}`}>
+                              {entry.team_name}
+                              {entry.fantasy_team_id === myTeamId && (
+                                <span className="ml-2 text-[8px] bg-amber-500 border border-amber-600 text-slate-900 px-2 py-0.5 rounded font-black tracking-wider uppercase">
+                                  YOU
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5 truncate">{entry.owner_name}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-center font-mono text-xs font-extrabold text-blue-600">
+                        {entry.player_points || 0}
+                      </td>
+                      <td className="px-4 py-3.5 text-center font-mono">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] font-bold text-slate-700 uppercase">
+                            {entry.supported_team_name || 'N/A'}
                           </span>
-                        )}
-                      </p>
-                      <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5 truncate">{entry.owner_name}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 sm:gap-6 text-right shrink-0">
-                    {/* Squad - hidden on very small screens */}
-                    <div className="hidden sm:block">
-                      <p className="text-[8px] text-slate-400 uppercase font-black">Squad</p>
-                      <p className="text-xs font-black text-slate-800 mt-0.5">{entry.player_count}</p>
-                    </div>
-                    <div className="hidden sm:block w-px bg-slate-200" />
-                    {/* Round - hidden on very small screens */}
-                    <div className="hidden sm:block">
-                      <p className="text-[8px] text-slate-400 uppercase font-black">Round</p>
-                      <p className={`text-xs font-black mt-0.5 ${entry.last_round_points > 0 ? 'text-emerald-650' : 'text-slate-500'}`}>
-                        {entry.last_round_points || 0}
-                      </p>
-                    </div>
-                    <div className="hidden sm:block w-px bg-slate-200" />
-                    <div>
-                      <p className="text-[8px] text-slate-400 uppercase font-black">Total</p>
-                      <p className="text-xs sm:text-sm font-black text-indigo-650 mt-0.5">{entry.total_points}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                          <span className="text-xs font-extrabold text-emerald-600 mt-0.5">
+                            +{entry.passive_points || 0}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs sm:text-sm font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900 shadow-sm">
+                          {entry.total_points}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

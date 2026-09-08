@@ -148,7 +148,8 @@ export default function ShareableLeaderboard({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => setShowPreview(!showPreview)}
+          type="button"
+          onClick={(e) => { e.preventDefault(); setShowPreview(!showPreview); }}
           className="inline-flex items-center gap-2 px-3.5 py-2 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer bg-slate-800 hover:bg-slate-900 border border-slate-900 hover:border-black text-amber-400"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +160,8 @@ export default function ShareableLeaderboard({
         </button>
 
         <button
-          onClick={generateImage}
+          type="button"
+          onClick={(e) => { e.preventDefault(); generateImage(); }}
           disabled={isGenerating}
           className="inline-flex items-center gap-2 px-3.5 py-2 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer bg-white text-slate-750 border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -179,7 +181,8 @@ export default function ShareableLeaderboard({
         </button>
 
         <button
-          onClick={shareImage}
+          type="button"
+          onClick={(e) => { e.preventDefault(); shareImage(); }}
           disabled={isGenerating}
           className="inline-flex items-center gap-2 px-3.5 py-2 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 hover:border-emerald-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >

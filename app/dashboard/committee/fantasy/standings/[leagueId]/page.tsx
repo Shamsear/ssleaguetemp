@@ -16,6 +16,9 @@ interface LeaderboardEntry {
   team_name: string;
   owner_name: string;
   total_points: number;
+  player_points?: number;
+  passive_points?: number;
+  supported_team_name?: string;
   player_count: number;
   last_round_points: number;
   team_logo?: string;
@@ -158,9 +161,10 @@ export default function FantasyStandingsPage() {
                   <tr className="bg-slate-50 border-b border-slate-150">
                     <th className="px-6 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rank</th>
                     <th className="px-6 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Team / Owner</th>
-                    <th className="px-6 py-3.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Squad size</th>
+                    <th className="px-6 py-3.5 text-center text-[10px] font-bold text-blue-600 uppercase tracking-wider">Player Pts</th>
+                    <th className="px-6 py-3.5 text-center text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Supported Team</th>
                     <th className="px-6 py-3.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Last Round</th>
-                    <th className="px-6 py-3.5 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Score</th>
+                    <th className="px-6 py-3.5 text-right text-[10px] font-bold text-amber-600 uppercase tracking-wider">Total Score</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -201,10 +205,18 @@ export default function FantasyStandingsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center px-2.5 py-1 bg-slate-100 border border-slate-205 text-slate-750 text-[10px] font-bold uppercase rounded-lg">
-                            {entry.player_count} / 6
-                          </span>
+                        <td className="px-6 py-4 text-center font-mono text-xs font-bold text-blue-600">
+                          {entry.player_points || 0}
+                        </td>
+                        <td className="px-6 py-4 text-center font-mono text-xs">
+                          <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-bold text-slate-700 uppercase">
+                              {entry.supported_team_name || 'N/A'}
+                            </span>
+                            <span className="text-emerald-600 font-extrabold mt-0.5">
+                              +{entry.passive_points || 0}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-center font-mono text-xs font-bold">
                           <span className={entry.last_round_points > 0 ? 'text-emerald-600' : 'text-slate-500'}>
