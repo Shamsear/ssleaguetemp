@@ -130,7 +130,8 @@ export default function ShareableFantasyLeaderboard({
         left: showPreview ? '0' : '-9999px', 
         top: '0',
         width: showPreview ? '100%' : '1200px',
-        overflow: showPreview ? 'auto' : 'hidden',
+        height: 'auto',
+        overflow: showPreview ? 'auto' : 'visible',
         zIndex: showPreview ? 'auto' : '-9999'
       }}>
         <div 
@@ -172,8 +173,8 @@ export default function ShareableFantasyLeaderboard({
                 <tr style={{ background: '#fcfaf5', borderBottom: '1px solid rgba(232,168,0,0.2)' }}>
                   <th style={{ padding: '16px 10px 16px 20px', textAlign: 'center', color: '#4B5563', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', width: '60px' }}>#</th>
                   <th style={{ padding: '16px 20px', textAlign: 'left', color: '#4B5563', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Team / Owner</th>
-                  <th style={{ padding: '16px 14px', textAlign: 'center', color: '#2563EB', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Player Pts</th>
-                  <th style={{ padding: '16px 14px', textAlign: 'center', color: '#059669', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Supported Team</th>
+                  <th style={{ padding: '16px 14px', textAlign: 'center', color: '#1D4ED8', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Player Pts</th>
+                  <th style={{ padding: '16px 14px', textAlign: 'center', color: '#047857', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Supported Team</th>
                   <th style={{ padding: '16px 20px', textAlign: 'center', color: '#E8A800', fontSize: 12, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase' }}>Total Pts</th>
                 </tr>
               </thead>
@@ -183,22 +184,22 @@ export default function ShareableFantasyLeaderboard({
                   const posStyle = 
                     pos === 1 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(255,215,0,0.4)' } :
                     pos === 2 ? { background: 'linear-gradient(135deg, #E0E0E0, #9E9E9E)', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(192,192,192,0.3)' } :
-                    pos === 3 ? { background: 'linear-gradient(135deg, #CD7F32, #8B4513)', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(205,127,50,0.3)' } :
+                    pos === 3 ? { background: 'linear-gradient(135deg, #CD7F32, #8B4513)', color: '#ffffff', boxShadow: '0 2px 8px rgba(205,127,50,0.3)' } :
                     { background: 'rgba(0,0,0,0.05)', color: '#6B7280' };
 
                   return (
                     <tr key={index} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: index % 2 === 0 ? 'transparent' : 'rgba(252,250,245,0.4)' }}>
                       {/* Rank */}
                       <td style={{ padding: '16px 10px 16px 20px', width: '60px' }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900, margin: '0 auto', ...posStyle }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, margin: '0 auto', ...posStyle }}>
                           {pos}
                         </div>
                       </td>
 
                       {/* Team & Owner */}
                       <td style={{ padding: '16px 20px' }}>
-                        <div style={{ display: 'flex', itemsAlign: 'center', gap: '14px' }}>
-                          <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)' }}>
                             {team.team_logo ? (
                               <img 
                                 src={team.team_logo} 
@@ -214,7 +215,7 @@ export default function ShareableFantasyLeaderboard({
                               />
                             ) : (
                               <div style={{ fontSize: '14px', fontWeight: '900', color: '#6B7280' }}>
-                                {team.team_name.charAt(0).toUpperCase()}
+                                {team.team_name.slice(0, 2).toUpperCase()}
                               </div>
                             )}
                           </div>
@@ -224,7 +225,7 @@ export default function ShareableFantasyLeaderboard({
                             </span>
                             {team.owner_name && (
                               <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginTop: '2px' }}>
-                                Owner: {team.owner_name}
+                                OWNER: {team.owner_name}
                               </span>
                             )}
                           </div>
@@ -233,18 +234,18 @@ export default function ShareableFantasyLeaderboard({
 
                       {/* Player Points */}
                       <td style={{ padding: '16px 14px', textAlign: 'center' }}>
-                        <span style={{ display: 'inline-block', background: 'rgba(37,99,235,0.1)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.2)', padding: '4px 12px', borderRadius: '8px', fontSize: 15, fontWeight: 900 }}>
+                        <span style={{ display: 'inline-block', background: 'rgba(37,99,235,0.08)', color: '#1D4ED8', border: '1px solid rgba(37,99,235,0.2)', padding: '6px 14px', borderRadius: '8px', fontSize: 15, fontWeight: 900 }}>
                           {team.player_points || 0} PTS
                         </span>
                       </td>
 
                       {/* Supported Team & Passive Points */}
                       <td style={{ padding: '16px 14px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
                           <span style={{ fontSize: 13, fontWeight: 800, color: '#111111', textTransform: 'uppercase' }}>
                             {team.supported_team_name || 'N/A'}
                           </span>
-                          <span style={{ display: 'inline-block', background: 'rgba(5,150,105,0.1)', color: '#059669', border: '1px solid rgba(5,150,105,0.2)', padding: '2px 8px', borderRadius: '6px', fontSize: 12, fontWeight: 800, marginTop: '3px' }}>
+                          <span style={{ display: 'inline-block', background: 'rgba(5,150,105,0.08)', color: '#047857', border: '1px solid rgba(5,150,105,0.2)', padding: '3px 10px', borderRadius: '6px', fontSize: 12, fontWeight: 800 }}>
                             +{team.passive_points || 0} PTS
                           </span>
                         </div>
@@ -252,7 +253,7 @@ export default function ShareableFantasyLeaderboard({
 
                       {/* Total Points */}
                       <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <span style={{ fontSize: 20, fontWeight: 900, color: '#E8A800' }}>
+                        <span style={{ fontSize: 22, fontWeight: 900, color: '#E8A800' }}>
                           {team.total_points}
                         </span>
                       </td>
