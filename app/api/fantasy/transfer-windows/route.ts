@@ -8,10 +8,10 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
  */
 export async function GET(request: NextRequest) {
   try {
-    const auth = await verifyAuth(['committee_admin'], request);
+    const auth = await verifyAuth([], request);
     if (!auth.authenticated) {
       return NextResponse.json(
-        { error: 'Unauthorized - Committee access required' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }

@@ -152,7 +152,7 @@ export default function TeamTransfersPage() {
       const windowRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${team.fantasy_league_id}`);
       if (windowRes.ok) {
         const windowData = await windowRes.json();
-        const activeWindow = (windowData.windows || []).find((w: TransferWindow) => w.is_active);
+        const activeWindow = (windowData.windows || []).find((w: TransferWindow) => w.is_active || w.status === 'active');
         
         if (activeWindow) {
           setTransferWindow(activeWindow);
@@ -363,7 +363,7 @@ export default function TeamTransfersPage() {
   };
 
   const canExecuteTransfer = () => {
-    if (!transferWindow || !transferWindow.is_active) return false;
+    if (!transferWindow || (!transferWindow.is_active && transferWindow.status !== 'active')) return false;
     if (!teamInfo) return false;
     
     // Must have at least one action (release or sign)
@@ -441,7 +441,7 @@ export default function TeamTransfersPage() {
     );
   }
 
-  if (!transferWindow || !transferWindow.is_active) {
+  if (!transferWindow || (!transferWindow.is_active && transferWindow.status !== 'active')) {
     return (
       <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
