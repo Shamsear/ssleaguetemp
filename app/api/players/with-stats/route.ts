@@ -160,44 +160,43 @@ export async function GET(request: NextRequest) {
       statsLookupMap.set(stat.player_id, stat);
     });
 
-    // Resolve active season ID from Firebase
-    let activeSeasonId = null;
+    // Resolve active season ID from Neon DB
+    let activeSeasonId: string | null = null;
     try {
-      const seasonsSnapshot = await firebaseDb
-        .collection('seasons')
-        .where('status', '!=', 'completed')
-        .orderBy('status')
-        .orderBy('created_at', 'desc')
-        .limit(1)
-        .get();
-      
-      if (!seasonsSnapshot.empty) {
-        activeSeasonId = seasonsSnapshot.docs[0].id;
-        console.log(`[Players API] Resolved active season ID from Firebase: ${activeSeasonId}`);
+      const activeRes = await sql`
+        SELECT season_id 
+        FROM tournament_settings 
+        WHERE season_id LIKE 'SSPSLS%' 
+        ORDER BY CAST(SUBSTRING(season_id FROM 7) AS INT) DESC 
+        LIMIT 1
+      `;
+      if (activeRes.length > 0 && activeRes[0].season_id) {
+        activeSeasonId = activeRes[0].season_id;
       } else {
-        const recentSeasonSnapshot = await firebaseDb
-          .collection('seasons')
-          .where('is_historical', '==', false)
-          .orderBy('created_at', 'desc')
-          .limit(1)
-          .get();
-        if (!recentSeasonSnapshot.empty) {
-          activeSeasonId = recentSeasonSnapshot.docs[0].id;
-          console.log(`[Players API] Fallback to recent season ID: ${activeSeasonId}`);
+        const rpsActive = await sql`
+          SELECT DISTINCT season_id 
+          FROM realplayerstats 
+          WHERE season_id LIKE 'SSPSLS%' 
+          ORDER BY CAST(SUBSTRING(season_id FROM 7) AS INT) DESC 
+          LIMIT 1
+        `;
+        if (rpsActive.length > 0) {
+          activeSeasonId = rpsActive[0].season_id;
         }
       }
+      console.log(`[Players API] Resolved active season ID from Neon: ${activeSeasonId}`);
     } catch (err: any) {
-      console.error('[Players API] Error getting active season from Firebase:', err.message);
+      console.error('[Players API] Error resolving active season from Neon:', err?.message);
     }
 
     // Get season info (team/category)
-    let seasonInfo;
+    let seasonInfo: any[] = [];
     try {
       if (activeSeasonId) {
         const activeSeasonNum = parseInt(activeSeasonId.replace(/\D/g, '')) || 0;
-        const isActiveModern = activeSeasonNum === 16 || activeSeasonNum === 17;
+        const isPlayerSeasonsSeason = activeSeasonNum === 16 || activeSeasonNum === 17;
 
-        if (isActiveModern) {
+        if (isPlayerSeasonsSeason) {
           // Query player_seasons table to get team/category for active season
           seasonInfo = await sql`
             SELECT DISTINCT ON (player_id) 
@@ -217,6 +216,7 @@ export async function GET(request: NextRequest) {
               player_id,
               category,
               team_id,
+              team as team_name,
               NULL as star_rating,
               season_id
             FROM realplayerstats
@@ -225,8 +225,10 @@ export async function GET(request: NextRequest) {
           `;
         }
         console.log(`[Players API] Found season info for ${seasonInfo.length} players in season ${activeSeasonId}`);
-      } else {
-        // Fallback: get the latest recorded season for each player from both tables and merge
+      }
+
+      // If active season info is empty, fallback to latest recorded season per player
+      if (!seasonInfo || seasonInfo.length === 0) {
         const psInfo = await sql`
           SELECT DISTINCT ON (player_id) 
             player_id,
@@ -235,7 +237,7 @@ export async function GET(request: NextRequest) {
             star_rating,
             season_id
           FROM player_seasons
-          ORDER BY player_id, season_id DESC, created_at DESC
+          ORDER BY player_id, CAST(SUBSTRING(season_id FROM 7) AS INT) DESC, created_at DESC
         `;
         
         const rpsInfo = await sql`
@@ -243,10 +245,11 @@ export async function GET(request: NextRequest) {
             player_id,
             category,
             team_id,
+            team as team_name,
             NULL as star_rating,
             season_id
           FROM realplayerstats
-          ORDER BY player_id, season_id DESC, created_at DESC
+          ORDER BY player_id, CAST(SUBSTRING(season_id FROM 7) AS INT) DESC, created_at DESC
         `;
 
         const infoMap = new Map();
@@ -291,9 +294,10 @@ export async function GET(request: NextRequest) {
     // Create season info lookup map
     const seasonMap = new Map();
     seasonInfo.forEach((info: any) => {
+      const resolvedTeamName = info.team_name || (info.team_id ? teamsMap.get(info.team_id) : null) || null;
       seasonMap.set(info.player_id, {
         ...info,
-        team_name: teamsMap.get(info.team_id) || null
+        team_name: resolvedTeamName
       });
     });
 
@@ -303,16 +307,19 @@ export async function GET(request: NextRequest) {
       const stats = statsLookupMap.get(playerId);
       const season = seasonMap.get(playerId);
 
+      const category = season?.category || playerData.category || null;
+      const teamName = season?.team_name || playerData.team || null;
+
       return {
         id: playerData.id,
         player_id: playerId,
         name: playerData.name,
         display_name: playerData.display_name || playerData.name,
-        category: season?.category || playerData.category || null,
+        category: category,
         star_rating: season?.star_rating || null,
-        season_id: season?.season_id || null,
-        team: playerData.team,
-        team_name: season?.team_name || playerData.team || null,
+        season_id: season?.season_id || activeSeasonId || null,
+        team: teamName,
+        team_name: teamName,
         photo_url: playerData.photo_url || null,
         // Photo positioning for circle shape
         photo_position_circle: playerData.photo_position_circle || null,
@@ -324,7 +331,7 @@ export async function GET(request: NextRequest) {
         photo_scale_square: playerData.photo_scale_square || null,
         photo_position_x_square: playerData.photo_position_x_square || null,
         photo_position_y_square: playerData.photo_position_y_square || null,
-        current_season_id: playerData.current_season_id || null,
+        current_season_id: activeSeasonId || playerData.current_season_id || null,
         matches_played: parseInt(stats?.matches_played) || 0,
         goals_scored: parseInt(stats?.goals_scored) || 0,
         clean_sheets: parseInt(stats?.clean_sheets) || 0,
