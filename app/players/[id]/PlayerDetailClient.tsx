@@ -217,31 +217,31 @@ export default function PlayerDetailPage() {
       setError(null);
 
       // Only show seasons that exist in Firebase and have started
+      // Show all seasons that have player stats data
       const startedSeasons = playerStatsData.filter((statsData: any) => {
         const seasonId = statsData.season_id;
+        if (!seasonId) return false;
 
-        // Find the season in Firebase
+        // If season exists in API seasons metadata, check status/start_date
         const fbSeason = firebaseSeasons.find(s => s.id === seasonId);
-
-        // If season not found in Firebase, exclude it
-        if (!fbSeason) return false;
-
-        // Check if season has started
-        if (fbSeason.start_date) {
-          const startDate = fbSeason.start_date.toDate ? fbSeason.start_date.toDate() : new Date(fbSeason.start_date);
-          const now = new Date();
-          return startDate <= now;
+        if (fbSeason) {
+          if (fbSeason.start_date) {
+            const startDate = fbSeason.start_date.toDate ? fbSeason.start_date.toDate() : new Date(fbSeason.start_date);
+            if (startDate > new Date()) return false;
+          }
+          if (fbSeason.status === 'upcoming') return false;
         }
 
-        // If no start_date field, check status (for backward compatibility)
-        if (fbSeason.status === 'active' || fbSeason.status === 'completed') {
-          return true;
-        }
-
-        // For very old seasons without start_date or status, include them
-        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-        return seasonNum < 16; 
+        // Include all seasons where the player has logged stats
+        return true;
       });
+
+      // Helper to format season display name (e.g. SSPSLS8 -> Season 8)
+      const formatSeasonName = (sid: string) => {
+        if (!sid) return 'Season';
+        const numMatch = sid.match(/\d+/);
+        return numMatch ? `Season ${numMatch[0]}` : sid;
+      };
 
       // Fetch photo_url and personal details from API
       let photoUrl: string | undefined;
@@ -276,7 +276,7 @@ export default function PlayerDetailPage() {
 
       // Process all season data from Neon
       const allData = startedSeasons.map((statsData: any) => {
-        const seasonName = statsData.season_name || statsData.season_id;
+        const seasonName = statsData.season_name || formatSeasonName(statsData.season_id);
 
         const matchesPlayed = statsData.matches_played || 0;
         const goalsScored = statsData.goals_scored || 0;
