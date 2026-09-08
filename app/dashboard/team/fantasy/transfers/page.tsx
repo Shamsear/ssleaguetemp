@@ -37,8 +37,10 @@ interface TransferWindow {
   opens_at: string;
   closes_at: string;
   is_active: boolean;
-  max_transfers_per_window: number;
-  points_cost_per_transfer: number;
+  max_transfers_per_window?: number;
+  max_releases?: number;
+  max_swaps?: number;
+  points_cost_per_transfer?: number;
   status?: string;
 }
 
@@ -420,8 +422,9 @@ export default function TeamTransfersPage() {
     
     if (!selectedOut && !selectedIn) return false;
     
-    const transfersRemaining = transferWindow.max_transfers_per_window - transfersUsed;
-    if (transfersRemaining <= 0) return false;
+    const maxTransfers = Number(transferWindow.max_transfers_per_window ?? transferWindow.max_releases ?? 1) || 1;
+    const remaining = Math.max(0, maxTransfers - (Number(transfersUsed) || 0));
+    if (remaining <= 0) return false;
     
     if (selectedOut && !selectedIn) {
       if (teamInfo.squad_size <= teamInfo.min_squad_size) return false;
@@ -520,7 +523,9 @@ export default function TeamTransfersPage() {
   }
 
   const newBudget = calculateNewBudget();
-  const transfersRemaining = transferWindow.max_transfers_per_window - transfersUsed;
+  const maxTransfers = Number(transferWindow?.max_transfers_per_window ?? transferWindow?.max_releases ?? 1) || 1;
+  const transfersRemaining = Math.max(0, maxTransfers - (Number(transfersUsed) || 0));
+  const pointsCost = Number(transferWindow?.points_cost_per_transfer || 0);
 
   return (
     <AuthGuard requiredRole="team">
@@ -605,7 +610,7 @@ export default function TeamTransfersPage() {
 
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 col-span-2 sm:col-span-1">
               <p className="text-[9px] text-slate-400 uppercase font-black">Points Penalty</p>
-              <p className="text-lg font-black text-slate-850 mt-1">{transferWindow.points_cost_per_transfer} pts</p>
+              <p className="text-lg font-black text-slate-850 mt-1">{pointsCost} pts</p>
             </div>
           </div>
         </div>
@@ -894,16 +899,16 @@ export default function TeamTransfersPage() {
                     <span>Current points:</span>
                     <span>{teamInfo.total_points}</span>
                   </div>
-                  {transferWindow.points_cost_per_transfer > 0 && (
+                  {pointsCost > 0 && (
                     <div className="flex items-center justify-between text-[10px] font-bold uppercase text-rose-600">
                       <span>- Penalty Cost:</span>
-                      <span>-{transferWindow.points_cost_per_transfer} pts</span>
+                      <span>-{pointsCost} pts</span>
                     </div>
                   )}
                   <div className="border-t border-slate-200 pt-2 mt-2 flex items-center justify-between text-xs font-black uppercase text-slate-850">
                     <span>New total points:</span>
                     <span>
-                      {teamInfo.total_points - (transferWindow.points_cost_per_transfer || 0)}
+                      {teamInfo.total_points - pointsCost}
                     </span>
                   </div>
                 </div>
