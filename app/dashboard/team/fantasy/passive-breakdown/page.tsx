@@ -155,8 +155,8 @@ export default function PassiveBreakdownPage() {
     );
   }
 
-  const teamBonusTotal = data.rounds.reduce((sum, r) => sum + r.total_bonus, 0);
-  const adminBonusTotal = data.admin_bonuses.reduce((sum, b) => sum + b.points, 0);
+  const teamBonusTotal = data.rounds.reduce((sum, r) => sum + (Number(r.total_bonus) || 0), 0);
+  const adminBonusTotal = data.admin_bonuses.reduce((sum, b) => sum + (Number(b.points) || 0), 0);
 
   return (
     <AuthGuard requiredRole="team">

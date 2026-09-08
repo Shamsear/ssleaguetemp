@@ -153,34 +153,37 @@ export async function GET(
       ORDER BY awarded_at DESC
     `;
 
-    const totalAdminBonus = adminBonuses.reduce((sum: number, b: any) => sum + (b.points || 0), 0);
+    const totalAdminBonus = adminBonuses.reduce((sum: number, b: any) => sum + (Number(b.points) || 0), 0);
+    const totalMatchBonus = bonusBreakdown.reduce((sum: number, b: any) => sum + (Number(b.total_bonus) || 0), 0);
+    const calculatedTotalPassive = totalMatchBonus + totalAdminBonus;
     
     console.log('📊 [Passive Breakdown] Admin bonuses found:', {
       count: adminBonuses.length,
       total: totalAdminBonus,
-      bonuses: adminBonuses.map((b: any) => ({ reason: b.reason, points: b.points }))
+      bonuses: adminBonuses.map((b: any) => ({ reason: b.reason, points: Number(b.points) || 0 }))
     });
 
     console.log('📊 [Passive Breakdown] Passive rounds found:', bonusBreakdown.length);
     console.log('📊 [Passive Breakdown] Summary:', {
-      passive_points_from_db: team.passive_points,
-      passive_rounds_total: bonusBreakdown.reduce((sum: number, b: any) => sum + (b.total_bonus || 0), 0),
+      passive_points_from_db: Number(team.passive_points) || 0,
+      passive_rounds_total: totalMatchBonus,
       admin_bonus_total: totalAdminBonus,
-      should_match: team.passive_points === (bonusBreakdown.reduce((sum: number, b: any) => sum + (b.total_bonus || 0), 0))
+      calculated_total: calculatedTotalPassive,
     });
 
     // Calculate statistics
     const stats = {
       total_rounds: bonusBreakdown.length,
-      total_passive_points: team.passive_points || 0,
+      total_passive_points: calculatedTotalPassive,
+      total_match_bonus: totalMatchBonus,
       total_admin_bonus: totalAdminBonus,
       average_per_round: bonusBreakdown.length > 0 
-        ? (bonusBreakdown.reduce((sum: number, b: any) => sum + (b.total_bonus || 0), 0) / bonusBreakdown.length).toFixed(1)
+        ? (totalMatchBonus / bonusBreakdown.length).toFixed(1)
         : '0.0',
       best_round: bonusBreakdown.length > 0
-        ? Math.max(...bonusBreakdown.map((b: any) => b.total_bonus || 0))
+        ? Math.max(...bonusBreakdown.map((b: any) => Number(b.total_bonus) || 0))
         : 0,
-      rounds_with_bonus: bonusBreakdown.filter((b: any) => b.total_bonus > 0).length,
+      rounds_with_bonus: bonusBreakdown.filter((b: any) => (Number(b.total_bonus) || 0) > 0).length,
     };
 
     return NextResponse.json({
@@ -190,13 +193,13 @@ export async function GET(
         owner_name: team.owner_name,
         supported_team_id: team.supported_team_id,
         supported_team_name: team.supported_team_name,
-        passive_points: team.passive_points,
+        passive_points: calculatedTotalPassive,
         league_id: team.league_id,
       },
       stats,
       admin_bonuses: adminBonuses.map((bonus: any) => ({
         id: bonus.id,
-        points: bonus.points,
+        points: Number(bonus.points) || 0,
         reason: bonus.reason,
         awarded_at: bonus.awarded_at,
       })),
@@ -209,6 +212,14 @@ export async function GET(
           } catch (e) {
             breakdown = {};
           }
+        }
+
+        // Convert numeric breakdown values to Numbers
+        const formattedBreakdown: Record<string, number> = {};
+        if (breakdown && typeof breakdown === 'object') {
+          Object.entries(breakdown).forEach(([k, v]) => {
+            formattedBreakdown[k] = Number(v) || 0;
+          });
         }
         
         const fixture = fixtureMap.get(bonus.fixture_id);
@@ -226,14 +237,14 @@ export async function GET(
 
         return {
           fixture_id: bonus.fixture_id,
-          round_number: bonus.round_number,
+          round_number: Number(bonus.round_number) || 0,
           real_team_id: bonus.real_team_id,
           real_team_name: bonus.real_team_name,
           opponent_name,
           score,
           home_away: fixture ? (isHome ? 'H' : 'A') : null,
-          bonus_breakdown: breakdown || {},
-          total_bonus: bonus.total_bonus,
+          bonus_breakdown: formattedBreakdown,
+          total_bonus: Number(bonus.total_bonus) || 0,
           calculated_at: bonus.calculated_at,
         };
       }),
