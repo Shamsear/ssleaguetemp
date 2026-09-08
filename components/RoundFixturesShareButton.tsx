@@ -107,7 +107,7 @@ export default function RoundFixturesShareButton({ roundNumber, fixtures, tourna
       </div>
 
       {/* Hidden card for image generation */}
-      <div style={{ position: 'fixed', left: '-9999px', top: '0px', width: '1200px', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', left: '-9999px', top: '0px', width: '1200px', height: 'auto', pointerEvents: 'none' }}>
         <div ref={cardRef}>
           <FixturesSnapshot 
             matches={fixtures.map((f): Match => ({

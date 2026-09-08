@@ -127,14 +127,20 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
 }
 
 /**
- * Generates a PNG data URL from a DOM container cleanly.
+ * Generates a PNG data URL from a DOM container cleanly with full height/width calculation.
  */
 export async function generateContainerPng(container: HTMLElement): Promise<string> {
   await inlineContainerImages(container);
   
+  // Calculate explicit full width and height to prevent viewport clipping
+  const targetWidth = container.scrollWidth || container.offsetWidth || 1200;
+  const targetHeight = container.scrollHeight || container.offsetHeight || 800;
+
   const options = {
     quality: 0.95,
     pixelRatio: 1.5,
+    width: targetWidth,
+    height: targetHeight,
     backgroundColor: '#ffffff',
     cacheBust: false,
     fontEmbedCSS: '',

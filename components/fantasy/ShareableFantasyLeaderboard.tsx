@@ -126,12 +126,13 @@ export default function ShareableFantasyLeaderboard({
 
       {/* Offscreen / Preview Snapshot Container for PNG Generation */}
       <div style={{ 
-        position: showPreview ? 'relative' : 'fixed', 
+        position: showPreview ? 'relative' : 'absolute', 
         left: showPreview ? '0' : '-9999px', 
         top: '0',
         width: showPreview ? '100%' : '1200px',
         height: 'auto',
         overflow: showPreview ? 'auto' : 'visible',
+        pointerEvents: showPreview ? 'auto' : 'none',
         zIndex: showPreview ? 'auto' : '-9999'
       }}>
         <div 
