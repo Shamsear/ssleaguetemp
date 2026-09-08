@@ -130,9 +130,9 @@ export async function GET(
         try { pointsBreakdown = JSON.parse(pointsBreakdown); } catch { pointsBreakdown = {}; }
       }
 
-      // If points_breakdown is empty, dynamically construct full itemized breakdown using standard fantasy scoring rules
+      // If points_breakdown is empty, dynamically construct full itemized breakdown using category-based result points
       if (!pointsBreakdown || Object.keys(pointsBreakdown).length === 0) {
-        const resultPts = res === 'win' ? 3 : (res === 'draw' ? 1 : 0);
+        const resultPts = calculatedResultPts; // category-based (already computed above)
         const goalsPts = goalsScored * 2;
         const cleanSheetPts = isCleanSheet ? 6 : 0;
         const motmPts = isMotm ? 5 : 0;
@@ -151,7 +151,8 @@ export async function GET(
       }
 
       const calculatedTotalBasePts = Object.values(pointsBreakdown).reduce((a: any, b: any) => Number(a) + Number(b), 0);
-      const basePts = (fppData?.base_points !== undefined && Number(fppData.base_points) > 0)
+      // Use DB base_points if it exists (may be negative — so check !== undefined, not > 0)
+      const basePts = fppData?.base_points !== undefined
         ? Number(fppData.base_points)
         : calculatedTotalBasePts;
 
