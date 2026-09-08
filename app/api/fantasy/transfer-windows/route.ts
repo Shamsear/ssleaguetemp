@@ -26,6 +26,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Auto-close any expired transfer windows
+    await fantasySql`
+      UPDATE fantasy_transfer_windows
+      SET is_active = false
+      WHERE league_id = ${leagueId}
+        AND is_active = true
+        AND closes_at < NOW()
+    `;
+
     // Get all transfer windows for the league
     const windows = await fantasySql`
       SELECT 
@@ -40,6 +49,7 @@ export async function GET(request: NextRequest) {
         COALESCE(max_releases, 1) as max_releases,
         COALESCE(max_swaps, 1) as max_swaps,
         CASE
+          WHEN closes_at < NOW() THEN 'closed'
           WHEN is_active = true THEN 'active'
           WHEN NOW() BETWEEN opens_at AND closes_at THEN 'active'
           WHEN NOW() < opens_at THEN 'upcoming'

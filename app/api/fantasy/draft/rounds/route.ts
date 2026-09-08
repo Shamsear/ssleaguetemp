@@ -31,6 +31,16 @@ export async function GET(request: NextRequest) {
 
     await fantasySql`SET timezone = 'UTC'`;
 
+    // Auto-close active draft rounds whose deadline has passed
+    await fantasySql`
+      UPDATE fantasy_draft_rounds
+      SET status = 'closed'
+      WHERE league_id = ${league_id}
+        AND status = 'active'
+        AND closes_at IS NOT NULL
+        AND closes_at < NOW()
+    `;
+
     const rounds = await fantasySql`
       SELECT id, league_id, slot_index, slot_name, opens_at, closes_at, status, finalization_mode, updated_at
       FROM fantasy_draft_rounds
@@ -41,7 +51,6 @@ export async function GET(request: NextRequest) {
     // Ensure timestamptz values are returned as proper ISO strings with Z suffix.
     // Neon HTTP driver strips timezone info, causing client-side new Date() to
     // interpret them as browser-local time instead of UTC.
-    // Ensure timestamptz values are returned as proper ISO strings with Z suffix
     const safeRounds = rounds.map((r: any) => ({
       ...r,
       opens_at: r.opens_at ? toISOZ(r.opens_at) : r.opens_at,
@@ -85,6 +94,34 @@ export async function POST(request: NextRequest) {
     await fantasySql`SET timezone = 'UTC'`;
 
     const slotIdx = Number(slot_index);
+
+    if (action === 'start') {
+      // Auto-close expired release windows first
+      await fantasySql`
+        UPDATE fantasy_transfer_windows
+        SET is_active = false
+        WHERE league_id = ${league_id}
+          AND is_active = true
+          AND closes_at < NOW()
+      `;
+
+      // Verify no release window is currently active for this league
+      const activeRelease = await fantasySql`
+        SELECT window_name, closes_at FROM fantasy_transfer_windows
+        WHERE league_id = ${league_id}
+          AND is_active = true
+        LIMIT 1
+      `;
+
+      if (activeRelease.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Cannot open draft round while release window "${activeRelease[0].window_name}" is still active. Please close the release window first before starting the draft!`
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Fetch existing round (or null)
     const existing = await fantasySql`
