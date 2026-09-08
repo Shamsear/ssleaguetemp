@@ -29,9 +29,29 @@ function dataUrlToBlob(dataUrl: string): Blob {
 }
 
 /**
+ * Forces mobile browser engines (iOS WebKit, Mobile Chrome) to decode an image into GPU memory.
+ */
+async function forceDecodeImage(img: HTMLImageElement): Promise<void> {
+  try {
+    if ('decode' in img && typeof img.decode === 'function') {
+      await img.decode();
+    } else {
+      if (img.complete) return;
+      await new Promise<void>((resolve) => {
+        const onDone = () => resolve();
+        img.addEventListener('load', onDone, { once: true });
+        img.addEventListener('error', onDone, { once: true });
+        setTimeout(onDone, 300);
+      });
+    }
+  } catch {
+    // Ignore decode error for broken images
+  }
+}
+
+/**
  * Preloads all <img> tags inside a DOM node and converts images to base64 Data URLs.
- * Uses /api/image-proxy server-side fetch to bypass CORS without modifying DOM crossorigin properties.
- * Ensures team logos and photos render cleanly in PNG export without white box artifacts.
+ * Uses /api/image-proxy server-side fetch to bypass CORS and forces GPU decoding for mobile compatibility.
  */
 export async function inlineContainerImages(container: HTMLElement): Promise<void> {
   const images = Array.from(container.querySelectorAll('img'));
@@ -53,38 +73,36 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
   await Promise.all(
     images.map(async (img) => {
       const src = img.src;
-      if (!src || src.startsWith('data:')) return;
+      if (!src) return;
 
-      // 1. Try proxy fetch via /api/image-proxy for http/https URLs
-      if (src.startsWith('http://') || src.startsWith('https://')) {
+      let targetDataUrl: string | null = null;
+
+      if (src.startsWith('data:')) {
+        targetDataUrl = src;
+      } else if (src.startsWith('http://') || src.startsWith('https://')) {
+        // 1. Try proxy fetch via /api/image-proxy for http/https URLs
         try {
           const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
           const response = await fetch(proxyUrl);
           if (response.ok) {
             const blob = await response.blob();
-            const dataUrl = await blobToDataUrl(blob);
-            if (dataUrl && dataUrl.length > 100) {
-              img.src = dataUrl;
-              return;
-            }
+            targetDataUrl = await blobToDataUrl(blob);
           }
         } catch (err) {
           console.warn('Proxy fetch failed for image:', src, err);
         }
 
-        // 2. Direct fetch fallback
-        try {
-          const response = await fetch(src, { mode: 'cors' });
-          if (response.ok) {
-            const blob = await response.blob();
-            const dataUrl = await blobToDataUrl(blob);
-            if (dataUrl && dataUrl.length > 100) {
-              img.src = dataUrl;
-              return;
+        // 2. Direct fetch fallback if proxy failed
+        if (!targetDataUrl) {
+          try {
+            const response = await fetch(src, { mode: 'cors' });
+            if (response.ok) {
+              const blob = await response.blob();
+              targetDataUrl = await blobToDataUrl(blob);
             }
+          } catch {
+            // Direct fetch failed
           }
-        } catch {
-          // Direct fetch failed
         }
       } else if (src.startsWith('/')) {
         // Relative origin URL
@@ -92,38 +110,38 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
           const response = await fetch(src);
           if (response.ok) {
             const blob = await response.blob();
-            const dataUrl = await blobToDataUrl(blob);
-            if (dataUrl && dataUrl.length > 100) {
-              img.src = dataUrl;
-              return;
-            }
+            targetDataUrl = await blobToDataUrl(blob);
           }
         } catch {
           // Relative fetch failed
         }
       }
 
-      // 3. Fallback: Canvas conversion if image is already loaded in DOM
-      try {
-        if (img.naturalWidth && img.naturalHeight) {
+      // 3. Fallback: Canvas conversion if image is loaded in DOM
+      if (!targetDataUrl && img.naturalWidth && img.naturalHeight) {
+        try {
           const canvas = document.createElement('canvas');
           canvas.width = img.naturalWidth;
           canvas.height = img.naturalHeight;
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0);
-            const dataUrl = canvas.toDataURL('image/png');
-            if (dataUrl && dataUrl.length > 100) {
-              img.src = dataUrl;
-              return;
-            }
+            targetDataUrl = canvas.toDataURL('image/png');
           }
+        } catch (err) {
+          console.warn('Canvas conversion failed for image:', src, err);
         }
-      } catch (err) {
-        console.warn('Canvas conversion failed for image:', src, err);
+      }
+
+      if (targetDataUrl && targetDataUrl.length > 100) {
+        img.src = targetDataUrl;
+        await forceDecodeImage(img);
       }
     })
   );
+
+  // Extra 150ms buffer for mobile Safari/Chrome GPU rendering pass
+  await new Promise((resolve) => setTimeout(resolve, 150));
 }
 
 /**
