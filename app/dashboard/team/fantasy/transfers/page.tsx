@@ -131,8 +131,8 @@ export default function TeamTransfersPage() {
         if (leagueRes.ok) {
           const leagueData = await leagueRes.json();
           const leagueDetails = leagueData.league;
-          minSquadSize = Number(leagueDetails.min_squad_size || 5);
-          maxSquadSize = Number(leagueDetails.max_squad_size || 15);
+          minSquadSize = Number(leagueDetails.min_squad_size ?? 0);
+          maxSquadSize = Number(leagueDetails.max_squad_size || 5);
           totalBudget = Number(leagueDetails.budget_per_team || 100);
         }
         

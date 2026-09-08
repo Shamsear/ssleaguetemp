@@ -11,25 +11,28 @@ export async function releasePlayer(
   transferWindowId?: string
 ) {
   try {
-    // 1. Get player from squad
+    // 1. Get player from squad & player details
     const [squadPlayer] = await fantasySql`
       SELECT 
-        squad_id,
-        real_player_id,
-        purchase_price,
-        added_at
-      FROM fantasy_squad
-      WHERE team_id = ${teamId}
-        AND real_player_id = ${playerId}
+        s.squad_id,
+        s.real_player_id,
+        s.purchase_price,
+        s.added_at,
+        p.player_name,
+        COALESCE(p.category, p.position, 'Uncategorized') as category
+      FROM fantasy_squad s
+      LEFT JOIN fantasy_players p ON s.real_player_id = p.real_player_id AND p.league_id = ${leagueId}
+      WHERE s.team_id = ${teamId}
+        AND s.real_player_id = ${playerId}
     `;
 
     if (!squadPlayer) {
       throw new Error('Player not found in squad');
     }
 
-    // 2. Calculate refund (80% of purchase price)
-    const purchasePrice = parseFloat(squadPlayer.purchase_price);
-    const refundPercentage = 80.0;
+    // 2. Calculate refund (100% of purchase price)
+    const purchasePrice = parseFloat(squadPlayer.purchase_price || 0);
+    const refundPercentage = 100.0;
     const refundAmount = (purchasePrice * refundPercentage) / 100;
 
     // 3. Get team's current budget
@@ -43,7 +46,7 @@ export async function releasePlayer(
       throw new Error('Team not found');
     }
 
-    const currentBudget = parseFloat(team.budget);
+    const currentBudget = parseFloat(team.budget || 0);
     const newBudget = currentBudget + refundAmount;
 
     // 4. Remove player from squad
@@ -79,12 +82,14 @@ export async function releasePlayer(
         release_id,
         league_id,
         team_id,
+        window_id,
         real_player_id,
+        player_name,
+        category,
+        is_passive_team,
         purchase_price,
         refund_amount,
         refund_percentage,
-        transfer_window_id,
-        status,
         released_at,
         created_at
       )
@@ -92,12 +97,14 @@ export async function releasePlayer(
         ${releaseId},
         ${leagueId},
         ${teamId},
+        ${transferWindowId || null},
         ${playerId},
+        ${squadPlayer.player_name || playerId},
+        ${squadPlayer.category || 'Uncategorized'},
+        false,
         ${purchasePrice},
         ${refundAmount},
         ${refundPercentage},
-        ${transferWindowId || null},
-        'completed',
         NOW(),
         NOW()
       )
@@ -269,11 +276,11 @@ export async function validateRelease(teamId: string, playerId: string): Promise
       WHERE team_id = ${teamId}
     `;
 
-    const minSquadSize = 5; // Configurable
+    const minSquadSize = 0; // Allows releases during release window
     if (parseInt(squadCount.count) <= minSquadSize) {
       return {
         valid: false,
-        error: `Cannot release player - minimum squad size is ${minSquadSize}`
+        error: `Cannot release player - minimum squad size reached`
       };
     }
 
