@@ -46,19 +46,21 @@ export async function GET(
     // Get squad players from fantasy_squad (current active squad)
     const squadPlayers = await fantasySql`
       SELECT 
-        squad_id,
-        real_player_id,
-        player_name,
-        position,
-        real_team_name,
-        purchase_price,
-        total_points,
-        is_captain,
-        is_vice_captain,
-        acquired_at
-      FROM fantasy_squad
-      WHERE team_id = ${teamId}
-      ORDER BY total_points DESC
+        fs.squad_id,
+        fs.real_player_id,
+        fs.player_name,
+        COALESCE(fp.category, fs.position, 'Unknown') as category,
+        fs.position,
+        fs.real_team_name,
+        fs.purchase_price,
+        fs.total_points,
+        fs.is_captain,
+        fs.is_vice_captain,
+        fs.acquired_at
+      FROM fantasy_squad fs
+      LEFT JOIN fantasy_players fp ON (fs.real_player_id = fp.real_player_id AND fs.league_id = fp.league_id)
+      WHERE fs.team_id = ${teamId}
+      ORDER BY fs.total_points DESC
     `;
 
     console.log('[Team API] Squad players found:', squadPlayers.length);
@@ -91,6 +93,7 @@ export async function GET(
           draft_id: player.squad_id,
           real_player_id: player.real_player_id,
           player_name: player.player_name,
+          category: player.category || 'Unknown',
           position: player.position,
           real_team_name: player.real_team_name,
           purchase_price: Number(player.purchase_price),
@@ -129,7 +132,7 @@ export async function GET(
         owner_name: teamData.owner_name,
         total_points: teamData.total_points,
         rank: teamData.rank,
-        budget_remaining: teamData.budget_remaining,
+        budget_remaining: Number(teamData.budget_remaining || 0),
       },
       players: draftedPlayers,
       recent_rounds: recentRounds,

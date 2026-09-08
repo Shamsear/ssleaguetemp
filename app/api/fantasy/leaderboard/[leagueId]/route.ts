@@ -101,7 +101,7 @@ export async function GET(
         if (doc.exists) {
           const teamData = doc.data();
           // Check multiple possible logo field names
-          const logoUrl = teamData?.logo_url || null;
+          const logoUrl = teamData?.logo_url || teamData?.logoUrl || teamData?.logo || teamData?.team_logo || teamData?.url || null;
           
           if (logoUrl) {
             teamLogos[fantasyTeamId] = {

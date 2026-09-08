@@ -24,23 +24,25 @@ export async function GET(request: NextRequest) {
     // Get squad with all details
     const squad = await fantasySql`
       SELECT 
-        squad_id,
-        team_id,
-        league_id,
-        real_player_id,
-        player_name,
-        position,
-        real_team_name,
-        purchase_price,
-        current_value,
-        total_points,
-        is_captain,
-        is_vice_captain,
-        acquisition_type,
-        acquired_at
-      FROM fantasy_squad
-      WHERE team_id = ${team_id}
-      ORDER BY acquired_at DESC
+        fs.squad_id,
+        fs.team_id,
+        fs.league_id,
+        fs.real_player_id,
+        fs.player_name,
+        COALESCE(fp.category, fs.position, 'Unknown') as category,
+        fs.position,
+        fs.real_team_name,
+        fs.purchase_price,
+        fs.current_value,
+        fs.total_points,
+        fs.is_captain,
+        fs.is_vice_captain,
+        fs.acquisition_type,
+        fs.acquired_at
+      FROM fantasy_squad fs
+      LEFT JOIN fantasy_players fp ON (fs.real_player_id = fp.real_player_id AND fs.league_id = fp.league_id)
+      WHERE fs.team_id = ${team_id}
+      ORDER BY fs.acquired_at DESC
     `;
 
     return NextResponse.json({
@@ -49,6 +51,7 @@ export async function GET(request: NextRequest) {
         squad_id: p.squad_id,
         real_player_id: p.real_player_id,
         player_name: p.player_name,
+        category: p.category || 'Unknown',
         position: p.position || 'Unknown',
         real_team_name: p.real_team_name || 'Unknown',
         purchase_price: Number(p.purchase_price || 0),
