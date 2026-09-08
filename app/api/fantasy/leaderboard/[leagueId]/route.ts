@@ -65,7 +65,7 @@ export async function GET(
       FROM fantasy_teams ft
       LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
       WHERE ft.league_id = ${leagueId}
-      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.supported_team_id
+      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.supported_team_id, ft.league_id
       ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
     `;
 
