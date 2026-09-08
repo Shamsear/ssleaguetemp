@@ -513,7 +513,7 @@ export default function TransferWindowsPage() {
 
           {/* Edit Window Modal */}
           {editingWindow && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
               <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 font-mono">
                 <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                   <h3 className="font-extrabold text-sm uppercase text-slate-900 flex items-center gap-2">
