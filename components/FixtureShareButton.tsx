@@ -68,7 +68,8 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
       <div className="flex items-center gap-2">
         {/* Download Button */}
         <button
-          onClick={handleDownload}
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDownload(); }}
           disabled={isGenerating}
           className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-amber-400 font-extrabold rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-xs uppercase font-mono border border-slate-900"
         >
@@ -87,7 +88,8 @@ export default function FixtureShareButton({ fixture, matchups }: Props) {
 
         {/* Share Button */}
         <button
-          onClick={handleShare}
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleShare(); }}
           disabled={isGenerating}
           className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-xs uppercase font-mono"
         >

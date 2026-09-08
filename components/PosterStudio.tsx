@@ -2,7 +2,7 @@
 
 import { useRef, useState, useMemo, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
-import { generateContainerPng } from '@/lib/utils/export-image';
+import { generateContainerPng, downloadPng, shareOrDownloadPng } from '@/lib/utils/export-image';
 import { SinglePlayerDesign, TableDesign, TeamOfWeekDesign, TeamOfDayDesign } from './PosterDesigns';
 import { 
   BarChart2, 
@@ -577,25 +577,14 @@ export default function PosterStudio({
   const hasNextPage = statsPage < totalPages - 1;
   const hasPrevPage = statsPage > 0;
 
-  const handleDownload = async () => {
+  const handleDownload = async (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     if (!posterRef.current || downloading) return;
     setDownloading(true);
     
     try {
       const dataUrl = await generateContainerPng(posterRef.current);
-
-      const blob = await (await fetch(dataUrl)).blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `${activeTheme}-poster.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-
+      downloadPng(dataUrl, `${activeTheme}-poster.png`);
       setDownloadDone(true);
       setTimeout(() => setDownloadDone(false), 2500);
     } catch (err) {
@@ -605,26 +594,16 @@ export default function PosterStudio({
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     if (!posterRef.current || sharing) return;
     setSharing(true);
     
     try {
       const dataUrl = await generateContainerPng(posterRef.current);
-
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], 'poster.png', { type: 'image/png' });
-
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `${theme.label} Poster`,
-        });
-        setShareDone(true);
-        setTimeout(() => setShareDone(false), 2500);
-      } else {
-        await handleDownload();
-      }
+      await shareOrDownloadPng(dataUrl, `${activeTheme}-poster.png`, `${theme.label} Poster`);
+      setShareDone(true);
+      setTimeout(() => setShareDone(false), 2500);
     } catch (err) {
       console.error('Share error:', err);
     } finally {
