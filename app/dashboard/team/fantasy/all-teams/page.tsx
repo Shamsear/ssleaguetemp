@@ -534,7 +534,7 @@ function PassiveBreakdown({ team, show, data, isLoading, onToggle }: {
                           <span className="w-7 h-7 bg-slate-800 text-amber-400 border border-slate-900 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0">
                             R{r.round_number}
                           </span>
-                          <p className="text-slate-800 truncate">{r.real_team_name}</p>
+                          <p className="text-slate-800 truncate">{r.real_team_name} {r.opponent_name ? `vs ${r.opponent_name}` : ''}</p>
                         </div>
                         <span className="text-xs font-black text-emerald-600 shrink-0">{r.total_bonus > 0 ? '+' : ''}{r.total_bonus} pts</span>
                       </div>

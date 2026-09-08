@@ -107,6 +107,31 @@ export async function GET(
           ORDER BY round_number ASC, calculated_at DESC
         `;
 
+    // Fetch fixture details for context (opponent name and score)
+    const { getTournamentDb } = await import('@/lib/neon/tournament-config');
+    const tourneySql = getTournamentDb();
+    const fixtureIds = [...new Set(bonusBreakdown.map((b: any) => b.fixture_id).filter(Boolean))];
+
+    const fixtures = fixtureIds.length > 0
+      ? await tourneySql`
+          SELECT 
+            f.id as fixture_id,
+            f.home_team_id,
+            f.away_team_id,
+            f.home_team_name,
+            f.away_team_name,
+            COALESCE(SUM(m.home_goals), 0) as home_goals,
+            COALESCE(SUM(m.away_goals), 0) as away_goals
+          FROM fixtures f
+          LEFT JOIN matchups m ON f.id = m.fixture_id
+          WHERE f.id = ANY(${fixtureIds})
+          GROUP BY f.id, f.home_team_id, f.away_team_id, f.home_team_name, f.away_team_name
+        `
+      : [];
+
+    const fixtureMap = new Map();
+    fixtures.forEach((f: any) => fixtureMap.set(f.fixture_id, f));
+
     // Get admin bonus points for this team
     console.log('🔍 [Passive Breakdown] Querying admin bonuses for:', {
       target_type: 'team',
@@ -186,11 +211,27 @@ export async function GET(
           }
         }
         
+        const fixture = fixtureMap.get(bonus.fixture_id);
+        const realTeamBase = (bonus.real_team_id || '').split('_')[0];
+        const homeBase = fixture ? String(fixture.home_team_id || '').split('_')[0] : '';
+        const isHome = !!fixture && homeBase === realTeamBase;
+
+        const opponent_name = fixture
+          ? (isHome ? fixture.away_team_name : fixture.home_team_name)
+          : null;
+
+        const score = fixture && fixture.home_goals !== undefined
+          ? (isHome ? `${fixture.home_goals}-${fixture.away_goals}` : `${fixture.away_goals}-${fixture.home_goals}`)
+          : null;
+
         return {
           fixture_id: bonus.fixture_id,
           round_number: bonus.round_number,
           real_team_id: bonus.real_team_id,
           real_team_name: bonus.real_team_name,
+          opponent_name,
+          score,
+          home_away: fixture ? (isHome ? 'H' : 'A') : null,
           bonus_breakdown: breakdown || {},
           total_bonus: bonus.total_bonus,
           calculated_at: bonus.calculated_at,

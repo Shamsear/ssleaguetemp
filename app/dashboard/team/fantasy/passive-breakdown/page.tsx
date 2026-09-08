@@ -316,7 +316,9 @@ export default function PassiveBreakdownPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900 text-lg">Round {round.round_number}</p>
-                        <p className="text-sm text-gray-600">{round.real_team_name}</p>
+                        <p className="text-sm text-gray-600 font-medium">
+                          {round.real_team_name} {round.opponent_name ? `vs ${round.opponent_name}` : ''} {round.score ? `(${round.score})` : ''}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
