@@ -30,8 +30,8 @@ function dataUrlToBlob(dataUrl: string): Blob {
 
 /**
  * Preloads all <img> tags inside a DOM node and converts cross-origin images to base64 Data URLs.
- * Uses a server-side proxy fallback (/api/image-proxy) if direct browser fetch fails due to CORS.
- * This prevents html-to-image / toPng from failing or omitting logos/images when deployed on Vercel.
+ * Converts DOM loaded images to base64 via Canvas first, and uses /api/image-proxy as a fallback.
+ * This guarantees logos and images render reliably in html-to-image PNG exports.
  */
 export async function inlineContainerImages(container: HTMLElement): Promise<void> {
   const images = Array.from(container.querySelectorAll('img'));
@@ -55,10 +55,30 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
       const src = img.src;
       if (!src || src.startsWith('data:')) return;
 
-      // Set crossorigin attribute to anonymous for CORS handling
+      // Ensure crossorigin attribute is set for CORS handling
       img.setAttribute('crossorigin', 'anonymous');
 
-      // 1. Try proxy fetch via /api/image-proxy for http/https URLs
+      // 1. Try local canvas conversion FIRST if image is loaded in browser DOM
+      try {
+        if (img.naturalWidth && img.naturalHeight) {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            if (dataUrl && dataUrl.length > 100) {
+              img.src = dataUrl;
+              return;
+            }
+          }
+        }
+      } catch (canvasErr) {
+        console.warn('Canvas conversion failed (CORS), trying proxy fallback for:', src, canvasErr);
+      }
+
+      // 2. Fallback: Proxy fetch via /api/image-proxy for http/https URLs
       if (src.startsWith('http://') || src.startsWith('https://')) {
         try {
           const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
@@ -75,7 +95,7 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
           console.warn('Proxy fetch failed for image:', src, err);
         }
 
-        // 2. Direct fetch fallback
+        // 3. Direct fetch fallback with cors mode
         try {
           const response = await fetch(src, { mode: 'cors' });
           if (response.ok) {
@@ -89,24 +109,6 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
         } catch {
           // Direct fetch failed
         }
-      }
-
-      // 3. Fallback: Try offscreen canvas conversion if image is loaded in DOM
-      try {
-        if (img.naturalWidth && img.naturalHeight) {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            const dataUrl = canvas.toDataURL('image/png');
-            img.src = dataUrl;
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Canvas conversion failed for image:', src, err);
       }
     })
   );
@@ -125,7 +127,6 @@ export async function generateContainerPng(container: HTMLElement): Promise<stri
     cacheBust: false,
     fontEmbedCSS: '',
     skipFontFace: true,
-    imagePlaceholder: 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="100%" height="100%" fill="%23f1f5f9"/></svg>',
     filter: (node: HTMLElement) => {
       if (node.tagName === 'SCRIPT' || node.tagName === 'NOSCRIPT' || node.tagName === 'IFRAME') {
         return false;
