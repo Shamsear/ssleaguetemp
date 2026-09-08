@@ -100,6 +100,7 @@ export default function AllPlayersPointsPage() {
   const [sortBy, setSortBy] = useState<'cumulative' | 'round' | 'name' | 'acquired'>('cumulative');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'drafted'>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [totalAvailable, setTotalAvailable] = useState(0);
   const [totalDrafted, setTotalDrafted] = useState(0);
