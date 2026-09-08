@@ -272,6 +272,7 @@ export async function GET(request: NextRequest) {
         player_count: draftedPlayers.length,
         supported_team_id: resolvedSupportedTeamId,
         supported_team_name: resolvedSupportedTeamName,
+        supported_team_price: Number(teamData.supported_team_price || 0),
         supported_team_logo: teamLogo,
         logo_position_x_circle,
         logo_position_y_circle,
