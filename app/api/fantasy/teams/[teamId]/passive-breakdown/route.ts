@@ -86,7 +86,7 @@ export async function GET(
         calculated_at
       FROM fantasy_team_bonus_points
       WHERE team_id = ${teamId} OR real_team_id = ${teamId}
-      ORDER BY round_number DESC, calculated_at DESC
+      ORDER BY fixture_id, round_number, calculated_at DESC
     `;
 
     // Get admin bonus points for this team
