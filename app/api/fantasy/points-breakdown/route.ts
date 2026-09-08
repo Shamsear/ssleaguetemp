@@ -224,10 +224,13 @@ export async function GET(request: NextRequest) {
                             ? JSON.parse(bonus.bonus_breakdown)
                             : bonus.bonus_breakdown;
 
-                        // Extract the real team ID from real_team_id field (format: SSPSLT0015)
-                        const realTeamId = bonus.real_team_id || team.supported_team_id.split('_')[0];
-                        const isHome = fixture && fixture.home_team_id === realTeamId;
-                        const isAway = fixture && fixture.away_team_id === realTeamId;
+                        // Normalise IDs to base (strip _SSPSLS18 suffix) before comparing
+                        // so isHome/isAway resolve correctly regardless of stored format
+                        const realTeamBase = (bonus.real_team_id || team.supported_team_id || '').split('_')[0];
+                        const homeBase = fixture ? String(fixture.home_team_id || '').split('_')[0] : '';
+                        const awayBase = fixture ? String(fixture.away_team_id || '').split('_')[0] : '';
+                        const isHome = !!fixture && homeBase === realTeamBase;
+                        const isAway = !!fixture && awayBase === realTeamBase;
 
                         return {
                             fixture_id: bonus.fixture_id,
@@ -240,9 +243,7 @@ export async function GET(request: NextRequest) {
                                     ? `${fixture.home_goals}-${fixture.away_goals}`
                                     : `${fixture.away_goals}-${fixture.home_goals}`
                             ) : 'N/A',
-                            home_away: fixture ? (
-                                isHome ? 'H' : 'A'
-                            ) : 'N/A',
+                            home_away: fixture ? (isHome ? 'H' : isAway ? 'A' : '?') : 'N/A',
                             bonus_points: bonus.total_bonus || 0,
                             breakdown: breakdown || {}
                         };
