@@ -319,11 +319,9 @@ async function processPlayer(params: {
   `;
 
   const isDrafted = squads.length > 0;
-  if (!isDrafted) {
-    console.log(`⏭️  Player ${player_name} (${player_id}) is not drafted in any fantasy team squad, skipping team points.`);
-    return;
-  }
-  const targetSquads = squads;
+  const targetSquads = isDrafted 
+    ? squads 
+    : [{ team_id: 'FREE_AGENT', is_captain: false, is_vice_captain: false }];
 
   // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
   const getCategoryResultPts = (oppCat: string, outcome: string): number => {

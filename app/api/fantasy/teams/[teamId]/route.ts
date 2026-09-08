@@ -65,6 +65,40 @@ export async function GET(
 
     console.log('[Team API] Squad players found:', squadPlayers.length);
 
+    // Build player sub-group map from league category_settings
+    const playerSubgroupMap: Record<string, string> = {};
+    if (squadPlayers.length > 0 && (teamData.league_id || teamData.fantasy_league_id)) {
+      try {
+        const targetLeagueId = teamData.league_id || teamData.fantasy_league_id;
+        const leagues = await fantasySql`
+          SELECT category_settings FROM fantasy_leagues
+          WHERE league_id = ${targetLeagueId}
+          LIMIT 1
+        `;
+        if (leagues.length > 0 && leagues[0].category_settings) {
+          const cs = typeof leagues[0].category_settings === 'string'
+            ? JSON.parse(leagues[0].category_settings)
+            : leagues[0].category_settings;
+          const slotNameMap: Record<string, string> = {};
+          (cs.slots || []).forEach((s: any) => {
+            slotNameMap[s.list_id] = s.name;
+          });
+          if (cs.lists) {
+            Object.entries(cs.lists).forEach(([listId, pids]: [string, any]) => {
+              const subName = slotNameMap[listId] || listId;
+              if (Array.isArray(pids)) {
+                pids.forEach((pid: string) => {
+                  playerSubgroupMap[pid] = subName;
+                });
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error resolving category subgroups in team API:', e);
+      }
+    }
+
     // Fetch player photos map
     const photosMap = await getPlayerPhotosMap();
 
@@ -93,7 +127,7 @@ export async function GET(
           draft_id: player.squad_id,
           real_player_id: player.real_player_id,
           player_name: player.player_name,
-          category: player.category || 'Unknown',
+          category: playerSubgroupMap[player.real_player_id] || player.category || 'Unknown',
           position: player.position,
           real_team_name: player.real_team_name,
           purchase_price: Number(player.purchase_price),

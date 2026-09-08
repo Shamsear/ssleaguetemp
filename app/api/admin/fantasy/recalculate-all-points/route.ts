@@ -172,19 +172,31 @@ export async function POST(request: NextRequest) {
           (goalsConceded >= 4 && SCORING_RULES.concedes_4_plus_goals ? SCORING_RULES.concedes_4_plus_goals : 0);
 
         const playerTeams = playerTeamsMap.get(playerId) || [];
-        if (playerTeams.length === 0) continue;
+        const effectivePlayerTeams = playerTeams.length > 0 
+          ? playerTeams 
+          : [{ teamId: 'FREE_AGENT', isCaptain: false, isViceCaptain: false, playerName: playerName }];
         
-        for (const teamInfo of playerTeams) {
+        for (const teamInfo of effectivePlayerTeams) {
           try {
-            const teamInfo_full = await fantasyDb`
-              SELECT league_id FROM fantasy_teams WHERE team_id = ${teamInfo.teamId} LIMIT 1
-            `;
-            const league_id = teamInfo_full[0]?.league_id || 'SSPSLFLS18';
+            let league_id = 'SSPSLFLS18';
+            if (teamInfo.teamId !== 'FREE_AGENT') {
+              const teamInfo_full = await fantasyDb`
+                SELECT league_id FROM fantasy_teams WHERE team_id = ${teamInfo.teamId} LIMIT 1
+              `;
+              league_id = teamInfo_full[0]?.league_id || 'SSPSLFLS18';
+            } else {
+              const fpRow = await fantasyDb`
+                SELECT league_id FROM fantasy_players WHERE real_player_id = ${playerId} LIMIT 1
+              `;
+              if (fpRow.length > 0 && fpRow[0].league_id) {
+                league_id = fpRow[0].league_id;
+              }
+            }
 
             let isCap = false;
             let isVc = false;
 
-            if (league_id) {
+            if (teamInfo.teamId !== 'FREE_AGENT' && league_id) {
               const windows = await fantasyDb`
                 SELECT window_id FROM fantasy_captain_windows
                 WHERE league_id = ${league_id}

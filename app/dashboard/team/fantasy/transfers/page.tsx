@@ -145,11 +145,12 @@ export default function TeamTransfersPage() {
       
       const teamData = await teamRes.json();
       const team = teamData.team;
+      const targetTeamId = team.team_id || team.id;
       
       setLeagueId(team.fantasy_league_id || team.league_id);
 
       // Get full squad data from fantasy_squad table
-      const squadRes = await fetchWithTokenRefresh(`/api/fantasy/squad?team_id=${team.id}`);
+      const squadRes = await fetchWithTokenRefresh(`/api/fantasy/squad?team_id=${targetTeamId}`);
       let squad: Player[] = [];
       
       if (squadRes.ok) {
@@ -162,7 +163,7 @@ export default function TeamTransfersPage() {
       setMySquad(squad);
 
       // Get team info with budget
-      const teamInfoRes = await fetchWithTokenRefresh(`/api/fantasy/teams/${team.id}`);
+      const teamInfoRes = await fetchWithTokenRefresh(`/api/fantasy/teams/${targetTeamId}`);
       if (teamInfoRes.ok) {
         const teamInfoData = await teamInfoRes.json();
         const teamDetails = teamInfoData.team;
@@ -186,7 +187,7 @@ export default function TeamTransfersPage() {
         );
 
         setTeamInfo({
-          team_id: team.id,
+          team_id: targetTeamId,
           team_name: team.team_name,
           budget_remaining: remainingBudget,
           total_budget: totalBudget,
@@ -209,7 +210,7 @@ export default function TeamTransfersPage() {
           setTransferWindow(activeWindow);
 
           // Get transfers used in this window
-          const transfersRes = await fetchWithTokenRefresh(`/api/fantasy/transfers/history?team_id=${team.id}&window_id=${activeWindow.window_id}`);
+          const transfersRes = await fetchWithTokenRefresh(`/api/fantasy/transfers/history?team_id=${targetTeamId}&window_id=${activeWindow.window_id}`);
           if (transfersRes.ok) {
             const transfersData = await transfersRes.json();
             setTransfersUsed((transfersData.transfers || []).length);

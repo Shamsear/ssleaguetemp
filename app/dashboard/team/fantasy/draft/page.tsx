@@ -782,6 +782,9 @@ export default function TeamDraftPage() {
                     Round Expired
                   </span>
                 ) : isSubmitted ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => saveBids(false)}
                       disabled={isSubmitting}
                       className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
                     >

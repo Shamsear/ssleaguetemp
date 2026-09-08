@@ -45,13 +45,46 @@ export async function GET(request: NextRequest) {
       ORDER BY fs.acquired_at DESC
     `;
 
+    // Build player sub-group map from league category_settings
+    const playerSubgroupMap: Record<string, string> = {};
+    if (squad.length > 0 && squad[0].league_id) {
+      try {
+        const leagues = await fantasySql`
+          SELECT category_settings FROM fantasy_leagues
+          WHERE league_id = ${squad[0].league_id}
+          LIMIT 1
+        `;
+        if (leagues.length > 0 && leagues[0].category_settings) {
+          const cs = typeof leagues[0].category_settings === 'string'
+            ? JSON.parse(leagues[0].category_settings)
+            : leagues[0].category_settings;
+          const slotNameMap: Record<string, string> = {};
+          (cs.slots || []).forEach((s: any) => {
+            slotNameMap[s.list_id] = s.name;
+          });
+          if (cs.lists) {
+            Object.entries(cs.lists).forEach(([listId, pids]: [string, any]) => {
+              const subName = slotNameMap[listId] || listId;
+              if (Array.isArray(pids)) {
+                pids.forEach((pid: string) => {
+                  playerSubgroupMap[pid] = subName;
+                });
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error resolving category subgroups:', e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       squad: squad.map((p: any) => ({
         squad_id: p.squad_id,
         real_player_id: p.real_player_id,
         player_name: p.player_name,
-        category: p.category || 'Unknown',
+        category: playerSubgroupMap[p.real_player_id] || p.category || 'Unknown',
         position: p.position || 'Unknown',
         real_team_name: p.real_team_name || 'Unknown',
         purchase_price: Number(p.purchase_price || 0),
