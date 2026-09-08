@@ -242,7 +242,7 @@ export default function ShareableFantasyLeaderboard({
 
                       {/* Player Points */}
                       <td style={{ padding: '16px 14px', textAlign: 'center' }}>
-                        <span style={{ display: 'inline-block', background: 'rgba(37,99,235,0.08)', color: '#1D4ED8', border: '1px solid rgba(37,99,235,0.2)', padding: '6px 14px', borderRadius: '8px', fontSize: 15, fontWeight: 900 }}>
+                        <span style={{ display: 'inline-block', background: 'rgba(37,99,235,0.08)', color: '#1D4ED8', border: '1px solid rgba(37,99,235,0.2)', padding: '6px 14px', borderRadius: '8px', fontSize: 15, fontWeight: 900, whiteSpace: 'nowrap' }}>
                           {team.player_points || 0} PTS
                         </span>
                       </td>
@@ -250,10 +250,10 @@ export default function ShareableFantasyLeaderboard({
                       {/* Supported Team & Passive Points */}
                       <td style={{ padding: '16px 14px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: '#111111', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#111111', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                             {team.supported_team_name || 'N/A'}
                           </span>
-                          <span style={{ display: 'inline-block', background: 'rgba(5,150,105,0.08)', color: '#047857', border: '1px solid rgba(5,150,105,0.2)', padding: '3px 10px', borderRadius: '6px', fontSize: 12, fontWeight: 800 }}>
+                          <span style={{ display: 'inline-block', background: 'rgba(5,150,105,0.08)', color: '#047857', border: '1px solid rgba(5,150,105,0.2)', padding: '3px 10px', borderRadius: '6px', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>
                             +{team.passive_points || 0} PTS
                           </span>
                         </div>
