@@ -83,10 +83,12 @@ export async function GET(request: NextRequest) {
     const teamBreakdowns = realTeams.map((realTeam: any) => {
       const teamId = realTeam.id;
 
-      // Filter bonus records for this real team
-      const teamBonuses = bonusRecords.filter((b: any) => 
-        b.real_team_id === teamId || b.team_id === teamId || b.team_id.startsWith(`${teamId}_`)
-      );
+      // Filter bonus records for this real team strictly by real_team_id
+      const teamBonuses = bonusRecords.filter((b: any) => {
+        const bReal = (b.real_team_id || '').split('_')[0];
+        const tBase = (teamId || '').split('_')[0];
+        return bReal === tBase;
+      });
 
       // Filter admin bonuses for this real team
       const teamAdminBonuses = adminBonuses.filter((b: any) => 
