@@ -42,35 +42,40 @@ export async function inlineContainerImages(container: HTMLElement): Promise<voi
       const src = img.src;
       if (!src || src.startsWith('data:')) return;
 
-      // 1. Try direct fetch
-      try {
-        const response = await fetch(src, { mode: 'cors' });
-        if (response.ok) {
-          const blob = await response.blob();
-          const dataUrl = await blobToDataUrl(blob);
-          if (dataUrl) {
-            img.src = dataUrl;
-            return;
-          }
-        }
-      } catch {
-        // Direct fetch failed (likely CORS error on external storage domain like Firebase or ImageKit)
-      }
+      // Set crossorigin attribute to anonymous for CORS handling
+      img.setAttribute('crossorigin', 'anonymous');
 
-      // 2. Fallback: Proxy fetch via /api/image-proxy
-      try {
-        const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
-        const response = await fetch(proxyUrl);
-        if (response.ok) {
-          const blob = await response.blob();
-          const dataUrl = await blobToDataUrl(blob);
-          if (dataUrl) {
-            img.src = dataUrl;
-            return;
+      // 1. Try proxy fetch via /api/image-proxy for http/https URLs
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        try {
+          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+          const response = await fetch(proxyUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            const dataUrl = await blobToDataUrl(blob);
+            if (dataUrl) {
+              img.src = dataUrl;
+              return;
+            }
           }
+        } catch (err) {
+          console.warn('Proxy fetch failed for image:', src, err);
         }
-      } catch (err) {
-        console.warn('Proxy fetch failed for image:', src, err);
+
+        // 2. Direct fetch fallback
+        try {
+          const response = await fetch(src, { mode: 'cors' });
+          if (response.ok) {
+            const blob = await response.blob();
+            const dataUrl = await blobToDataUrl(blob);
+            if (dataUrl) {
+              img.src = dataUrl;
+              return;
+            }
+          }
+        } catch {
+          // Direct fetch failed
+        }
       }
 
       // 3. Fallback: Try offscreen canvas conversion if image is loaded in DOM

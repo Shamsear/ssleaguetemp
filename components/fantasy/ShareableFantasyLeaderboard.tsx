@@ -124,131 +124,136 @@ export default function ShareableFantasyLeaderboard({
         </button>
       </div>
 
-      {/* Preview/Hidden Leaderboard for Image Generation */}
+      {/* Offscreen / Preview Snapshot Container for PNG Generation */}
       <div style={{ 
         position: showPreview ? 'relative' : 'fixed', 
         left: showPreview ? '0' : '-9999px', 
         top: '0',
         width: showPreview ? '100%' : '1200px',
-        overflow: showPreview ? 'auto' : 'hidden'
+        overflow: showPreview ? 'auto' : 'hidden',
+        zIndex: showPreview ? 'auto' : '-9999'
       }}>
         <div 
           ref={leaderboardRef}
-          className="bg-white font-mono"
-          style={{ width: '1200px' }}
+          style={{
+            background: 'linear-gradient(to bottom right, #ffffff, #fdfbf7)',
+            padding: '48px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            width: '1200px',
+            boxSizing: 'border-box',
+            border: '1px solid rgba(232,168,0,0.2)',
+          }}
         >
-          {/* Header with Gradient Background */}
-          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-center py-8 px-6">
-            <h1 className="text-5xl font-black text-white uppercase tracking-wider mb-2" style={{ fontFamily: 'Arial Black, sans-serif' }}>
-              {leagueName}
-            </h1>
-            <p className="text-2xl text-yellow-300 font-bold uppercase tracking-wide">
-              ⚡ FANTASY LEAGUE STANDINGS ⚡
-            </p>
+          {/* Header Section */}
+          <div style={{ marginBottom: 36, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid rgba(232,168,0,0.2)', paddingBottom: '24px' }}>
+            <div>
+              <div style={{ color: '#E8A800', fontSize: 13, fontWeight: 900, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
+                FANTASY LEAGUE
+              </div>
+              <div style={{ color: '#111111', fontSize: 38, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 4 }}>
+                {leagueName}
+              </div>
+              <div style={{ color: '#6B7280', fontSize: 14, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                Leaderboard Standings
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(232,168,0,0.1)', border: '1px solid rgba(232,168,0,0.2)', padding: '6px 14px', borderRadius: '30px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#E8A800' }}></div>
+                <span style={{ color: '#E8A800', fontSize: 11, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>OFFICIAL STANDINGS</span>
+              </div>
+            </div>
           </div>
 
-          {/* Leaderboard Title */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-4 text-center">
-            <h2 className="text-3xl font-bold uppercase tracking-wide flex items-center justify-center gap-2"><Trophy className="w-8 h-8 text-amber-500" /> LEADERBOARD <Trophy className="w-8 h-8 text-amber-500" /></h2>
-          </div>
-
-          {/* Table */}
-          <div className="px-6 pb-6 pt-4">
-            <table className="w-full border-collapse">
+          {/* Table Container */}
+          <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(232,168,0,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.05)', background: '#ffffff' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="bg-gradient-to-r from-purple-100 to-indigo-100 text-gray-800 text-sm font-bold uppercase">
-                  <th className="py-4 px-3 text-center border-2 border-purple-300">Rank</th>
-                  <th className="py-4 px-6 text-left border-2 border-purple-300">Team / Owner</th>
-                  <th className="py-4 px-4 text-center border-2 border-purple-300">Player Points</th>
-                  <th className="py-4 px-4 text-center border-2 border-purple-300">Supported Team</th>
-                  <th className="py-4 px-4 text-center border-2 border-purple-300">Total Points</th>
+                <tr style={{ background: '#fcfaf5', borderBottom: '1px solid rgba(232,168,0,0.2)' }}>
+                  <th style={{ padding: '16px 10px 16px 20px', textAlign: 'center', color: '#4B5563', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', width: '60px' }}>#</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'left', color: '#4B5563', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Team / Owner</th>
+                  <th style={{ padding: '16px 14px', textAlign: 'center', color: '#2563EB', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Player Pts</th>
+                  <th style={{ padding: '16px 14px', textAlign: 'center', color: '#059669', fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Supported Team</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'center', color: '#E8A800', fontSize: 12, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase' }}>Total Pts</th>
                 </tr>
               </thead>
               <tbody>
                 {teams.map((team, index) => {
-                  const isTop3 = index < 3;
-                  const bgColor = 
-                    index === 0 ? 'bg-gradient-to-r from-yellow-100 to-yellow-200' :
-                    index === 1 ? 'bg-gradient-to-r from-gray-100 to-gray-200' :
-                    index === 2 ? 'bg-gradient-to-r from-orange-100 to-orange-200' :
-                    index % 2 === 0 ? 'bg-purple-50' : 'bg-white';
-                  
+                  const pos = team.rank || index + 1;
+                  const posStyle = 
+                    pos === 1 ? { background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(255,215,0,0.4)' } :
+                    pos === 2 ? { background: 'linear-gradient(135deg, #E0E0E0, #9E9E9E)', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(192,192,192,0.3)' } :
+                    pos === 3 ? { background: 'linear-gradient(135deg, #CD7F32, #8B4513)', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(205,127,50,0.3)' } :
+                    { background: 'rgba(0,0,0,0.05)', color: '#6B7280' };
+
                   return (
-                    <tr key={index} className={bgColor}>
+                    <tr key={index} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: index % 2 === 0 ? 'transparent' : 'rgba(252,250,245,0.4)' }}>
                       {/* Rank */}
-                      <td className="py-4 px-3 text-center border-2 border-purple-200">
-                        <div className="flex items-center justify-center">
-                          {index === 0 && (
-                            <Award className="w-10 h-10 text-amber-500" />
-                          )}
-                          {index === 1 && (
-                            <Award className="w-10 h-10 text-slate-400" />
-                          )}
-                          {index === 2 && (
-                            <Award className="w-10 h-10 text-amber-700" />
-                          )}
-                          {index > 2 && (
-                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-4 py-2 rounded-lg text-lg">
-                              {index + 1}
-                            </span>
-                          )}
+                      <td style={{ padding: '16px 10px 16px 20px', width: '60px' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900, margin: '0 auto', ...posStyle }}>
+                          {pos}
                         </div>
                       </td>
-                      
-                      {/* Team Name */}
-                      <td className="py-4 px-6 border-2 border-purple-200">
-                        <div className="flex items-center gap-3">
-                          {team.team_logo ? (
-                            <img 
-                              src={team.team_logo} 
-                              alt={`${team.team_name} logo`}
-                              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                              style={{
-                                objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-                                transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
-                                transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-                              }}
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                              {team.team_name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+
+                      {/* Team & Owner */}
+                      <td style={{ padding: '16px 20px' }}>
+                        <div style={{ display: 'flex', itemsAlign: 'center', gap: '14px' }}>
+                          <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.1)' }}>
+                            {team.team_logo ? (
+                              <img 
+                                src={team.team_logo} 
+                                alt={`${team.team_name} logo`}
+                                crossOrigin="anonymous"
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                                  transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
+                                  transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                                }}
+                              />
+                            ) : (
+                              <div style={{ fontSize: '14px', fontWeight: '900', color: '#6B7280' }}>
+                                {team.team_name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
                           <div>
-                            <span className={`font-bold uppercase text-lg block ${isTop3 ? 'text-gray-900' : 'text-gray-800'}`}>
+                            <span style={{ fontWeight: 900, color: '#111111', fontSize: 16, textTransform: 'uppercase', display: 'block' }}>
                               {team.team_name?.toUpperCase()}
                             </span>
                             {team.owner_name && (
-                              <span className="text-xs text-gray-500 font-bold uppercase block">
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginTop: '2px' }}>
                                 Owner: {team.owner_name}
                               </span>
                             )}
                           </div>
                         </div>
                       </td>
-                      
+
                       {/* Player Points */}
-                      <td className="py-4 px-4 text-center border-2 border-purple-200">
-                        <span className="inline-block bg-blue-600 text-white font-black px-4 py-2 rounded-lg text-lg">
+                      <td style={{ padding: '16px 14px', textAlign: 'center' }}>
+                        <span style={{ display: 'inline-block', background: 'rgba(37,99,235,0.1)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.2)', padding: '4px 12px', borderRadius: '8px', fontSize: 15, fontWeight: 900 }}>
                           {team.player_points || 0} PTS
                         </span>
                       </td>
-                      
+
                       {/* Supported Team & Passive Points */}
-                      <td className="py-4 px-4 text-center border-2 border-purple-200">
-                        <div className="flex flex-col items-center">
-                          <span className="text-sm font-extrabold text-emerald-700 uppercase">
+                      <td style={{ padding: '16px 14px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#111111', textTransform: 'uppercase' }}>
                             {team.supported_team_name || 'N/A'}
                           </span>
-                          <span className="inline-block bg-emerald-600 text-white font-black px-3 py-1 rounded-md text-xs mt-1">
+                          <span style={{ display: 'inline-block', background: 'rgba(5,150,105,0.1)', color: '#059669', border: '1px solid rgba(5,150,105,0.2)', padding: '2px 8px', borderRadius: '6px', fontSize: 12, fontWeight: 800, marginTop: '3px' }}>
                             +{team.passive_points || 0} PTS
                           </span>
                         </div>
                       </td>
-                      
+
                       {/* Total Points */}
-                      <td className="py-4 px-4 text-center border-2 border-purple-200 bg-gradient-to-r from-indigo-100 to-purple-100">
-                        <span className="font-black text-2xl text-indigo-700">
+                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                        <span style={{ fontSize: 20, fontWeight: 900, color: '#E8A800' }}>
                           {team.total_points}
                         </span>
                       </td>
@@ -259,11 +264,10 @@ export default function ShareableFantasyLeaderboard({
             </table>
           </div>
 
-          {/* Footer */}
-          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white px-6 py-4 text-center">
-            <p className="text-lg font-bold uppercase tracking-wide">
-              🎮 {teams.length} Teams Competing • Fantasy League Standings
-            </p>
+          {/* Footer Watermark */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#9CA3AF', fontSize: 12, fontWeight: 700, marginTop: 24, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+            <div>sspsleague.com • Fantasy League</div>
+            <div>Generated on {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
           </div>
         </div>
       </div>
