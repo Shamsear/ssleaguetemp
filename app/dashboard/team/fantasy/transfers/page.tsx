@@ -525,7 +525,7 @@ export default function TeamTransfersPage() {
   const newBudget = calculateNewBudget();
   const maxTransfers = Number(transferWindow?.max_transfers_per_window ?? transferWindow?.max_releases ?? 1) || 1;
   const transfersRemaining = Math.max(0, maxTransfers - (Number(transfersUsed) || 0));
-  const pointsCost = Number(transferWindow?.points_cost_per_transfer || 0);
+  const pointsCost = 0; // No points penalty for transfers
 
   return (
     <AuthGuard requiredRole="team">
@@ -610,7 +610,7 @@ export default function TeamTransfersPage() {
 
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 col-span-2 sm:col-span-1">
               <p className="text-[9px] text-slate-400 uppercase font-black">Points Penalty</p>
-              <p className="text-lg font-black text-slate-850 mt-1">{pointsCost} pts</p>
+              <p className="text-lg font-black text-emerald-650 mt-1">0 pts (No Penalty)</p>
             </div>
           </div>
         </div>

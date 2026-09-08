@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     const window = activeWindows[0];
     const maxTransfers = Number(window.max_transfers_per_window || 3);
-    const pointsCost = Number(window.points_cost_per_transfer || 4);
+    const pointsCost = 0; // No points penalty for transfers
 
     // Count transfers made in this window
     const transferCount = await fantasySql`
