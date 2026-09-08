@@ -466,26 +466,32 @@ export async function GET(request: NextRequest) {
     }
     // Get specific player stats for a season - OPTIMIZED
     else if (playerId && seasonId) {
-      let result = await sql`
-        SELECT 
-          id, player_id, player_name, season_id,
-          team, team_id, category,
-          matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
-          clean_sheets, motm_awards, 
-          CASE 
-            WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
-            THEN points - COALESCE(base_points, 0)
-            ELSE points
-          END as points,
-          base_points,
-          star_rating,
-          contract_id, contract_start_season, contract_end_season,
-          is_auto_registered, registration_date
-        FROM player_seasons 
-        WHERE player_id = ${playerId} AND season_id = ${seasonId}
-      `;
+      let result = [];
 
-      if (result.length === 0) {
+      // Seasons 16 & 17 are in player_seasons
+      if (isModernSeason(seasonId)) {
+        result = await sql`
+          SELECT 
+            id, player_id, player_name, season_id,
+            team, team_id, category,
+            matches_played, goals_scored, goals_conceded, assists, wins, draws, losses,
+            clean_sheets, motm_awards, 
+            CASE 
+              WHEN season_id LIKE 'SSPSLS16%' OR season_id LIKE 'SSPSLS17%' 
+              THEN points - COALESCE(base_points, 0)
+              ELSE points
+            END as points,
+            base_points,
+            star_rating,
+            contract_id, contract_start_season, contract_end_season,
+            is_auto_registered, registration_date
+          FROM player_seasons 
+          WHERE player_id = ${playerId} AND season_id = ${seasonId}
+        `;
+      }
+
+      // Seasons 1-15 & 18+ are in realplayerstats (also fallback for 16-17 if missing in player_seasons)
+      if (!result || result.length === 0) {
         result = await sql`
           SELECT 
             id, player_id, player_name, season_id, tournament_id,
@@ -496,7 +502,7 @@ export async function GET(request: NextRequest) {
             NULL as star_rating
           FROM realplayerstats 
           WHERE player_id = ${playerId} 
-            AND (season_id = ${seasonId} OR tournament_id = ${tournamentId} OR tournament_id IS NULL)
+            AND (season_id = ${seasonId} OR tournament_id = ${tournamentId})
           ORDER BY season_id DESC
           LIMIT 1
         `;
