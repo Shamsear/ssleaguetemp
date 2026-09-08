@@ -121,6 +121,22 @@ export async function POST(request: NextRequest) {
       )
     `;
 
+        // Log passive team release in fantasy_releases
+        const releaseId = `release_st_${teamId}_${Date.now()}`;
+        await fantasySql`
+      INSERT INTO fantasy_releases (
+        release_id, league_id, team_id, window_id,
+        real_player_id, player_name, category,
+        is_passive_team, purchase_price, refund_amount, refund_percentage,
+        released_at, created_at
+      ) VALUES (
+        ${releaseId}, ${leagueId}, ${teamId}, ${window.window_id},
+        ${oldSupportedTeamId || null}, ${oldSupportedTeamName || 'Passive Team'}, 'Passive Team',
+        true, 0, 0, 0,
+        NOW(), NOW()
+      )
+    `;
+
         console.log(`✅ Supported team changed: ${oldSupportedTeamName || 'None'} → ${new_supported_team_name}`);
 
         return NextResponse.json({

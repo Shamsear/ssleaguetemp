@@ -78,6 +78,7 @@ export default function TeamDraftPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [slotSubmissions, setSlotSubmissions] = useState<Record<number, boolean>>({});
+  const [eligibleCategories, setEligibleCategories] = useState<Record<string, number>>({});
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -99,6 +100,14 @@ export default function TeamDraftPage() {
       }
 
       const leagueId = teamData.team.fantasy_league_id;
+      const teamId = teamData.team.team_id || teamData.team.id;
+
+      // 1b. Fetch eligible post-release categories
+      const catRes = await fetchWithTokenRefresh(`/api/fantasy/draft/eligible-categories?team_id=${teamId}&league_id=${leagueId}`);
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        setEligibleCategories(catData.eligible_categories || {});
+      }
 
       // 2. Fetch draft settings and league info
       const settingsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/settings?league_id=${leagueId}`);
@@ -769,16 +778,10 @@ export default function TeamDraftPage() {
               {/* Submit / Edit Button */}
               <div>
                 {isRoundExpired ? (
-                  <span className="px-4 py-2.5 bg-slate-100 text-slate-500 border border-slate-200 text-xs font-black rounded-xl uppercase flex items-center gap-1.5 shadow-sm">
-                    <Clock className="w-4 h-4" /> Round Closed
+                  <span className="px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 text-xs font-mono font-bold uppercase tracking-wider rounded-xl block">
+                    Round Expired
                   </span>
                 ) : isSubmitted ? (
-                  <div className="flex items-center gap-2">
-                    <span className="px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-250 text-xs font-black rounded-xl uppercase flex items-center gap-1.5 shadow-sm">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" /> Submitted
-                    </span>
-                    <button
-                      onClick={() => handleUnlock(activeSlotIndex)}
                       disabled={isSubmitting}
                       className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
                     >

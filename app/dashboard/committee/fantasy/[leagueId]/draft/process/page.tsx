@@ -353,7 +353,73 @@ export default function ProcessDraftPage() {
   const [slotNames, setSlotNames] = useState<Record<number, string>>({});
   const [trackingTab, setTrackingTab] = useState<number | 'all'>(0);
 
+  // Post-release draft & tie resolution state
+  const [ties, setTies] = useState<any[]>([]);
+  const [tieResolutions, setTieResolutions] = useState<Record<string, { winning_team_id: string; admin_amount: string }>>({});
+  const [isProcessingPostRelease, setIsProcessingPostRelease] = useState(false);
+
   const { alertState, showAlert, closeAlert } = useModal();
+
+  const loadTies = async () => {
+    try {
+      const res = await fetchWithTokenRefresh(`/api/fantasy/draft/ties?league_id=${leagueId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTies(data.ties || []);
+      }
+    } catch (e) {
+      console.error('Failed to load draft ties:', e);
+    }
+  };
+
+  const handleResolveTie = async (tieId: string) => {
+    const resState = tieResolutions[tieId];
+    if (!resState || !resState.winning_team_id || !resState.admin_amount) {
+      showAlert({ type: 'error', title: 'Input Required', message: 'Please select a winning team and enter the new tiebreaker price.' });
+      return;
+    }
+
+    try {
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/resolve-tie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tie_id: tieId,
+          winning_team_id: resState.winning_team_id,
+          admin_adjusted_amount: parseFloat(resState.admin_amount),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to resolve tie');
+
+      showAlert({ type: 'success', title: 'Tie Resolved!', message: data.message });
+      loadSubmissions();
+      loadTies();
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Resolution Failed', message: err.message });
+    }
+  };
+
+  const handleProcessPostReleaseBids = async () => {
+    setIsProcessingPostRelease(true);
+    try {
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/process-post-release', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_round_id: 'post_release_1', league_id: leagueId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to process bids');
+
+      showAlert({ type: 'success', title: 'Processing Complete!', message: data.message });
+      loadSubmissions();
+      loadTies();
+    } catch (err: any) {
+      showAlert({ type: 'error', title: 'Processing Failed', message: err.message });
+    } finally {
+      setIsProcessingPostRelease(false);
+    }
+  };
 
   const handleCopyAllSubmittedTeams = () => {
     if (teams.length === 0) return;
@@ -443,8 +509,9 @@ export default function ProcessDraftPage() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && leagueId) {
       loadSubmissions();
+      loadTies();
     }
   }, [user, leagueId]);
 
@@ -675,13 +742,117 @@ export default function ProcessDraftPage() {
               Finalize Draft
             </h1>
             <p className="text-xs text-slate-400 font-mono mt-1">
-              Review team submissions and run the blind bid allocation engine
+              Review team submissions, process post-release bids, and resolve draft ties
             </p>
           </div>
           <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
             <Users className="w-8 h-8" />
           </div>
         </div>
+
+        {/* ⚡ ACTION REQUIRED: DRAFT TIES CARD */}
+        {ties.length > 0 && (
+          <div className="console-card bg-amber-50/90 border border-amber-300 p-6 rounded-3xl shadow-sm space-y-4 font-mono">
+            <div className="flex items-center justify-between border-b pb-3 border-amber-200">
+              <h2 className="text-xs font-extrabold text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 animate-bounce" /> Action Required: Draft Ties ({ties.length})
+              </h2>
+              <span className="text-[10px] bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-md font-bold uppercase">
+                Equal Top Bids
+              </span>
+            </div>
+
+            <p className="text-[10px] text-amber-800 font-bold uppercase">
+              The following players/teams received equal winning bids. Select the winning manager and enter the new adjusted tiebreaker amount:
+            </p>
+
+            <div className="space-y-4">
+              {ties.map((t: any) => {
+                const currentRes = tieResolutions[t.tie_id] || {
+                  winning_team_id: t.tied_teams?.[0]?.team_id || '',
+                  admin_amount: String(t.tied_bid_amount || '0')
+                };
+
+                return (
+                  <div key={t.tie_id} className="bg-white border border-amber-200 p-4 rounded-2xl space-y-3 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2 border-slate-100">
+                      <div>
+                        <h3 className="font-extrabold text-sm uppercase text-slate-900">{t.target_name}</h3>
+                        <span className="text-[9px] font-bold text-amber-700 uppercase">
+                          Category: {t.category || 'Standard'} • Equal Bid: ₹{t.tied_bid_amount}M
+                        </span>
+                      </div>
+
+                      <span className={`px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase ${
+                        t.status === 'resolved' ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-rose-100 border-rose-300 text-rose-800'
+                      }`}>
+                        {t.status === 'resolved' ? `✓ RESOLVED (${t.winning_team_name})` : '● UNRESOLVED TIE'}
+                      </span>
+                    </div>
+
+                    {/* Tied Managers List */}
+                    <div className="text-[10px] font-bold text-slate-600 uppercase">
+                      Tied Managers:
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {t.tied_teams?.map((tt: any) => (
+                          <span key={tt.team_id} className="px-2 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded-lg">
+                            {tt.team_name} (₹{t.tied_bid_amount}M)
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Resolution Inputs */}
+                    {t.status !== 'resolved' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100 items-end">
+                        <div>
+                          <label className="block text-[9px] text-slate-500 font-bold uppercase mb-1">Select Winner</label>
+                          <select
+                            value={currentRes.winning_team_id}
+                            onChange={(e) => setTieResolutions(prev => ({
+                              ...prev,
+                              [t.tie_id]: { ...prev[t.tie_id], winning_team_id: e.target.value, admin_amount: prev[t.tie_id]?.admin_amount || String(t.tied_bid_amount) }
+                            }))}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase outline-none focus:border-amber-400"
+                          >
+                            <option value="">-- Select Winning Manager --</option>
+                            {t.tied_teams?.map((tt: any) => (
+                              <option key={tt.team_id} value={tt.team_id}>
+                                {tt.team_name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[9px] text-slate-500 font-bold uppercase mb-1">New Amount (Tiebreaker Price)</label>
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={currentRes.admin_amount}
+                            onChange={(e) => setTieResolutions(prev => ({
+                              ...prev,
+                              [t.tie_id]: { ...prev[t.tie_id], winning_team_id: prev[t.tie_id]?.winning_team_id || t.tied_teams?.[0]?.team_id || '', admin_amount: e.target.value }
+                            }))}
+                            placeholder="e.g. 18"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-amber-400"
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => handleResolveTie(t.tie_id)}
+                          className="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-900 cursor-pointer transition-all shadow-sm"
+                        >
+                          Resolve & Award
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
 
 

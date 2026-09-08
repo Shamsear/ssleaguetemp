@@ -484,13 +484,29 @@ export default function TeamTransfersPage() {
 
       <div className="max-w-6xl mx-auto relative z-10 space-y-6">
         {/* Navigation */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <Link
             href="/dashboard/team/fantasy/my-team"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to My Team
           </Link>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/team/fantasy/releases"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs uppercase tracking-wider hover:bg-rose-100 transition-all"
+            >
+              My Releases
+            </Link>
+
+            <Link
+              href="/dashboard/team/fantasy/swaps"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-bold text-xs uppercase tracking-wider hover:bg-purple-100 transition-all"
+            >
+              My Swaps
+            </Link>
+          </div>
         </div>
 
         {/* Top Banner (Window Status & Telemetry Grid) */}

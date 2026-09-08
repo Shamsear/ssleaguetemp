@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Edit2, Trash2, Clock, CheckCircle, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Calendar, Edit2, Trash2, Clock, CheckCircle, Lock, Unlock, Target } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -531,7 +531,15 @@ export default function TransferWindowsPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {/* Launch Post-Release Draft Shortcut */}
+                        <Link
+                          href={`/dashboard/committee/fantasy/${leagueId}/draft/process?window_id=${window.window_id}`}
+                          className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5"
+                        >
+                          <Target className="w-3.5 h-3.5" /> Post-Release Draft
+                        </Link>
+
                         {/* Force Open / Close Toggle */}
                         <button
                           onClick={() => toggleWindow(window.window_id)}
