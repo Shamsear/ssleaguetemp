@@ -482,7 +482,7 @@ export default function TeamTransfersPage() {
           </div>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
               <p className="text-[9px] text-slate-400 uppercase font-black">Budget</p>
               <p className="text-lg font-black mt-1 text-emerald-650">
@@ -499,11 +499,6 @@ export default function TeamTransfersPage() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
               <p className="text-[9px] text-slate-400 uppercase font-black">Releases Left</p>
               <p className="text-lg font-black text-amber-650 mt-1">{transfersRemaining}</p>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-              <p className="text-[9px] text-slate-400 uppercase font-black">Points Penalty</p>
-              <p className="text-lg font-black text-emerald-650 mt-1">0 pts (Free)</p>
             </div>
           </div>
         </div>
