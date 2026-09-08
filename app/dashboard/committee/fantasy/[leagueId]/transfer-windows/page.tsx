@@ -23,12 +23,14 @@ interface TransferWindow {
 // ── IST Timezone Helpers ──────────────────────────────────────────────────
 
 /**
- * Convert ISO string to datetime-local input string in IST (Asia/Kolkata)
+ * Convert ISO string or DB timestamp string to datetime-local input string in IST (Asia/Kolkata)
  */
 function isoToIstInput(isoString: string): string {
   if (!isoString) return '';
   try {
-    const date = new Date(isoString);
+    const str = isoString.includes('T') ? isoString : isoString.replace(' ', 'T');
+    const zStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+    const date = new Date(zStr);
     const formatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Kolkata',
       year: 'numeric',
@@ -47,26 +49,29 @@ function isoToIstInput(isoString: string): string {
 }
 
 /**
- * Convert datetime-local input value (assumed in IST) to ISO string with +05:30 offset
+ * Convert datetime-local input value (e.g. "2026-09-08T18:00") entered as IST to UTC ISO string for DB storage
  */
 function istInputToIso(inputString: string): string {
   if (!inputString) return '';
   try {
-    const istStr = inputString.length === 16 ? `${inputString}:00+05:30` : inputString;
-    return new Date(istStr).toISOString();
+    const cleanInput = inputString.substring(0, 16);
+    const istDateString = `${cleanInput}:00+05:30`;
+    return new Date(istDateString).toISOString();
   } catch (e) {
     return new Date(inputString).toISOString();
   }
 }
 
 /**
- * Format ISO date string into readable IST time (Asia/Kolkata)
+ * Format ISO string or DB timestamp string into readable IST time (Asia/Kolkata)
  */
 function formatInIst(isoString: string): string {
   if (!isoString) return 'N/A';
   try {
+    const str = isoString.includes('T') ? isoString : isoString.replace(' ', 'T');
+    const zStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
     return (
-      new Date(isoString).toLocaleString('en-IN', {
+      new Date(zStr).toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         day: '2-digit',
         month: 'short',
