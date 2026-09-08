@@ -16,6 +16,8 @@ interface Player {
   real_player_id: string;
   player_name: string;
   position: string;
+  category?: string;
+  tier?: string;
   real_team_name?: string;
   team?: string;
   team_id?: string;
@@ -37,6 +39,7 @@ interface TransferWindow {
   is_active: boolean;
   max_transfers_per_window: number;
   points_cost_per_transfer: number;
+  status?: string;
 }
 
 interface TeamInfo {
@@ -48,6 +51,8 @@ interface TeamInfo {
   min_squad_size: number;
   max_squad_size: number;
   total_points: number;
+  supported_team_id?: string | null;
+  supported_team_name?: string | null;
 }
 
 export default function TeamTransfersPage() {
@@ -65,12 +70,13 @@ export default function TeamTransfersPage() {
   const [currentSubmission, setCurrentSubmission] = useState<any>(null);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [positionFilter, setPositionFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [teamFilter, setTeamFilter] = useState<string>('all');
   
   const [isLoading, setIsLoading] = useState(true);
   const [isTransferring, setIsTransferring] = useState(false);
   const [isUpdatingCaptain, setIsUpdatingCaptain] = useState(false);
+  const [isReleasingPassiveTeam, setIsReleasingPassiveTeam] = useState(false);
   const [leagueId, setLeagueId] = useState<string>('');
   
   const [captainId, setCaptainId] = useState<string | null>(null);
@@ -94,11 +100,11 @@ export default function TeamTransfersPage() {
       const teamData = await teamRes.json();
       const team = teamData.team;
       
-      setLeagueId(team.fantasy_league_id);
+      setLeagueId(team.fantasy_league_id || team.league_id);
 
       // Get full squad data from fantasy_squad table
       const squadRes = await fetchWithTokenRefresh(`/api/fantasy/squad?team_id=${team.id}`);
-      let squad = [];
+      let squad: Player[] = [];
       
       if (squadRes.ok) {
         const squadData = await squadRes.json();
@@ -123,7 +129,7 @@ export default function TeamTransfersPage() {
         const teamDetails = teamInfoData.team;
         
         // Get league info for squad size limits
-        const leagueRes = await fetchWithTokenRefresh(`/api/fantasy/leagues/${team.fantasy_league_id}`);
+        const leagueRes = await fetchWithTokenRefresh(`/api/fantasy/leagues/${team.fantasy_league_id || team.league_id}`);
         let minSquadSize = 11;
         let maxSquadSize = 15;
         let totalBudget = 100;
@@ -145,11 +151,13 @@ export default function TeamTransfersPage() {
           min_squad_size: minSquadSize,
           max_squad_size: maxSquadSize,
           total_points: Number(teamDetails.total_points || 0),
+          supported_team_id: team.supported_team_id || teamDetails.supported_team_id || null,
+          supported_team_name: team.supported_team_name || teamDetails.supported_team_name || null,
         });
       }
 
       // Get active transfer window
-      const windowRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${team.fantasy_league_id}`);
+      const windowRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${team.fantasy_league_id || team.league_id}`);
       if (windowRes.ok) {
         const windowData = await windowRes.json();
         const activeWindow = (windowData.windows || []).find((w: TransferWindow) => w.is_active || w.status === 'active');
@@ -167,7 +175,7 @@ export default function TeamTransfersPage() {
       }
 
       // Get available players
-      const playersRes = await fetchWithTokenRefresh(`/api/fantasy/players/available?league_id=${team.fantasy_league_id}`);
+      const playersRes = await fetchWithTokenRefresh(`/api/fantasy/players/available?league_id=${team.fantasy_league_id || team.league_id}`);
       if (playersRes.ok) {
         const playersData = await playersRes.json();
         setAvailablePlayers(playersData.available_players || []);
@@ -192,6 +200,51 @@ export default function TeamTransfersPage() {
       loadTransferData();
     }
   }, [user, loadTransferData]);
+
+  const releaseSupportedTeam = async () => {
+    if (!teamInfo?.supported_team_name) return;
+    if (!confirm(`Are you sure you want to release your Supported Team (${teamInfo.supported_team_name})?`)) return;
+
+    setIsReleasingPassiveTeam(true);
+    try {
+      const response = await fetchWithTokenRefresh('/api/fantasy/supported-team/change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user!.uid,
+          is_release: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showAlert({
+          type: 'error',
+          title: 'Release Failed',
+          message: data.error || 'Failed to release supported team',
+        });
+        return;
+      }
+
+      showAlert({
+        type: 'success',
+        title: 'Supported Team Released',
+        message: `Your supported team (${teamInfo.supported_team_name}) has been released.`,
+      });
+
+      loadTransferData();
+    } catch (error: any) {
+      console.error('Release supported team error:', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: `Failed to release supported team: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    } finally {
+      setIsReleasingPassiveTeam(false);
+    }
+  };
 
   const executeTransfer = async () => {
     if (!selectedOut || !selectedIn) {
@@ -243,7 +296,6 @@ export default function TeamTransfersPage() {
         message: data.message
       });
 
-      // Reset selections and reload
       setSelectedOut(null);
       setSelectedIn(null);
       loadTransferData();
@@ -366,25 +418,20 @@ export default function TeamTransfersPage() {
     if (!transferWindow || (!transferWindow.is_active && transferWindow.status !== 'active')) return false;
     if (!teamInfo) return false;
     
-    // Must have at least one action (release or sign)
     if (!selectedOut && !selectedIn) return false;
     
     const transfersRemaining = transferWindow.max_transfers_per_window - transfersUsed;
     if (transfersRemaining <= 0) return false;
     
-    // Release-only transfer
     if (selectedOut && !selectedIn) {
-      // Can only release if above minimum squad size
       if (teamInfo.squad_size <= teamInfo.min_squad_size) return false;
       return true;
     }
     
-    // Sign-only or swap transfer
     if (selectedIn) {
       const newBudget = calculateNewBudget();
       if (newBudget < 0) return false;
       
-      // If not releasing anyone, check squad size
       if (!selectedOut && teamInfo.squad_size >= teamInfo.max_squad_size) return false;
     }
     
@@ -396,7 +443,8 @@ export default function TeamTransfersPage() {
     if (searchTerm && !normalizeStr(player.player_name).includes(normalizeStr(searchTerm))) {
       return false;
     }
-    if (positionFilter !== 'all' && player.position !== positionFilter) {
+    const cat = player.category || player.tier || player.position;
+    if (categoryFilter !== 'all' && cat !== categoryFilter) {
       return false;
     }
     if (teamFilter !== 'all' && (player.real_team_name || player.team) !== teamFilter) {
@@ -405,8 +453,8 @@ export default function TeamTransfersPage() {
     return true;
   });
 
-  // Get unique positions and teams for filters
-  const positions = Array.from(new Set(availablePlayers.map(p => p.position))).sort();
+  // Get unique categories and teams for filters
+  const categories = Array.from(new Set(availablePlayers.map(p => p.category || p.tier || p.position))).sort();
   const teams = Array.from(new Set(availablePlayers.map(p => p.real_team_name || p.team || 'Unknown'))).sort();
 
   if (loading || isLoading) {
@@ -562,6 +610,40 @@ export default function TeamTransfersPage() {
           </div>
         </div>
 
+        {/* Supported (Passive) Team Release Banner */}
+        <div className="console-card bg-white border border-slate-200/60 p-5 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[9px] text-slate-400 font-black uppercase">Supported Team (Passive Team)</p>
+              <p className="text-sm font-black text-slate-900 uppercase">
+                {teamInfo.supported_team_name ? teamInfo.supported_team_name : 'No Supported Team Assigned'}
+              </p>
+            </div>
+          </div>
+
+          {teamInfo.supported_team_name && (
+            <button
+              onClick={releaseSupportedTeam}
+              disabled={isReleasingPassiveTeam}
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              {isReleasingPassiveTeam ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-rose-700/30 border-t-rose-700 rounded-full animate-spin" />
+                  Releasing...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4" /> Release Supported Team
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
         {/* Captain Selection Modal */}
         {showCaptainModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 font-mono">
@@ -606,7 +688,7 @@ export default function TeamTransfersPage() {
                         <div>
                           <p className="text-xs font-black uppercase">{player.player_name}</p>
                           <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5">
-                            {player.position} | {player.real_team_name}
+                            {player.category || player.tier || player.position} | {player.real_team_name}
                           </p>
                         </div>
                         <div className="text-right">
@@ -640,7 +722,7 @@ export default function TeamTransfersPage() {
                         <div>
                           <p className="text-xs font-black uppercase">{player.player_name}</p>
                           <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5">
-                            {player.position} | {player.real_team_name}
+                            {player.category || player.tier || player.position} | {player.real_team_name}
                           </p>
                         </div>
                         <div className="text-right">
@@ -707,7 +789,7 @@ export default function TeamTransfersPage() {
               <div>
                 <p className="text-[8px] text-slate-400 font-bold uppercase mb-1">Releasing Player</p>
                 <p className="text-xs font-black uppercase text-slate-900">{currentSubmission.player_out_name}</p>
-                <p className="text-[9px] font-bold text-slate-450 uppercase">{currentSubmission.player_out_position} | {currentSubmission.player_out_real_team}</p>
+                <p className="text-[9px] font-bold text-slate-450 uppercase">{currentSubmission.player_out_category || currentSubmission.player_out_position} | {currentSubmission.player_out_real_team}</p>
                 <p className="text-[10px] text-emerald-650 font-black mt-1">+{currentSubmission.player_out_price} Cr (Refund)</p>
               </div>
               <div className="flex justify-center text-slate-300">
@@ -716,7 +798,7 @@ export default function TeamTransfersPage() {
               <div>
                 <p className="text-[8px] text-slate-400 font-bold uppercase mb-1">Requesting Player</p>
                 <p className="text-xs font-black uppercase text-slate-900">{currentSubmission.player_in_name}</p>
-                <p className="text-[9px] font-bold text-slate-450 uppercase">{currentSubmission.player_in_position} | {currentSubmission.player_in_real_team}</p>
+                <p className="text-[9px] font-bold text-slate-450 uppercase">{currentSubmission.player_in_category || currentSubmission.player_in_position} | {currentSubmission.player_in_real_team}</p>
                 <p className="text-[10px] text-rose-600 font-black mt-1">-{currentSubmission.player_in_price} Cr (Cost)</p>
               </div>
             </div>
@@ -745,8 +827,8 @@ export default function TeamTransfersPage() {
                 {selectedOut ? (
                   <div>
                     <p className="text-xs font-black text-slate-850 uppercase">{selectedOut.player_name}</p>
-                    <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5">{selectedOut.position} | {selectedOut.real_team_name}</p>
-                    <p className="text-emerald-650 font-black text-xs mt-2.5">+{selectedOut.purchase_price} Cr</p>
+                    <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5">{selectedOut.category || selectedOut.tier || selectedOut.position} | {selectedOut.real_team_name}</p>
+                    <p className="text-emerald-650 font-black text-xs mt-2.5">+{selectedOut.purchase_price} Cr (100% Refund)</p>
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-400 font-bold uppercase italic">No selection</p>
@@ -764,7 +846,7 @@ export default function TeamTransfersPage() {
                 {selectedIn ? (
                   <div>
                     <p className="text-xs font-black text-slate-850 uppercase">{selectedIn.player_name}</p>
-                    <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5">{selectedIn.position} | {selectedIn.real_team_name}</p>
+                    <p className="text-[9px] font-bold text-slate-450 uppercase mt-0.5">{selectedIn.category || selectedIn.tier || selectedIn.position} | {selectedIn.real_team_name}</p>
                     <p className="text-rose-600 font-black text-xs mt-2.5">-{selectedIn.current_price || selectedIn.draft_price} Cr</p>
                   </div>
                 ) : (
@@ -901,13 +983,13 @@ export default function TeamTransfersPage() {
                         {player.is_vice_captain && <span className="text-[8px] px-2 py-0.5 bg-slate-800 text-white rounded-lg font-black uppercase tracking-wider">VC</span>}
                       </div>
                       <p className={`text-[9px] font-bold uppercase ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-450'}`}>
-                        {player.position || 'Unknown'} | {player.real_team_name || 'Unknown'}
+                        {player.category || player.tier || player.position || 'Unknown'} | {player.real_team_name || 'Unknown'}
                       </p>
                     </div>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs font-black">{player.purchase_price || 0} Cr</p>
-                      <p className={`text-[8px] font-bold uppercase mt-1 ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-400'}`}>
+                      <p className={`text-[8px] font-bold uppercase mt-1 ${selectedOut?.squad_id === player.squad_id ? 'text-rose-700' : 'text-slate-450'}`}>
                         {player.total_points || 0} pts
                       </p>
                     </div>
@@ -938,13 +1020,13 @@ export default function TeamTransfersPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <select
-                    value={positionFilter}
-                    onChange={(e) => setPositionFilter(e.target.value)}
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
                     className="px-3 py-2 border border-slate-250 rounded-xl text-[10px] font-bold uppercase text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
-                    <option value="all">All Positions</option>
-                    {positions.map(pos => (
-                      <option key={pos} value={pos}>{pos}</option>
+                    <option value="all">All Categories</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
 
@@ -995,7 +1077,7 @@ export default function TeamTransfersPage() {
                           </div>
                         </div>
                         <p className={`text-[9px] font-bold uppercase ${selectedIn?.real_player_id === player.real_player_id ? 'text-emerald-700' : 'text-slate-450'}`}>
-                          {player.position || 'Unknown'} | {player.real_team_name || player.team || 'Unknown'}
+                          {player.category || player.tier || player.position || 'Unknown'} | {player.real_team_name || player.team || 'Unknown'}
                         </p>
                       </div>
                     </div>

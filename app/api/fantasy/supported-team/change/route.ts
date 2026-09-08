@@ -13,11 +13,12 @@ export async function POST(request: NextRequest) {
             new_supported_team_id,
             new_supported_team_name,
             reason,
+            is_release
         } = body;
 
-        console.log('🔄 Supported team change request:', { user_id, new_supported_team_id, new_supported_team_name });
+        console.log('🔄 Supported team request:', { user_id, new_supported_team_id, new_supported_team_name, is_release });
 
-        if (!user_id || !new_supported_team_id || !new_supported_team_name) {
+        if (!user_id || (!is_release && (!new_supported_team_id || !new_supported_team_name))) {
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
@@ -42,12 +43,11 @@ export async function POST(request: NextRequest) {
         const teamId = team.team_id;
         const leagueId = team.league_id;
 
-        // Check if there's an active window that allows supported team changes
+        // Check if there's an active transfer window
         const activeWindows = await fantasySql`
-      SELECT * FROM transfer_windows
+      SELECT * FROM fantasy_transfer_windows
       WHERE league_id = ${leagueId}
-        AND is_active = true
-        AND allow_supported_team_change = true
+        AND (is_active = true OR status = 'active')
       LIMIT 1
     `;
 
@@ -98,13 +98,23 @@ export async function POST(request: NextRequest) {
         const changeId = `stc_${teamId}_${Date.now()}`;
 
         // Update the fantasy team's supported team
-        await fantasySql`
-      UPDATE fantasy_teams
-      SET supported_team_id = ${new_supported_team_id},
-          supported_team_name = ${new_supported_team_name},
-          updated_at = NOW()
-      WHERE team_id = ${teamId}
-    `;
+        if (is_release) {
+          await fantasySql`
+            UPDATE fantasy_teams
+            SET supported_team_id = NULL,
+                supported_team_name = NULL,
+                updated_at = NOW()
+            WHERE team_id = ${teamId}
+          `;
+        } else {
+          await fantasySql`
+            UPDATE fantasy_teams
+            SET supported_team_id = ${new_supported_team_id},
+                supported_team_name = ${new_supported_team_name},
+                updated_at = NOW()
+            WHERE team_id = ${teamId}
+          `;
+        }
 
         // Record the change
         await fantasySql`
@@ -193,10 +203,9 @@ export async function GET(request: NextRequest) {
 
         // Check for active window
         const activeWindows = await fantasySql`
-      SELECT * FROM transfer_windows
+      SELECT * FROM fantasy_transfer_windows
       WHERE league_id = ${leagueId}
-        AND is_active = true
-        AND allow_supported_team_change = true
+        AND (is_active = true OR status = 'active')
       LIMIT 1
     `;
 
