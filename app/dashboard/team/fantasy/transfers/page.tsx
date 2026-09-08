@@ -136,15 +136,20 @@ export default function TeamTransfersPage() {
           totalBudget = Number(leagueDetails.budget_per_team || 100);
         }
         
+        const squadSpent = squad.reduce((acc: number, p: Player) => acc + Number(p.purchase_price || 0), 0);
+        const remainingBudget = Number(
+          teamDetails.budget_remaining ?? team.budget_remaining ?? Math.max(0, totalBudget - squadSpent)
+        );
+        
         setTeamInfo({
           team_id: team.id,
           team_name: team.team_name,
-          budget_remaining: Number(teamDetails.budget_remaining || 0),
+          budget_remaining: remainingBudget,
           total_budget: totalBudget,
           squad_size: squad.length,
           min_squad_size: minSquadSize,
           max_squad_size: maxSquadSize,
-          total_points: Number(teamDetails.total_points || 0),
+          total_points: Number(teamDetails.total_points || team.total_points || 0),
           supported_team_id: team.supported_team_id || teamDetails.supported_team_id || null,
           supported_team_name: team.supported_team_name || teamDetails.supported_team_name || null,
         });
