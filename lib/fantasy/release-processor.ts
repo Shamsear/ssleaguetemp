@@ -37,7 +37,7 @@ export async function releasePlayer(
 
     // 3. Get team's current budget
     const [team] = await fantasySql`
-      SELECT budget
+      SELECT budget_remaining
       FROM fantasy_teams
       WHERE team_id = ${teamId}
     `;
@@ -46,7 +46,7 @@ export async function releasePlayer(
       throw new Error('Team not found');
     }
 
-    const currentBudget = parseFloat(team.budget || 0);
+    const currentBudget = parseFloat(team.budget_remaining || 0);
     const newBudget = currentBudget + refundAmount;
 
     // 4. Remove player from squad
@@ -59,7 +59,7 @@ export async function releasePlayer(
     await fantasySql`
       UPDATE fantasy_teams
       SET 
-        budget = ${newBudget},
+        budget_remaining = ${newBudget},
         updated_at = NOW()
       WHERE team_id = ${teamId}
     `;

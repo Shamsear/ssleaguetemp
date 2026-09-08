@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         // Deduct budget
         await fantasySql`
           UPDATE fantasy_teams
-          SET budget = budget - ${bidAmount}, updated_at = NOW()
+          SET budget_remaining = budget_remaining - ${bidAmount}, updated_at = NOW()
           WHERE team_id = ${winningTeamId}
         `;
 
