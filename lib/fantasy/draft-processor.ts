@@ -974,10 +974,12 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
         
         let supportedTeamId = null;
         let supportedTeamName = null;
+        let supportedTeamPrice = 0;
 
         if (winningTeamBid) {
           supportedTeamId = winningTeamBid.target_id;
           supportedTeamName = realTeamNames.get(winningTeamBid.target_id) || winningTeamBid.target_id;
+          supportedTeamPrice = parseFloat(winningTeamBid.bid_amount || 0);
         }
 
         writeQueries.push(fantasySql`
@@ -985,6 +987,7 @@ export async function processSlotBids(leagueId: string): Promise<SlotDraftProces
           SET budget_remaining = ${budget},
               supported_team_id = ${supportedTeamId},
               supported_team_name = ${supportedTeamName},
+              supported_team_price = ${supportedTeamPrice},
               updated_at = CURRENT_TIMESTAMP
           WHERE team_id = ${teamId} AND league_id = ${leagueId}
         `);
@@ -1334,9 +1337,11 @@ export async function applySlotBidResults(
       const realTeamWins = resultsBySlot[0]?.winning_bids?.filter((w: any) => w.bid_type === 'real_team') || [];
       for (const w of realTeamWins) {
         const teamName = await getTeamNameFromFirestore(w.target_id);
+        const bidPrice = parseFloat(w.bid_amount || 0);
         writeQueries.push(fantasySql`
           UPDATE fantasy_teams SET supported_team_id = ${w.target_id},
-          supported_team_name = ${teamName}
+          supported_team_name = ${teamName},
+          supported_team_price = ${bidPrice}
           WHERE team_id = ${w.team_id} AND league_id = ${leagueId}
         `);
       }

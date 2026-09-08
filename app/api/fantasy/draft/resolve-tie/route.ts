@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         UPDATE fantasy_teams
         SET supported_team_id = ${tie.target_id},
             supported_team_name = ${tie.target_name},
+            supported_team_price = ${newAmount},
             updated_at = NOW()
         WHERE team_id = ${winning_team_id}
       `;
