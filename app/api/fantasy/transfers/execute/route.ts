@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
     }
 
     const league = leagues[0];
-    const minSquadSize = Number(league.min_squad_size || 11);
-    const maxSquadSize = Number(league.max_squad_size || 15);
+    const minSquadSize = league.min_squad_size !== null && league.min_squad_size !== undefined ? Number(league.min_squad_size) : 0;
+    const maxSquadSize = league.max_squad_size !== null && league.max_squad_size !== undefined ? Number(league.max_squad_size) : 15;
 
     // Check if transfer window is open (either explicitly is_active = true or current time within range)
     const activeWindows = await fantasySql`
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         }
 
         const seasonNum = parseInt(league.season_id.replace(/\D/g, '')) || 0;
-        const isModern = seasonNum === 16 || seasonNum === 17;
+        const isModern = seasonNum >= 16;
 
         let playerSeasons;
         if (isModern) {
@@ -406,6 +406,24 @@ export async function POST(request: NextRequest) {
         ${playerCost}, ${pointsCost}, false
       )
     `;
+
+    // Log release in fantasy_releases if a player was released
+    if (releasedPlayer) {
+      const releaseId = `rel_${teamId}_${Date.now()}`;
+      await fantasySql`
+        INSERT INTO fantasy_releases (
+          release_id, league_id, team_id, window_id,
+          real_player_id, player_name, category,
+          is_passive_team, purchase_price, refund_amount, refund_percentage,
+          released_at, created_at
+        ) VALUES (
+          ${releaseId}, ${leagueId}, ${teamId}, ${window.window_id},
+          ${releasedPlayer.real_player_id}, ${releasedPlayer.player_name}, ${releasedPlayer.position || 'Player'},
+          false, ${budgetRefund}, ${budgetRefund}, 100,
+          NOW(), NOW()
+        )
+      `;
+    }
 
     // Update player statistics (times drafted)
     if (player_in_id && playerIn) {

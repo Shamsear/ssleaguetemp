@@ -48,12 +48,14 @@ function neonTable(collection: string): string {
 class NeonDocSnapshot {
   readonly id: string;
   readonly exists: boolean;
+  readonly ref: any;
   private _data: any;
   
-  constructor(id: string, data: any) {
+  constructor(id: string, data: any, ref?: any) {
     this.id = id;
     this.exists = data !== null && data !== undefined;
     this._data = data;
+    this.ref = ref;
   }
   
   data(): any {
@@ -94,6 +96,7 @@ function mapSeasonRow(row: any): Record<string, any> {
     isActive: row.is_active,
     status: row.status,
     registrationOpen: row.registration_open,
+    is_player_registration_open: row.is_player_registration_open ?? row.registration_open ?? false,
     startDate: row.start_date,
     endDate: row.end_date,
     totalTeams: row.total_teams,
@@ -345,9 +348,9 @@ async function neonDocGet(collection: string, docId: string): Promise<NeonDocSna
     console.error(`[Neon] sql.query(docGet) failed for ${collection}:`, e.message);
     throw e;
   }
-  if (!rows.length) return new NeonDocSnapshot(docId, undefined);
+  if (!rows.length) return new NeonDocSnapshot(docId, undefined, wrapDocRef(firebaseAdminDb.collection(collection).doc(docId), collection));
   const mapper = ROW_MAPPER[collection];
-  return new NeonDocSnapshot(docId, mapper ? mapper(rows[0]) : rows[0]);
+  return new NeonDocSnapshot(docId, mapper ? mapper(rows[0]) : rows[0], wrapDocRef(firebaseAdminDb.collection(collection).doc(docId), collection));
 }
 
 async function neonCollectionGet(collection: string): Promise<NeonQuerySnapshot> {
@@ -378,7 +381,7 @@ async function neonCollectionGet(collection: string): Promise<NeonQuerySnapshot>
     throw e;
   }
   const mapper = ROW_MAPPER[collection];
-  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row));
+  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row, wrapDocRef(firebaseAdminDb.collection(collection).doc(row.id), collection)));
   return new NeonQuerySnapshot(docs);
 }
 
@@ -448,7 +451,7 @@ async function neonWhereGet(
     throw e;
   }
   const mapper = ROW_MAPPER[collection];
-  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row));
+  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row, wrapDocRef(firebaseAdminDb.collection(collection).doc(row.id), collection)));
   return new NeonQuerySnapshot(docs);
 }
 
@@ -535,7 +538,17 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
       if (columns.includes(col)) continue;
       columns.push(col);
       placeholders.push(`$${idx}`);
-      values.push(typeof value === 'object' ? JSON.stringify(value) : value);
+      let valToInsert = value;
+      if (value && typeof value === 'object') {
+        if ((value as any)._methodName === 'serverTimestamp' || (value as any).constructor?.name === 'FieldValue') {
+          valToInsert = new Date().toISOString();
+        } else if (value instanceof Date) {
+          valToInsert = value.toISOString();
+        } else {
+          valToInsert = JSON.stringify(value);
+        }
+      }
+      values.push(valToInsert);
       idx++;
     }
     

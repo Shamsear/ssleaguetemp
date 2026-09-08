@@ -3,6 +3,7 @@ import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { neon } from '@neondatabase/serverless';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getMainDb } from '@/lib/neon/main-config';
 
 /**
  * GET /api/fantasy/teams/my-team?user_id=xxx
@@ -166,16 +167,7 @@ export async function GET(request: NextRequest) {
     // Fetch player photos map from Neon PostgreSQL
     const tournamentSql = getTournamentDb();
     let playerPhotosMap: Record<string, string> = {};
-    try {
-      const pRows = await tournamentSql`
-        SELECT player_id, photo_url FROM player_seasons WHERE photo_url IS NOT NULL AND photo_url != ''
-      `;
-      pRows.forEach((r: any) => {
-        if (r.player_id && r.photo_url) playerPhotosMap[r.player_id] = r.photo_url;
-      });
-    } catch (photoErr) {
-      console.warn('Error fetching player photos map:', photoErr);
-    }
+    // Note: photo_url is not in player_seasons table schema
 
     // Get points breakdown for each player
     const draftedPlayers = await Promise.all(
@@ -245,35 +237,24 @@ export async function GET(request: NextRequest) {
     let resolvedSupportedTeamId = teamData.supported_team_id || null;
     let resolvedSupportedTeamName = teamData.supported_team_name || null;
     try {
+      const mainSql = getMainDb();
       // If no supported team set, auto-detect from user's real team
       if (!resolvedSupportedTeamId) {
-        const userTeamRows = await tournamentSql`SELECT id, name as team_name, logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle, logo_position_x_square, logo_position_y_square, logo_scale_square FROM teams WHERE firebase_uid = ${user_id} OR id = ${user_id} LIMIT 1`;
+        const userTeamRows = await mainSql`SELECT id, name as team_name, logo_url FROM teams WHERE firebase_uid = ${user_id} OR id = ${user_id} LIMIT 1`;
         if (userTeamRows && userTeamRows.length > 0) {
           const userTeam = userTeamRows[0] as any;
           resolvedSupportedTeamId = userTeam.id;
           resolvedSupportedTeamName = userTeam.team_name;
           await fantasySql`UPDATE fantasy_teams SET supported_team_id = ${userTeam.id}, supported_team_name = ${userTeam.team_name}, updated_at = NOW() WHERE team_id = ${teamId}`;
           teamLogo = userTeam.logo_url || null;
-          logo_position_x_circle = userTeam.logo_position_x_circle || null;
-          logo_position_y_circle = userTeam.logo_position_y_circle || null;
-          logo_scale_circle = userTeam.logo_scale_circle || null;
-          logo_position_x_square = userTeam.logo_position_x_square || null;
-          logo_position_y_square = userTeam.logo_position_y_square || null;
-          logo_scale_square = userTeam.logo_scale_square || null;
         }
       } else {
         // Fetch logo from explicitly set supported team
         const baseTeamId = resolvedSupportedTeamId.split('_')[0];
-        const teamRows = await tournamentSql`SELECT logo_url, logo_position_x_circle, logo_position_y_circle, logo_scale_circle, logo_position_x_square, logo_position_y_square, logo_scale_square FROM teams WHERE id = ${baseTeamId} OR id = ${resolvedSupportedTeamId} OR LOWER(name) = LOWER(${resolvedSupportedTeamName}) LIMIT 1`;
+        const teamRows = await mainSql`SELECT logo_url FROM teams WHERE id = ${baseTeamId} OR id = ${resolvedSupportedTeamId} OR LOWER(name) = LOWER(${resolvedSupportedTeamName}) LIMIT 1`;
         if (teamRows && teamRows.length > 0) {
           const teamRow = teamRows[0] as any;
           teamLogo = teamRow.logo_url || null;
-          logo_position_x_circle = teamRow.logo_position_x_circle || null;
-          logo_position_y_circle = teamRow.logo_position_y_circle || null;
-          logo_scale_circle = teamRow.logo_scale_circle || null;
-          logo_position_x_square = teamRow.logo_position_x_square || null;
-          logo_position_y_square = teamRow.logo_position_y_square || null;
-          logo_scale_square = teamRow.logo_scale_square || null;
         }
       }
     } catch (error: any) {

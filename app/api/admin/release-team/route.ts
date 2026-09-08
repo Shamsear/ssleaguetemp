@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     console.log(`🔓 Mid-Season Team Release: ${teamId} from ${seasonId}`);
 
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17;
+    const isModern = seasonNum >= 16;
 
     // Step 1: Find all Real Players (SS Members) on this team
     const realPlayers = isModern
