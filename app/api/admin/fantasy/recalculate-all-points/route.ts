@@ -404,6 +404,22 @@ export async function POST(request: NextRequest) {
       `;
     }
 
+    // Sync fantasy_squad.total_points = SUM(fpp.total_points) per player per team
+    // (team-specific contribution including captain/VC multiplier)
+    for (const league of allLeagues as any[]) {
+      await fantasyDb`
+        UPDATE fantasy_squad fs
+        SET total_points = COALESCE((
+          SELECT SUM(fpp.total_points)
+          FROM fantasy_player_points fpp
+          WHERE fpp.real_player_id = fs.real_player_id
+            AND fpp.team_id = fs.team_id
+            AND fpp.league_id = fs.league_id
+        ), 0)
+        WHERE fs.league_id = ${league.league_id}
+      `;
+    }
+
     // ============================================================================
     // STEP 4: Recalculate Fantasy Team Totals and Ranks
     // ============================================================================

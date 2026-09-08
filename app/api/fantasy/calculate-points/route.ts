@@ -606,6 +606,20 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
       WHERE fp.league_id = ${fantasy_league_id}
     `;
 
+    // Sync fantasy_squad.total_points = SUM(fpp.total_points) per player per team
+    // This is the team-specific contribution including captain/VC multiplier
+    await sql`
+      UPDATE fantasy_squad fs
+      SET total_points = COALESCE((
+        SELECT SUM(fpp.total_points)
+        FROM fantasy_player_points fpp
+        WHERE fpp.real_player_id = fs.real_player_id
+          AND fpp.team_id = fs.team_id
+          AND fpp.league_id = fs.league_id
+      ), 0)
+      WHERE fs.league_id = ${fantasy_league_id}
+    `;
+
     // Recalculate ranks based on updated total_points
     await sql`
       WITH ranked_teams AS (

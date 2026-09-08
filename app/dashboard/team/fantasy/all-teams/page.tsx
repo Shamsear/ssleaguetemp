@@ -718,15 +718,23 @@ function MatchCard({ match, scoringRules }: { match: any; scoringRules: any }) {
   const draw = playerGoals === opponentGoals;
   const actualResult = won ? 'win' : draw ? 'draw' : 'loss';
 
-  const goalPts = playerGoals * (scoringRules.goals_scored || 0);
-  const csPts = match.clean_sheet ? (scoringRules.clean_sheet || 0) : 0;
-  const motmPts = match.motm ? (scoringRules.motm || 0) : 0;
-  const resultPts = won ? (scoringRules.win || 0) : draw ? (scoringRules.draw || 0) : 0;
-  const appPts = scoringRules.match_played || 0;
-  const htPts = (playerGoals >= 3 && scoringRules.hat_trick) ? scoringRules.hat_trick : 0;
-  const concPts = (opponentGoals >= 4 && scoringRules.concedes_4_plus_goals) ? scoringRules.concedes_4_plus_goals : 0;
+  // Read directly from stored points_breakdown (category-based, already calculated correctly)
+  const bd = (typeof match.points_breakdown === 'string'
+    ? (() => { try { return JSON.parse(match.points_breakdown); } catch { return {}; } })()
+    : match.points_breakdown) || {};
 
-  const basePoints = goalPts + csPts + motmPts + resultPts + appPts + htPts + concPts;
+  const goalPts   = bd.goals       ?? (playerGoals * (scoringRules?.goals_scored || 0));
+  const csPts     = bd.clean_sheet ?? (match.clean_sheet ? (scoringRules?.clean_sheet || 0) : 0);
+  const motmPts   = bd.motm        ?? (match.motm ? (scoringRules?.motm || 0) : 0);
+  const resultPts = bd.result      ?? (won ? (scoringRules?.win || 0) : draw ? (scoringRules?.draw || 0) : 0);
+  const appPts    = bd.match_played ?? (scoringRules?.match_played || 0);
+  const htPts     = bd.hat_trick   ?? ((playerGoals >= 3 && scoringRules?.hat_trick) ? scoringRules.hat_trick : 0);
+  const concPts   = bd.concedes_4_plus ?? ((opponentGoals >= 4 && scoringRules?.concedes_4_plus_goals) ? scoringRules.concedes_4_plus_goals : 0);
+
+  // Use stored values — they are authoritative
+  const basePoints = match.base_points !== undefined
+    ? Number(match.base_points)
+    : goalPts + csPts + motmPts + resultPts + appPts + htPts + concPts;
   const multiplierValue = match.points_multiplier || 100;
   const multiplier = multiplierValue >= 100 ? multiplierValue / 100 : multiplierValue;
   const totalPoints = Math.round(basePoints * multiplier);
@@ -761,8 +769,22 @@ function MatchCard({ match, scoringRules }: { match: any; scoringRules: any }) {
         {csPts !== 0 && <BreakdownBadge icon={<ShieldIcon className="w-3 h-3 text-blue-500" />} label="Clean Sheet" pts={`+${csPts}`} />}
         {concPts !== 0 && <BreakdownBadge label="Conceded 4+ goals" pts={`${concPts}`} ptsColor="text-rose-500" />}
         {motmPts !== 0 && <BreakdownBadge icon={<Award className="w-3 h-3 text-amber-500" />} label="MOTM Star" pts={`+${motmPts}`} />}
-        {resultPts !== 0 && <BreakdownBadge label="Team Result" pts={`+${resultPts}`} />}
+        {resultPts !== 0 && (
+          <BreakdownBadge
+            label={resultPts > 0 ? `${match.opponent_category ? `Win vs ${match.opponent_category}` : 'Result Bonus'}` : `${match.opponent_category ? `Loss vs ${match.opponent_category}` : 'Result Penalty'}`}
+            pts={resultPts > 0 ? `+${resultPts}` : `${resultPts}`}
+            ptsColor={resultPts > 0 ? undefined : 'text-rose-500'}
+          />
+        )}
+        {resultPts === 0 && actualResult === 'draw' && (bd.result !== undefined) && (
+          <BreakdownBadge
+            label={`Draw vs ${match.opponent_category || 'Opponent'}`}
+            pts={`${bd.result >= 0 ? '+' : ''}${bd.result}`}
+            ptsColor={bd.result >= 0 ? undefined : 'text-rose-500'}
+          />
+        )}
         {appPts !== 0 && <BreakdownBadge icon={<SoccerBallIcon className="w-3.5 h-3.5" />} label="Appearance" pts={`+${appPts}`} />}
+
         {multiplier !== 1 && (
           <div className="flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-100 col-span-2">
             <span className="flex items-center gap-1">
