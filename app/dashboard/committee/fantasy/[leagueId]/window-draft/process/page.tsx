@@ -950,7 +950,7 @@ export default function PostWindowDraftProcessPage() {
               const isSelfReleaseBid = (bid: Bid) => {
                 return allReleases.some((r) => 
                   r.team_id === bid.team_id && 
-                  (r.real_player_id === bid.target_id || (r.is_passive_team && bid.is_passive_team))
+                  r.real_player_id === bid.target_id
                 );
               };
 
