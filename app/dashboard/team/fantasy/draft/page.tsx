@@ -272,6 +272,7 @@ export default function TeamDraftPage() {
         if (windowBidsRes.ok) {
           const windowBidsData = await windowBidsRes.json();
           const teamWindowBids = (windowBidsData.bids || []).filter((b: any) => b.team_id === teamId);
+          const slotSubs: Record<number, boolean> = {};
           const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => {
             const cat = (b.category || '').toUpperCase();
             let slotIdx = activeSlotIndex || 2;
@@ -281,6 +282,10 @@ export default function TeamDraftPage() {
             else if (cat.includes('BLACK')) slotIdx = 4;
             else if (cat.includes('WHITE')) slotIdx = 5;
             else if (cat.includes('PASSIVE') || b.is_passive_team) slotIdx = 6;
+
+            if (b.status === 'submitted' || b.status === 'pending' || b.status === 'won') {
+              slotSubs[slotIdx] = true;
+            }
 
             return {
               slot_index: slotIdx,
@@ -292,16 +297,10 @@ export default function TeamDraftPage() {
             };
           });
           setLocalBids(mappedWindowBids);
-          
-          const currentSlotCat = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'PASSIVE';
-          const isSubmitted = teamWindowBids.length > 0 && teamWindowBids.some((b: any) => {
-            const cat = (b.category || '').toUpperCase();
-            return cat.includes(currentSlotCat) || (currentSlotCat === 'PASSIVE' && b.is_passive_team);
-          });
-          setIsWindowSubmitted(isSubmitted);
+          setSlotSubmissions(slotSubs);
         } else {
           setLocalBids([]);
-          setIsWindowSubmitted(false);
+          setSlotSubmissions({});
         }
       }
 
@@ -966,9 +965,6 @@ export default function TeamDraftPage() {
 
   // Per-slot locking
   const isSlotSubmitted = (slotIdx: number) => {
-    if (activeTransferWindow) {
-      return localBids.some((b) => b.slot_index === slotIdx);
-    }
     return !!slotSubmissions[slotIdx];
   };
 
@@ -1048,12 +1044,15 @@ export default function TeamDraftPage() {
                   </span>
                 ) : isSubmitted ? (
                   <div className="flex items-center gap-2">
+                    <span className="px-3.5 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-1.5 shadow-sm">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Bids Submitted & Locked
+                    </span>
                     <button
-                      onClick={() => saveBids(false)}
+                      onClick={() => handleUnlock(activeSlotIndex)}
                       disabled={isSubmitting}
                       className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
                     >
-                      <Save className="w-3.5 h-3.5" /> Edit Bids
+                      <Unlock className="w-3.5 h-3.5" /> Unlock to Edit
                     </button>
                   </div>
                 ) : (
@@ -1062,7 +1061,7 @@ export default function TeamDraftPage() {
                     disabled={isSaving || isSubmitting}
                     className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer border border-slate-900"
                   >
-                    <Lock className="w-3.5 h-3.5" /> Submit
+                    <Lock className="w-3.5 h-3.5" /> Submit Bids
                   </button>
                 )}
               </div>
