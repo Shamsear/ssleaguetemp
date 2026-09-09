@@ -33,8 +33,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const opensUTC = opens_at ? new Date(opens_at).toISOString() : new Date().toISOString();
-    const closesUTC = closes_at ? new Date(closes_at).toISOString() : new Date(Date.now() + 2 * 3600 * 1000).toISOString();
+    const parseSafeISO = (val: any, fallbackMs: number) => {
+      if (!val) return new Date(fallbackMs).toISOString();
+      try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return new Date(fallbackMs).toISOString();
+        return d.toISOString();
+      } catch (e) {
+        return new Date(fallbackMs).toISOString();
+      }
+    };
+
+    const opensUTC = parseSafeISO(opens_at, Date.now());
+    const closesUTC = parseSafeISO(closes_at, Date.now() + 2 * 3600 * 1000);
 
     const opensDate = new Date(opensUTC);
     const closesDate = new Date(closesUTC);
@@ -123,7 +134,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error toggling draft round:', error);
     return NextResponse.json(
-      { error: 'Failed to toggle draft round', details: error.message },
+      { error: error.message || 'Failed to toggle draft round', details: error.message },
       { status: 500 }
     );
   }
