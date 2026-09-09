@@ -162,12 +162,29 @@ export async function POST(request: NextRequest) {
             WHERE team_id = ${winningTeamId}
           `;
         } else {
+          // Fetch player metadata for the full squad insert
+          const playerRows = await fantasySql`
+            SELECT player_name, position, real_team_name, current_price
+            FROM fantasy_players
+            WHERE real_player_id = ${targetId} AND league_id = ${league_id}
+            LIMIT 1
+          `;
+          const playerMeta = playerRows[0] || {};
+          const playerName = playerMeta.player_name || winningBid.target_name;
+          const playerPos = playerMeta.position || 'Unknown';
+          const realTeamName = playerMeta.real_team_name || '';
+          const currentValue = parseFloat(playerMeta.current_price) || bidAmount;
+
           const squadId = `squad_${winningTeamId}_${targetId}_${Date.now()}`;
           await fantasySql`
             INSERT INTO fantasy_squad (
-              squad_id, team_id, real_player_id, purchase_price, acquired_at
+              squad_id, team_id, league_id, real_player_id, player_name,
+              position, real_team_name, purchase_price, current_value,
+              acquisition_type, acquired_at
             ) VALUES (
-              ${squadId}, ${winningTeamId}, ${targetId}, ${bidAmount}, NOW()
+              ${squadId}, ${winningTeamId}, ${league_id}, ${targetId}, ${playerName},
+              ${playerPos}, ${realTeamName}, ${bidAmount}, ${currentValue},
+              'post_release_draft', NOW()
             )
           `;
 
