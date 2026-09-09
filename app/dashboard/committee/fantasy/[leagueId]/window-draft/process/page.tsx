@@ -351,12 +351,13 @@ export default function PostWindowDraftProcessPage() {
       const opensUTC = istInputToUTC(opensAtInput);
       const closesUTC = istInputToUTC(closesAtInput);
 
+      const targetWinId = windowId || windowDetails?.window_id || '';
       const res = await fetchWithTokenRefresh('/api/fantasy/draft/toggle-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           league_id: leagueId,
-          window_id: windowId,
+          window_id: targetWinId,
           category: activeCategory,
           action: 'open',
           opens_at: opensUTC,
@@ -429,12 +430,13 @@ export default function PostWindowDraftProcessPage() {
       const opensUTC = istInputToUTC(opensAtInput);
       const closesUTC = istInputToUTC(closesAtInput);
 
+      const targetWinId = windowId || windowDetails?.window_id || '';
       const res = await fetchWithTokenRefresh('/api/fantasy/draft/toggle-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           league_id: leagueId,
-          window_id: windowId,
+          window_id: targetWinId,
           category: activeCategory,
           action,
           opens_at: opensUTC,

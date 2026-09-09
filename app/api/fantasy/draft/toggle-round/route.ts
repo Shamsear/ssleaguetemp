@@ -14,7 +14,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { league_id, window_id, category, action, opens_at, closes_at } = body;
+    let { league_id, window_id, category, action, opens_at, closes_at } = body;
+
+    // Auto-resolve window_id if not provided or empty string
+    if ((!window_id || window_id.trim() === '') && league_id) {
+      const [activeWin] = await fantasySql`
+        SELECT window_id FROM fantasy_transfer_windows
+        WHERE league_id = ${league_id}
+        ORDER BY opens_at DESC LIMIT 1
+      `;
+      window_id = activeWin?.window_id || '';
+    }
 
     if (!league_id || !window_id || !category || !action) {
       return NextResponse.json(
