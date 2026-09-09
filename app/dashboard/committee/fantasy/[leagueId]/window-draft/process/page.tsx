@@ -1380,10 +1380,13 @@ export default function PostWindowDraftProcessPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {activeCategoryTeams.map((team) => {
+                    const currentTabObj = categoryTabs.find(t => t.id.toUpperCase() === activeCategory.toUpperCase());
+                    const targetBaseCat = (currentTabObj?.baseCategory || activeCategory).toUpperCase();
+
                     const catReleases = team.releases.filter((r) =>
-                      activeCategory.toLowerCase().includes('passive')
+                      activeCategory.toLowerCase().includes('passive') || activeCategory.toLowerCase().includes('supported')
                         ? r.is_passive_team
-                        : (r.category || '').toUpperCase() === currentTabObj.baseCategory.toUpperCase()
+                        : (r.category || '').toUpperCase().trim() === targetBaseCat.trim()
                     );
 
                     return (
