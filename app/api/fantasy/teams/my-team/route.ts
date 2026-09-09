@@ -238,17 +238,7 @@ export async function GET(request: NextRequest) {
     let resolvedSupportedTeamName = teamData.supported_team_name || null;
     try {
       const mainSql = getMainDb();
-      // If no supported team set, auto-detect from user's real team
-      if (!resolvedSupportedTeamId) {
-        const userTeamRows = await mainSql`SELECT id, team_name, logo_url FROM teams WHERE firebase_uid = ${user_id} OR id = ${user_id} OR team_id = ${user_id} LIMIT 1`;
-        if (userTeamRows && userTeamRows.length > 0) {
-          const userTeam = userTeamRows[0] as any;
-          resolvedSupportedTeamId = userTeam.id || userTeam.team_id;
-          resolvedSupportedTeamName = userTeam.team_name;
-          await fantasySql`UPDATE fantasy_teams SET supported_team_id = ${resolvedSupportedTeamId}, supported_team_name = ${userTeam.team_name}, updated_at = NOW() WHERE team_id = ${teamId}`;
-          teamLogo = userTeam.logo_url || null;
-        }
-      } else {
+      if (resolvedSupportedTeamId) {
         // Fetch logo from explicitly set supported team
         const baseTeamId = resolvedSupportedTeamId.split('_')[0];
         const teamRows = await mainSql`SELECT logo_url FROM teams WHERE id = ${baseTeamId} OR team_id = ${baseTeamId} OR id = ${resolvedSupportedTeamId} OR team_id = ${resolvedSupportedTeamId} OR LOWER(team_name) = LOWER(${resolvedSupportedTeamName}) LIMIT 1`;
