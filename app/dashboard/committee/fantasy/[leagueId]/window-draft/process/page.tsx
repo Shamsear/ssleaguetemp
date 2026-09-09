@@ -857,6 +857,7 @@ export default function PostWindowDraftProcessPage() {
                   Awards targets & updates budget savings instantly.
                 </p>
               </button>
+            </div>
           </div>
 
           {/* ── LIVE DRAFT RESULT PREVIEW ── */}
