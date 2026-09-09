@@ -974,7 +974,7 @@ export default function TeamDraftPage() {
     );
   }
 
-  // Per-slot locking
+  // Per-slot locking & eligibility
   const isSlotSubmitted = (slotIdx: number) => {
     return !!slotSubmissions[slotIdx];
   };
@@ -988,10 +988,38 @@ export default function TeamDraftPage() {
     return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
   };
 
+  const isCategoryEligibleForSlot = (slotIdx: number) => {
+    if (!activeTransferWindow && windowReleasesList.length === 0) return true;
+
+    const slot = draftSettings?.category_settings?.slots.find(s => s.slot_index === slotIdx);
+    const slotName = (slot?.name || '').toUpperCase();
+
+    let categoryName = slotIdx === 1 ? 'RED 1'
+      : slotIdx === 2 ? 'RED 2'
+      : slotIdx === 3 ? 'BLUE'
+      : slotIdx === 4 ? 'BLACK'
+      : slotIdx === 5 ? 'WHITE'
+      : 'Passive Team';
+
+    if (slotName.includes('RED 1')) categoryName = 'RED 1';
+    else if (slotName.includes('RED 2')) categoryName = 'RED 2';
+    else if (slotName.includes('BLUE')) categoryName = 'BLUE';
+    else if (slotName.includes('BLACK')) categoryName = 'BLACK';
+    else if (slotName.includes('WHITE')) categoryName = 'WHITE';
+    else if (slotName.includes('TEAM') || slotName.includes('PASSIVE') || slotName.includes('SUPPORTED')) categoryName = 'Passive Team';
+
+    if (categoryName === 'Passive Team') {
+      return !!(eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']);
+    }
+
+    return !!(eligibleCategories[categoryName]);
+  };
+
   const isSlotDisabled = (slotIdx: number) => {
     if (!isBiddingStarted) return true;
     if (isSlotRoundExpired(slotIdx)) return true;
     if (isSlotLocked(slotIdx)) return true;
+    if (!isCategoryEligibleForSlot(slotIdx)) return true;
     if (activeTransferWindow) return false;
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
@@ -1000,6 +1028,7 @@ export default function TeamDraftPage() {
   // For the top banner - use active slot
   const isRoundExpired = isSlotRoundExpired(activeSlotIndex);
   const isSubmitted = isSlotSubmitted(activeSlotIndex);
+  const isEligibleForActiveSlot = isCategoryEligibleForSlot(activeSlotIndex);
 
   return (
     <AuthGuard requiredRole="team">
@@ -1054,7 +1083,11 @@ export default function TeamDraftPage() {
 
               {/* Submit / Edit Button */}
               <div>
-                {isRoundExpired ? (
+                {!isEligibleForActiveSlot ? (
+                  <span className="px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-mono font-bold uppercase tracking-wider rounded-xl block">
+                    Ineligible Slot
+                  </span>
+                ) : isRoundExpired ? (
                   <span className="px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 text-xs font-mono font-bold uppercase tracking-wider rounded-xl block">
                     Round Closed
                   </span>
@@ -1140,9 +1173,21 @@ export default function TeamDraftPage() {
             if (!activeRoundSlot) return null;
 
             return (
-              <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="space-y-4">
+                {!isEligibleForActiveSlot && (
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-900 font-mono text-xs font-bold shadow-sm">
+                    <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                    <div>
+                      <h4 className="font-black uppercase">Not Eligible For {activeRoundSlot.name} Bidding</h4>
+                      <p className="text-[10px] text-rose-700 font-bold uppercase mt-0.5">
+                        Your team did not release a player in {activeRoundSlot.name} during this transfer window. Bidding in this slot is restricted to teams that released target players in this category.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-sm overflow-hidden">
+                  {/* Header */}
+                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-sm font-black text-slate-900 shadow-sm">
                       {activeRoundSlot.slot_index}
@@ -1271,6 +1316,7 @@ export default function TeamDraftPage() {
                   </div>
                 )}
               </div>
+            </div>
             );
           })()}
 
