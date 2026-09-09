@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         closes_at = ${closesUTC},
         start_time = ${opensUTC},
         end_time = ${closesUTC},
-        config = jsonb_build_object('active_category', ${category}),
+        config = jsonb_build_object('active_category', ${category}::text),
         updated_at = NOW()
       WHERE window_id = ${window_id}
     `;
