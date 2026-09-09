@@ -207,9 +207,9 @@ export default function TeamDraftPage() {
       const ownedIds = new Set<string>();
       if (draftedRes.ok) {
         const draftedData = await draftedRes.json();
-        const squadList = draftedData.bids || draftedData.players || draftedData.squad || [];
+        const squadList = draftedData.drafted_players || draftedData.players || draftedData.squad || [];
         squadList.forEach((sp: any) => {
-          if (sp.real_player_id) ownedIds.add(sp.real_player_id);
+          if (sp.real_player_id) ownedIds.add(String(sp.real_player_id));
         });
       }
       setOwnedPlayerIds(ownedIds);
@@ -375,16 +375,14 @@ export default function TeamDraftPage() {
   // Math for remaining budget: deduct the maximum bid amount placed in each slot
   const calculateRemainingBudget = () => {
     if (!draftSettings || !myTeam) return 0;
-    // Use the actual active round from draftRounds, not the old category_settings
-    const activeSlotIndex = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? null;
+    const currentTeamBudget = Number(myTeam.budget_remaining ?? myTeam.current_budget ?? myTeam.budget ?? 0);
+    const activeSlotIdx = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? activeSlotIndex ?? 1;
 
-    if (activeSlotIndex) {
-      // Slot-by-slot: Remaining budget is the team's current database budget minus the max bid in the active slot
-      const slotBids = localBids.filter(b => b.slot_index === activeSlotIndex);
+    if (activeSlotIdx) {
+      const slotBids = localBids.filter(b => b.slot_index === activeSlotIdx);
       const maxBidInSlot = slotBids.length > 0 ? Math.max(...slotBids.map(b => b.bid_amount)) : 0;
-      return Math.max(0, Number(myTeam.budget_remaining || 0) - maxBidInSlot);
+      return Math.max(0, currentTeamBudget - maxBidInSlot);
     } else {
-      // Legacy batch mode
       const maxBidsBySlot: Record<number, number> = {};
       localBids.forEach(bid => {
         const idx = bid.slot_index;
@@ -393,7 +391,7 @@ export default function TeamDraftPage() {
         }
       });
       const spent = Object.values(maxBidsBySlot).reduce((sum, amt) => sum + amt, 0);
-      return Math.max(0, draftSettings.budget - spent);
+      return Math.max(0, currentTeamBudget - spent);
     }
   };
 
@@ -426,11 +424,13 @@ export default function TeamDraftPage() {
           // Self-release check: cannot bid on player released by own team
           if (myTeamId && p.released_by_team_id === myTeamId) return false;
 
-          // If active transfer window is running, filter out players currently owned by ANY team
+          // If active transfer window is running or releases exist, filter out players currently owned by ANY team
           // UNLESS the player is explicitly a window release!
-          if (activeTransferWindow) {
-            const isWindowRelease = p.released_by_team_id || windowReleasesList.some((r: any) => r.real_player_id === p.real_player_id);
-            if (ownedPlayerIds.has(p.real_player_id) && !isWindowRelease) {
+          if (activeTransferWindow || windowReleasesList.length > 0) {
+            const isWindowRelease = p.released_by_team_id || windowReleasesList.some((r: any) => 
+              String(r.real_player_id) === String(p.real_player_id)
+            );
+            if (ownedPlayerIds.has(String(p.real_player_id)) && !isWindowRelease) {
               return false;
             }
           }
