@@ -469,6 +469,38 @@ export default function TeamDraftPage() {
     }
   };
 
+  // Compute dynamic max bids limit per team for a slot (equal to participating teams in window, or draft settings default)
+  const getMaxBidsLimitForSlot = (slot?: Slot) => {
+    if (!slot) return 0;
+    if (activeTransferWindow || windowReleasesList.length > 0) {
+      const slotName = slot.name.toUpperCase();
+      let matchingCat = slotName;
+      if (slotName.includes('RED 1')) matchingCat = 'RED 1';
+      else if (slotName.includes('RED 2')) matchingCat = 'RED 2';
+      else if (slotName.includes('BLACK')) matchingCat = 'BLACK';
+      else if (slotName.includes('BLUE')) matchingCat = 'BLUE';
+      else if (slotName.includes('WHITE')) matchingCat = 'WHITE';
+      else if (slotName.includes('TEAM') || slotName.includes('PASSIVE')) matchingCat = 'PASSIVE TEAM';
+
+      const slotReleases = windowReleasesList.filter((r: any) => {
+        if (matchingCat === 'PASSIVE TEAM') return r.is_passive_team;
+        const rCat = (r.category || '').toUpperCase();
+        if (rCat === matchingCat) return true;
+        if (rCat === 'RED' && slotName.includes('RED 2')) {
+          return r.resolved_category === 'RED 2';
+        }
+        if (rCat === 'RED' && slotName.includes('RED 1')) {
+          return r.resolved_category === 'RED 1' || !r.resolved_category;
+        }
+        return false;
+      });
+
+      const releasingTeamIds = new Set(slotReleases.map((r: any) => r.team_id));
+      return Math.max(1, releasingTeamIds.size || slotReleases.length);
+    }
+    return draftSettings?.category_settings?.max_bids_per_team || 0;
+  };
+
   const addBidToSlot = (targetId: string, name: string, isPlayer: boolean, teamName?: string) => {
     const slot = getActiveSlot();
     if (!slot) return;
@@ -494,7 +526,7 @@ export default function TeamDraftPage() {
     }
 
     const slotBids = localBids.filter(b => b.slot_index === activeSlotIndex);
-    const maxBidsLimit = draftSettings?.category_settings?.max_bids_per_team || 0;
+    const maxBidsLimit = getMaxBidsLimitForSlot(slot);
 
     if (maxBidsLimit > 0 && slotBids.length >= maxBidsLimit) {
       showAlert({
@@ -1162,7 +1194,7 @@ export default function TeamDraftPage() {
             {(() => {
               const slot = getActiveSlot();
               if (!slot) return null;
-              const maxBidsLimit = draftSettings?.category_settings?.max_bids_per_team || 0;
+              const maxBidsLimit = getMaxBidsLimitForSlot(slot);
               return (
                 <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl flex items-center justify-between gap-4">
                   <div>
