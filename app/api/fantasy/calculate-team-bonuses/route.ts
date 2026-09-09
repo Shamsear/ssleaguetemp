@@ -184,62 +184,38 @@ async function awardTeamBonus(params: {
     bonusesAwarded,
   } = params;
 
-  // TEAM CHANGE SUPPORT: Check if any teams changed their supported team after round 13
-  const TEAM_CHANGE_AFTER_ROUND = 13;
-
-  // Get team changes for this league
-  const teamChanges = await fantasySql`
-    SELECT 
-      team_id,
-      old_supported_team_id,
-      old_supported_team_name,
-      new_supported_team_id,
-      new_supported_team_name
-    FROM supported_team_changes
+  // Fetch draft slot 6 bids for Rounds 1-6 supported team mapping
+  const draftPassiveBids = await fantasySql`
+    SELECT team_id, target_id
+    FROM fantasy_draft_bids
     WHERE league_id = ${fantasy_league_id}
+      AND slot_index = 6
+      AND status = 'won'
   `;
-
-  const teamChangeMap = new Map();
-  teamChanges.forEach((change: any) => {
-    teamChangeMap.set(change.team_id, {
-      oldTeamId: change.old_supported_team_id,
-      oldTeamName: change.old_supported_team_name,
-      newTeamId: change.new_supported_team_id,
-      newTeamName: change.new_supported_team_name
-    });
+  const draftSupportedMap = new Map<string, string>();
+  draftPassiveBids.forEach((bid: any) => {
+    draftSupportedMap.set(bid.team_id, bid.target_id);
   });
 
-  // Get ALL fantasy teams first
+  // Get ALL fantasy teams for this league
   const allFantasyTeams = await fantasySql`
     SELECT team_id, team_name, supported_team_id, supported_team_name
     FROM fantasy_teams
     WHERE league_id = ${fantasy_league_id}
-      AND supported_team_id IS NOT NULL
   `;
 
-  // Filter teams based on round number and team changes
-  // Match: SSPSLT0015 (fixture) against SSPSLT0015_SSPSLS16 (fantasy team)
+  // Filter teams based on round number:
+  // Rounds 1-6: use original draft supported team (slot 6)
+  // Rounds 7+: use current supported_team_id
   const fantasyTeams = allFantasyTeams.filter((team: any) => {
-    const teamChange = teamChangeMap.get(team.team_id);
+    const activeSupportedTeamId = (round_number <= 6)
+      ? (draftSupportedMap.get(team.team_id) || null)
+      : (team.supported_team_id || null);
 
-    if (!teamChange) {
-      // Team never changed, use current supported team
-      return team.supported_team_id === real_team_id ||
-        team.supported_team_id.startsWith(`${real_team_id}_`);
-    }
+    if (!activeSupportedTeamId) return false;
 
-    // Team changed after round 13
-    if (round_number <= TEAM_CHANGE_AFTER_ROUND) {
-      // For rounds 1-13, use OLD supported team
-      return teamChange.oldTeamId === real_team_id ||
-        teamChange.oldTeamId.startsWith(`${real_team_id}_`);
-    } else {
-      // For rounds 14+, use NEW supported team
-      return teamChange.newTeamId === real_team_id ||
-        teamChange.newTeamId.startsWith(`${real_team_id}_`) ||
-        team.supported_team_id === real_team_id ||
-        team.supported_team_id.startsWith(`${real_team_id}_`);
-    }
+    return activeSupportedTeamId === real_team_id ||
+      activeSupportedTeamId.startsWith(`${real_team_id}_`);
   });
 
   if (fantasyTeams.length === 0) {

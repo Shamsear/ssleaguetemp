@@ -310,18 +310,42 @@ async function processPlayer(params: {
     sql, pointsCalculated, teamPointsMap
   } = params;
 
-  // Get ALL teams that have drafted this player (all players earn points now)
-  const squads = await sql`
-    SELECT team_id, is_captain, is_vice_captain
-    FROM fantasy_squad
-    WHERE league_id = ${fantasy_league_id}
-      AND real_player_id = ${player_id}
-  `;
+  // Determine target teams based on round_number
+  let targetSquads: Array<{ team_id: string; is_captain: boolean; is_vice_captain: boolean }> = [];
 
-  const isDrafted = squads.length > 0;
-  const targetSquads = isDrafted 
-    ? squads 
-    : [{ team_id: 'FREE_AGENT', is_captain: false, is_vice_captain: false }];
+  if (round_number <= 6) {
+    // Rounds 1-6: Find team that drafted this player in slots 1-5
+    const draftBids = await sql`
+      SELECT team_id
+      FROM fantasy_draft_bids
+      WHERE league_id = ${fantasy_league_id}
+        AND target_id = ${player_id}
+        AND slot_index BETWEEN 1 AND 5
+        AND status = 'won'
+    `;
+    if (draftBids.length > 0) {
+      targetSquads = draftBids.map((b: any) => ({
+        team_id: b.team_id,
+        is_captain: false,
+        is_vice_captain: false,
+      }));
+    }
+  } else {
+    // Rounds 7+: Find team in current fantasy_squad
+    const squads = await sql`
+      SELECT team_id, is_captain, is_vice_captain
+      FROM fantasy_squad
+      WHERE league_id = ${fantasy_league_id}
+        AND real_player_id = ${player_id}
+    `;
+    if (squads.length > 0) {
+      targetSquads = squads.map((s: any) => ({
+        team_id: s.team_id,
+        is_captain: s.is_captain || false,
+        is_vice_captain: s.is_vice_captain || false,
+      }));
+    }
+  }
 
   // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
   const getCategoryResultPts = (oppCat: string, outcome: string): number => {
@@ -334,7 +358,6 @@ async function processPlayer(params: {
   };
   const resultPoints: number = getCategoryResultPts(opponent_category, result);
   console.log(`📊 [Fantasy Result] ${player_name} [${result}] vs [${opponent_category}] → ${resultPoints} pts`);
-  // --------------------------------------------------------------------------
 
   // Calculate points breakdown (same for all teams)
   const is_clean_sheet = goals_conceded === 0;
@@ -343,40 +366,25 @@ async function processPlayer(params: {
     opponent_player_id: opponent_player_id || '',
     goals: goals_scored * (scoringRules.get('goals_scored') || 0),
     conceded: goals_conceded * (scoringRules.get('goals_conceded') || 0),
-    result: resultPoints,  // ← Category-based, not flat scoring rule
+    result: resultPoints,
     motm: is_motm ? (scoringRules.get('motm') || 0) : 0,
     fines: fine_goals * (scoringRules.get('fine_goals') || 0),
     clean_sheet: is_clean_sheet ? (scoringRules.get('clean_sheet') || 0) : 0,
     substitution: substitution_penalty > 0 ? (scoringRules.get('substitution_penalty') || 0) : 0,
   };
   
-  // Conditional bonuses based on goal milestones
-  if (goals_scored === 2) {
-    points_breakdown.brace = scoringRules.get('brace') || 0;
-  }
-  if (goals_scored >= 3) {
-    points_breakdown.hat_trick = scoringRules.get('hat_trick') || 0;
-  }
-  if (goals_scored >= 6) {
-    points_breakdown.scored_6_plus = scoringRules.get('scored_6_plus_goals') || 0;
-  }
-  
-  // Conditional penalties based on goals conceded
-  if (goals_conceded >= 4) {
-    points_breakdown.concedes_4_plus = scoringRules.get('concedes_4_plus_goals') || 0;
-  }
-  if (goals_conceded >= 15) {
-    points_breakdown.concedes_15_plus = scoringRules.get('concedes_15_plus_goals') || 0;
-  }
-  
-  // Match played bonus (always awarded if player participated)
+  if (goals_scored === 2) points_breakdown.brace = scoringRules.get('brace') || 0;
+  if (goals_scored >= 3) points_breakdown.hat_trick = scoringRules.get('hat_trick') || 0;
+  if (goals_scored >= 6) points_breakdown.scored_6_plus = scoringRules.get('scored_6_plus_goals') || 0;
+  if (goals_conceded >= 4) points_breakdown.concedes_4_plus = scoringRules.get('concedes_4_plus_goals') || 0;
+  if (goals_conceded >= 15) points_breakdown.concedes_15_plus = scoringRules.get('concedes_15_plus_goals') || 0;
   points_breakdown.match_played = scoringRules.get('match_played') || 0;
 
-  const total_points = Object.keys(points_breakdown)
+  const base_points = Object.keys(points_breakdown)
     .filter(k => k !== 'opponent_player_id')
     .reduce((sum: number, key: string) => sum + (Number(points_breakdown[key]) || 0), 0);
 
-  // Award points to EACH team that owns this player (or fallback team if free agent)
+  // Award points to EACH team that owns this player in this round
   for (const squad of targetSquads) {
     const fantasy_team_id = squad.team_id;
 
@@ -389,10 +397,10 @@ async function processPlayer(params: {
       LIMIT 1
     `;
 
-    let isCaptain = false;
-    let isViceCaptain = false;
+    let isCaptain = squad.is_captain;
+    let isViceCaptain = squad.is_vice_captain;
 
-    if (isDrafted && windows.length > 0) {
+    if (windows.length > 0) {
       const windowId = windows[0].window_id;
       const selections = await sql`
         SELECT captain_player_id, vice_captain_player_id
@@ -406,57 +414,21 @@ async function processPlayer(params: {
       if (selections.length > 0) {
         isCaptain = selections[0].captain_player_id === player_id;
         isViceCaptain = selections[0].vice_captain_player_id === player_id;
-      } else {
-        const captainCheck = await sql`
-          SELECT is_captain, is_vice_captain
-          FROM fantasy_squad
-          WHERE team_id = ${fantasy_team_id}
-            AND real_player_id = ${player_id}
-          LIMIT 1
-        `;
-        isCaptain = captainCheck.length > 0 && captainCheck[0].is_captain;
-        isViceCaptain = captainCheck.length > 0 && captainCheck[0].is_vice_captain;
       }
-    } else if (isDrafted) {
-      const captainCheck = await sql`
-        SELECT is_captain, is_vice_captain
-        FROM fantasy_squad
-        WHERE team_id = ${fantasy_team_id}
-          AND real_player_id = ${player_id}
-        LIMIT 1
-      `;
-      isCaptain = captainCheck.length > 0 && captainCheck[0].is_captain;
-      isViceCaptain = captainCheck.length > 0 && captainCheck[0].is_vice_captain;
     }
 
-    // Apply multiplier: Captain = 2x, Vice-Captain = 1.5x
-    let multiplier = 1;
-    let multiplierPercentage = 100; // Store as integer percentage for DB
-    if (isCaptain) {
-      multiplier = 2;
-      multiplierPercentage = 200;
-    } else if (isViceCaptain) {
-      multiplier = 1.5;
-      multiplierPercentage = 150;
-    }
+    let multiplier = isCaptain ? 2 : isViceCaptain ? 1.5 : 1;
+    let multiplierPercentage = isCaptain ? 200 : isViceCaptain ? 150 : 100;
+    const final_points = Math.round(base_points * multiplier);
 
-    const final_points = Math.round(total_points * multiplier);
-
-    // Delete existing record for this specific matchup (by opponent ID or score)
-    // Using opponent_player_id ensures editing a result replaces the old record cleanly without touching other matchups
     await sql`
       DELETE FROM fantasy_player_points
       WHERE league_id = ${fantasy_league_id}
         AND team_id = ${fantasy_team_id}
         AND real_player_id = ${player_id}
         AND fixture_id = ${fixture_id}
-        AND (
-          (points_breakdown->>'opponent_player_id' IS NOT NULL AND points_breakdown->>'opponent_player_id' = ${opponent_player_id})
-          OR (goals_scored = ${goals_scored} AND goals_conceded = ${goals_conceded})
-        )
     `;
 
-    // Create fantasy_player_points record for this team
     await sql`
       INSERT INTO fantasy_player_points (
         league_id,
@@ -496,59 +468,56 @@ async function processPlayer(params: {
         ${isCaptain},
         ${isViceCaptain},
         ${multiplierPercentage},
-        ${total_points},
+        ${base_points},
         ${JSON.stringify(points_breakdown)},
         ${final_points},
         NOW()
       )
     `;
 
-    if (isDrafted) {
-      // Track team points (with captain/vice-captain multiplier)
-      const currentTeamPoints = teamPointsMap.get(fantasy_team_id) || 0;
-      teamPointsMap.set(fantasy_team_id, currentTeamPoints + final_points);
+    // Track team points
+    const currentTeamPoints = teamPointsMap.get(fantasy_team_id) || 0;
+    teamPointsMap.set(fantasy_team_id, currentTeamPoints + final_points);
 
-      // Update fantasy_squad with points for this team (recalculate from fantasy_player_points)
-      await sql`
-        UPDATE fantasy_squad
-        SET 
-          total_points = COALESCE((
-            SELECT SUM(fpp.total_points)
-            FROM fantasy_player_points fpp
-            WHERE fpp.real_player_id = ${player_id}
-              AND fpp.team_id = ${fantasy_team_id}
-              AND fpp.league_id = ${fantasy_league_id}
-          ), 0)
-        WHERE team_id = ${fantasy_team_id}
-          AND real_player_id = ${player_id}
-      `;
-    }
+    // Update fantasy_squad with points for this team
+    await sql`
+      UPDATE fantasy_squad
+      SET 
+        total_points = COALESCE((
+          SELECT SUM(fpp.total_points)
+          FROM fantasy_player_points fpp
+          WHERE fpp.real_player_id = ${player_id}
+            AND fpp.team_id = ${fantasy_team_id}
+            AND fpp.league_id = ${fantasy_league_id}
+        ), 0)
+      WHERE team_id = ${fantasy_team_id}
+        AND real_player_id = ${player_id}
+    `;
 
     pointsCalculated.push({
       player_id,
       player_name,
       fantasy_team_id,
-      base_points: total_points,
+      base_points: base_points,
       multiplier: multiplier,
       final_points: final_points,
       is_captain: isCaptain,
       is_vice_captain: isViceCaptain,
       breakdown: points_breakdown,
     });
-
-    console.log(`  ${player_name}: ${total_points} pts × ${multiplier} ${isCaptain ? '(C)' : isViceCaptain ? '(VC)' : ''} = ${final_points} pts`);
   }
 
-  // Update fantasy_players with cumulative total_points (base points, no multiplier)
+  // Update fantasy_players with cumulative total_points across all completed fixtures
+  // (Sums base_points from fantasy_player_points if drafted, or computes base_points for free agents)
   await sql`
     UPDATE fantasy_players
     SET 
       total_points = COALESCE((
-        SELECT SUM(base_points)
-        FROM fantasy_player_points
-        WHERE real_player_id = ${player_id}
-          AND league_id = ${fantasy_league_id}
-      ), 0),
+        SELECT SUM(fpp.base_points)
+        FROM fantasy_player_points fpp
+        WHERE fpp.real_player_id = ${player_id}
+          AND fpp.league_id = ${fantasy_league_id}
+      ), ${base_points}),
       updated_at = NOW()
     WHERE league_id = ${fantasy_league_id} 
       AND real_player_id = ${player_id}
