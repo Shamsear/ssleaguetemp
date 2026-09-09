@@ -751,14 +751,18 @@ export default function TeamDraftPage() {
 
     if (lockSubmit) {
       if (activeSlotIndex) {
+        const slot = getActiveSlot();
+        const maxLimit = getMaxBidsLimitForSlot(slot);
         const slotBids = localBids.filter(b => b.slot_index === activeSlotIndex);
-        if (slotBids.length === 0) {
+        // Include items already in wishlist + remaining in pool to determine required choices
+        const poolCount = getFilteredPool().length + slotBids.length;
+        const requiredCount = maxLimit > 0 ? Math.min(maxLimit, poolCount) : 1;
+
+        if (slotBids.length < requiredCount) {
           showAlert({
             type: 'error',
-            title: 'No Bids Placed',
-            message: `You must place at least one bid for the active slot (${
-              draftSettings.category_settings?.slots.find(s => s.slot_index === activeSlotIndex)?.name || `Slot ${activeSlotIndex}`
-            }) before submitting.`
+            title: 'Incomplete Bids',
+            message: `You must place all ${requiredCount} required choices for ${slot?.name || `Slot ${activeSlotIndex}`} before submitting (${slotBids.length} of ${requiredCount} placed).`
           });
           return;
         }
