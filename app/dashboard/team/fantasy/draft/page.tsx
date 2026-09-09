@@ -276,17 +276,15 @@ export default function TeamDraftPage() {
           const slotSubs: Record<number, boolean> = {};
           const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => {
             const cat = (b.category || '').toUpperCase();
-            let slotIdx = activeSlotIndex || 2;
-            if (cat.includes('RED 1')) slotIdx = 1;
-            else if (cat.includes('RED 2')) slotIdx = 2;
+            let slotIdx = 1;
+            if (cat.includes('RED 2') || cat === 'RED 2') slotIdx = 2;
+            else if (cat.includes('RED 1') || cat === 'RED 1' || cat === 'RED') slotIdx = 1;
             else if (cat.includes('BLUE')) slotIdx = 3;
             else if (cat.includes('BLACK')) slotIdx = 4;
             else if (cat.includes('WHITE')) slotIdx = 5;
-            else if (cat.includes('PASSIVE') || b.is_passive_team) slotIdx = 6;
+            else if (cat.includes('PASSIVE') || cat.includes('SUPPORTED') || b.is_passive_team) slotIdx = 6;
 
-            if (b.status === 'submitted' || b.status === 'pending' || b.status === 'won') {
-              slotSubs[slotIdx] = true;
-            }
+            slotSubs[slotIdx] = true;
 
             return {
               slot_index: slotIdx,
@@ -976,11 +974,13 @@ export default function TeamDraftPage() {
 
   // Per-slot locking & eligibility
   const isSlotSubmitted = (slotIdx: number) => {
-    return !!slotSubmissions[slotIdx];
+    if (slotSubmissions[slotIdx]) return true;
+    const slotBids = localBids.filter(b => b.slot_index === slotIdx);
+    return slotBids.length > 0 && !hasUnsavedChanges;
   };
 
   const isSlotLocked = (slotIdx: number) => {
-    return !!slotSubmissions[slotIdx] && !editingSlots[slotIdx];
+    return isSlotSubmitted(slotIdx) && !editingSlots[slotIdx];
   };
 
   const isSlotRoundExpired = (slotIdx: number) => {
