@@ -263,6 +263,24 @@ export default function TeamDraftPage() {
       setAvailablePlayers(playersList);
       setRealTeams(teamsList);
 
+      // Ensure draftRounds includes slot 6 (Supported Team) if active window or window releases exist
+      if (activeWin || windowReleases.length > 0) {
+        setDraftRounds(prevRounds => {
+          const rounds = [...prevRounds];
+          if (!rounds.some((r: any) => r.slot_index === 6)) {
+            rounds.push({
+              id: 'round_passive_team',
+              slot_index: 6,
+              slot_name: 'Supported Team',
+              status: 'active',
+              opens_at: activeWin?.opens_at || null,
+              closes_at: activeWin?.closes_at || null
+            });
+          }
+          return rounds;
+        });
+      }
+
       // 5. Fetch team's current bids (Check post-release window bids first if window is active)
       let windowBidsLoaded = false;
       if (activeWin) {
@@ -487,6 +505,8 @@ export default function TeamDraftPage() {
           || draftRounds.find((r: any) => isCategoryEligibleForSlot(r.slot_index));
         if (firstEligible) {
           setActiveSlotIndex(firstEligible.slot_index);
+        } else if (eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']) {
+          setActiveSlotIndex(6);
         }
       }
     }
@@ -556,32 +576,16 @@ export default function TeamDraftPage() {
     const myTeamId = myTeam?.team_id || myTeam?.id;
 
     if (slot.name.toLowerCase().includes('team') || slot.list_id?.includes('team')) {
-      // Real Teams pool
-      let base = realTeams;
-
-      // In active transfer window / post-release window: ONLY show real teams that were RELEASED in this window!
-      if (activeTransferWindow || windowReleasesList.length > 0) {
-        const releasedPassiveTeamIds = new Set(
-          windowReleasesList
-            .filter((r: any) => r.is_passive_team && r.real_player_id)
-            .map((r: any) => String(r.real_player_id))
-        );
-        base = realTeams.filter(t => releasedPassiveTeamIds.has(String(t.team_uid)));
-      } else if (listIds.length > 0) {
-        base = realTeams.filter(t => listIds.includes(t.team_uid) || t.released_by_team_id);
-      }
-
-      const currentSupportedTeamId = myTeam?.supported_team_id;
-
+      // Real Teams pool — filter by list if it has entries, otherwise show all
+      const myTeamName = (myTeam?.team_name || '').toLowerCase();
+      const base = listIds.length > 0
+        ? realTeams.filter(t => listIds.includes(t.team_uid) || t.released_by_team_id)
+        : realTeams;
       return base
-        .filter(t => {
-          // Cannot bid on team released by own fantasy team
-          if (myTeamId && String(t.released_by_team_id) === String(myTeamId)) return false;
-          // Cannot bid on own fantasy team or own currently supported team ("dont show itself")
-          if (myTeamId && String(t.team_uid) === String(myTeamId)) return false;
-          if (currentSupportedTeamId && String(t.team_uid) === String(currentSupportedTeamId)) return false;
-          return true;
-        })
+        // Do not show team itself ("dont show itself")
+        .filter(t => !myTeamId || (String(t.team_uid) !== String(myTeamId) && t.team_name.toLowerCase() !== myTeamName))
+        // Do not show team released by self
+        .filter(t => !myTeamId || String(t.released_by_team_id) !== String(myTeamId))
         .filter(t => t.team_name.toLowerCase().includes(searchTerm.toLowerCase()));
     } else {
       // Players pool
