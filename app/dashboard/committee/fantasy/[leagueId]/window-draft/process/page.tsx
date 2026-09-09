@@ -252,12 +252,21 @@ export default function PostWindowDraftProcessPage() {
         setAllBids(fetchedBids);
         setTies(bidsData.ties || []);
 
+        // Fetch per-slot active status from fantasy_draft_rounds
+        const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
+        let isSlotActiveInDb = false;
+        if (roundsRes.ok) {
+          const roundsData = await roundsRes.json();
+          const activeR = (roundsData.rounds || []).find((r: any) => r.status === 'active');
+          if (activeR) isSlotActiveInDb = true;
+        }
+
         if (fetchedBids.some((b: any) => b.status === 'won')) {
           setRoundStatus('finalized');
-        } else if (fetchedBids.length > 0) {
+        } else if (foundWin?.is_active || isSlotActiveInDb || fetchedBids.length > 0) {
           setRoundStatus('active');
         } else {
-          setRoundStatus('pending');
+          setRoundStatus('closed');
         }
       }
 

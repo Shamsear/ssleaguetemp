@@ -81,6 +81,9 @@ export default function TeamDraftPage() {
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [slotSubmissions, setSlotSubmissions] = useState<Record<number, boolean>>({});
   const [eligibleCategories, setEligibleCategories] = useState<Record<string, number>>({});
+  const [ownedPlayerIds, setOwnedPlayerIds] = useState<Set<string>>(new Set());
+  const [activeTransferWindow, setActiveTransferWindow] = useState<any>(null);
+  const [windowReleasesList, setWindowReleasesList] = useState<any[]>([]);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -191,11 +194,25 @@ export default function TeamDraftPage() {
       if (winRes.ok) {
         const winData = await winRes.json();
         activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
+        setActiveTransferWindow(activeWin);
       }
 
       const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
       const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
       const windowReleases = releasesData.releases || [];
+      setWindowReleasesList(windowReleases);
+
+      // Fetch squad players across all teams in the league to identify owned players
+      const draftedRes = await fetchWithTokenRefresh(`/api/fantasy/players/drafted?league_id=${leagueId}`);
+      const ownedIds = new Set<string>();
+      if (draftedRes.ok) {
+        const draftedData = await draftedRes.json();
+        const squadList = draftedData.bids || draftedData.players || draftedData.squad || [];
+        squadList.forEach((sp: any) => {
+          if (sp.real_player_id) ownedIds.add(sp.real_player_id);
+        });
+      }
+      setOwnedPlayerIds(ownedIds);
 
       // Add window released players to player pool
       windowReleases.forEach((r: any) => {
@@ -241,24 +258,24 @@ export default function TeamDraftPage() {
       // 5. Fetch team's current bids (Check post-release window bids first if window is active)
       let windowBidsLoaded = false;
       if (activeWin) {
+        windowBidsLoaded = true; // Prevent fallback to initial main draft bids when transfer window is active
         const windowBidsRes = await fetchWithTokenRefresh(
           `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${activeWin.window_id}`
         );
         if (windowBidsRes.ok) {
           const windowBidsData = await windowBidsRes.json();
           const teamWindowBids = (windowBidsData.bids || []).filter((b: any) => b.team_id === teamId);
-          if (teamWindowBids.length > 0) {
-            const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => ({
-              slot_index: 2, // Active slot index
-              priority: idx + 1,
-              target_id: b.target_id,
-              target_name: b.target_name,
-              bid_type: b.is_passive_team ? 'real_team' : 'player',
-              bid_amount: Number(b.bid_amount)
-            }));
-            setLocalBids(mappedWindowBids);
-            windowBidsLoaded = true;
-          }
+          const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => ({
+            slot_index: activeSlotIndex || 2, // Active slot index
+            priority: idx + 1,
+            target_id: b.target_id,
+            target_name: b.target_name,
+            bid_type: b.is_passive_team ? 'real_team' : 'player',
+            bid_amount: Number(b.bid_amount)
+          }));
+          setLocalBids(mappedWindowBids);
+        } else {
+          setLocalBids([]);
         }
       }
 
@@ -408,6 +425,15 @@ export default function TeamDraftPage() {
         .filter(p => {
           // Self-release check: cannot bid on player released by own team
           if (myTeamId && p.released_by_team_id === myTeamId) return false;
+
+          // If active transfer window is running, filter out players currently owned by ANY team
+          // UNLESS the player is explicitly a window release!
+          if (activeTransferWindow) {
+            const isWindowRelease = p.released_by_team_id || windowReleasesList.some((r: any) => r.real_player_id === p.real_player_id);
+            if (ownedPlayerIds.has(p.real_player_id) && !isWindowRelease) {
+              return false;
+            }
+          }
 
           // Category matching logic
           const playerCat = (p.category || '').toUpperCase();
@@ -929,33 +955,41 @@ export default function TeamDraftPage() {
           </div>
         </div>
 
-        {/* Slot Tabs - show all non-pending rounds */}
-        {draftRounds.filter((r: any) => r.status !== 'pending').length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {draftRounds.filter((r: any) => r.status !== 'pending').map((r: any) => {
-              const slot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === r.slot_index);
-              const isActiveTab = activeSlotIndex === r.slot_index;
-              const submitted = isSlotSubmitted(r.slot_index);
-              const expired = isSlotRoundExpired(r.slot_index);
-              return (
-                <button
-                  key={r.slot_index}
-                  onClick={() => setActiveSlotIndex(r.slot_index)}
-                  className={`px-4 py-2 rounded-xl font-bold font-mono text-[10px] uppercase tracking-wider transition-all border whitespace-nowrap cursor-pointer ${
-                    isActiveTab
-                      ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-sm'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200/60'
-                  }`}
-                >
-                  <span className="font-black">{slot?.name || `Slot ${r.slot_index}`}</span>
-                  {submitted && <span className="ml-1.5 text-emerald-500">✓</span>}
-                  {expired && !submitted && <span className="ml-1.5 text-rose-400">⏱</span>}
-                  {r.status === 'active' && !submitted && !expired && <span className="ml-1.5 text-emerald-400 animate-pulse">●</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Slot Tabs - show active rounds when window is active, or non-pending rounds */}
+        {(() => {
+          const visibleRounds = activeTransferWindow 
+            ? draftRounds.filter((r: any) => r.status === 'active')
+            : draftRounds.filter((r: any) => r.status !== 'pending');
+
+          if (visibleRounds.length <= 1) return null;
+
+          return (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {visibleRounds.map((r: any) => {
+                const slot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === r.slot_index);
+                const isActiveTab = activeSlotIndex === r.slot_index;
+                const submitted = isSlotSubmitted(r.slot_index);
+                const expired = isSlotRoundExpired(r.slot_index);
+                return (
+                  <button
+                    key={r.slot_index}
+                    onClick={() => setActiveSlotIndex(r.slot_index)}
+                    className={`px-4 py-2 rounded-xl font-bold font-mono text-[10px] uppercase tracking-wider transition-all border whitespace-nowrap cursor-pointer ${
+                      isActiveTab
+                        ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-sm'
+                        : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200/60'
+                    }`}
+                  >
+                    <span className="font-black">{slot?.name || `Slot ${r.slot_index}`}</span>
+                    {submitted && <span className="ml-1.5 text-emerald-500">✓</span>}
+                    {expired && !submitted && <span className="ml-1.5 text-rose-400">⏱</span>}
+                    {r.status === 'active' && !submitted && !expired && <span className="ml-1.5 text-emerald-400 animate-pulse">●</span>}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Content: single column — Slots first, then player pool below */}
         <div className="flex flex-col space-y-6">
