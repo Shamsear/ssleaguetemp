@@ -967,7 +967,7 @@ export default function TeamDraftPage() {
   // Per-slot locking
   const isSlotSubmitted = (slotIdx: number) => {
     if (activeTransferWindow) {
-      return isWindowSubmitted;
+      return localBids.some((b) => b.slot_index === slotIdx);
     }
     return !!slotSubmissions[slotIdx];
   };
