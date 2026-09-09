@@ -5,7 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Target, Users, Clock, AlertTriangle, CheckCircle, Trophy, RefreshCw, Zap, Shield, Sparkles, Filter, Lock, Unlock, Play, Pause, Timer } from 'lucide-react';
+import { ArrowLeft, Target, Users, Clock, AlertTriangle, CheckCircle, Trophy, RefreshCw, Zap, Shield, Sparkles, Filter, Lock, Unlock, Play, Pause, Timer, Save } from 'lucide-react';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -344,6 +344,58 @@ export default function PostWindowDraftProcessPage() {
     }
   };
 
+  // Save modified IST schedule (Opens At / Closes At) to database
+  const handleSaveSchedule = async () => {
+    try {
+      setIsProcessing(true);
+      const opensUTC = istInputToUTC(opensAtInput);
+      const closesUTC = istInputToUTC(closesAtInput);
+
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/toggle-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          league_id: leagueId,
+          window_id: windowId,
+          category: activeCategory,
+          action: 'open',
+          opens_at: opensUTC,
+          closes_at: closesUTC
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to update schedule');
+      }
+
+      const now = Date.now();
+      const opensMs = new Date(opensUTC).getTime();
+      const closesMs = new Date(closesUTC).getTime();
+
+      let newStatusDisplay: 'pending' | 'active' | 'closed' | 'finalized' = 'active';
+      if (now < opensMs) newStatusDisplay = 'pending';
+      else if (now >= closesMs) newStatusDisplay = 'closed';
+
+      setRoundStatus(newStatusDisplay);
+
+      showAlert({
+        type: 'success',
+        title: 'Schedule Saved!',
+        message: `Updated bidding schedule for ${activeCategory}.\nOpens At: ${opensAtInput.replace('T', ' ')} IST\nCloses At: ${closesAtInput.replace('T', ' ')} IST`
+      });
+    } catch (err: any) {
+      console.error('Error saving schedule:', err);
+      showAlert({
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Failed to save schedule.'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const currentTabObj = categoryTabs.find(t => t.id.toUpperCase() === activeCategory.toUpperCase()) || {
     id: activeCategory,
     label: activeCategory,
@@ -679,6 +731,17 @@ export default function PostWindowDraftProcessPage() {
               </div>
             </div>
 
+            {/* Save Schedule Button */}
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={handleSaveSchedule}
+                disabled={isProcessing}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Schedule
+              </button>
+            </div>
+
             {/* Quick Extension Controls */}
             {roundStatus === 'active' && (
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
@@ -708,16 +771,18 @@ export default function PostWindowDraftProcessPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
               <button
                 onClick={() => handleToggleBiddingStatus('active')}
-                disabled={roundStatus === 'active'}
+                disabled={roundStatus === 'finalized' || isProcessing}
                 className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
-                  roundStatus === 'active'
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold opacity-60 cursor-not-allowed'
+                  roundStatus === 'finalized'
+                    ? 'bg-slate-50 border-slate-200 text-slate-400 font-bold opacity-60 cursor-not-allowed'
+                    : roundStatus === 'active'
+                    ? 'bg-emerald-50/50 border-emerald-300 text-emerald-900 font-bold hover:bg-emerald-100/60 shadow-sm'
                     : 'bg-white hover:bg-emerald-50/50 border-slate-200 text-slate-800 hover:border-emerald-300 shadow-sm'
                 }`}
               >
                 <div className="flex items-center gap-2 font-black text-xs uppercase mb-1">
                   <Play className="w-4 h-4 text-emerald-600" />
-                  Step 1: Open Bidding
+                  {roundStatus === 'active' ? 'Step 1: Update / Re-open Bidding' : 'Step 1: Open Bidding'}
                 </div>
                 <p className="text-[10px] text-slate-500 font-mono">
                   Starts bidding round in IST for team owners.

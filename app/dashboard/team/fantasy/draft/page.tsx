@@ -1216,16 +1216,25 @@ export default function TeamDraftPage() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {!isRealTeam && (
-                          <span className={`px-2 py-0.5 text-[8px] font-black rounded-lg border uppercase tracking-wider ${
-                            item.category === 'RED' ? 'bg-red-50 border-red-200 text-red-700' :
-                            item.category === 'BLUE' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                            item.category === 'BLACK' ? 'bg-zinc-100 border-zinc-200 text-zinc-700' :
-                            'bg-slate-50 border-slate-200 text-slate-650'
-                          }`}>
-                            {item.category}
-                          </span>
-                        )}
+                        {!isRealTeam && (() => {
+                          const slot = getActiveSlot();
+                          const displayCat = (item.category === 'RED' && slot?.name?.startsWith('Red Slot'))
+                            ? slot.name.replace(/Slot\s*/i, '').trim().toUpperCase()
+                            : (item.category || slot?.name || '');
+                          const isRed = displayCat.startsWith('RED');
+                          const isBlue = displayCat.startsWith('BLUE');
+                          const isBlack = displayCat.startsWith('BLACK');
+                          return (
+                            <span className={`px-2 py-0.5 text-[8px] font-black rounded-lg border uppercase tracking-wider ${
+                              isRed ? 'bg-red-50 border-red-200 text-red-700' :
+                              isBlue ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                              isBlack ? 'bg-zinc-100 border-zinc-200 text-zinc-700' :
+                              'bg-slate-50 border-slate-200 text-slate-650'
+                            }`}>
+                              {displayCat}
+                            </span>
+                          );
+                        })()}
                         
                         <button
                           onClick={() => addBidToSlot(itemId, name, !isRealTeam, item.real_team_name)}
