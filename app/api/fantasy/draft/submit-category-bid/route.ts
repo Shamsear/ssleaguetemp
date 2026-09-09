@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
         AND (
           real_player_id = ${target_id} 
           OR player_name = ${target_name || ''} 
-          OR (is_passive_team = true AND ${is_passive_team || false} = true)
         )
     `;
 
@@ -92,7 +91,8 @@ export async function POST(request: NextRequest) {
       WHERE team_id = ${team_id}
         AND (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
         AND (category ILIKE ${category} OR (${category === 'Passive Team'} AND is_passive_team = true))
-        AND status = 'pending'
+        AND target_id != ${target_id}
+        AND status IN ('pending', 'submitted')
     `;
 
     if (existingCategoryBids.length >= participatingTeamsCount) {

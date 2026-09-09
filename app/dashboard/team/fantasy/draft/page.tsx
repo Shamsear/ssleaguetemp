@@ -282,7 +282,13 @@ export default function TeamDraftPage() {
             else if (cat.includes('BLUE')) slotIdx = 3;
             else if (cat.includes('BLACK')) slotIdx = 4;
             else if (cat.includes('WHITE')) slotIdx = 5;
-            else if (cat.includes('PASSIVE') || cat.includes('SUPPORTED') || b.is_passive_team) slotIdx = 6;
+            else if (cat.includes('PASSIVE') || cat.includes('SUPPORTED') || b.is_passive_team) {
+              const passiveSlot = settingsObj?.category_settings?.slots.find((s: any) => {
+                const sName = (s.name || '').toUpperCase();
+                return sName.includes('TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
+              });
+              slotIdx = passiveSlot ? passiveSlot.slot_index : 6;
+            }
 
             slotSubs[slotIdx] = true;
 
@@ -291,7 +297,7 @@ export default function TeamDraftPage() {
               priority: idx + 1,
               target_id: b.target_id,
               target_name: b.target_name || b.target_id,
-              bid_type: b.is_passive_team ? 'real_team' : 'player',
+              bid_type: (b.is_passive_team || cat.includes('PASSIVE') || cat.includes('SUPPORTED')) ? 'real_team' : 'player',
               bid_amount: Number(b.bid_amount)
             };
           });
@@ -372,25 +378,29 @@ export default function TeamDraftPage() {
     return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
   };
 
-  const isCategoryEligibleForSlot = (slotIdx: number) => {
-    if (!activeTransferWindow && windowReleasesList.length === 0) return true;
-
-    const slot = draftSettings?.category_settings?.slots.find(s => s.slot_index === slotIdx);
+  const getCategoryNameForSlot = (slotIdx: number): string => {
+    const slot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === slotIdx);
     const slotName = (slot?.name || '').toUpperCase();
 
-    let categoryName = slotIdx === 1 ? 'RED 1'
+    if (slotName.includes('RED 1')) return 'RED 1';
+    if (slotName.includes('RED 2')) return 'RED 2';
+    if (slotName.includes('BLUE')) return 'BLUE';
+    if (slotName.includes('BLACK')) return 'BLACK';
+    if (slotName.includes('WHITE')) return 'WHITE';
+    if (slotName.includes('TEAM') || slotName.includes('PASSIVE') || slotName.includes('SUPPORTED')) return 'Passive Team';
+
+    return slotIdx === 1 ? 'RED 1'
       : slotIdx === 2 ? 'RED 2'
       : slotIdx === 3 ? 'BLUE'
       : slotIdx === 4 ? 'BLACK'
       : slotIdx === 5 ? 'WHITE'
       : 'Passive Team';
+  };
 
-    if (slotName.includes('RED 1')) categoryName = 'RED 1';
-    else if (slotName.includes('RED 2')) categoryName = 'RED 2';
-    else if (slotName.includes('BLUE')) categoryName = 'BLUE';
-    else if (slotName.includes('BLACK')) categoryName = 'BLACK';
-    else if (slotName.includes('WHITE')) categoryName = 'WHITE';
-    else if (slotName.includes('TEAM') || slotName.includes('PASSIVE') || slotName.includes('SUPPORTED')) categoryName = 'Passive Team';
+  const isCategoryEligibleForSlot = (slotIdx: number) => {
+    if (!activeTransferWindow && windowReleasesList.length === 0) return true;
+
+    const categoryName = getCategoryNameForSlot(slotIdx);
 
     if (categoryName === 'Passive Team') {
       return !!(eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']);
@@ -760,83 +770,78 @@ export default function TeamDraftPage() {
     }
 
     try {
-      const res = await fetchWithTokenRefresh('/api/fantasy/draft/bids/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user!.uid,
-          bids: (() => {
-            // Always only send the current slot's bids to avoid overwriting other slots
-            const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
-            // Auto-assign priority based on bid amount (highest amount = priority 1)
-            const bySlot: Record<number, typeof localBids> = {};
-            bidsToSend.forEach(b => {
-              if (!bySlot[b.slot_index]) bySlot[b.slot_index] = [];
-              bySlot[b.slot_index].push(b);
-            });
-            const result: any[] = [];
-            Object.values(bySlot).forEach(slotBids => {
-              const sorted = [...slotBids].sort((a, b) => b.bid_amount - a.bid_amount);
-              sorted.forEach((b, i) => {
-                result.push({
-                  slot_index: b.slot_index,
-                  priority: i + 1,
-                  target_id: b.target_id,
-                  bid_type: b.bid_type,
-                  bid_amount: b.bid_amount
-                });
-              });
-            });
-            return result;
-          })(),
-          lock: lockSubmit
-        })
-      });
+      if (activeTransferWindow) {
+        const categoryName = getCategoryNameForSlot(activeSlotIndex);
+        const teamId = myTeam.team_id || myTeam.id;
 
-      const data = await res.json();
+        // Clear old bids in database for this category slot first so deleted bids don't persist
+        await fetchWithTokenRefresh(
+          `/api/fantasy/draft/post-release-bids?window_id=${activeTransferWindow.window_id}&team_id=${teamId}&category=${encodeURIComponent(categoryName)}`,
+          { method: 'DELETE' }
+        );
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit bids');
-      }
+        // Re-insert current active bids
+        const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
+        for (const b of bidsToSend) {
+          const res = await fetchWithTokenRefresh('/api/fantasy/draft/submit-category-bid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              draft_round_id: activeTransferWindow.window_id,
+              league_id: myTeam.fantasy_league_id,
+              team_id: teamId,
+              category: categoryName,
+              is_passive_team: b.bid_type === 'real_team' || categoryName === 'Passive Team',
+              target_id: b.target_id,
+              target_name: b.target_name,
+              bid_amount: b.bid_amount
+            })
+          });
 
-      // Also post to window category bids if active transfer window exists
-      try {
-        const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${myTeam.fantasy_league_id}`);
-        if (winRes.ok) {
-          const winData = await winRes.json();
-          const activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
-          if (activeWin) {
-            const categoryName = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'Passive Team';
-            const teamId = myTeam.team_id || myTeam.id;
-
-            // Clear old bids in database for this category slot first so deleted bids don't persist
-            await fetchWithTokenRefresh(
-              `/api/fantasy/draft/post-release-bids?window_id=${activeWin.window_id}&team_id=${teamId}&category=${encodeURIComponent(categoryName)}`,
-              { method: 'DELETE' }
-            );
-
-            // Re-insert current active bids
-            const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
-            for (const b of bidsToSend) {
-              await fetchWithTokenRefresh('/api/fantasy/draft/submit-category-bid', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  draft_round_id: activeWin.window_id,
-                  league_id: myTeam.fantasy_league_id,
-                  team_id: teamId,
-                  category: categoryName,
-                  is_passive_team: b.bid_type === 'real_team',
-                  target_id: b.target_id,
-                  target_name: b.target_name,
-                  bid_amount: b.bid_amount
-                })
-              });
-            }
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || 'Failed to submit category bid');
           }
         }
-      } catch (winErr) {
-        console.warn('Post-release category sync notice:', winErr);
+      } else {
+        const res = await fetchWithTokenRefresh('/api/fantasy/draft/bids/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user!.uid,
+            bids: (() => {
+              // Always only send the current slot's bids to avoid overwriting other slots
+              const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
+              // Auto-assign priority based on bid amount (highest amount = priority 1)
+              const bySlot: Record<number, typeof localBids> = {};
+              bidsToSend.forEach(b => {
+                if (!bySlot[b.slot_index]) bySlot[b.slot_index] = [];
+                bySlot[b.slot_index].push(b);
+              });
+              const result: any[] = [];
+              Object.values(bySlot).forEach(slotBids => {
+                const sorted = [...slotBids].sort((a, b) => b.bid_amount - a.bid_amount);
+                sorted.forEach((b, i) => {
+                  result.push({
+                    slot_index: b.slot_index,
+                    priority: i + 1,
+                    target_id: b.target_id,
+                    bid_type: b.bid_type,
+                    bid_amount: b.bid_amount
+                  });
+                });
+              });
+              return result;
+            })(),
+            lock: lockSubmit
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to submit bids');
+        }
       }
 
       setSlotSubmissions(prev => ({ ...prev, [activeSlotIndex]: true }));
@@ -868,7 +873,8 @@ export default function TeamDraftPage() {
     if (localBids.length === 0 || !myTeam) return '';
     const slots = draftSettings?.category_settings?.slots || [];
     let msg = `*Fantasy Draft Bids*\n*Team:* ${myTeam.team_name}\n\n`;
-    slots.forEach((slot: Slot) => {                  const slotBids = localBids
+    slots.forEach((slot: Slot) => {
+      const slotBids = localBids
         .filter(b => b.slot_index === slot.slot_index)
         .sort((a, b) => b.bid_amount - a.bid_amount);
       if (slotBids.length === 0) return;
@@ -925,7 +931,7 @@ export default function TeamDraftPage() {
     setIsSubmitting(true);
     try {
       if (activeTransferWindow && myTeam) {
-        const categoryName = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'Passive Team';
+        const categoryName = getCategoryNameForSlot(activeSlotIndex);
         const teamId = myTeam.team_id || myTeam.id;
         await fetchWithTokenRefresh(
           `/api/fantasy/draft/post-release-bids?window_id=${activeTransferWindow.window_id}&team_id=${teamId}&category=${encodeURIComponent(categoryName)}`,

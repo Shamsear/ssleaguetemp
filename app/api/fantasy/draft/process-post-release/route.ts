@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         SELECT release_id FROM fantasy_releases
         WHERE team_id = ${b.team_id}
           AND (window_id = ${draft_round_id} OR league_id = ${league_id})
-          AND (real_player_id = ${b.target_id} OR player_name = ${b.target_name} OR (is_passive_team = true AND ${b.is_passive_team || false} = true))
+          AND (real_player_id = ${b.target_id} OR player_name = ${b.target_name})
       `;
       if (selfRelease.length > 0) {
         // Mark self-release bid as invalid
