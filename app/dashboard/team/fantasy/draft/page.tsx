@@ -1324,35 +1324,73 @@ export default function TeamDraftPage() {
           </div>
         </div>
 
-        {/* Slot Tabs - show active rounds when window is active, or non-pending rounds */}
+        {/* Slot Tabs - Show ALL 6 category rounds with open, closed, locked, or ineligible status badges */}
         {(() => {
-          const visibleRounds = (activeTransferWindow || windowReleasesList.length > 0)
-            ? draftRounds.filter((r: any) => r.status === 'active' && isCategoryEligibleForSlot(r.slot_index))
-            : draftRounds.filter((r: any) => r.status !== 'pending');
-
-          if (visibleRounds.length <= 1) return null;
+          const slotsList = draftSettings?.category_settings?.slots || [
+            { slot_index: 1, name: 'Red Slot 1' },
+            { slot_index: 2, name: 'Red Slot 2' },
+            { slot_index: 3, name: 'Blue Slot' },
+            { slot_index: 4, name: 'Black Slot' },
+            { slot_index: 5, name: 'White Slot' },
+            { slot_index: 6, name: 'Real Team Slot' }
+          ];
 
           return (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {visibleRounds.map((r: any) => {
-                const slot = draftSettings?.category_settings?.slots.find((s: any) => s.slot_index === r.slot_index);
-                const isActiveTab = activeSlotIndex === r.slot_index;
-                const submitted = isSlotSubmitted(r.slot_index);
-                const expired = isSlotRoundExpired(r.slot_index);
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {slotsList.map((slot: any) => {
+                const slotIdx = slot.slot_index;
+                const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
+                const isActiveTab = activeSlotIndex === slotIdx;
+                const isRoundActive = round?.status === 'active';
+                const isRoundCompleted = round?.status === 'completed' || round?.status === 'closed';
+                const isEligible = isCategoryEligibleForSlot(slotIdx);
+                const submitted = isSlotSubmitted(slotIdx);
+                const locked = isSlotLocked(slotIdx);
+
+                let badgeText = 'PENDING';
+                let badgeStyle = 'bg-slate-100 text-slate-500 border-slate-200';
+
+                if (isRoundCompleted) {
+                  badgeText = 'CLOSED';
+                  badgeStyle = 'bg-slate-100 text-slate-500 border-slate-250';
+                } else if (isRoundActive && isEligible) {
+                  if (locked) {
+                    badgeText = 'LOCKED';
+                    badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                  } else if (submitted) {
+                    badgeText = 'SUBMITTED';
+                    badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-250';
+                  } else {
+                    badgeText = 'OPEN';
+                    badgeStyle = 'bg-emerald-500 text-white border-emerald-600 animate-pulse';
+                  }
+                } else if (isRoundActive && !isEligible) {
+                  badgeText = 'OPEN (NOT ELIGIBLE)';
+                  badgeStyle = 'bg-amber-100 text-amber-900 border-amber-300';
+                } else if (!isEligible && (activeTransferWindow || windowReleasesList.length > 0)) {
+                  badgeText = 'NOT ELIGIBLE';
+                  badgeStyle = 'bg-slate-100 text-slate-400 border-slate-200';
+                }
+
                 return (
                   <button
-                    key={r.slot_index}
-                    onClick={() => setActiveSlotIndex(r.slot_index)}
-                    className={`px-4 py-2 rounded-xl font-bold font-mono text-[10px] uppercase tracking-wider transition-all border whitespace-nowrap cursor-pointer ${
+                    key={slotIdx}
+                    onClick={() => setActiveSlotIndex(slotIdx)}
+                    className={`px-3.5 py-2.5 rounded-2xl font-bold font-mono text-[10px] uppercase tracking-wider transition-all border whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       isActiveTab
-                        ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-sm'
-                        : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200/60'
+                        ? 'bg-slate-900 text-amber-400 border-slate-950 shadow-md ring-2 ring-amber-400/30'
+                        : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200/80 shadow-sm'
                     }`}
                   >
-                    <span className="font-black">{slot?.name || `Slot ${r.slot_index}`}</span>
-                    {submitted && <span className="ml-1.5 text-emerald-500">{isSlotLocked(r.slot_index) ? '🔒' : '✓'}</span>}
-                    {expired && !submitted && <span className="ml-1.5 text-rose-400">⏱</span>}
-                    {r.status === 'active' && !submitted && !expired && <span className="ml-1.5 text-emerald-400 animate-pulse">●</span>}
+                    <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      isActiveTab ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {slotIdx}
+                    </span>
+                    <span className="font-black truncate">{slot.name}</span>
+                    <span className={`px-1.5 py-0.2 rounded-md text-[8px] font-black tracking-wider uppercase border shrink-0 ${badgeStyle}`}>
+                      {badgeText}
+                    </span>
                   </button>
                 );
               })}
