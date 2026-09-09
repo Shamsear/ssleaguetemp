@@ -356,6 +356,60 @@ export default function TeamDraftPage() {
     return new Date(ts.replace(' ', 'T') + 'Z').getTime();
   };
 
+  // Per-slot locking & eligibility
+  const isSlotSubmitted = (slotIdx: number) => {
+    if (slotSubmissions[slotIdx]) return true;
+    const slotBids = localBids.filter(b => b.slot_index === slotIdx);
+    return slotBids.length > 0 && !hasUnsavedChanges;
+  };
+
+  const isSlotLocked = (slotIdx: number) => {
+    return isSlotSubmitted(slotIdx) && !editingSlots[slotIdx];
+  };
+
+  const isSlotRoundExpired = (slotIdx: number) => {
+    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
+    return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
+  };
+
+  const isCategoryEligibleForSlot = (slotIdx: number) => {
+    if (!activeTransferWindow && windowReleasesList.length === 0) return true;
+
+    const slot = draftSettings?.category_settings?.slots.find(s => s.slot_index === slotIdx);
+    const slotName = (slot?.name || '').toUpperCase();
+
+    let categoryName = slotIdx === 1 ? 'RED 1'
+      : slotIdx === 2 ? 'RED 2'
+      : slotIdx === 3 ? 'BLUE'
+      : slotIdx === 4 ? 'BLACK'
+      : slotIdx === 5 ? 'WHITE'
+      : 'Passive Team';
+
+    if (slotName.includes('RED 1')) categoryName = 'RED 1';
+    else if (slotName.includes('RED 2')) categoryName = 'RED 2';
+    else if (slotName.includes('BLUE')) categoryName = 'BLUE';
+    else if (slotName.includes('BLACK')) categoryName = 'BLACK';
+    else if (slotName.includes('WHITE')) categoryName = 'WHITE';
+    else if (slotName.includes('TEAM') || slotName.includes('PASSIVE') || slotName.includes('SUPPORTED')) categoryName = 'Passive Team';
+
+    if (categoryName === 'Passive Team') {
+      return !!(eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']);
+    }
+
+    return !!(eligibleCategories[categoryName]);
+  };
+
+  const isSlotDisabled = (slotIdx: number) => {
+    if (!isBiddingStarted) return true;
+    if (isSlotRoundExpired(slotIdx)) return true;
+    if (isSlotLocked(slotIdx)) return true;
+    if (!isCategoryEligibleForSlot(slotIdx)) return true;
+    if (activeTransferWindow) return false;
+    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
+    if (!round || round.status !== 'active') return true;
+    return false;
+  };
+
   // Set up live countdown timer based on active slot's round / active window
   useEffect(() => {
     const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex) || activeTransferWindow;
@@ -985,59 +1039,6 @@ export default function TeamDraftPage() {
     );
   }
 
-  // Per-slot locking & eligibility
-  const isSlotSubmitted = (slotIdx: number) => {
-    if (slotSubmissions[slotIdx]) return true;
-    const slotBids = localBids.filter(b => b.slot_index === slotIdx);
-    return slotBids.length > 0 && !hasUnsavedChanges;
-  };
-
-  const isSlotLocked = (slotIdx: number) => {
-    return isSlotSubmitted(slotIdx) && !editingSlots[slotIdx];
-  };
-
-  const isSlotRoundExpired = (slotIdx: number) => {
-    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
-    return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
-  };
-
-  const isCategoryEligibleForSlot = (slotIdx: number) => {
-    if (!activeTransferWindow && windowReleasesList.length === 0) return true;
-
-    const slot = draftSettings?.category_settings?.slots.find(s => s.slot_index === slotIdx);
-    const slotName = (slot?.name || '').toUpperCase();
-
-    let categoryName = slotIdx === 1 ? 'RED 1'
-      : slotIdx === 2 ? 'RED 2'
-      : slotIdx === 3 ? 'BLUE'
-      : slotIdx === 4 ? 'BLACK'
-      : slotIdx === 5 ? 'WHITE'
-      : 'Passive Team';
-
-    if (slotName.includes('RED 1')) categoryName = 'RED 1';
-    else if (slotName.includes('RED 2')) categoryName = 'RED 2';
-    else if (slotName.includes('BLUE')) categoryName = 'BLUE';
-    else if (slotName.includes('BLACK')) categoryName = 'BLACK';
-    else if (slotName.includes('WHITE')) categoryName = 'WHITE';
-    else if (slotName.includes('TEAM') || slotName.includes('PASSIVE') || slotName.includes('SUPPORTED')) categoryName = 'Passive Team';
-
-    if (categoryName === 'Passive Team') {
-      return !!(eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']);
-    }
-
-    return !!(eligibleCategories[categoryName]);
-  };
-
-  const isSlotDisabled = (slotIdx: number) => {
-    if (!isBiddingStarted) return true;
-    if (isSlotRoundExpired(slotIdx)) return true;
-    if (isSlotLocked(slotIdx)) return true;
-    if (!isCategoryEligibleForSlot(slotIdx)) return true;
-    if (activeTransferWindow) return false;
-    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
-    if (!round || round.status !== 'active') return true;
-    return false;
-  };
   // For the top banner - use active slot
   const isRoundExpired = isSlotRoundExpired(activeSlotIndex);
   const isSubmitted = isSlotSubmitted(activeSlotIndex);
