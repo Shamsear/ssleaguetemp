@@ -84,11 +84,11 @@ export async function POST(request: NextRequest) {
     const sortedBids = [...validBids].sort((a, b) => {
       const diff = parseFloat(b.bid_amount) - parseFloat(a.bid_amount);
       if (diff !== 0) return diff;
-      return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+      return new Date(a.submitted_at || 0).getTime() - new Date(b.submitted_at || 0).getTime();
     });
 
-    const assignedTeams = new Set<string>();
-    const resolvedTargets = new Set<string>();
+    const assignedTeams = new Set();
+    const resolvedTargets = new Set();
     const awarded: any[] = [];
     const ties: any[] = [];
 
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
           const squadId = `squad_${winningTeamId}_${targetId}_${Date.now()}`;
           await fantasySql`
             INSERT INTO fantasy_squad (
-              squad_id, team_id, real_player_id, purchase_price, added_at
+              squad_id, team_id, real_player_id, purchase_price, acquired_at
             ) VALUES (
               ${squadId}, ${winningTeamId}, ${targetId}, ${bidAmount}, NOW()
             )
