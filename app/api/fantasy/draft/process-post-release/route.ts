@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Fetch pending bids for this draft round / window (and optional category filter)
+    // 1. Fetch pending/submitted bids for this draft round / window (and optional category filter)
     let bids = [];
     if (category) {
       bids = await fantasySql`
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         FROM fantasy_post_release_bids
         WHERE (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
           AND (category ILIKE ${category} OR (${category === 'Passive Team'} AND is_passive_team = true))
-          AND status = 'pending'
+          AND (status = 'pending' OR status = 'submitted')
         ORDER BY target_id, bid_amount DESC, submitted_at ASC
       `;
     } else {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
           bid_amount, submitted_at
         FROM fantasy_post_release_bids
         WHERE (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
-          AND status = 'pending'
+          AND (status = 'pending' OR status = 'submitted')
         ORDER BY target_id, bid_amount DESC, submitted_at ASC
       `;
     }
@@ -198,6 +198,26 @@ export async function POST(request: NextRequest) {
           bid_amount: bidAmount
         });
       }
+    }
+
+    // Update fantasy_draft_rounds status to 'completed' for this category round
+    if (category) {
+      let slotPattern = category.toUpperCase();
+      if (slotPattern === 'RED 1') slotPattern = 'RED SLOT 1';
+      else if (slotPattern === 'RED 2') slotPattern = 'RED SLOT 2';
+      else if (slotPattern.includes('PASSIVE') || slotPattern.includes('SUPPORTED')) slotPattern = 'REAL TEAM SLOT';
+
+      await fantasySql`
+        UPDATE fantasy_draft_rounds
+        SET status = 'completed', updated_at = NOW()
+        WHERE league_id = ${league_id}
+          AND (
+            slot_name ILIKE ${'%' + category + '%'} OR
+            (${slotPattern === 'RED SLOT 1'} AND (slot_name ILIKE '%SLOT 1%' OR slot_name ILIKE '%RED 1%')) OR
+            (${slotPattern === 'RED SLOT 2'} AND (slot_name ILIKE '%SLOT 2%' OR slot_name ILIKE '%RED 2%')) OR
+            (${slotPattern === 'REAL TEAM SLOT'} AND (slot_name ILIKE '%REAL TEAM%' OR slot_name ILIKE '%PASSIVE%' OR slot_name ILIKE '%SUPPORTED%'))
+          )
+      `;
     }
 
     return NextResponse.json({
