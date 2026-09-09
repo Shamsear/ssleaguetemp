@@ -182,8 +182,8 @@ export async function POST(request: NextRequest) {
     // using the column type. The Z suffix ensures UTC interpretation.
     // Do NOT use fantasySql.unsafe() with AT TIME ZONE as it doesn't work
     // correctly with Neon's HTTP driver (transactions run on separate connections).
-    // Determine finalization_mode: use provided value, or keep existing, or default to 'auto'
-    const newFinMode = finalization_mode || existing[0]?.finalization_mode || 'auto';
+    // Determine finalization_mode: use provided value, or keep existing, or default to 'manual'
+    const newFinMode = finalization_mode || existing[0]?.finalization_mode || 'manual';
 
     queries.push(fantasySql`
       INSERT INTO fantasy_draft_rounds (league_id, slot_index, slot_name, opens_at, closes_at, status, finalization_mode)
