@@ -975,7 +975,7 @@ export default function TeamDraftPage() {
 
   const isSlotDisabled = (slotIdx: number) => {
     if (!isBiddingStarted) return true;
-    if (isSlotSubmitted(slotIdx) || isSlotRoundExpired(slotIdx)) return true;
+    if (isSlotRoundExpired(slotIdx)) return true;
     if (activeTransferWindow) return false;
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
@@ -1040,19 +1040,19 @@ export default function TeamDraftPage() {
               <div>
                 {isRoundExpired ? (
                   <span className="px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 text-xs font-mono font-bold uppercase tracking-wider rounded-xl block">
-                    Round Expired
+                    Round Closed
                   </span>
                 ) : isSubmitted ? (
                   <div className="flex items-center gap-2">
                     <span className="px-3.5 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-1.5 shadow-sm">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Bids Submitted & Locked
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Bids Submitted
                     </span>
                     <button
-                      onClick={() => handleUnlock(activeSlotIndex)}
-                      disabled={isSubmitting}
-                      className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                      onClick={() => saveBids(true)}
+                      disabled={isSaving || isSubmitting}
+                      className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
-                      <Unlock className="w-3.5 h-3.5" /> Unlock to Edit
+                      <Save className="w-3.5 h-3.5" /> Update / Resubmit Bids
                     </button>
                   </div>
                 ) : (
