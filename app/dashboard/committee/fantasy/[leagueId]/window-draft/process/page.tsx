@@ -285,14 +285,14 @@ export default function PostWindowDraftProcessPage() {
       const closesTime = activeClosesAt ? new Date(activeClosesAt).getTime() : 0;
       const nowTime = Date.now();
 
-      if (fetchedBids.some((b: any) => b.status === 'won')) {
-        setRoundStatus('finalized');
-      } else if (matchingRound?.status === 'completed') {
-        setRoundStatus('finalized');
+      if (matchingRound?.status === 'active') {
+        setRoundStatus('active');
       } else if (matchingRound?.status === 'closed') {
         setRoundStatus('closed');
-      } else if (matchingRound?.status === 'active') {
-        setRoundStatus('active');
+      } else if (matchingRound?.status === 'completed') {
+        setRoundStatus('finalized');
+      } else if (fetchedBids.some((b: any) => b.status === 'won')) {
+        setRoundStatus('finalized');
       } else if (opensTime > nowTime) {
         setRoundStatus('pending');
       } else if (closesTime > 0 && nowTime >= closesTime) {

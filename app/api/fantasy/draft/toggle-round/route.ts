@@ -116,17 +116,6 @@ export async function POST(request: NextRequest) {
       WHERE league_id = ${league_id} AND (slot_name ILIKE ${'%' + slotPattern + '%'} OR slot_name ILIKE ${'%' + category + '%'})
     `;
 
-    // 4. Reset other rounds to completed/closed if opening this one
-    if (computedIsActive) {
-      await fantasySql`
-        UPDATE fantasy_draft_rounds
-        SET status = 'completed', updated_at = NOW()
-        WHERE league_id = ${league_id} 
-          AND NOT (slot_name ILIKE ${'%' + slotPattern + '%'} OR slot_name ILIKE ${'%' + category + '%'})
-          AND status = 'active'
-      `;
-    }
-
     return NextResponse.json({
       success: true,
       message: `Round ${category} is now ${roundStatus.toUpperCase()} (Opens: ${opensUTC}, Closes: ${closesUTC})`,
