@@ -159,8 +159,6 @@ export default function PostWindowDraftProcessPage() {
         foundWin = (windowData.windows || []).find((w: any) => w.window_id === windowId);
         if (foundWin) {
           setWindowDetails(foundWin);
-          if (foundWin.opens_at) setOpensAtInput(formatISTForInput(foundWin.opens_at));
-          if (foundWin.closes_at) setClosesAtInput(formatISTForInput(foundWin.closes_at));
         }
       }
 
@@ -243,38 +241,65 @@ export default function PostWindowDraftProcessPage() {
 
       setParticipatingTeams(Object.values(teamsMap));
 
-      // 4. Fetch Submitted Bids & Ties for active category
+      // 4. Fetch Submitted Bids & Ties for active category, and matching slot schedule
+      let fetchedBids: Bid[] = [];
       const bidsRes = await fetchWithTokenRefresh(
         `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${windowId}&category=${encodeURIComponent(activeCategory)}`
       );
       if (bidsRes.ok) {
         const bidsData = await bidsRes.json();
-        const fetchedBids = bidsData.bids || [];
+        fetchedBids = bidsData.bids || [];
         setAllBids(fetchedBids);
         setTies(bidsData.ties || []);
+      }
 
-        // Fetch per-slot active status from fantasy_draft_rounds
-        const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
-        let isSlotActiveInDb = false;
-        if (roundsRes.ok) {
-          const roundsData = await roundsRes.json();
-          const activeR = (roundsData.rounds || []).find((r: any) => r.status === 'active');
-          if (activeR) isSlotActiveInDb = true;
-        }
+      // Fetch per-slot active status & schedule from fantasy_draft_rounds
+      const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
+      let matchingRound: any = null;
+      if (roundsRes.ok) {
+        const roundsData = await roundsRes.json();
+        const rounds = roundsData.rounds || [];
 
-        const opensUTC = foundWin?.opens_at;
-        const opensTime = opensUTC ? new Date(opensUTC).getTime() : 0;
-        const nowTime = Date.now();
+        let slotPattern = activeCategory.toUpperCase();
+        if (slotPattern === 'RED 1') slotPattern = 'RED SLOT 1';
+        else if (slotPattern === 'RED 2') slotPattern = 'RED SLOT 2';
+        else if (slotPattern.includes('PASSIVE') || slotPattern.includes('SUPPORTED')) slotPattern = 'REAL TEAM SLOT';
 
-        if (fetchedBids.some((b: any) => b.status === 'won')) {
-          setRoundStatus('finalized');
-        } else if (opensTime > nowTime) {
-          setRoundStatus('pending');
-        } else if (foundWin?.is_active || isSlotActiveInDb || fetchedBids.length > 0) {
-          setRoundStatus('active');
-        } else {
-          setRoundStatus('closed');
-        }
+        matchingRound = rounds.find((r: any) => {
+          const sName = (r.slot_name || '').toUpperCase();
+          if (slotPattern === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
+          if (slotPattern === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
+          if (slotPattern === 'REAL TEAM SLOT') return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
+          return sName.includes(slotPattern);
+        });
+      }
+
+      const activeOpensAt = matchingRound?.opens_at || foundWin?.opens_at;
+      const activeClosesAt = matchingRound?.closes_at || foundWin?.closes_at;
+
+      if (activeOpensAt) setOpensAtInput(formatISTForInput(activeOpensAt));
+      if (activeClosesAt) setClosesAtInput(formatISTForInput(activeClosesAt));
+
+      const opensTime = activeOpensAt ? new Date(activeOpensAt).getTime() : 0;
+      const closesTime = activeClosesAt ? new Date(activeClosesAt).getTime() : 0;
+      const nowTime = Date.now();
+
+      if (fetchedBids.some((b: any) => b.status === 'won')) {
+        setRoundStatus('finalized');
+      } else if (matchingRound?.status === 'completed') {
+        setRoundStatus('finalized');
+      } else if (matchingRound?.status === 'closed') {
+        setRoundStatus('closed');
+      } else if (matchingRound?.status === 'active') {
+        setRoundStatus('active');
+      } else if (opensTime > nowTime) {
+        setRoundStatus('pending');
+      } else if (closesTime > 0 && nowTime >= closesTime) {
+        setRoundStatus('closed');
+      } else if (foundWin?.is_active) {
+        setRoundStatus('active');
+      } else {
+        setRoundStatus('closed');
       }
 
     } catch (error: any) {
