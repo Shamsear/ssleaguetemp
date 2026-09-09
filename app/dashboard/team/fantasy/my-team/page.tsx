@@ -103,6 +103,9 @@ export default function MyFantasyTeamPage() {
   const [draftSettings, setDraftSettings] = useState<any | null>(null);
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [eligibleCategories, setEligibleCategories] = useState<Record<string, number>>({});
+  const [activeTransferWindow, setActiveTransferWindow] = useState<any | null>(null);
+  const [windowReleases, setWindowReleases] = useState<any[]>([]);
 
   useEffect(() => {
     const loadFantasyTeam = async () => {
@@ -134,7 +137,7 @@ export default function MyFantasyTeamPage() {
         // Load other teams and draft settings
         if (data.team.fantasy_league_id) {
           loadOtherTeams(data.team.fantasy_league_id, data.team.id);
-          loadDraftSettings(data.team.fantasy_league_id);
+          loadDraftSettings(data.team.fantasy_league_id, data.team.team_id || data.team.id);
         }
       } catch (error: any) {
         console.error('Error loading fantasy team:', error);
@@ -161,7 +164,7 @@ export default function MyFantasyTeamPage() {
     }
   };
 
-  const loadDraftSettings = async (leagueId: string) => {
+  const loadDraftSettings = async (leagueId: string, teamId?: string) => {
     try {
       const response = await fetchWithTokenRefresh(`/api/fantasy/draft/settings?league_id=${leagueId}`);
       if (response.ok) {
@@ -174,25 +177,82 @@ export default function MyFantasyTeamPage() {
         const roundsData = await roundsRes.json();
         setDraftRounds(roundsData.rounds || []);
       }
+      // Fetch eligible categories for team
+      if (teamId) {
+        const catRes = await fetchWithTokenRefresh(`/api/fantasy/draft/eligible-categories?team_id=${teamId}&league_id=${leagueId}`);
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          setEligibleCategories(catData.eligible_categories || {});
+        }
+      }
+      // Fetch active transfer window
+      const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${leagueId}`);
+      if (winRes.ok) {
+        const winData = await winRes.json();
+        const activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
+        setActiveTransferWindow(activeWin || null);
+      }
+      // Fetch window releases
+      const relRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
+      if (relRes.ok) {
+        const relData = await relRes.json();
+        setWindowReleases(relData.releases || []);
+      }
     } catch (error: any) {
       console.error('Error loading draft settings:', error);
     }
   };
 
-  // Countdown timer — derives activeRound from state (before early returns)
+  const isCategoryEligibleForSlot = (slotIdx: number, slotNameStr?: string) => {
+    if (!activeTransferWindow && (!windowReleases || windowReleases.length === 0)) {
+      return true;
+    }
+
+    if (!eligibleCategories || Object.keys(eligibleCategories).length === 0) {
+      return false;
+    }
+
+    const slot = draftSettings?.category_settings?.slots?.find((s: any) => s.slot_index === slotIdx);
+    const slotName = (slotNameStr || slot?.name || '').toUpperCase();
+
+    let categoryName = slotIdx === 1 ? 'RED 1'
+      : slotIdx === 2 ? 'RED 2'
+      : slotIdx === 3 ? 'BLUE'
+      : slotIdx === 4 ? 'BLACK'
+      : slotIdx === 5 ? 'WHITE'
+      : 'Passive Team';
+
+    if (slotName.includes('RED 1') || slotName.includes('SLOT 1')) categoryName = 'RED 1';
+    else if (slotName.includes('RED 2') || slotName.includes('SLOT 2')) categoryName = 'RED 2';
+    else if (slotName.includes('BLUE')) categoryName = 'BLUE';
+    else if (slotName.includes('BLACK')) categoryName = 'BLACK';
+    else if (slotName.includes('WHITE')) categoryName = 'WHITE';
+    else if (slotName.includes('TEAM') || slotName.includes('PASSIVE') || slotName.includes('SUPPORTED') || slotName.includes('REAL')) categoryName = 'Passive Team';
+
+    if (categoryName === 'Passive Team') {
+      return !!(eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']);
+    }
+
+    return !!(eligibleCategories[categoryName]);
+  };
+
+  // Countdown timer — derives activeRound for this team from state
   useEffect(() => {
-    const activeR = draftRounds.find((r: any) => r.status === 'active');
-    if (!activeR?.closes_at) return;
+    const activeR = draftRounds.find((r: any) => r.status === 'active' && isCategoryEligibleForSlot(r.slot_index, r.slot_name));
+    if (!activeR?.closes_at) {
+      setTimeRemaining(0);
+      return;
+    }
 
     const tick = () => {
       const closeTime = new Date(activeR.closes_at).getTime();
       const diff = closeTime - Date.now();
-      setTimeRemaining(diff);
+      setTimeRemaining(diff > 0 ? diff : 0);
     };
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [draftRounds]);
+  }, [draftRounds, eligibleCategories, activeTransferWindow, windowReleases, draftSettings]);
 
   const formatTime = (ms: number) => {
     if (ms <= 0) return 'Closed';
@@ -352,8 +412,11 @@ export default function MyFantasyTeamPage() {
     );
   }
 
-  // Derive effective draft status from per-slot rounds (not the league table)
-  const activeRound = draftRounds.find((r: any) => r.status === 'active');
+  // Derive effective draft status from per-slot rounds (filtered by team eligibility)
+  const activeRound = draftRounds.find((r: any) => r.status === 'active' && isCategoryEligibleForSlot(r.slot_index, r.slot_name));
+  const anyLeagueActiveRound = draftRounds.find((r: any) => r.status === 'active');
+  const isRoundActiveForOthersOnly = !!anyLeagueActiveRound && !activeRound;
+
   const hasAnyRound = draftRounds.length > 0;
   const hasCompletedRound = draftRounds.some((r: any) => r.status === 'completed');
   const effectiveDraftStatus = activeRound ? 'active'
@@ -363,7 +426,9 @@ export default function MyFantasyTeamPage() {
 
   const activeSlotIndex = activeRound?.slot_index
     ?? (draftSettings?.category_settings?.active_slot_index ? Number(draftSettings.category_settings.active_slot_index) : null);
-  const activeSlot = draftSettings?.category_settings?.slots?.find((s: any) => s.slot_index === activeSlotIndex);
+  const activeSlot = activeRound
+    ? draftSettings?.category_settings?.slots?.find((s: any) => s.slot_index === activeSlotIndex)
+    : null;
 
   return (
     <AuthGuard requiredRole="team">
@@ -525,11 +590,13 @@ export default function MyFantasyTeamPage() {
                   <span className={`text-[9px] uppercase px-2.5 py-0.5 rounded-lg font-black tracking-wider border ${
                     effectiveDraftStatus === 'active' 
                       ? 'bg-emerald-50 border-emerald-250 text-emerald-700' 
+                      : isRoundActiveForOthersOnly
+                      ? 'bg-amber-50 border-amber-250 text-amber-700'
                       : effectiveDraftStatus === 'pending'
                       ? 'bg-amber-50 border-amber-250 text-amber-700 animate-pulse'
                       : 'bg-slate-100 border-slate-200 text-slate-650'
                   }`}>
-                    Draft Status: {effectiveDraftStatus.toUpperCase()}
+                    Draft Status: {effectiveDraftStatus === 'active' ? 'ACTIVE FOR YOUR TEAM' : isRoundActiveForOthersOnly ? `CLOSED FOR YOUR TEAM (${anyLeagueActiveRound.slot_name || 'ROUND'} OPEN)` : effectiveDraftStatus.toUpperCase()}
                   </span>
                   {effectiveDraftStatus === 'active' && activeSlot && (
                     <span className="text-[9px] uppercase bg-indigo-50 border border-indigo-200 text-indigo-700 px-2.5 py-0.5 rounded-lg font-black tracking-wider">
@@ -545,6 +612,8 @@ export default function MyFantasyTeamPage() {
                 <h2 className="text-base font-black text-slate-900 uppercase tracking-tight mt-1">
                   {effectiveDraftStatus === 'active' 
                     ? 'Live Blind Bid Draft in Progress' 
+                    : isRoundActiveForOthersOnly
+                    ? `Bidding Open for ${anyLeagueActiveRound.slot_name || 'Active Round'} (Not Eligible)`
                     : effectiveDraftStatus === 'pending'
                     ? 'Upcoming Draft / Bidding Round'
                     : 'Draft Completed & Rosters Locked'}
@@ -552,6 +621,8 @@ export default function MyFantasyTeamPage() {
                 <p className="text-[10px] text-slate-500 font-bold uppercase leading-normal">
                   {effectiveDraftStatus === 'active' && activeSlot
                     ? `Currently accepting bids for ${activeSlot.name} (Base price: ${activeSlot.base_price} credits). Click "Enter Draft & Place Bids" to manage your roster wishlist.`
+                    : isRoundActiveForOthersOnly
+                    ? `Round ${anyLeagueActiveRound.slot_name || 'Active Round'} is currently open, but your team has no released players in this category.`
                     : effectiveDraftStatus === 'pending'
                     ? 'Bidding is currently closed. Please wait for the tournament administrators to open the next round.'
                     : 'The bidding phase has finished. All squads have been finalized based on the blind bids.'}
@@ -572,7 +643,7 @@ export default function MyFantasyTeamPage() {
               )}
             </div>
 
-            {/* Active Round Info — only show when a round is active */}
+            {/* Active Round Info — only show when an eligible round is active for this team */}
             {effectiveDraftStatus === 'active' && activeSlot && (
               <div className="border-t border-slate-100 pt-4">
                 <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
