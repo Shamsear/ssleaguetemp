@@ -577,13 +577,10 @@ export default function TeamDraftPage() {
 
     if (slot.name.toLowerCase().includes('team') || slot.list_id?.includes('team')) {
       // Real Teams pool — filter by list if it has entries, otherwise show all
-      const myTeamName = (myTeam?.team_name || '').toLowerCase();
       const base = listIds.length > 0
         ? realTeams.filter(t => listIds.includes(t.team_uid) || t.released_by_team_id)
         : realTeams;
       return base
-        // Do not show team itself ("dont show itself")
-        .filter(t => !myTeamId || (String(t.team_uid) !== String(myTeamId) && t.team_name.toLowerCase() !== myTeamName))
         // Do not show team released by self
         .filter(t => !myTeamId || String(t.released_by_team_id) !== String(myTeamId))
         .filter(t => t.team_name.toLowerCase().includes(searchTerm.toLowerCase()));
