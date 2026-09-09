@@ -1105,6 +1105,10 @@ export default function PostWindowDraftProcessPage() {
                               <span className="px-2.5 py-1 bg-amber-100 border border-amber-300 text-amber-900 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
                                 <Crown className="w-3 h-3 text-amber-600" /> LEADER (₹{topBidAmount} Cr)
                               </span>
+                            ) : validBids.length > 0 ? (
+                              <span className="px-2.5 py-1 bg-slate-200 border border-slate-300 text-slate-600 text-[9px] font-black rounded-lg uppercase tracking-wider">
+                                NO WINNER — All Teams Assigned
+                              </span>
                             ) : (
                               <span className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-500 text-[9px] font-black rounded-lg uppercase tracking-wider">
                                 NO BIDS YET
