@@ -80,157 +80,167 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Sort all valid bids across all targets by bid_amount DESC, submitted_at ASC
-    const sortedBids = [...validBids].sort((a, b) => {
-      const diff = parseFloat(b.bid_amount) - parseFloat(a.bid_amount);
-      if (diff !== 0) return diff;
-      return new Date(a.submitted_at || 0).getTime() - new Date(b.submitted_at || 0).getTime();
-    });
+    // 2. Build per-team bid priority queues (each team's bids sorted by amount DESC)
+    //    Nomination-round algorithm: each round, every unassigned team nominates
+    //    their highest unresolved bid. Conflicts resolved by bid amount.
+    //    This ensures teams win their highest-priority target, not a lower bid
+    //    that gets processed first due to another team's high bid inflating a target.
+    const teamBidQueues: Map<string, typeof validBids> = new Map();
+    for (const bid of validBids) {
+      if (!teamBidQueues.has(bid.team_id)) teamBidQueues.set(bid.team_id, []);
+      teamBidQueues.get(bid.team_id)!.push(bid);
+    }
+    for (const [, bids] of teamBidQueues) {
+      bids.sort((a, b) => {
+        const diff = parseFloat(b.bid_amount) - parseFloat(a.bid_amount);
+        if (diff !== 0) return diff;
+        return new Date(a.submitted_at || 0).getTime() - new Date(b.submitted_at || 0).getTime();
+      });
+    }
 
     const assignedTeams = new Set();
-    const resolvedTargets = new Set();
+    const wonTargets = new Set();
     const awarded: any[] = [];
     const ties: any[] = [];
 
-    // Process targets in descending order of highest bid placed
-    for (const b of sortedBids) {
-      const targetId = b.target_id;
-      if (resolvedTargets.has(targetId)) continue; // Target already awarded or tied
+    // Track all bids by bid_id for status updates
+    const bidById: Map<string, any> = new Map();
+    for (const b of validBids) bidById.set(b.bid_id, b);
 
-      // Find all bids for this target from teams that have NOT won a player yet in this round
-      const eligibleTargetBids = sortedBids.filter(
-        (tb) => tb.target_id === targetId && !assignedTeams.has(tb.team_id)
-      );
+    let hasProgress = true;
+    while (hasProgress) {
+      hasProgress = false;
 
-      if (eligibleTargetBids.length === 0) continue;
+      // Each unassigned team nominates their highest unresolved bid
+      const nominations: Map<string, Array<{ teamId: string; bid: any }>> = new Map();
 
-      const maxBidAmount = parseFloat(eligibleTargetBids[0].bid_amount);
-      const topBidders = eligibleTargetBids.filter(
-        (tb) => parseFloat(tb.bid_amount) === maxBidAmount
-      );
+      for (const [teamId, bids] of teamBidQueues) {
+        if (assignedTeams.has(teamId)) continue;
+        const topBid = bids.find((b) => !wonTargets.has(b.target_id));
+        if (!topBid) continue;
 
-      if (topBidders.length > 1) {
-        // TIE DETECTED!
-        const tieId = `tie_${draft_round_id}_${targetId}_${Date.now()}`;
-        const tiedTeamIds = topBidders.map((tb) => tb.team_id);
+        if (!nominations.has(topBid.target_id)) nominations.set(topBid.target_id, []);
+        nominations.get(topBid.target_id)!.push({ teamId, bid: topBid });
+      }
 
-        await fantasySql`
-          INSERT INTO fantasy_draft_ties (
-            tie_id, draft_round_id, league_id, target_id, target_name,
-            category, is_passive_team, tied_team_ids, tied_bid_amount,
-            status, created_at
-          ) VALUES (
-            ${tieId}, ${draft_round_id}, ${league_id}, ${targetId}, ${eligibleTargetBids[0].target_name},
-            ${eligibleTargetBids[0].category}, ${eligibleTargetBids[0].is_passive_team}, ${JSON.stringify(tiedTeamIds)}, ${maxBidAmount},
-            'pending_resolution', NOW()
-          )
-        `;
+      if (nominations.size === 0) break;
+      hasProgress = true;
 
-        for (const tb of topBidders) {
+      // Resolve each nominated target
+      for (const [targetId, nominees] of nominations) {
+        const maxAmt = Math.max(...nominees.map((n) => parseFloat(n.bid.bid_amount)));
+        const topNominees = nominees.filter((n) => parseFloat(n.bid.bid_amount) === maxAmt);
+
+        if (topNominees.length > 1) {
+          // TIE among top nominators
+          const tieId = `tie_${draft_round_id}_${targetId}_${Date.now()}`;
+          const tiedTeamIds = topNominees.map((n) => n.teamId);
+          const refBid = topNominees[0].bid;
+
           await fantasySql`
-            UPDATE fantasy_post_release_bids
-            SET status = 'tied'
-            WHERE bid_id = ${tb.bid_id}
-          `;
-        }
-
-        ties.push({
-          tie_id: tieId,
-          target_id: targetId,
-          target_name: eligibleTargetBids[0].target_name,
-          tied_teams_count: topBidders.length,
-          tied_bid_amount: maxBidAmount
-        });
-
-        resolvedTargets.add(targetId);
-      } else {
-        // WINNER!
-        const winningBid = topBidders[0];
-        const winningTeamId = winningBid.team_id;
-        const bidAmount = parseFloat(winningBid.bid_amount);
-
-        assignedTeams.add(winningTeamId);
-        resolvedTargets.add(targetId);
-
-        if (winningBid.is_passive_team) {
-          await fantasySql`
-            UPDATE fantasy_teams
-            SET supported_team_id = ${targetId},
-                supported_team_name = ${winningBid.target_name},
-                supported_team_price = ${bidAmount},
-                updated_at = NOW()
-            WHERE team_id = ${winningTeamId}
-          `;
-        } else {
-          // Fetch player metadata for the full squad insert
-          const playerRows = await fantasySql`
-            SELECT player_name, position, real_team_name, current_price
-            FROM fantasy_players
-            WHERE real_player_id = ${targetId} AND league_id = ${league_id}
-            LIMIT 1
-          `;
-          const playerMeta = playerRows[0] || {};
-          const playerName = playerMeta.player_name || winningBid.target_name;
-          const playerPos = playerMeta.position || 'Unknown';
-          const realTeamName = playerMeta.real_team_name || '';
-          const currentValue = parseFloat(playerMeta.current_price) || bidAmount;
-
-          const squadId = `squad_${winningTeamId}_${targetId}_${Date.now()}`;
-          await fantasySql`
-            INSERT INTO fantasy_squad (
-              squad_id, team_id, league_id, real_player_id, player_name,
-              position, real_team_name, purchase_price, current_value,
-              acquisition_type, acquired_at
+            INSERT INTO fantasy_draft_ties (
+              tie_id, draft_round_id, league_id, target_id, target_name,
+              category, is_passive_team, tied_team_ids, tied_bid_amount,
+              status, created_at
             ) VALUES (
-              ${squadId}, ${winningTeamId}, ${league_id}, ${targetId}, ${playerName},
-              ${playerPos}, ${realTeamName}, ${bidAmount}, ${currentValue},
-              'post_release_draft', NOW()
+              ${tieId}, ${draft_round_id}, ${league_id}, ${targetId}, ${refBid.target_name},
+              ${refBid.category}, ${refBid.is_passive_team}, ${JSON.stringify(tiedTeamIds)}, ${maxAmt},
+              'pending_resolution', NOW()
             )
           `;
+          for (const n of topNominees) {
+            await fantasySql`UPDATE fantasy_post_release_bids SET status = 'tied' WHERE bid_id = ${n.bid.bid_id}`;
+          }
+          ties.push({
+            tie_id: tieId,
+            target_id: targetId,
+            target_name: refBid.target_name,
+            tied_teams_count: topNominees.length,
+            tied_bid_amount: maxAmt
+          });
+          wonTargets.add(targetId);
 
+        } else {
+          // Single winner
+          const { teamId: winningTeamId, bid: winningBid } = topNominees[0];
+          const bidAmount = parseFloat(winningBid.bid_amount);
+
+          assignedTeams.add(winningTeamId);
+          wonTargets.add(targetId);
+
+          if (winningBid.is_passive_team) {
+            await fantasySql`
+              UPDATE fantasy_teams
+              SET supported_team_id = ${targetId},
+                  supported_team_name = ${winningBid.target_name},
+                  supported_team_price = ${bidAmount},
+                  updated_at = NOW()
+              WHERE team_id = ${winningTeamId}
+            `;
+          } else {
+            const playerRows = await fantasySql`
+              SELECT player_name, position, real_team_name, current_price
+              FROM fantasy_players
+              WHERE real_player_id = ${targetId} AND league_id = ${league_id}
+              LIMIT 1
+            `;
+            const playerMeta = playerRows[0] || {};
+            const playerName = playerMeta.player_name || winningBid.target_name;
+            const playerPos = playerMeta.position || 'Unknown';
+            const realTeamName = playerMeta.real_team_name || '';
+            const currentValue = parseFloat(playerMeta.current_price) || bidAmount;
+
+            const squadId = `squad_${winningTeamId}_${targetId}_${Date.now()}`;
+            await fantasySql`
+              INSERT INTO fantasy_squad (
+                squad_id, team_id, league_id, real_player_id, player_name,
+                position, real_team_name, purchase_price, current_value,
+                acquisition_type, acquired_at
+              ) VALUES (
+                ${squadId}, ${winningTeamId}, ${league_id}, ${targetId}, ${playerName},
+                ${playerPos}, ${realTeamName}, ${bidAmount}, ${currentValue},
+                'post_release_draft', NOW()
+              )
+            `;
+            await fantasySql`
+              UPDATE fantasy_players SET is_available = false, updated_at = NOW()
+              WHERE real_player_id = ${targetId} AND league_id = ${league_id}
+            `;
+          }
+
+          // Deduct budget
           await fantasySql`
-            UPDATE fantasy_players
-            SET is_available = false, updated_at = NOW()
-            WHERE real_player_id = ${targetId} AND league_id = ${league_id}
+            UPDATE fantasy_teams
+            SET budget_remaining = budget_remaining - ${bidAmount}, updated_at = NOW()
+            WHERE team_id = ${winningTeamId}
           `;
+
+          // Mark winning bid
+          await fantasySql`UPDATE fantasy_post_release_bids SET status = 'won' WHERE bid_id = ${winningBid.bid_id}`;
+
+          // Mark losing nominees' bids on this target as lost
+          const losingNominees = nominees.filter((n) => parseFloat(n.bid.bid_amount) < maxAmt);
+          for (const n of losingNominees) {
+            await fantasySql`UPDATE fantasy_post_release_bids SET status = 'lost' WHERE bid_id = ${n.bid.bid_id}`;
+          }
+
+          awarded.push({
+            winning_team_id: winningTeamId,
+            target_id: targetId,
+            target_name: winningBid.target_name,
+            bid_amount: bidAmount
+          });
         }
-
-        // Deduct budget
-        await fantasySql`
-          UPDATE fantasy_teams
-          SET budget_remaining = budget_remaining - ${bidAmount}, updated_at = NOW()
-          WHERE team_id = ${winningTeamId}
-        `;
-
-        // Update winning bid status
-        await fantasySql`
-          UPDATE fantasy_post_release_bids
-          SET status = 'won'
-          WHERE bid_id = ${winningBid.bid_id}
-        `;
-
-        // Mark other bids for this target as lost
-        const lostBids = eligibleTargetBids.slice(1);
-        for (const lb of lostBids) {
-          await fantasySql`
-            UPDATE fantasy_post_release_bids
-            SET status = 'lost'
-            WHERE bid_id = ${lb.bid_id}
-          `;
-        }
-
-        awarded.push({
-          winning_team_id: winningTeamId,
-          target_id: targetId,
-          target_name: winningBid.target_name,
-          bid_amount: bidAmount
-        });
       }
     }
 
-    // Mark remaining bids from teams that already won a player as 'lost'
+    // Mark all remaining pending/submitted bids as 'lost':
+    // - Bids from assigned teams (they already won something)
+    // - Bids on won targets from teams that didn't win that target
     for (const b of validBids) {
-      if (assignedTeams.has(b.team_id)) {
+      const alreadyResolved = ['won', 'tied', 'lost', 'invalid_self_release'].includes(b.status);
+      if (alreadyResolved) continue;
+      if (assignedTeams.has(b.team_id) || wonTargets.has(b.target_id)) {
         await fantasySql`
           UPDATE fantasy_post_release_bids
           SET status = 'lost'

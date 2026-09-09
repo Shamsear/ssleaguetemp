@@ -975,39 +975,71 @@ export default function PostWindowDraftProcessPage() {
 
               const previewTargets = Array.from(categoryTargetsMap.values());
 
-              // Compute 1-player-per-team projected allocations
+              // Compute 1-player-per-team projected allocations (nomination-round algorithm)
+              // Each team nominates their highest unresolved bid each round.
+              // Conflicts resolved by bid amount — teams always win their top priority target.
               const validCategoryBids = allBids.filter((b) => !isSelfReleaseBid(b));
-              const sortedBids = [...validCategoryBids].sort((a, b) => {
-                const diff = b.bid_amount - a.bid_amount;
-                if (diff !== 0) return diff;
-                return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
-              });
+
+              // Build per-team priority queues
+              const teamBidQueues = new Map<string, Bid[]>();
+              for (const bid of validCategoryBids) {
+                if (!teamBidQueues.has(bid.team_id)) teamBidQueues.set(bid.team_id, []);
+                teamBidQueues.get(bid.team_id)!.push(bid);
+              }
+              for (const [, bids] of teamBidQueues) {
+                bids.sort((a, b) => {
+                  const diff = b.bid_amount - a.bid_amount;
+                  if (diff !== 0) return diff;
+                  return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+                });
+              }
 
               const assignedTeams = new Set<string>();
-              const resolvedTargets = new Set<string>();
+              const wonTargets = new Set<string>();
               const projectedWinnersMap = new Map<string, { winningBid: Bid; topBidders: Bid[]; isTie: boolean }>();
 
-              for (const b of sortedBids) {
-                const targetId = b.target_id;
-                if (resolvedTargets.has(targetId)) continue;
+              let hasProgress = true;
+              while (hasProgress) {
+                hasProgress = false;
+                const nominations = new Map<string, Array<{ teamId: string; bid: Bid }>>();
 
-                const eligibleTargetBids = sortedBids.filter(
-                  (tb) => tb.target_id === targetId && !assignedTeams.has(tb.team_id)
-                );
+                for (const [teamId, bids] of teamBidQueues) {
+                  if (assignedTeams.has(teamId)) continue;
+                  const topBid = bids.find((b) => !wonTargets.has(b.target_id));
+                  if (!topBid) continue;
+                  if (!nominations.has(topBid.target_id)) nominations.set(topBid.target_id, []);
+                  nominations.get(topBid.target_id)!.push({ teamId, bid: topBid });
+                }
 
-                if (eligibleTargetBids.length === 0) continue;
+                if (nominations.size === 0) break;
+                hasProgress = true;
 
-                const maxBidAmount = eligibleTargetBids[0].bid_amount;
-                const topBidders = eligibleTargetBids.filter((tb) => tb.bid_amount === maxBidAmount);
+                for (const [targetId, nominees] of nominations) {
+                  const maxAmt = Math.max(...nominees.map((n) => n.bid.bid_amount));
+                  const topNominees = nominees.filter((n) => n.bid.bid_amount === maxAmt);
 
-                if (topBidders.length > 1) {
-                  projectedWinnersMap.set(targetId, { winningBid: topBidders[0], topBidders, isTie: true });
-                  resolvedTargets.add(targetId);
-                } else {
-                  const winningBid = topBidders[0];
-                  projectedWinnersMap.set(targetId, { winningBid, topBidders, isTie: false });
-                  assignedTeams.add(winningBid.team_id);
-                  resolvedTargets.add(targetId);
+                  // Also include all bids on this target for display (sorted by amount)
+                  const allTargetBids = validCategoryBids
+                    .filter((b) => b.target_id === targetId)
+                    .sort((a, b) => b.bid_amount - a.bid_amount);
+
+                  if (topNominees.length > 1) {
+                    projectedWinnersMap.set(targetId, {
+                      winningBid: topNominees[0].bid,
+                      topBidders: topNominees.map((n) => n.bid),
+                      isTie: true
+                    });
+                    wonTargets.add(targetId);
+                  } else {
+                    const { teamId: winTeam, bid: winBid } = topNominees[0];
+                    projectedWinnersMap.set(targetId, {
+                      winningBid: winBid,
+                      topBidders: allTargetBids,
+                      isTie: false
+                    });
+                    assignedTeams.add(winTeam);
+                    wonTargets.add(targetId);
+                  }
                 }
               }
 
@@ -1090,6 +1122,7 @@ export default function PostWindowDraftProcessPage() {
                           {validBids.map((b, idx) => {
                             const isWinner = projWinnerBid?.bid_id === b.bid_id || b.status === 'won';
                             const isTiedTop = isTie && topBidders.some((tb) => tb.bid_id === b.bid_id);
+                            // Skipped = team already won something else (assigned) and this bid didn't win
                             const isSkippedDueToTeamLimit = !isWinner && !isTiedTop && assignedTeams.has(b.team_id);
 
                             return (
