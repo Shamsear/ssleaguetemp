@@ -82,6 +82,7 @@ export default function TeamDraftPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [slotSubmissions, setSlotSubmissions] = useState<Record<number, boolean>>({});
+  const [editingSlots, setEditingSlots] = useState<Record<number, boolean>>({});
   const [eligibleCategories, setEligibleCategories] = useState<Record<string, number>>({});
   const [ownedPlayerIds, setOwnedPlayerIds] = useState<Set<string>>(new Set());
   const [activeTransferWindow, setActiveTransferWindow] = useState<any>(null);
@@ -758,12 +759,14 @@ export default function TeamDraftPage() {
         console.warn('Post-release category sync notice:', winErr);
       }
 
+      setSlotSubmissions(prev => ({ ...prev, [activeSlotIndex]: true }));
+      setEditingSlots(prev => ({ ...prev, [activeSlotIndex]: false }));
       setHasUnsavedChanges(false);
       showAlert({
         type: 'success',
         title: lockSubmit ? 'Bids Submitted & Locked!' : 'Draft Saved',
         message: lockSubmit 
-          ? 'Your bids are now locked. Good luck in the draft!' 
+          ? 'Your bids are now locked. You can click Edit Bids to make changes before the deadline.' 
           : 'Your draft bids have been synced to the database.'
       });
       loadDraftData();
@@ -976,6 +979,10 @@ export default function TeamDraftPage() {
     return !!slotSubmissions[slotIdx];
   };
 
+  const isSlotLocked = (slotIdx: number) => {
+    return !!slotSubmissions[slotIdx] && !editingSlots[slotIdx];
+  };
+
   const isSlotRoundExpired = (slotIdx: number) => {
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
@@ -984,6 +991,7 @@ export default function TeamDraftPage() {
   const isSlotDisabled = (slotIdx: number) => {
     if (!isBiddingStarted) return true;
     if (isSlotRoundExpired(slotIdx)) return true;
+    if (isSlotLocked(slotIdx)) return true;
     if (activeTransferWindow) return false;
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
@@ -1050,19 +1058,26 @@ export default function TeamDraftPage() {
                   <span className="px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-500 text-xs font-mono font-bold uppercase tracking-wider rounded-xl block">
                     Round Closed
                   </span>
-                ) : isSubmitted ? (
+                ) : isSlotLocked(activeSlotIndex) ? (
                   <div className="flex items-center gap-2">
                     <span className="px-3.5 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-1.5 shadow-sm">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Bids Submitted
+                      <Lock className="w-3.5 h-3.5 text-emerald-600" /> Bids Submitted &amp; Locked
                     </span>
                     <button
-                      onClick={() => saveBids(true)}
-                      disabled={isSaving || isSubmitting}
+                      onClick={() => setEditingSlots(prev => ({ ...prev, [activeSlotIndex]: true }))}
                       className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
-                      <Save className="w-3.5 h-3.5" /> Update / Resubmit Bids
+                      <Save className="w-3.5 h-3.5" /> Edit Bids
                     </button>
                   </div>
+                ) : isSlotSubmitted(activeSlotIndex) ? (
+                  <button
+                    onClick={() => saveBids(true)}
+                    disabled={isSaving || isSubmitting}
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white text-xs font-black rounded-xl transition-all uppercase flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5" /> Update &amp; Lock Bids
+                  </button>
                 ) : (
                   <button
                     onClick={() => saveBids(true)}
@@ -1103,7 +1118,7 @@ export default function TeamDraftPage() {
                     }`}
                   >
                     <span className="font-black">{slot?.name || `Slot ${r.slot_index}`}</span>
-                    {submitted && <span className="ml-1.5 text-emerald-500">✓</span>}
+                    {submitted && <span className="ml-1.5 text-emerald-500">{isSlotLocked(r.slot_index) ? '🔒' : '✓'}</span>}
                     {expired && !submitted && <span className="ml-1.5 text-rose-400">⏱</span>}
                     {r.status === 'active' && !submitted && !expired && <span className="ml-1.5 text-emerald-400 animate-pulse">●</span>}
                   </button>
@@ -1133,7 +1148,14 @@ export default function TeamDraftPage() {
                       {activeRoundSlot.slot_index}
                     </span>
                     <div>
-                      <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">{activeRoundSlot.name}</h2>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider">{activeRoundSlot.name}</h2>
+                        {isSlotLocked(activeSlotIndex) && (
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-md flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5 text-emerald-600" /> Locked
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3 mt-0.5">
                         <span className="text-[9px] text-slate-400 font-bold">Base: {activeRoundSlot.base_price} Cr</span>
                         <span className="text-[9px] font-bold text-amber-600">{slotBids.length} bid{slotBids.length !== 1 ? 's' : ''}</span>
