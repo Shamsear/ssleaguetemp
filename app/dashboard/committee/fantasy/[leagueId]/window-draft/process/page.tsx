@@ -298,15 +298,30 @@ export default function PostWindowDraftProcessPage() {
     return () => clearInterval(interval);
   }, [roundStatus, closesAtInput]);
 
-  const addTimeMinutes = (minutesToAdd: number) => {
+  const addTimeMinutes = async (minutesToAdd: number) => {
     try {
       const currentUTC = new Date(istInputToUTC(closesAtInput));
       currentUTC.setMinutes(currentUTC.getMinutes() + minutesToAdd);
-      setClosesAtInput(formatISTForInput(currentUTC.toISOString()));
+      const newClosesInput = formatISTForInput(currentUTC.toISOString());
+      setClosesAtInput(newClosesInput);
+
+      await fetchWithTokenRefresh('/api/fantasy/draft/toggle-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          league_id: leagueId,
+          window_id: windowId,
+          category: activeCategory,
+          action: 'open',
+          opens_at: istInputToUTC(opensAtInput),
+          closes_at: currentUTC.toISOString()
+        })
+      });
+
       showAlert({
         type: 'success',
         title: 'Time Extended!',
-        message: `Extended ${activeCategory} bidding deadline by +${minutesToAdd} minutes.`
+        message: `Extended ${activeCategory} bidding deadline by +${minutesToAdd} minutes. Saved to database!`
       });
     } catch (e) {
       console.error('Error extending time:', e);
@@ -338,16 +353,50 @@ export default function PostWindowDraftProcessPage() {
 
   const maxBidsPerTeam = Math.max(1, activeCategoryTeams.length);
 
-  // Toggle Bidding Status & Save IST Timing
-  const handleToggleBiddingStatus = (newStatus: 'active' | 'closed') => {
-    setRoundStatus(newStatus);
-    showAlert({
-      type: 'success',
-      title: newStatus === 'active' ? 'Bidding Round Opened!' : 'Bidding Round Closed',
-      message: newStatus === 'active' 
-        ? `Bidding for ${activeCategory} is now OPEN (Deadline: ${closesAtInput.replace('T', ' ')} IST). Team owners can place their bids on their team dashboard.`
-        : `Bidding for ${activeCategory} is now CLOSED. Click "Finalize Round" to process winning bids.`
-    });
+  // Toggle Bidding Status & Save IST Timing to DB
+  const handleToggleBiddingStatus = async (newStatus: 'active' | 'closed') => {
+    try {
+      setIsProcessing(true);
+      const action = newStatus === 'active' ? 'open' : 'close';
+      const opensUTC = istInputToUTC(opensAtInput);
+      const closesUTC = istInputToUTC(closesAtInput);
+
+      const res = await fetchWithTokenRefresh('/api/fantasy/draft/toggle-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          league_id: leagueId,
+          window_id: windowId,
+          category: activeCategory,
+          action,
+          opens_at: opensUTC,
+          closes_at: closesUTC
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to update round status');
+      }
+
+      setRoundStatus(newStatus);
+      showAlert({
+        type: 'success',
+        title: newStatus === 'active' ? 'Bidding Round Opened!' : 'Bidding Round Closed',
+        message: newStatus === 'active' 
+          ? `Bidding for ${activeCategory} is now OPEN (Deadline: ${closesAtInput.replace('T', ' ')} IST). Saved to database! Team owners can now place their bids on their dashboard.`
+          : `Bidding for ${activeCategory} is now CLOSED. Click "Finalize Round" to process winning bids.`
+      });
+    } catch (err: any) {
+      console.error('Error toggling round status:', err);
+      showAlert({
+        type: 'error',
+        title: 'Error Updating Round Status',
+        message: err.message || 'Failed to update round status'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Finalize Category Round
