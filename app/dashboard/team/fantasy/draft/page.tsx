@@ -471,32 +471,26 @@ export default function TeamDraftPage() {
 
   // Compute dynamic max bids limit per team for a slot (equal to participating teams in window, or draft settings default)
   const getMaxBidsLimitForSlot = (slot?: Slot) => {
-    if (!slot) return 0;
+    if (!slot || !draftSettings?.category_settings) return 0;
     if (activeTransferWindow || windowReleasesList.length > 0) {
-      const slotName = slot.name.toUpperCase();
-      let matchingCat = slotName;
-      if (slotName.includes('RED 1')) matchingCat = 'RED 1';
-      else if (slotName.includes('RED 2')) matchingCat = 'RED 2';
-      else if (slotName.includes('BLACK')) matchingCat = 'BLACK';
-      else if (slotName.includes('BLUE')) matchingCat = 'BLUE';
-      else if (slotName.includes('WHITE')) matchingCat = 'WHITE';
-      else if (slotName.includes('TEAM') || slotName.includes('PASSIVE')) matchingCat = 'PASSIVE TEAM';
+      const listId = slot.list_id;
+      const listIds = draftSettings.category_settings.lists?.[listId] || [];
+      const isRealTeamSlot = slot.name.toLowerCase().includes('team') || listId?.includes('team');
 
       const slotReleases = windowReleasesList.filter((r: any) => {
-        if (matchingCat === 'PASSIVE TEAM') return r.is_passive_team;
+        if (isRealTeamSlot) return r.is_passive_team;
+        if (r.real_player_id && listIds.includes(r.real_player_id)) return true;
         const rCat = (r.category || '').toUpperCase();
-        if (rCat === matchingCat) return true;
-        if (rCat === 'RED' && slotName.includes('RED 2')) {
-          return r.resolved_category === 'RED 2';
-        }
-        if (rCat === 'RED' && slotName.includes('RED 1')) {
-          return r.resolved_category === 'RED 1' || !r.resolved_category;
-        }
+        const slotName = slot.name.toUpperCase();
+        if (rCat === slotName) return true;
+        if (rCat === 'RED' && slotName.includes('RED 2') && r.resolved_category === 'RED 2') return true;
+        if (rCat === 'RED' && slotName.includes('RED 1') && (r.resolved_category === 'RED 1' || !r.resolved_category)) return true;
         return false;
       });
 
       const releasingTeamIds = new Set(slotReleases.map((r: any) => r.team_id));
-      return Math.max(1, releasingTeamIds.size || slotReleases.length);
+      const count = releasingTeamIds.size || slotReleases.length;
+      return Math.max(1, count);
     }
     return draftSettings?.category_settings?.max_bids_per_team || 0;
   };
