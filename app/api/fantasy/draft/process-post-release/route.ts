@@ -80,29 +80,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Group bids by target_id
-    const targetMap: Record<string, any[]> = {};
-    for (const b of validBids) {
-      if (!targetMap[b.target_id]) targetMap[b.target_id] = [];
-      targetMap[b.target_id].push(b);
-    }
+    // 2. Sort all valid bids across all targets by bid_amount DESC, submitted_at ASC
+    const sortedBids = [...validBids].sort((a, b) => {
+      const diff = parseFloat(b.bid_amount) - parseFloat(a.bid_amount);
+      if (diff !== 0) return diff;
+      return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+    });
 
+    const assignedTeams = new Set<string>();
+    const resolvedTargets = new Set<string>();
     const awarded: any[] = [];
     const ties: any[] = [];
 
-    for (const targetId in targetMap) {
-      const targetBids = targetMap[targetId];
-      const maxBidAmount = parseFloat(targetBids[0].bid_amount);
+    // Process targets in descending order of highest bid placed
+    for (const b of sortedBids) {
+      const targetId = b.target_id;
+      if (resolvedTargets.has(targetId)) continue; // Target already awarded or tied
 
-      // Find all top bidders with the exact same max amount
-      const topBidders = targetBids.filter(
-        (b) => parseFloat(b.bid_amount) === maxBidAmount
+      // Find all bids for this target from teams that have NOT won a player yet in this round
+      const eligibleTargetBids = sortedBids.filter(
+        (tb) => tb.target_id === targetId && !assignedTeams.has(tb.team_id)
+      );
+
+      if (eligibleTargetBids.length === 0) continue;
+
+      const maxBidAmount = parseFloat(eligibleTargetBids[0].bid_amount);
+      const topBidders = eligibleTargetBids.filter(
+        (tb) => parseFloat(tb.bid_amount) === maxBidAmount
       );
 
       if (topBidders.length > 1) {
         // TIE DETECTED!
         const tieId = `tie_${draft_round_id}_${targetId}_${Date.now()}`;
-        const tiedTeamIds = topBidders.map((b) => b.team_id);
+        const tiedTeamIds = topBidders.map((tb) => tb.team_id);
 
         await fantasySql`
           INSERT INTO fantasy_draft_ties (
@@ -110,13 +120,12 @@ export async function POST(request: NextRequest) {
             category, is_passive_team, tied_team_ids, tied_bid_amount,
             status, created_at
           ) VALUES (
-            ${tieId}, ${draft_round_id}, ${league_id}, ${targetId}, ${targetBids[0].target_name},
-            ${targetBids[0].category}, ${targetBids[0].is_passive_team}, ${JSON.stringify(tiedTeamIds)}, ${maxBidAmount},
+            ${tieId}, ${draft_round_id}, ${league_id}, ${targetId}, ${eligibleTargetBids[0].target_name},
+            ${eligibleTargetBids[0].category}, ${eligibleTargetBids[0].is_passive_team}, ${JSON.stringify(tiedTeamIds)}, ${maxBidAmount},
             'pending_resolution', NOW()
           )
         `;
 
-        // Mark bids as tied
         for (const tb of topBidders) {
           await fantasySql`
             UPDATE fantasy_post_release_bids
@@ -128,18 +137,22 @@ export async function POST(request: NextRequest) {
         ties.push({
           tie_id: tieId,
           target_id: targetId,
-          target_name: targetBids[0].target_name,
+          target_name: eligibleTargetBids[0].target_name,
           tied_teams_count: topBidders.length,
           tied_bid_amount: maxBidAmount
         });
+
+        resolvedTargets.add(targetId);
       } else {
         // WINNER!
         const winningBid = topBidders[0];
         const winningTeamId = winningBid.team_id;
         const bidAmount = parseFloat(winningBid.bid_amount);
 
+        assignedTeams.add(winningTeamId);
+        resolvedTargets.add(targetId);
+
         if (winningBid.is_passive_team) {
-          // Assign supported team
           await fantasySql`
             UPDATE fantasy_teams
             SET supported_team_id = ${targetId},
@@ -149,7 +162,6 @@ export async function POST(request: NextRequest) {
             WHERE team_id = ${winningTeamId}
           `;
         } else {
-          // Add player to squad
           const squadId = `squad_${winningTeamId}_${targetId}_${Date.now()}`;
           await fantasySql`
             INSERT INTO fantasy_squad (
@@ -159,7 +171,6 @@ export async function POST(request: NextRequest) {
             )
           `;
 
-          // Mark player unavailable
           await fantasySql`
             UPDATE fantasy_players
             SET is_available = false, updated_at = NOW()
@@ -174,7 +185,7 @@ export async function POST(request: NextRequest) {
           WHERE team_id = ${winningTeamId}
         `;
 
-        // Update bid status
+        // Update winning bid status
         await fantasySql`
           UPDATE fantasy_post_release_bids
           SET status = 'won'
@@ -182,7 +193,7 @@ export async function POST(request: NextRequest) {
         `;
 
         // Mark other bids for this target as lost
-        const lostBids = targetBids.slice(1);
+        const lostBids = eligibleTargetBids.slice(1);
         for (const lb of lostBids) {
           await fantasySql`
             UPDATE fantasy_post_release_bids
@@ -197,6 +208,17 @@ export async function POST(request: NextRequest) {
           target_name: winningBid.target_name,
           bid_amount: bidAmount
         });
+      }
+    }
+
+    // Mark remaining bids from teams that already won a player as 'lost'
+    for (const b of validBids) {
+      if (assignedTeams.has(b.team_id)) {
+        await fantasySql`
+          UPDATE fantasy_post_release_bids
+          SET status = 'lost'
+          WHERE bid_id = ${b.bid_id} AND status IN ('pending', 'submitted')
+        `;
       }
     }
 

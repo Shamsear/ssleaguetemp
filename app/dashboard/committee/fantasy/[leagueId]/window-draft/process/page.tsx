@@ -975,6 +975,42 @@ export default function PostWindowDraftProcessPage() {
 
               const previewTargets = Array.from(categoryTargetsMap.values());
 
+              // Compute 1-player-per-team projected allocations
+              const validCategoryBids = allBids.filter((b) => !isSelfReleaseBid(b));
+              const sortedBids = [...validCategoryBids].sort((a, b) => {
+                const diff = b.bid_amount - a.bid_amount;
+                if (diff !== 0) return diff;
+                return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+              });
+
+              const assignedTeams = new Set<string>();
+              const resolvedTargets = new Set<string>();
+              const projectedWinnersMap = new Map<string, { winningBid: Bid; topBidders: Bid[]; isTie: boolean }>();
+
+              for (const b of sortedBids) {
+                const targetId = b.target_id;
+                if (resolvedTargets.has(targetId)) continue;
+
+                const eligibleTargetBids = sortedBids.filter(
+                  (tb) => tb.target_id === targetId && !assignedTeams.has(tb.team_id)
+                );
+
+                if (eligibleTargetBids.length === 0) continue;
+
+                const maxBidAmount = eligibleTargetBids[0].bid_amount;
+                const topBidders = eligibleTargetBids.filter((tb) => tb.bid_amount === maxBidAmount);
+
+                if (topBidders.length > 1) {
+                  projectedWinnersMap.set(targetId, { winningBid: topBidders[0], topBidders, isTie: true });
+                  resolvedTargets.add(targetId);
+                } else {
+                  const winningBid = topBidders[0];
+                  projectedWinnersMap.set(targetId, { winningBid, topBidders, isTie: false });
+                  assignedTeams.add(winningBid.team_id);
+                  resolvedTargets.add(targetId);
+                }
+              }
+
               if (previewTargets.length === 0) {
                 return (
                   <div className="py-12 text-center text-slate-400 text-xs font-bold uppercase italic border border-dashed border-slate-200 rounded-2xl">
@@ -993,10 +1029,12 @@ export default function PostWindowDraftProcessPage() {
                     const validBids = targetBids.filter((b) => !isSelfReleaseBid(b));
                     const selfReleaseBids = targetBids.filter((b) => isSelfReleaseBid(b));
 
-                    const topBidAmount = validBids.length > 0 ? validBids[0].bid_amount : 0;
-                    const topBidders = validBids.filter((b) => b.bid_amount === topBidAmount);
-                    const isTie = topBidders.length > 1;
+                    const projResult = projectedWinnersMap.get(target.target_id);
+                    const topBidAmount = projResult ? projResult.winningBid.bid_amount : 0;
+                    const topBidders = projResult ? projResult.topBidders : [];
+                    const isTie = projResult ? projResult.isTie : false;
                     const wonBid = validBids.find((b) => b.status === 'won');
+                    const projWinnerBid = projResult && !projResult.isTie ? projResult.winningBid : null;
 
                     return (
                       <div
@@ -1006,7 +1044,7 @@ export default function PostWindowDraftProcessPage() {
                             ? 'bg-emerald-50/40 border-emerald-300'
                             : isTie
                             ? 'bg-amber-50/40 border-amber-300'
-                            : validBids.length > 0
+                            : projWinnerBid
                             ? 'bg-white border-slate-200 hover:border-amber-300'
                             : 'bg-slate-50/60 border-slate-200'
                         }`}
@@ -1031,7 +1069,7 @@ export default function PostWindowDraftProcessPage() {
                               <span className="px-2.5 py-1 bg-amber-500 text-slate-950 text-[9px] font-black rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse">
                                 <AlertTriangle className="w-3 h-3" /> TIE ({topBidders.length} Teams @ ₹{topBidAmount} Cr)
                               </span>
-                            ) : validBids.length > 0 ? (
+                            ) : projWinnerBid ? (
                               <span className="px-2.5 py-1 bg-amber-100 border border-amber-300 text-amber-900 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1">
                                 <Crown className="w-3 h-3 text-amber-600" /> LEADER (₹{topBidAmount} Cr)
                               </span>
@@ -1050,8 +1088,9 @@ export default function PostWindowDraftProcessPage() {
                           </span>
 
                           {validBids.map((b, idx) => {
-                            const isWinner = !isTie && idx === 0;
-                            const isTiedTop = isTie && b.bid_amount === topBidAmount;
+                            const isWinner = projWinnerBid?.bid_id === b.bid_id || b.status === 'won';
+                            const isTiedTop = isTie && topBidders.some((tb) => tb.bid_id === b.bid_id);
+                            const isSkippedDueToTeamLimit = !isWinner && !isTiedTop && assignedTeams.has(b.team_id);
 
                             return (
                               <div
@@ -1061,6 +1100,8 @@ export default function PostWindowDraftProcessPage() {
                                     ? 'bg-amber-500 text-slate-950 border border-amber-600 shadow-sm'
                                     : isTiedTop
                                     ? 'bg-amber-100 border border-amber-300 text-amber-950'
+                                    : isSkippedDueToTeamLimit
+                                    ? 'bg-slate-100/70 border border-slate-200 text-slate-400 line-through'
                                     : 'bg-slate-50 border border-slate-100 text-slate-700'
                                 }`}
                               >
@@ -1073,9 +1114,14 @@ export default function PostWindowDraftProcessPage() {
                                   <span className="truncate uppercase">{b.team_name}</span>
                                   {isWinner && <Crown className="w-3.5 h-3.5 text-slate-950 fill-amber-300 shrink-0" />}
                                   {isTiedTop && <span className="text-[8px] bg-amber-200 text-amber-900 px-1 py-0.2 rounded font-black uppercase shrink-0">TIED</span>}
+                                  {isSkippedDueToTeamLimit && (
+                                    <span className="text-[8px] bg-slate-200 text-slate-600 px-1 py-0.2 rounded font-black uppercase shrink-0">
+                                      SKIPPED (Limit 1)
+                                    </span>
+                                  )}
                                 </div>
 
-                                <span className={`font-black shrink-0 ${isWinner ? 'text-slate-950 text-xs font-extrabold' : 'text-emerald-700'}`}>
+                                <span className={`font-black shrink-0 ${isWinner ? 'text-slate-950 text-xs font-extrabold' : isSkippedDueToTeamLimit ? 'text-slate-400 line-through' : 'text-emerald-700'}`}>
                                   ₹{b.bid_amount} Cr
                                 </span>
                               </div>
