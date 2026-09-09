@@ -220,6 +220,10 @@ export default function TeamDraftPage() {
       // Add window released players to player pool
       windowReleases.forEach((r: any) => {
         if (!r.is_passive_team && r.real_player_id) {
+          const resolvedCat = (r.category && r.category !== 'Unknown' && r.category !== 'RED')
+            ? r.category
+            : (settingsObj?.category_settings?.lists?.red_list_2?.includes(r.real_player_id) ? 'RED 2' : 'RED 1');
+
           const existing = playersList.find((p) => p.real_player_id === r.real_player_id);
           if (!existing) {
             playersList.push({
@@ -227,13 +231,13 @@ export default function TeamDraftPage() {
               player_name: r.player_name,
               real_team_name: `Released from ${r.team_name}`,
               position: 'FWD',
-              category: r.category || 'RED 2',
+              category: resolvedCat,
               star_rating: 5,
               released_by_team_id: r.team_id
             });
           } else {
             existing.released_by_team_id = r.team_id;
-            if (r.category) existing.category = r.category;
+            existing.category = resolvedCat;
           }
         }
       });
@@ -435,6 +439,23 @@ export default function TeamDraftPage() {
     return draftSettings?.category_settings?.slots.find(s => s.slot_index === activeSlotIndex);
   };
 
+  // Resolve precise category for a player based on category settings lists
+  const getResolvedPlayerCategory = (player: any): string => {
+    const pId = String(player.real_player_id || player.id || player.target_id || '');
+    const lists = draftSettings?.category_settings?.lists || {};
+
+    if (lists.red_list_2 && Array.isArray(lists.red_list_2) && lists.red_list_2.includes(pId)) return 'RED 2';
+    if (lists.red_list_1 && Array.isArray(lists.red_list_1) && lists.red_list_1.includes(pId)) return 'RED 1';
+    if (lists.blue_list && Array.isArray(lists.blue_list) && lists.blue_list.includes(pId)) return 'BLUE';
+    if (lists.black_list && Array.isArray(lists.black_list) && lists.black_list.includes(pId)) return 'BLACK';
+    if (lists.white_list && Array.isArray(lists.white_list) && lists.white_list.includes(pId)) return 'WHITE';
+
+    const cat = (player.category || '').toUpperCase();
+    if (cat === 'RED 1' || cat === 'RED 2') return cat;
+    if (cat === 'RED') return 'RED 1';
+    return cat || 'RED 2';
+  };
+
   // Filter available player pool / teams based on selected active slot lists & categories
   const getFilteredPool = () => {
     const slot = getActiveSlot();
@@ -455,6 +476,13 @@ export default function TeamDraftPage() {
     } else {
       // Players pool
       const slotName = slot.name.toUpperCase();
+      const targetSlotCat = slotName.includes('RED 2') || listId === 'red_list_2' ? 'RED 2'
+        : slotName.includes('RED 1') || listId === 'red_list_1' ? 'RED 1'
+        : slotName.includes('BLUE') || listId === 'blue_list' ? 'BLUE'
+        : slotName.includes('BLACK') || listId === 'black_list' ? 'BLACK'
+        : slotName.includes('WHITE') || listId === 'white_list' ? 'WHITE'
+        : slotName;
+
       return availablePlayers
         .filter(p => {
           // Self-release check: cannot bid on player released by own team
@@ -471,10 +499,10 @@ export default function TeamDraftPage() {
             }
           }
 
-          // Category matching logic: exact match for slotName (e.g. 'RED 2', 'RED 1', 'BLACK', 'BLUE', 'WHITE')
-          const playerCat = (p.category || '').toUpperCase();
           if (listIds.includes(p.real_player_id)) return true;
-          if (playerCat === slotName) return true;
+
+          const resolvedCat = getResolvedPlayerCategory(p);
+          if (resolvedCat === targetSlotCat) return true;
 
           return false;
         })
@@ -493,15 +521,16 @@ export default function TeamDraftPage() {
       const listIds = draftSettings.category_settings.lists?.[listId] || [];
       const isRealTeamSlot = slot.name.toLowerCase().includes('team') || listId?.includes('team');
 
+      const slotName = slot.name.toUpperCase();
+      const targetSlotCat = slotName.includes('RED 2') || listId === 'red_list_2' ? 'RED 2'
+        : slotName.includes('RED 1') || listId === 'red_list_1' ? 'RED 1'
+        : slotName;
+
       const slotReleases = windowReleasesList.filter((r: any) => {
         if (isRealTeamSlot) return r.is_passive_team;
         if (r.real_player_id && listIds.includes(r.real_player_id)) return true;
-        const rCat = (r.category || '').toUpperCase();
-        const slotName = slot.name.toUpperCase();
-        if (rCat === slotName) return true;
-        if (rCat === 'RED' && slotName.includes('RED 2') && r.resolved_category === 'RED 2') return true;
-        if (rCat === 'RED' && slotName.includes('RED 1') && (r.resolved_category === 'RED 1' || !r.resolved_category)) return true;
-        return false;
+        const rCat = getResolvedPlayerCategory({ real_player_id: r.real_player_id, category: r.category });
+        return rCat === targetSlotCat;
       });
 
       const releasingTeamIds = new Set(slotReleases.map((r: any) => r.team_id));
@@ -1276,10 +1305,7 @@ export default function TeamDraftPage() {
 
                       <div className="flex items-center gap-3">
                         {!isRealTeam && (() => {
-                          const slot = getActiveSlot();
-                          const displayCat = (item.category === 'RED' && slot?.name?.startsWith('Red Slot'))
-                            ? slot.name.replace(/Slot\s*/i, '').trim().toUpperCase()
-                            : (item.category || slot?.name || '');
+                          const displayCat = getResolvedPlayerCategory(item);
                           const isRed = displayCat.startsWith('RED');
                           const isBlue = displayCat.startsWith('BLUE');
                           const isBlack = displayCat.startsWith('BLACK');
