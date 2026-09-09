@@ -31,6 +31,17 @@ export async function GET(request: NextRequest) {
 
     await fantasySql`SET timezone = 'UTC'`;
 
+    // Auto-activate pending draft rounds whose opens_at has arrived
+    await fantasySql`
+      UPDATE fantasy_draft_rounds
+      SET status = 'active'
+      WHERE league_id = ${league_id}
+        AND status = 'pending'
+        AND opens_at IS NOT NULL
+        AND opens_at <= NOW()
+        AND (closes_at IS NULL OR closes_at > NOW())
+    `;
+
     // Auto-close active draft rounds whose deadline has passed
     await fantasySql`
       UPDATE fantasy_draft_rounds

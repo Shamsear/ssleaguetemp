@@ -77,6 +77,8 @@ export default function TeamDraftPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [timeLabel, setTimeLabel] = useState<string>('Closes In');
+  const [isBiddingStarted, setIsBiddingStarted] = useState<boolean>(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [draftRounds, setDraftRounds] = useState<any[]>([]);
   const [slotSubmissions, setSlotSubmissions] = useState<Record<number, boolean>>({});
@@ -84,6 +86,7 @@ export default function TeamDraftPage() {
   const [ownedPlayerIds, setOwnedPlayerIds] = useState<Set<string>>(new Set());
   const [activeTransferWindow, setActiveTransferWindow] = useState<any>(null);
   const [windowReleasesList, setWindowReleasesList] = useState<any[]>([]);
+  const [isWindowSubmitted, setIsWindowSubmitted] = useState<boolean>(false);
 
   const { alertState, showAlert, closeAlert } = useModal();
 
@@ -274,8 +277,11 @@ export default function TeamDraftPage() {
             bid_amount: Number(b.bid_amount)
           }));
           setLocalBids(mappedWindowBids);
+          const isSubmitted = teamWindowBids.length > 0 && teamWindowBids.some((b: any) => b.status === 'submitted' || b.status === 'locked');
+          setIsWindowSubmitted(isSubmitted);
         } else {
           setLocalBids([]);
+          setIsWindowSubmitted(false);
         }
       }
 
@@ -332,29 +338,43 @@ export default function TeamDraftPage() {
     return new Date(ts.replace(' ', 'T') + 'Z').getTime();
   };
 
-  // Set up live countdown timer based on active slot's round
+  // Set up live countdown timer based on active slot's round / active window
   useEffect(() => {
-    const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex && r.status === 'active');
-    if (!activeRound?.closes_at) {
+    const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex) || activeTransferWindow;
+    const opensAtStr = activeTransferWindow?.opens_at || activeRound?.opens_at;
+    const closesAtStr = activeTransferWindow?.closes_at || activeRound?.closes_at;
+
+    if (!closesAtStr && !opensAtStr) {
       setTimeRemaining(0);
+      setIsBiddingStarted(true);
       return;
     }
 
     const timer = setInterval(() => {
-      const closesAt = parseAsUTC(activeRound.closes_at);
+      const opensAt = opensAtStr ? parseAsUTC(opensAtStr) : 0;
+      const closesAt = closesAtStr ? parseAsUTC(closesAtStr) : 0;
       const now = Date.now();
-      const diff = closesAt - now;
 
-      if (diff <= 0) {
+      if (opensAt > now) {
+        // Start time is in the future -> Scheduled pre-bidding mode!
+        setIsBiddingStarted(false);
+        setTimeLabel('Opens In');
+        setTimeRemaining(opensAt - now);
+      } else if (closesAt > now) {
+        // Bidding active!
+        setIsBiddingStarted(true);
+        setTimeLabel('Closes In');
+        setTimeRemaining(closesAt - now);
+      } else {
+        setIsBiddingStarted(false);
+        setTimeLabel('Closed');
         setTimeRemaining(0);
         clearInterval(timer);
-      } else {
-        setTimeRemaining(diff);
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [draftRounds, activeSlotIndex]);
+  }, [draftRounds, activeSlotIndex, activeTransferWindow]);
 
   useEffect(() => {
     if (user) {
@@ -435,12 +455,10 @@ export default function TeamDraftPage() {
             }
           }
 
-          // Category matching logic
+          // Category matching logic: exact match for slotName (e.g. 'RED 2', 'RED 1', 'BLACK', 'BLUE', 'WHITE')
           const playerCat = (p.category || '').toUpperCase();
           if (listIds.includes(p.real_player_id)) return true;
           if (playerCat === slotName) return true;
-          if (slotName.startsWith('RED') && playerCat === 'RED') return true;
-          if (slotName.startsWith('RED') && playerCat.startsWith('RED')) return playerCat === slotName;
 
           return false;
         })
@@ -829,7 +847,7 @@ export default function TeamDraftPage() {
   }
 
   // Check if ANY slot round is active
-  const hasActiveRound = draftRounds.some((r: any) => r.status === 'active');
+  const hasActiveRound = draftRounds.some((r: any) => r.status === 'active') || !!activeTransferWindow;
   const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex);
 
   if (!hasActiveRound) {
@@ -859,13 +877,22 @@ export default function TeamDraftPage() {
   }
 
   // Per-slot locking
-  const isSlotSubmitted = (slotIdx: number) => !!slotSubmissions[slotIdx];
+  const isSlotSubmitted = (slotIdx: number) => {
+    if (activeTransferWindow) {
+      return isWindowSubmitted;
+    }
+    return !!slotSubmissions[slotIdx];
+  };
+
   const isSlotRoundExpired = (slotIdx: number) => {
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     return round?.closes_at && parseAsUTC(round.closes_at) < Date.now();
   };
+
   const isSlotDisabled = (slotIdx: number) => {
+    if (!isBiddingStarted) return true;
     if (isSlotSubmitted(slotIdx) || isSlotRoundExpired(slotIdx)) return true;
+    if (activeTransferWindow) return false;
     const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
     if (!round || round.status !== 'active') return true;
     return false;
@@ -911,7 +938,7 @@ export default function TeamDraftPage() {
               <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-xl">
                 <Clock className="w-4.5 h-4.5 text-indigo-650" />
                 <div>
-                  <p className="text-[8px] text-slate-400 uppercase font-black">{activeRound?.slot_name || 'Slot'} Closes In</p>
+                  <p className="text-[8px] text-slate-400 uppercase font-black">{activeRound?.slot_name || 'Slot'} {timeLabel}</p>
                   <h4 className="text-xs font-black text-slate-800 uppercase mt-0.5">{formatTime(timeRemaining)}</h4>
                 </div>
               </div>
@@ -920,8 +947,8 @@ export default function TeamDraftPage() {
               <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-xl">
                 <DollarSign className="w-4.5 h-4.5 text-emerald-650" />
                 <div>
-                  <p className="text-[8px] text-slate-400 uppercase font-black">Remaining Budget</p>
-                  <h4 className="text-xs font-black text-emerald-600 mt-0.5">{calculateRemainingBudget()} / {draftSettings.budget} Cr</h4>
+                  <p className="text-[8px] text-slate-400 uppercase font-black">Available Bidding Budget</p>
+                  <h4 className="text-xs font-black text-emerald-600 mt-0.5">{calculateRemainingBudget()} Cr</h4>
                 </div>
               </div>
 

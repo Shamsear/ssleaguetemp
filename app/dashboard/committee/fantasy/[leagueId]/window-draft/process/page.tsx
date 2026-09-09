@@ -262,8 +262,14 @@ export default function PostWindowDraftProcessPage() {
           if (activeR) isSlotActiveInDb = true;
         }
 
+        const opensUTC = foundWin?.opens_at;
+        const opensTime = opensUTC ? new Date(opensUTC).getTime() : 0;
+        const nowTime = Date.now();
+
         if (fetchedBids.some((b: any) => b.status === 'won')) {
           setRoundStatus('finalized');
+        } else if (opensTime > nowTime) {
+          setRoundStatus('pending');
         } else if (foundWin?.is_active || isSlotActiveInDb || fetchedBids.length > 0) {
           setRoundStatus('active');
         } else {

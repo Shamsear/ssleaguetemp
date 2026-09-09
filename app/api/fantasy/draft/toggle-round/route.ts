@@ -23,18 +23,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isActive = action === 'open' || action === 'active';
-    const roundStatus = isActive ? 'active' : action === 'close' ? 'closed' : 'completed';
-
     const opensUTC = opens_at ? new Date(opens_at).toISOString() : new Date().toISOString();
     const closesUTC = closes_at ? new Date(closes_at).toISOString() : new Date(Date.now() + 2 * 3600 * 1000).toISOString();
+
+    const opensDate = new Date(opensUTC);
+    const closesDate = new Date(closesUTC);
+    const now = new Date();
+
+    let computedStatus: string;
+    let computedIsActive: boolean;
+
+    if (action === 'close') {
+      computedStatus = 'closed';
+      computedIsActive = false;
+    } else if (action === 'completed') {
+      computedStatus = 'completed';
+      computedIsActive = false;
+    } else {
+      // action === 'open' or 'active'
+      if (now < opensDate) {
+        // Start time is in the future -> scheduled pre-bidding mode!
+        computedStatus = 'pending';
+        computedIsActive = true;
+      } else if (now >= closesDate) {
+        computedStatus = 'closed';
+        computedIsActive = false;
+      } else {
+        computedStatus = 'active';
+        computedIsActive = true;
+      }
+    }
 
     // 1. Update transfer window table
     await fantasySql`
       UPDATE fantasy_transfer_windows
       SET 
-        is_active = ${isActive},
-        status = ${roundStatus},
+        is_active = ${computedIsActive},
+        status = ${computedStatus},
         opens_at = ${opensUTC},
         closes_at = ${closesUTC},
         start_time = ${opensUTC},
@@ -57,7 +82,7 @@ export async function POST(request: NextRequest) {
     await fantasySql`
       UPDATE fantasy_draft_rounds
       SET 
-        status = ${roundStatus},
+        status = ${computedStatus},
         opens_at = ${opensUTC},
         closes_at = ${closesUTC},
         updated_at = NOW()
@@ -65,7 +90,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // 4. Reset other rounds to completed/closed if opening this one
-    if (isActive) {
+    if (computedIsActive) {
       await fantasySql`
         UPDATE fantasy_draft_rounds
         SET status = 'completed', updated_at = NOW()
@@ -77,10 +102,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Round ${category} is now ${roundStatus.toUpperCase()}`,
+      message: `Round ${category} is now ${computedStatus.toUpperCase()} (Opens: ${opensUTC}, Closes: ${closesUTC})`,
       active_category: category,
-      round_status: roundStatus,
-      is_active: isActive,
+      round_status: computedStatus,
+      is_active: computedIsActive,
       opens_at: opensUTC,
       closes_at: closesUTC
     });
