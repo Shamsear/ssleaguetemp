@@ -35,8 +35,10 @@ export async function GET(request: NextRequest) {
           fr.player_name,
           CASE
             WHEN fr.is_passive_team = true THEN 'Passive Team'
-            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
+            WHEN (fl.category_settings->'lists'->'red_list_2')::jsonb @> jsonb_build_array(fr.real_player_id) THEN 'RED 2'
+            WHEN (fl.category_settings->'lists'->'red_list_1')::jsonb @> jsonb_build_array(fr.real_player_id) THEN 'RED 1'
             WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 2 OR fdr.slot_name ILIKE '%Slot 2%') THEN 'RED 2'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
             WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' THEN 'RED 1'
             ELSE UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, 'Red'))
           END as category,
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
           fr.refund_percentage,
           fr.released_at
         FROM fantasy_releases fr
+        LEFT JOIN fantasy_leagues fl ON fr.league_id = fl.league_id
         LEFT JOIN fantasy_teams ft ON fr.team_id = ft.team_id
         LEFT JOIN fantasy_transfer_windows tw ON fr.window_id = tw.window_id
         LEFT JOIN fantasy_players fp ON (
@@ -75,8 +78,10 @@ export async function GET(request: NextRequest) {
           fr.player_name,
           CASE
             WHEN fr.is_passive_team = true THEN 'Passive Team'
-            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
+            WHEN (fl.category_settings->'lists'->'red_list_2')::jsonb @> jsonb_build_array(fr.real_player_id) THEN 'RED 2'
+            WHEN (fl.category_settings->'lists'->'red_list_1')::jsonb @> jsonb_build_array(fr.real_player_id) THEN 'RED 1'
             WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 2 OR fdr.slot_name ILIKE '%Slot 2%') THEN 'RED 2'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
             WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' THEN 'RED 1'
             ELSE UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, 'Red'))
           END as category,
@@ -86,6 +91,7 @@ export async function GET(request: NextRequest) {
           fr.refund_percentage,
           fr.released_at
         FROM fantasy_releases fr
+        LEFT JOIN fantasy_leagues fl ON fr.league_id = fl.league_id
         LEFT JOIN fantasy_teams ft ON fr.team_id = ft.team_id
         LEFT JOIN fantasy_transfer_windows tw ON fr.window_id = tw.window_id
         LEFT JOIN fantasy_players fp ON (
