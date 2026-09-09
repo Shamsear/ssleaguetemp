@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
           ) VALUES (
             ${changeId}, ${leagueId}, ${teamId}, ${window.window_id},
             ${oldSupportedTeamId}, ${oldSupportedTeamName},
-            ${new_supported_team_id || null}, ${new_supported_team_name || null},
+            ${new_supported_team_id || 'RELEASED'}, ${new_supported_team_name || 'RELEASED'},
             ${user_id}, ${reason || (is_release ? 'Released supported team' : 'Team preference change')}
           )
         `;
