@@ -51,26 +51,32 @@ export async function POST(request: NextRequest) {
     const closesDate = new Date(closesUTC);
     const now = new Date();
 
-    let computedStatus: string;
+    let roundStatus: string;
+    let windowStatus: string;
     let computedIsActive: boolean;
 
     if (action === 'close') {
-      computedStatus = 'closed';
+      roundStatus = 'closed';
+      windowStatus = 'closed';
       computedIsActive = false;
     } else if (action === 'completed') {
-      computedStatus = 'completed';
+      roundStatus = 'completed';
+      windowStatus = 'closed';
       computedIsActive = false;
     } else {
       // action === 'open' or 'active'
       if (now < opensDate) {
         // Start time is in the future -> scheduled pre-bidding mode!
-        computedStatus = 'pending';
+        roundStatus = 'pending';
+        windowStatus = 'scheduled';
         computedIsActive = true;
       } else if (now >= closesDate) {
-        computedStatus = 'closed';
+        roundStatus = 'closed';
+        windowStatus = 'closed';
         computedIsActive = false;
       } else {
-        computedStatus = 'active';
+        roundStatus = 'active';
+        windowStatus = 'active';
         computedIsActive = true;
       }
     }
@@ -80,7 +86,7 @@ export async function POST(request: NextRequest) {
       UPDATE fantasy_transfer_windows
       SET 
         is_active = ${computedIsActive},
-        status = ${computedStatus},
+        status = ${windowStatus},
         opens_at = ${opensUTC},
         closes_at = ${closesUTC},
         start_time = ${opensUTC},
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
     await fantasySql`
       UPDATE fantasy_draft_rounds
       SET 
-        status = ${computedStatus},
+        status = ${roundStatus},
         opens_at = ${opensUTC},
         closes_at = ${closesUTC},
         updated_at = NOW()
@@ -123,9 +129,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Round ${category} is now ${computedStatus.toUpperCase()} (Opens: ${opensUTC}, Closes: ${closesUTC})`,
+      message: `Round ${category} is now ${roundStatus.toUpperCase()} (Opens: ${opensUTC}, Closes: ${closesUTC})`,
       active_category: category,
-      round_status: computedStatus,
+      round_status: roundStatus,
+      window_status: windowStatus,
       is_active: computedIsActive,
       opens_at: opensUTC,
       closes_at: closesUTC
