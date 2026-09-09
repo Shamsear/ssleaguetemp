@@ -137,7 +137,7 @@ export default function PostWindowDraftProcessPage() {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
 
   // Tie modal state
   const [selectedTie, setSelectedTie] = useState<Tie | null>(null);
@@ -147,10 +147,12 @@ export default function PostWindowDraftProcessPage() {
 
   const { alertState, showAlert, closeAlert } = useModal();
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isSilent: boolean = false) => {
     if (!leagueId || !windowId) return;
     try {
-      setIsLoading(true);
+      if (!isSilent) {
+        setIsLoading(true);
+      }
 
       // 1. Fetch Window Details
       let foundWin: any = null;
@@ -344,7 +346,7 @@ export default function PostWindowDraftProcessPage() {
   useEffect(() => {
     if (!autoRefresh || !leagueId || !windowId) return;
     const interval = setInterval(() => {
-      loadData();
+      loadData(true);
     }, 5000);
     return () => clearInterval(interval);
   }, [autoRefresh, leagueId, windowId, loadData]);
