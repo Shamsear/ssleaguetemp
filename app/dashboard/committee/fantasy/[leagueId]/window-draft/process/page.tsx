@@ -281,7 +281,10 @@ export default function PostWindowDraftProcessPage() {
         let reserved = 0;
         Object.entries(releaseCountsByCategory).forEach(([futureCat, count]) => {
           const catInfo = getCategoryInfo(futureCat);
-          if (catInfo.slotIndex > activeInfo.slotIndex && catInfo.status !== 'completed' && catInfo.status !== 'finalized') {
+          const isFuture = catInfo.slotIndex > activeInfo.slotIndex;
+          const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
+
+          if (isFuture && isRoundUncompleted) {
             reserved += count * catInfo.basePrice;
           }
         });

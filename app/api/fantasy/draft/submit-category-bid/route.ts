@@ -182,10 +182,27 @@ export async function POST(request: NextRequest) {
       releaseCountsByCategory[catKey] = (releaseCountsByCategory[catKey] || 0) + 1;
     }
 
+    const wonPostReleaseBids = await fantasySql`
+      SELECT category, is_passive_team
+      FROM fantasy_post_release_bids
+      WHERE team_id = ${team_id}
+        AND (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+        AND status = 'won'
+    `;
+
+    const teamWonCats = new Set(
+      wonPostReleaseBids.map((b: any) => b.is_passive_team ? 'PASSIVE TEAM' : (b.category || '').toUpperCase().trim())
+    );
+
     let reservedFunds = 0;
     for (const [catKey, count] of Object.entries(releaseCountsByCategory)) {
-      const catInfo = getCategoryInfo(catKey);
-      if (catInfo.slotIndex > activeInfo.slotIndex && catInfo.status !== 'completed' && catInfo.status !== 'finalized') {
+      const normCatKey = catKey.toUpperCase().trim();
+      const catInfo = getCategoryInfo(normCatKey);
+      const isFuture = catInfo.slotIndex > activeInfo.slotIndex;
+      const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
+      const isTeamUncompleted = !teamWonCats.has(normCatKey);
+
+      if (isFuture && isRoundUncompleted && isTeamUncompleted) {
         reservedFunds += count * catInfo.basePrice;
       }
     }
