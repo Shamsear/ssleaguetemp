@@ -111,12 +111,53 @@ export default function TeamDraftPage() {
       const leagueId = teamData.team.fantasy_league_id;
       const teamId = teamData.team.team_id || teamData.team.id;
 
-      // 1b. Fetch eligible post-release categories
+      // 1b. Fetch eligible post-release categories & transfer windows
+      let catDataMap: Record<string, number> = {};
       const catRes = await fetchWithTokenRefresh(`/api/fantasy/draft/eligible-categories?team_id=${teamId}&league_id=${leagueId}`);
       if (catRes.ok) {
         const catData = await catRes.json();
-        setEligibleCategories(catData.eligible_categories || {});
+        catDataMap = catData.eligible_categories || {};
+        setEligibleCategories(catDataMap);
       }
+
+      // Fetch transfer windows and releases early
+      const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${leagueId}`);
+      let activeWin: any = null;
+      if (winRes.ok) {
+        const winData = await winRes.json();
+        activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
+        setActiveTransferWindow(activeWin);
+      }
+
+      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
+      const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
+      const windowReleases = releasesData.releases || [];
+      setWindowReleasesList(windowReleases);
+
+      const checkSlotEligible = (slotIdx: number, slotNameStr?: string) => {
+        if (!activeWin && windowReleases.length === 0) return true;
+        if (Object.keys(catDataMap).length === 0) return false;
+
+        let categoryName = slotIdx === 1 ? 'RED 1'
+          : slotIdx === 2 ? 'RED 2'
+          : slotIdx === 3 ? 'BLUE'
+          : slotIdx === 4 ? 'BLACK'
+          : slotIdx === 5 ? 'WHITE'
+          : 'Passive Team';
+
+        const sName = (slotNameStr || '').toUpperCase();
+        if (sName.includes('RED 1') || sName.includes('SLOT 1')) categoryName = 'RED 1';
+        else if (sName.includes('RED 2') || sName.includes('SLOT 2')) categoryName = 'RED 2';
+        else if (sName.includes('BLUE')) categoryName = 'BLUE';
+        else if (sName.includes('BLACK')) categoryName = 'BLACK';
+        else if (sName.includes('WHITE')) categoryName = 'WHITE';
+        else if (sName.includes('TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED') || sName.includes('REAL')) categoryName = 'Passive Team';
+
+        if (categoryName === 'Passive Team') {
+          return !!(catDataMap['Passive Team'] || catDataMap['Supported Team'] || catDataMap['PASSIVE TEAM']);
+        }
+        return !!(catDataMap[categoryName]);
+      };
 
       // 2. Fetch draft settings and league info
       const settingsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/settings?league_id=${leagueId}`);
@@ -152,10 +193,18 @@ export default function TeamDraftPage() {
         const rounds = roundsData.rounds || [];
         setDraftRounds(rounds);
 
-        // Find the first active slot from rounds
-        const activeRound = rounds.find((r: any) => r.status === 'active');
-        if (activeRound) {
-          setActiveSlotIndex(activeRound.slot_index);
+        // Find the first active slot that this team is actually eligible for
+        const eligibleActiveRound = rounds.find((r: any) => r.status === 'active' && checkSlotEligible(r.slot_index, r.slot_name));
+        if (eligibleActiveRound) {
+          setActiveSlotIndex(eligibleActiveRound.slot_index);
+        } else {
+          // Fallback to any eligible round
+          const eligibleRound = rounds.find((r: any) => checkSlotEligible(r.slot_index, r.slot_name));
+          if (eligibleRound) {
+            setActiveSlotIndex(eligibleRound.slot_index);
+          } else if (catDataMap['Passive Team'] || catDataMap['Supported Team'] || catDataMap['PASSIVE TEAM']) {
+            setActiveSlotIndex(6);
+          }
         }
       }
 
@@ -191,20 +240,6 @@ export default function TeamDraftPage() {
           logo_url: t.team_logo || t.logo_url
         }));
       }
-
-      // 4b. Fetch transfer windows and releases to enrich target pool
-      const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${leagueId}`);
-      let activeWin: any = null;
-      if (winRes.ok) {
-        const winData = await winRes.json();
-        activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
-        setActiveTransferWindow(activeWin);
-      }
-
-      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
-      const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
-      const windowReleases = releasesData.releases || [];
-      setWindowReleasesList(windowReleases);
 
       // Fetch squad players across all teams in the league to identify owned players
       const draftedRes = await fetchWithTokenRefresh(`/api/fantasy/players/drafted?league_id=${leagueId}`);
