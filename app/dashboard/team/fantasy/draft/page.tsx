@@ -400,6 +400,19 @@ export default function TeamDraftPage() {
     }
   }, [user, loadDraftData]);
 
+  // Auto-sync activeSlotIndex to the first eligible slot if transfer window is active
+  useEffect(() => {
+    if ((activeTransferWindow || windowReleasesList.length > 0) && Object.keys(eligibleCategories).length > 0) {
+      if (!isCategoryEligibleForSlot(activeSlotIndex)) {
+        const firstEligible = draftRounds.find((r: any) => r.status === 'active' && isCategoryEligibleForSlot(r.slot_index))
+          || draftRounds.find((r: any) => isCategoryEligibleForSlot(r.slot_index));
+        if (firstEligible) {
+          setActiveSlotIndex(firstEligible.slot_index);
+        }
+      }
+    }
+  }, [eligibleCategories, activeSlotIndex, draftRounds, activeTransferWindow, windowReleasesList]);
+
   // Format time remaining
   const formatTime = (ms: number) => {
     if (ms <= 0) return 'Closed';
@@ -1127,8 +1140,8 @@ export default function TeamDraftPage() {
 
         {/* Slot Tabs - show active rounds when window is active, or non-pending rounds */}
         {(() => {
-          const visibleRounds = activeTransferWindow 
-            ? draftRounds.filter((r: any) => r.status === 'active')
+          const visibleRounds = (activeTransferWindow || windowReleasesList.length > 0)
+            ? draftRounds.filter((r: any) => r.status === 'active' && isCategoryEligibleForSlot(r.slot_index))
             : draftRounds.filter((r: any) => r.status !== 'pending');
 
           if (visibleRounds.length <= 1) return null;
