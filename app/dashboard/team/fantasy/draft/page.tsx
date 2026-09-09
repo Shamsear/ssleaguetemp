@@ -39,12 +39,14 @@ interface Player {
   position: string;
   category: string;
   star_rating: number;
+  released_by_team_id?: string;
 }
 
 interface RealTeam {
   team_uid: string;
   team_name: string;
   logo_url?: string;
+  released_by_team_id?: string;
 }
 
 interface LocalBid {
@@ -167,7 +169,6 @@ export default function TeamDraftPage() {
       if (playersRes.ok) {
         const playersData = await playersRes.json();
         playersList = playersData.players || [];
-        setAvailablePlayers(playersList);
       }
 
       // 4. Fetch real teams in the tournament
@@ -182,43 +183,120 @@ export default function TeamDraftPage() {
           team_name: t.team_name,
           logo_url: t.team_logo || t.logo_url
         }));
-        setRealTeams(teamsList);
       }
 
-      // 5. Fetch team's current bids
-      const bidsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/my-bids?user_id=${user.uid}`);
-      if (bidsRes.ok) {
-        const bidsData = await bidsRes.json();
-        
-        // Map bids to local state structure
-        const mappedBids: LocalBid[] = (bidsData.bids || []).map((b: any) => {
-          if (b.bid_type === 'player') {
-            const playerObj = playersList.find((p: any) => p.real_player_id === b.target_id);
-            return {
-              slot_index: b.slot_index,
-              priority: b.priority,
-              target_id: b.target_id,
-              target_name: playerObj?.player_name || b.target_id,
-              bid_type: 'player',
-              bid_amount: b.bid_amount,
-              team_name: playerObj?.real_team_name
-            };
+      // 4b. Fetch transfer windows and releases to enrich target pool
+      const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${leagueId}`);
+      let activeWin: any = null;
+      if (winRes.ok) {
+        const winData = await winRes.json();
+        activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
+      }
+
+      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
+      const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
+      const windowReleases = releasesData.releases || [];
+
+      // Add window released players to player pool
+      windowReleases.forEach((r: any) => {
+        if (!r.is_passive_team && r.real_player_id) {
+          const existing = playersList.find((p) => p.real_player_id === r.real_player_id);
+          if (!existing) {
+            playersList.push({
+              real_player_id: r.real_player_id,
+              player_name: r.player_name,
+              real_team_name: `Released from ${r.team_name}`,
+              position: 'FWD',
+              category: r.category || 'RED 2',
+              star_rating: 5,
+              released_by_team_id: r.team_id
+            });
           } else {
-            const teamObj = teamsList.find((t: any) => t.team_uid === b.target_id);
-            return {
-              slot_index: b.slot_index,
-              priority: b.priority,
-              target_id: b.target_id,
-              target_name: teamObj?.team_name || b.target_id,
-              bid_type: 'real_team',
-              bid_amount: b.bid_amount
-            };
+            existing.released_by_team_id = r.team_id;
+            if (r.category) existing.category = r.category;
           }
-        });
+        }
+      });
 
-        setLocalBids(mappedBids);
-        setHasUnsavedChanges(false);
+      // Add window released supported teams to team pool
+      windowReleases.forEach((r: any) => {
+        if (r.is_passive_team && r.real_player_id) {
+          const existing = teamsList.find((t) => t.team_uid === r.real_player_id);
+          if (!existing) {
+            teamsList.push({
+              team_uid: r.real_player_id,
+              team_name: r.player_name || 'Supported Team',
+              logo_url: undefined,
+              released_by_team_id: r.team_id
+            });
+          } else {
+            existing.released_by_team_id = r.team_id;
+          }
+        }
+      });
+
+      setAvailablePlayers(playersList);
+      setRealTeams(teamsList);
+
+      // 5. Fetch team's current bids (Check post-release window bids first if window is active)
+      let windowBidsLoaded = false;
+      if (activeWin) {
+        const windowBidsRes = await fetchWithTokenRefresh(
+          `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${activeWin.window_id}`
+        );
+        if (windowBidsRes.ok) {
+          const windowBidsData = await windowBidsRes.json();
+          const teamWindowBids = (windowBidsData.bids || []).filter((b: any) => b.team_id === teamId);
+          if (teamWindowBids.length > 0) {
+            const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => ({
+              slot_index: 2, // Active slot index
+              priority: idx + 1,
+              target_id: b.target_id,
+              target_name: b.target_name,
+              bid_type: b.is_passive_team ? 'real_team' : 'player',
+              bid_amount: Number(b.bid_amount)
+            }));
+            setLocalBids(mappedWindowBids);
+            windowBidsLoaded = true;
+          }
+        }
       }
+
+      if (!windowBidsLoaded) {
+        const bidsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/my-bids?user_id=${user.uid}`);
+        if (bidsRes.ok) {
+          const bidsData = await bidsRes.json();
+          
+          const mappedBids: LocalBid[] = (bidsData.bids || []).map((b: any) => {
+            if (b.bid_type === 'player') {
+              const playerObj = playersList.find((p: any) => p.real_player_id === b.target_id);
+              return {
+                slot_index: b.slot_index,
+                priority: b.priority,
+                target_id: b.target_id,
+                target_name: playerObj?.player_name || b.target_id,
+                bid_type: 'player',
+                bid_amount: b.bid_amount,
+                team_name: playerObj?.real_team_name
+              };
+            } else {
+              const teamObj = teamsList.find((t: any) => t.team_uid === b.target_id);
+              return {
+                slot_index: b.slot_index,
+                priority: b.priority,
+                target_id: b.target_id,
+                target_name: teamObj?.team_name || b.target_id,
+                bid_type: 'real_team',
+                bid_amount: b.bid_amount
+              };
+            }
+          });
+
+          setLocalBids(mappedBids);
+        }
+      }
+
+      setHasUnsavedChanges(false);
 
     } catch (error: any) {
       console.error('Failed to load draft data:', error);
@@ -306,26 +384,40 @@ export default function TeamDraftPage() {
     return draftSettings?.category_settings?.slots.find(s => s.slot_index === activeSlotIndex);
   };
 
-  // Filter available player pool / teams based on selected active slot lists
+  // Filter available player pool / teams based on selected active slot lists & categories
   const getFilteredPool = () => {
     const slot = getActiveSlot();
     if (!slot || !draftSettings?.category_settings) return [];
 
     const listId = slot.list_id;
     const listIds = draftSettings.category_settings.lists?.[listId] || [];
+    const myTeamId = myTeam?.team_id || myTeam?.id;
 
     if (slot.name.toLowerCase().includes('team') || slot.list_id?.includes('team')) {
       // Real Teams pool — filter by list if it has entries, otherwise show all
       const base = listIds.length > 0
-        ? realTeams.filter(t => listIds.includes(t.team_uid))
+        ? realTeams.filter(t => listIds.includes(t.team_uid) || t.released_by_team_id)
         : realTeams;
-      return base.filter(t =>
-        t.team_name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      return base
+        .filter(t => !myTeamId || t.released_by_team_id !== myTeamId)
+        .filter(t => t.team_name.toLowerCase().includes(searchTerm.toLowerCase()));
     } else {
-      // Players pool — always filter by list
+      // Players pool
+      const slotName = slot.name.toUpperCase();
       return availablePlayers
-        .filter(p => listIds.includes(p.real_player_id))
+        .filter(p => {
+          // Self-release check: cannot bid on player released by own team
+          if (myTeamId && p.released_by_team_id === myTeamId) return false;
+
+          // Category matching logic
+          const playerCat = (p.category || '').toUpperCase();
+          if (listIds.includes(p.real_player_id)) return true;
+          if (playerCat === slotName) return true;
+          if (slotName.startsWith('RED') && playerCat === 'RED') return true;
+          if (slotName.startsWith('RED') && playerCat.startsWith('RED')) return playerCat === slotName;
+
+          return false;
+        })
         .filter(p =>
           p.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.real_team_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -510,6 +602,38 @@ export default function TeamDraftPage() {
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to submit bids');
+      }
+
+      // Also post to window category bids if active transfer window exists
+      try {
+        const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${myTeam.fantasy_league_id}`);
+        if (winRes.ok) {
+          const winData = await winRes.json();
+          const activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
+          if (activeWin) {
+            const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
+            const categoryName = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'Passive Team';
+
+            for (const b of bidsToSend) {
+              await fetchWithTokenRefresh('/api/fantasy/draft/submit-category-bid', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  draft_round_id: activeWin.window_id,
+                  league_id: myTeam.fantasy_league_id,
+                  team_id: myTeam.team_id || myTeam.id,
+                  category: categoryName,
+                  is_passive_team: b.bid_type === 'real_team',
+                  target_id: b.target_id,
+                  target_name: b.target_name,
+                  bid_amount: b.bid_amount
+                })
+              });
+            }
+          }
+        }
+      } catch (winErr) {
+        console.warn('Post-release category sync notice:', winErr);
       }
 
       setHasUnsavedChanges(false);
