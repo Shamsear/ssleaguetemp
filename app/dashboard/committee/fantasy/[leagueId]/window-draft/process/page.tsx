@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Target, Users, Clock, AlertTriangle, CheckCircle, Trophy, RefreshCw, Zap, Shield, Sparkles, Filter, Lock, Unlock, Play, Pause, Timer, Save, Eye, Crown } from 'lucide-react';
@@ -112,7 +112,7 @@ const istInputToUTC = (istInput: string): string => {
   }
 };
 
-export default function PostWindowDraftProcessPage() {
+function PostWindowDraftProcessContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -1018,9 +1018,11 @@ export default function PostWindowDraftProcessPage() {
               }
               for (const [, bids] of teamBidQueues) {
                 bids.sort((a, b) => {
-                  const diff = b.bid_amount - a.bid_amount;
+                  const diff = Number(b.bid_amount || 0) - Number(a.bid_amount || 0);
                   if (diff !== 0) return diff;
-                  return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+                  const tA = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
+                  const tB = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
+                  return tA - tB;
                 });
               }
 
@@ -1029,7 +1031,9 @@ export default function PostWindowDraftProcessPage() {
               const projectedWinnersMap = new Map<string, { winningBid: Bid; topBidders: Bid[]; isTie: boolean }>();
 
               let hasProgress = true;
-              while (hasProgress) {
+              let loopGuard = 0;
+              while (hasProgress && loopGuard < 50) {
+                loopGuard++;
                 hasProgress = false;
                 const nominations = new Map<string, Array<{ teamId: string; bid: Bid }>>();
 
@@ -1042,18 +1046,17 @@ export default function PostWindowDraftProcessPage() {
                 }
 
                 if (nominations.size === 0) break;
-                hasProgress = true;
 
                 for (const [targetId, nominees] of nominations) {
                   if (!nominees || nominees.length === 0) continue;
-                  const maxAmt = Math.max(...nominees.map((n) => n.bid.bid_amount));
-                  const topNominees = nominees.filter((n) => n.bid.bid_amount === maxAmt);
+                  const maxAmt = Math.max(...nominees.map((n) => Number(n.bid.bid_amount || 0)));
+                  const topNominees = nominees.filter((n) => Number(n.bid.bid_amount || 0) === maxAmt);
                   if (!topNominees || topNominees.length === 0) continue;
 
                   // Also include all bids on this target for display (sorted by amount)
                   const allTargetBids = validCategoryBids
                     .filter((b) => b.target_id === targetId)
-                    .sort((a, b) => b.bid_amount - a.bid_amount);
+                    .sort((a, b) => Number(b.bid_amount || 0) - Number(a.bid_amount || 0));
 
                   if (topNominees.length > 1) {
                     projectedWinnersMap.set(targetId, {
@@ -1071,6 +1074,7 @@ export default function PostWindowDraftProcessPage() {
                     });
                     assignedTeams.add(winTeam);
                     wonTargets.add(targetId);
+                    hasProgress = true; // Set progress true ONLY when a team gets assigned an item
                   }
                 }
               }
@@ -1094,9 +1098,9 @@ export default function PostWindowDraftProcessPage() {
                     const selfReleaseBids = targetBids.filter((b) => isSelfReleaseBid(b));
 
                     const projResult = projectedWinnersMap.get(target.target_id);
-                    const topBidAmount = projResult ? projResult.winningBid.bid_amount : 0;
-                    const topBidders = projResult ? projResult.topBidders : [];
-                    const isTie = projResult ? projResult.isTie : false;
+                    const topBidAmount = projResult?.winningBid?.bid_amount ?? 0;
+                    const topBidders = projResult?.topBidders || [];
+                    const isTie = !!projResult?.isTie;
                     const wonBid = validBids.find((b) => b.status === 'won');
                     const projWinnerBid = projResult && !projResult.isTie ? projResult.winningBid : null;
 
@@ -1574,5 +1578,17 @@ export default function PostWindowDraftProcessPage() {
         </div>
       </div>
     </AuthGuard>
+  );
+}
+
+export default function PostWindowDraftProcessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-slate-400 font-mono text-xs">
+        <RefreshCw className="w-5 h-5 animate-spin text-amber-400 mr-2.5" /> Loading Transfer Window Process...
+      </div>
+    }>
+      <PostWindowDraftProcessContent />
+    </Suspense>
   );
 }
