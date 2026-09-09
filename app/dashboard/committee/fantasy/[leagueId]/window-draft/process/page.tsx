@@ -152,10 +152,11 @@ export default function PostWindowDraftProcessPage() {
       setIsLoading(true);
 
       // 1. Fetch Window Details
+      let foundWin: any = null;
       const windowRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${leagueId}`);
       if (windowRes.ok) {
         const windowData = await windowRes.json();
-        const foundWin = (windowData.windows || []).find((w: any) => w.window_id === windowId);
+        foundWin = (windowData.windows || []).find((w: any) => w.window_id === windowId);
         if (foundWin) {
           setWindowDetails(foundWin);
           if (foundWin.opens_at) setOpensAtInput(formatISTForInput(foundWin.opens_at));
