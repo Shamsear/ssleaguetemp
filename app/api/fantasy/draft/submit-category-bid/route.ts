@@ -143,6 +143,14 @@ export async function POST(request: NextRequest) {
     // 5. Save/upsert bid
     const bidId = `bid_${draft_round_id}_${team_id}_${target_id}_${Date.now()}`;
 
+    // Delete existing bid for same target and team in this window before inserting
+    await fantasySql`
+      DELETE FROM fantasy_post_release_bids
+      WHERE team_id = ${team_id}
+        AND (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+        AND target_id = ${target_id}
+    `;
+
     await fantasySql`
       INSERT INTO fantasy_post_release_bids (
         bid_id, draft_round_id, league_id, team_id,
@@ -151,7 +159,7 @@ export async function POST(request: NextRequest) {
       ) VALUES (
         ${bidId}, ${draft_round_id}, ${league_id}, ${team_id},
         ${category}, ${is_passive_team || false}, ${target_id}, ${target_name || target_id},
-        ${amount}, 'pending', NOW()
+        ${amount}, 'submitted', NOW()
       )
     `;
 

@@ -8,7 +8,7 @@ import { verifyAuth } from '@/lib/auth-helper';
  */
 export async function POST(request: NextRequest) {
   try {
-    const auth = await verifyAuth(['committee_admin'], request);
+    const auth = await verifyAuth(['committee_admin', 'super_admin', 'admin', 'committee'], request);
     if (!auth.authenticated) {
       return NextResponse.json({ error: 'Unauthorized - Committee access required' }, { status: 401 });
     }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         end_time = ${closesUTC},
         config = jsonb_build_object('active_category', ${category}),
         updated_at = NOW()
-      WHERE window_id = ${window_id} OR league_id = ${league_id}
+      WHERE window_id = ${window_id}
     `;
 
     // 2. Map category to draft round slot_name

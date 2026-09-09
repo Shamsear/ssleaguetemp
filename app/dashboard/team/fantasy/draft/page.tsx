@@ -268,16 +268,32 @@ export default function TeamDraftPage() {
         if (windowBidsRes.ok) {
           const windowBidsData = await windowBidsRes.json();
           const teamWindowBids = (windowBidsData.bids || []).filter((b: any) => b.team_id === teamId);
-          const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => ({
-            slot_index: activeSlotIndex || 2, // Active slot index
-            priority: idx + 1,
-            target_id: b.target_id,
-            target_name: b.target_name,
-            bid_type: b.is_passive_team ? 'real_team' : 'player',
-            bid_amount: Number(b.bid_amount)
-          }));
+          const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => {
+            const cat = (b.category || '').toUpperCase();
+            let slotIdx = activeSlotIndex || 2;
+            if (cat.includes('RED 1')) slotIdx = 1;
+            else if (cat.includes('RED 2')) slotIdx = 2;
+            else if (cat.includes('BLUE')) slotIdx = 3;
+            else if (cat.includes('BLACK')) slotIdx = 4;
+            else if (cat.includes('WHITE')) slotIdx = 5;
+            else if (cat.includes('PASSIVE') || b.is_passive_team) slotIdx = 6;
+
+            return {
+              slot_index: slotIdx,
+              priority: idx + 1,
+              target_id: b.target_id,
+              target_name: b.target_name || b.target_id,
+              bid_type: b.is_passive_team ? 'real_team' : 'player',
+              bid_amount: Number(b.bid_amount)
+            };
+          });
           setLocalBids(mappedWindowBids);
-          const isSubmitted = teamWindowBids.length > 0 && teamWindowBids.some((b: any) => b.status === 'submitted' || b.status === 'locked');
+          
+          const currentSlotCat = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'PASSIVE';
+          const isSubmitted = teamWindowBids.length > 0 && teamWindowBids.some((b: any) => {
+            const cat = (b.category || '').toUpperCase();
+            return cat.includes(currentSlotCat) || (currentSlotCat === 'PASSIVE' && b.is_passive_team);
+          });
           setIsWindowSubmitted(isSubmitted);
         } else {
           setLocalBids([]);
@@ -789,6 +805,23 @@ export default function TeamDraftPage() {
     }
     setIsSubmitting(true);
     try {
+      if (activeTransferWindow && myTeam) {
+        const categoryName = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'Passive Team';
+        const teamId = myTeam.team_id || myTeam.id;
+        await fetchWithTokenRefresh(
+          `/api/fantasy/draft/post-release-bids?window_id=${activeTransferWindow.window_id}&team_id=${teamId}&category=${encodeURIComponent(categoryName)}`,
+          { method: 'DELETE' }
+        );
+        setIsWindowSubmitted(false);
+        showAlert({
+          type: 'success',
+          title: 'Draft Unlocked',
+          message: `Unlocked bids for ${categoryName}. You can edit and resubmit.`
+        });
+        loadDraftData();
+        return;
+      }
+
       const slotParam = slotIdx ? `&slot_index=${slotIdx}` : '';
       const res = await fetchWithTokenRefresh(`/api/fantasy/draft/bids/submit?user_id=${user!.uid}${slotParam}`, {
         method: 'DELETE'

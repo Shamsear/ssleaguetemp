@@ -78,3 +78,50 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+/**
+ * DELETE /api/fantasy/draft/post-release-bids?window_id=xxx&team_id=yyy&category=zzz
+ * Unlock / delete submitted post-release bids for a team and category slot
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const windowId = searchParams.get('window_id');
+    const teamId = searchParams.get('team_id');
+    const category = searchParams.get('category');
+
+    if (!windowId || !teamId) {
+      return NextResponse.json(
+        { error: 'window_id and team_id are required' },
+        { status: 400 }
+      );
+    }
+
+    if (category) {
+      await fantasySql`
+        DELETE FROM fantasy_post_release_bids
+        WHERE team_id = ${teamId}
+          AND (draft_round_id = ${windowId} OR bid_id LIKE ${'%' + windowId + '%'})
+          AND (category ILIKE ${category} OR (${category === 'Passive Team'} AND is_passive_team = true))
+      `;
+    } else {
+      await fantasySql`
+        DELETE FROM fantasy_post_release_bids
+        WHERE team_id = ${teamId}
+          AND (draft_round_id = ${windowId} OR bid_id LIKE ${'%' + windowId + '%'})
+      `;
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Post-release bids deleted/unlocked successfully'
+    });
+  } catch (error: any) {
+    console.error('Error deleting post-release bids:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete post-release bids', details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
