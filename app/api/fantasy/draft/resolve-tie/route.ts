@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Verify winning team budget
     const [team] = await fantasySql`
-      SELECT team_id, team_name, budget
+      SELECT team_id, team_name, budget_remaining
       FROM fantasy_teams
       WHERE team_id = ${winning_team_id}
     `;
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Winning team not found' }, { status: 404 });
     }
 
-    const currentBudget = parseFloat(team.budget || 0);
+    const currentBudget = parseFloat(team.budget_remaining || 0);
     if (currentBudget < newAmount) {
       return NextResponse.json(
         { error: `Winning team ${team.team_name} has insufficient budget (Available: ₹${currentBudget}M, Required: ₹${newAmount}M)` },
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     // Deduct new amount from winning team's budget
     await fantasySql`
       UPDATE fantasy_teams
-      SET budget = budget - ${newAmount}, updated_at = NOW()
+      SET budget_remaining = budget_remaining - ${newAmount}, updated_at = NOW()
       WHERE team_id = ${winning_team_id}
     `;
 

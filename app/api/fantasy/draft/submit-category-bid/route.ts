@@ -103,31 +103,91 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. FUTURE ROUNDS BUDGET RESERVATION
-    // Find all remaining categories this team released items for in this window
+    // Fetch league category settings and draft rounds
+    const [leagueRow] = await fantasySql`
+      SELECT category_settings
+      FROM fantasy_leagues
+      WHERE league_id = ${league_id}
+    `;
+
+    const draftRounds = await fantasySql`
+      SELECT slot_index, slot_name, status
+      FROM fantasy_draft_rounds
+      WHERE league_id = ${league_id}
+      ORDER BY slot_index ASC
+    `;
+
+    const slots = typeof leagueRow?.category_settings === 'string'
+      ? JSON.parse(leagueRow.category_settings)?.slots
+      : leagueRow?.category_settings?.slots;
+
+    const getCategoryInfo = (catName: string) => {
+      const normCat = (catName || '').toUpperCase().trim();
+
+      let foundSlotIndex = 99;
+      let foundBasePrice = 10;
+      let foundStatus = 'pending';
+
+      if (slots && Array.isArray(slots)) {
+        const slot = slots.find((s: any) => {
+          const sName = (s.name || '').toUpperCase().trim();
+          const sList = (s.list_id || '').toUpperCase().trim();
+          if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL TEAM')) {
+            return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED') || sList.includes('REAL_TEAM');
+          }
+          if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1') || sList === 'RED_LIST_1';
+          if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2') || sList === 'RED_LIST_2';
+          return sName.includes(normCat) || sList.includes(normCat.toLowerCase());
+        });
+        if (slot) {
+          foundSlotIndex = Number(slot.slot_index);
+          foundBasePrice = Number(slot.base_price) || 10;
+        }
+      }
+
+      if (foundSlotIndex === 99) {
+        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+          foundSlotIndex = 6; foundBasePrice = 30;
+        } else if (normCat === 'RED 1' || normCat === 'RED SLOT 1' || normCat === 'RED') {
+          foundSlotIndex = 1; foundBasePrice = 25;
+        } else if (normCat === 'RED 2' || normCat === 'RED SLOT 2') {
+          foundSlotIndex = 2; foundBasePrice = 25;
+        } else if (normCat === 'BLUE') {
+          foundSlotIndex = 3; foundBasePrice = 15;
+        } else if (normCat === 'BLACK') {
+          foundSlotIndex = 4; foundBasePrice = 20;
+        } else if (normCat === 'WHITE') {
+          foundSlotIndex = 5; foundBasePrice = 10;
+        }
+      }
+
+      const round = draftRounds?.find((r: any) => Number(r.slot_index) === foundSlotIndex);
+      if (round) {
+        foundStatus = round.status;
+      }
+
+      return {
+        slotIndex: foundSlotIndex,
+        basePrice: foundBasePrice,
+        status: foundStatus
+      };
+    };
+
+    const activeInfo = getCategoryInfo(category);
     const teamReleases = windowReleases.filter((r) => r.team_id === team_id);
 
-    let reservedFunds = 0;
-    const processedCategories = new Set<string>();
-    processedCategories.add(category.toLowerCase());
-
+    const releaseCountsByCategory: Record<string, number> = {};
     for (const rel of teamReleases) {
-      const catKey = rel.resolved_category.toLowerCase();
-      if (processedCategories.has(catKey)) continue;
-      processedCategories.add(catKey);
+      const catKey = (rel.resolved_category || '').toUpperCase().trim();
+      releaseCountsByCategory[catKey] = (releaseCountsByCategory[catKey] || 0) + 1;
+    }
 
-      // Find participating teams count N_future for this future category round
-      const futureTeamIds = new Set(
-        windowReleases
-          .filter((r) => r.resolved_category.toLowerCase() === catKey)
-          .map((r) => r.team_id)
-      );
-      const N_future = Math.max(1, futureTeamIds.size);
-      const basePrice = 10; // Default base price ₹10 Cr
-      const increment = 1;
-
-      // Reserved formula: Base_Price + (N_future - 1) * Increment
-      const categoryReserved = basePrice + (N_future - 1) * increment;
-      reservedFunds += categoryReserved;
+    let reservedFunds = 0;
+    for (const [catKey, count] of Object.entries(releaseCountsByCategory)) {
+      const catInfo = getCategoryInfo(catKey);
+      if (catInfo.slotIndex > activeInfo.slotIndex && catInfo.status !== 'completed' && catInfo.status !== 'finalized') {
+        reservedFunds += count * catInfo.basePrice;
+      }
     }
 
     const currentBudget = parseFloat(team.budget_remaining || 0);

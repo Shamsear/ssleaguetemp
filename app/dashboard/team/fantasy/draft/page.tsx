@@ -522,16 +522,79 @@ export default function TeamDraftPage() {
     return `${hours}h ${mins}m ${secs}s`;
   };
 
-  // Math for remaining budget: deduct the maximum bid amount placed in each slot
+  // Calculate reserved funds for future uncompleted transfer window rounds based on category base prices
+  const calculateReservedFunds = () => {
+    if (!draftSettings || !myTeam || !activeTransferWindow || windowReleasesList.length === 0) return 0;
+    const activeSlotIdx = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? activeSlotIndex ?? 1;
+
+    const myTeamId = myTeam.team_id || myTeam.id;
+    const myReleases = windowReleasesList.filter((r: any) => r.team_id === myTeamId);
+    if (myReleases.length === 0) return 0;
+
+    const getCategoryInfo = (catName: string) => {
+      const normCat = (catName || '').toUpperCase().trim();
+      const round = draftRounds.find((r: any) => {
+        const sName = (r.slot_name || '').toUpperCase().trim();
+        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL TEAM')) {
+          return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
+        }
+        if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
+        if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
+        return sName.includes(normCat);
+      });
+      if (round) {
+        return {
+          slotIndex: Number(round.slot_index),
+          basePrice: Number(round.base_price) || 10,
+          status: round.status
+        };
+      }
+      if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) return { slotIndex: 6, basePrice: 30, status: 'pending' };
+      if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return { slotIndex: 1, basePrice: 25, status: 'pending' };
+      if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return { slotIndex: 2, basePrice: 25, status: 'pending' };
+      if (normCat === 'RED') return { slotIndex: 1, basePrice: 25, status: 'pending' };
+      if (normCat === 'BLUE') return { slotIndex: 3, basePrice: 15, status: 'pending' };
+      if (normCat === 'BLACK') return { slotIndex: 4, basePrice: 20, status: 'pending' };
+      if (normCat === 'WHITE') return { slotIndex: 5, basePrice: 10, status: 'pending' };
+      return { slotIndex: 99, basePrice: 10, status: 'pending' };
+    };
+
+    const releaseCountsByCategory: Record<string, number> = {};
+    myReleases.forEach((r: any) => {
+      let cat = r.is_passive_team ? 'PASSIVE TEAM' : (r.category || 'RED').toUpperCase().trim();
+      if (cat === 'UNKNOWN' || cat === 'RED') {
+        const pId = r.real_player_id;
+        const lists = draftSettings?.category_settings?.lists || {};
+        if (lists.red_list_2 && Array.isArray(lists.red_list_2) && lists.red_list_2.includes(pId)) cat = 'RED 2';
+        else cat = 'RED 1';
+      }
+      releaseCountsByCategory[cat] = (releaseCountsByCategory[cat] || 0) + 1;
+    });
+
+    let reserved = 0;
+    Object.entries(releaseCountsByCategory).forEach(([futureCat, count]) => {
+      const catInfo = getCategoryInfo(futureCat);
+      if (catInfo.slotIndex > activeSlotIdx && catInfo.status !== 'completed' && catInfo.status !== 'finalized') {
+        reserved += count * catInfo.basePrice;
+      }
+    });
+
+    return reserved;
+  };
+
+  // Math for remaining budget: deduct reserved funds for future rounds and maximum bid placed in current slot
   const calculateRemainingBudget = () => {
     if (!draftSettings || !myTeam) return 0;
     const currentTeamBudget = Number(myTeam.budget_remaining ?? myTeam.current_budget ?? myTeam.budget ?? 0);
+    const reservedFunds = calculateReservedFunds();
+    const availableBudget = Math.max(0, currentTeamBudget - reservedFunds);
+
     const activeSlotIdx = draftRounds.find((r: any) => r.status === 'active')?.slot_index ?? activeSlotIndex ?? 1;
 
     if (activeSlotIdx) {
       const slotBids = localBids.filter(b => b.slot_index === activeSlotIdx);
       const maxBidInSlot = slotBids.length > 0 ? Math.max(...slotBids.map(b => b.bid_amount)) : 0;
-      return Math.max(0, currentTeamBudget - maxBidInSlot);
+      return Math.max(0, availableBudget - maxBidInSlot);
     } else {
       const maxBidsBySlot: Record<number, number> = {};
       localBids.forEach(bid => {
@@ -541,7 +604,7 @@ export default function TeamDraftPage() {
         }
       });
       const spent = Object.values(maxBidsBySlot).reduce((sum, amt) => sum + amt, 0);
-      return Math.max(0, currentTeamBudget - spent);
+      return Math.max(0, availableBudget - spent);
     }
   };
 
@@ -1140,6 +1203,16 @@ export default function TeamDraftPage() {
                   <h4 className="text-xs font-black text-emerald-600 mt-0.5">{calculateRemainingBudget()} Cr</h4>
                 </div>
               </div>
+
+              {calculateReservedFunds() > 0 && (
+                <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200/80 px-4 py-2.5 rounded-xl">
+                  <Shield className="w-4.5 h-4.5 text-amber-600" />
+                  <div>
+                    <p className="text-[8px] text-amber-700/80 uppercase font-black">Reserved for Future Rounds</p>
+                    <h4 className="text-xs font-black text-amber-700 mt-0.5">{calculateReservedFunds()} Cr</h4>
+                  </div>
+                </div>
+              )}
 
               {/* Submit / Edit Button */}
               <div>

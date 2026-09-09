@@ -195,6 +195,64 @@ export default function PostWindowDraftProcessPage() {
 
       setCategoryTabs(dynamicTabs);
 
+      // Fetch per-slot active status & schedule from fantasy_draft_rounds first
+      const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
+      let rounds: any[] = [];
+      let matchingRound: any = null;
+
+      if (roundsRes.ok) {
+        const roundsData = await roundsRes.json();
+        rounds = roundsData.rounds || [];
+
+        let slotPattern = activeCategory.toUpperCase();
+        if (slotPattern === 'RED 1') slotPattern = 'RED SLOT 1';
+        else if (slotPattern === 'RED 2') slotPattern = 'RED SLOT 2';
+        else if (slotPattern.includes('PASSIVE') || slotPattern.includes('SUPPORTED')) slotPattern = 'REAL TEAM SLOT';
+
+        matchingRound = rounds.find((r: any) => {
+          const sName = (r.slot_name || '').toUpperCase();
+          if (slotPattern === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
+          if (slotPattern === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
+          if (slotPattern === 'REAL TEAM SLOT') return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
+          return sName.includes(slotPattern);
+        });
+      }
+
+      const getCategoryInfo = (catName: string) => {
+        const normCat = (catName || '').toUpperCase().trim();
+
+        if (rounds && Array.isArray(rounds)) {
+          const round = rounds.find((r: any) => {
+            const sName = (r.slot_name || '').toUpperCase().trim();
+            if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL TEAM')) {
+              return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
+            }
+            if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
+            if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
+            return sName.includes(normCat);
+          });
+          if (round) {
+            return {
+              slotIndex: Number(round.slot_index),
+              basePrice: Number(round.base_price) || 10,
+              status: round.status
+            };
+          }
+        }
+
+        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+          return { slotIndex: 6, basePrice: 30, status: 'pending' };
+        }
+        if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return { slotIndex: 1, basePrice: 25, status: 'pending' };
+        if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return { slotIndex: 2, basePrice: 25, status: 'pending' };
+        if (normCat === 'RED') return { slotIndex: 1, basePrice: 25, status: 'pending' };
+        if (normCat === 'BLUE') return { slotIndex: 3, basePrice: 15, status: 'pending' };
+        if (normCat === 'BLACK') return { slotIndex: 4, basePrice: 20, status: 'pending' };
+        if (normCat === 'WHITE') return { slotIndex: 5, basePrice: 10, status: 'pending' };
+
+        return { slotIndex: 99, basePrice: 10, status: 'pending' };
+      };
+
       // Map releases by team
       const teamsMap: Record<string, ParticipatingTeam> = {};
       allTeams.forEach((t: any) => {
@@ -210,31 +268,21 @@ export default function PostWindowDraftProcessPage() {
         };
       });
 
-      // Calculate reserves for future rounds based on N_future
-      const currentTabObj = dynamicTabs.find(t => t.id.toUpperCase() === activeCategory.toUpperCase()) || dynamicTabs[0];
+      // Calculate reserves for future rounds based on category base prices and uncompleted future slots
+      const activeInfo = getCategoryInfo(activeCategory);
 
       Object.values(teamsMap).forEach((pTeam) => {
-        const teamCats = new Set<string>();
+        const releaseCountsByCategory: Record<string, number> = {};
         pTeam.releases.forEach((r) => {
-          const cat = r.is_passive_team ? 'Passive Team' : (r.category || 'RED').toUpperCase();
-          teamCats.add(cat);
+          const cat = r.is_passive_team ? 'PASSIVE TEAM' : (r.category || 'RED').toUpperCase().trim();
+          releaseCountsByCategory[cat] = (releaseCountsByCategory[cat] || 0) + 1;
         });
 
         let reserved = 0;
-        teamCats.forEach((futureCat) => {
-          if (futureCat !== activeCategory.toUpperCase()) {
-            const futureParticipatingCount = Object.values(teamsMap).filter((t) =>
-              t.releases.some((r) =>
-                futureCat === 'PASSIVE TEAM'
-                  ? r.is_passive_team
-                  : (r.category || '').toUpperCase() === futureCat
-              )
-            ).length;
-
-            const N_future = Math.max(1, futureParticipatingCount);
-            const basePrice = 10;
-            const increment = 1;
-            reserved += basePrice + (N_future - 1) * increment;
+        Object.entries(releaseCountsByCategory).forEach(([futureCat, count]) => {
+          const catInfo = getCategoryInfo(futureCat);
+          if (catInfo.slotIndex > activeInfo.slotIndex && catInfo.status !== 'completed' && catInfo.status !== 'finalized') {
+            reserved += count * catInfo.basePrice;
           }
         });
 
@@ -244,7 +292,7 @@ export default function PostWindowDraftProcessPage() {
 
       setParticipatingTeams(Object.values(teamsMap));
 
-      // 4. Fetch Submitted Bids & Ties for active category, and matching slot schedule
+      // 4. Fetch Submitted Bids & Ties for active category
       let fetchedBids: Bid[] = [];
       const bidsRes = await fetchWithTokenRefresh(
         `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${windowId}&category=${encodeURIComponent(activeCategory)}`
@@ -254,27 +302,6 @@ export default function PostWindowDraftProcessPage() {
         fetchedBids = bidsData.bids || [];
         setAllBids(fetchedBids);
         setTies(bidsData.ties || []);
-      }
-
-      // Fetch per-slot active status & schedule from fantasy_draft_rounds
-      const roundsRes = await fetchWithTokenRefresh(`/api/fantasy/draft/rounds?league_id=${leagueId}`);
-      let matchingRound: any = null;
-      if (roundsRes.ok) {
-        const roundsData = await roundsRes.json();
-        const rounds = roundsData.rounds || [];
-
-        let slotPattern = activeCategory.toUpperCase();
-        if (slotPattern === 'RED 1') slotPattern = 'RED SLOT 1';
-        else if (slotPattern === 'RED 2') slotPattern = 'RED SLOT 2';
-        else if (slotPattern.includes('PASSIVE') || slotPattern.includes('SUPPORTED')) slotPattern = 'REAL TEAM SLOT';
-
-        matchingRound = rounds.find((r: any) => {
-          const sName = (r.slot_name || '').toUpperCase();
-          if (slotPattern === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
-          if (slotPattern === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
-          if (slotPattern === 'REAL TEAM SLOT') return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
-          return sName.includes(slotPattern);
-        });
       }
 
       const activeOpensAt = matchingRound?.opens_at || foundWin?.opens_at;
@@ -653,7 +680,7 @@ export default function PostWindowDraftProcessPage() {
 
             <div className="flex flex-wrap items-center gap-3 shrink-0">
               <button
-                onClick={loadData}
+                onClick={() => loadData(false)}
                 disabled={isLoading}
                 className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-200 flex items-center gap-2 transition cursor-pointer"
               >
@@ -1015,8 +1042,10 @@ export default function PostWindowDraftProcessPage() {
                 hasProgress = true;
 
                 for (const [targetId, nominees] of nominations) {
+                  if (!nominees || nominees.length === 0) continue;
                   const maxAmt = Math.max(...nominees.map((n) => n.bid.bid_amount));
                   const topNominees = nominees.filter((n) => n.bid.bid_amount === maxAmt);
+                  if (!topNominees || topNominees.length === 0) continue;
 
                   // Also include all bids on this target for display (sorted by amount)
                   const allTargetBids = validCategoryBids
@@ -1030,7 +1059,7 @@ export default function PostWindowDraftProcessPage() {
                       isTie: true
                     });
                     wonTargets.add(targetId);
-                  } else {
+                  } else if (topNominees[0]) {
                     const { teamId: winTeam, bid: winBid } = topNominees[0];
                     projectedWinnersMap.set(targetId, {
                       winningBid: winBid,
