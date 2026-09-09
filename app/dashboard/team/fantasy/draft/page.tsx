@@ -725,9 +725,17 @@ export default function TeamDraftPage() {
           const winData = await winRes.json();
           const activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
           if (activeWin) {
-            const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
             const categoryName = activeSlotIndex === 1 ? 'RED 1' : activeSlotIndex === 2 ? 'RED 2' : activeSlotIndex === 3 ? 'BLUE' : activeSlotIndex === 4 ? 'BLACK' : activeSlotIndex === 5 ? 'WHITE' : 'Passive Team';
+            const teamId = myTeam.team_id || myTeam.id;
 
+            // Clear old bids in database for this category slot first so deleted bids don't persist
+            await fetchWithTokenRefresh(
+              `/api/fantasy/draft/post-release-bids?window_id=${activeWin.window_id}&team_id=${teamId}&category=${encodeURIComponent(categoryName)}`,
+              { method: 'DELETE' }
+            );
+
+            // Re-insert current active bids
+            const bidsToSend = localBids.filter(b => b.slot_index === activeSlotIndex);
             for (const b of bidsToSend) {
               await fetchWithTokenRefresh('/api/fantasy/draft/submit-category-bid', {
                 method: 'POST',
@@ -735,7 +743,7 @@ export default function TeamDraftPage() {
                 body: JSON.stringify({
                   draft_round_id: activeWin.window_id,
                   league_id: myTeam.fantasy_league_id,
-                  team_id: myTeam.team_id || myTeam.id,
+                  team_id: teamId,
                   category: categoryName,
                   is_passive_team: b.bid_type === 'real_team',
                   target_id: b.target_id,
