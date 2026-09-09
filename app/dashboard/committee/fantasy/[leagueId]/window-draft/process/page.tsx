@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { ArrowLeft, Target, Users, Clock, AlertTriangle, CheckCircle, Trophy, RefreshCw, Zap, Shield, Sparkles, Filter, Lock, Unlock, Play, Pause, Timer, Save, Eye, Crown } from 'lucide-react';
@@ -125,6 +125,9 @@ function PostWindowDraftProcessContent() {
   const [activeCategory, setActiveCategory] = useState<string>('Passive Team');
   const [categoryTabs, setCategoryTabs] = useState<CategoryTab[]>([]);
   const [allReleases, setAllReleases] = useState<ReleaseItem[]>([]);
+  const [draftRounds, setDraftRounds] = useState<any[]>([]);
+  const [leagueSettings, setLeagueSettings] = useState<any>(null);
+  const hasUserSelectedTab = useRef<boolean>(false);
   
   const [participatingTeams, setParticipatingTeams] = useState<ParticipatingTeam[]>([]);
   const [allBids, setAllBids] = useState<Bid[]>([]);
@@ -165,6 +168,19 @@ function PostWindowDraftProcessContent() {
         }
       }
 
+      // 1.5 Fetch League Settings
+      const settingsRes = await fetchWithTokenRefresh(`/api/fantasy/settings?league_id=${leagueId}`);
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        const loadedCategorySettings = typeof settingsData.settings?.category_settings === 'string'
+          ? JSON.parse(settingsData.settings.category_settings)
+          : settingsData.settings?.category_settings;
+        setLeagueSettings({
+          ...settingsData.settings,
+          category_settings: loadedCategorySettings
+        });
+      }
+
       // 2. Fetch All Teams
       const teamsRes = await fetchWithTokenRefresh(`/api/fantasy/teams?league_id=${leagueId}`);
       const teamsData = teamsRes.ok ? await teamsRes.json() : { teams: [] };
@@ -203,6 +219,28 @@ function PostWindowDraftProcessContent() {
       if (roundsRes.ok) {
         const roundsData = await roundsRes.json();
         rounds = roundsData.rounds || [];
+        setDraftRounds(rounds);
+
+        if (!hasUserSelectedTab.current) {
+          const activeRound = rounds.find((r: any) => r.status === 'active') || rounds.find((r: any) => r.status !== 'completed');
+          if (activeRound) {
+            let targetCat = 'Passive Team';
+            const sName = (activeRound.slot_name || '').toUpperCase();
+            if (sName.includes('SLOT 1') || sName.includes('RED 1')) targetCat = 'RED 1';
+            else if (sName.includes('SLOT 2') || sName.includes('RED 2')) targetCat = 'RED 2';
+            else if (sName.includes('BLUE')) targetCat = 'BLUE';
+            else if (sName.includes('BLACK')) targetCat = 'BLACK';
+            else if (sName.includes('WHITE')) targetCat = 'WHITE';
+            else if (sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED')) targetCat = 'Passive Team';
+
+            if (targetCat !== activeCategory) {
+              hasUserSelectedTab.current = true;
+              setActiveCategory(targetCat);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
 
         let slotPattern = activeCategory.toUpperCase();
         if (slotPattern === 'RED 1') slotPattern = 'RED SLOT 1';
@@ -234,7 +272,7 @@ function PostWindowDraftProcessContent() {
           basePrice = 10;
         }
 
-        if (leagueSettings?.category_settings?.slots && Array.isArray(leagueSettings.category_settings.slots)) {
+        if (typeof leagueSettings !== 'undefined' && leagueSettings && leagueSettings.category_settings?.slots && Array.isArray(leagueSettings.category_settings.slots)) {
           const matchingSlot = leagueSettings.category_settings.slots.find((s: any) => {
             const sName = (s.name || '').toUpperCase().trim();
             const sList = (s.list_id || '').toUpperCase().trim();
@@ -738,10 +776,35 @@ function PostWindowDraftProcessContent() {
                 )
               ).length;
 
+              const normCat = tab.id.toUpperCase().trim();
+              const matchingRound = draftRounds.find((r: any) => {
+                const sName = (r.slot_name || '').toUpperCase().trim();
+                if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL TEAM')) {
+                  return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
+                }
+                if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
+                if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
+                return sName.includes(normCat);
+              });
+              const tabStatus = matchingRound?.status || 'pending';
+
+              const statusBadge = tabStatus === 'active' ? (
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500 text-white shadow-sm animate-pulse">OPEN</span>
+              ) : tabStatus === 'completed' || tabStatus === 'finalized' ? (
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-blue-500 text-white">DONE</span>
+              ) : tabStatus === 'closed' ? (
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-slate-500 text-white">CLOSED</span>
+              ) : (
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-amber-500 text-slate-950">PENDING</span>
+              );
+
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveCategory(tab.id)}
+                  onClick={() => {
+                    hasUserSelectedTab.current = true;
+                    setActiveCategory(tab.id);
+                  }}
                   className={`px-4 py-2.5 rounded-xl font-mono text-xs uppercase tracking-wider transition flex items-center gap-2.5 cursor-pointer ${
                     isSelected
                       ? 'bg-slate-800 text-amber-400 font-bold border border-slate-900 shadow-sm'
@@ -749,6 +812,7 @@ function PostWindowDraftProcessContent() {
                   }`}
                 >
                   <span>{tab.label}</span>
+                  {statusBadge}
                   <span
                     className={`px-2 py-0.5 rounded-md text-[9px] font-black ${
                       isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'
