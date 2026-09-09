@@ -539,11 +539,11 @@ export default function TransferWindowsPage() {
                               alert('The Release Window is currently ACTIVE. Please Force Close the Release Window first before starting the Post-Release Draft!');
                               return;
                             }
-                            router.push(`/dashboard/committee/fantasy/${leagueId}/draft/process?window_id=${window.window_id}`);
+                            router.push(`/dashboard/committee/fantasy/${leagueId}/window-draft/process?window_id=${window.window_id}`);
                           }}
                           className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                         >
-                          <Target className="w-3.5 h-3.5" /> Post-Release Draft
+                          <Target className="w-3.5 h-3.5" /> Process Window Draft
                         </button>
 
                         {/* Force Open / Close Toggle */}

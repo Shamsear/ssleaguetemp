@@ -4,7 +4,7 @@ import { verifyAuth } from '@/lib/auth-helper';
 
 /**
  * POST /api/fantasy/draft/process-post-release
- * Admin endpoint to process post-release draft bids
+ * Admin endpoint to process post-release draft bids for a specific category round or full window
  */
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { draft_round_id, league_id } = body;
+    const { draft_round_id, league_id, category } = body;
 
     if (!draft_round_id || !league_id) {
       return NextResponse.json(
@@ -23,31 +23,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Fetch pending bids for this draft round
-    const bids = await fantasySql`
-      SELECT 
-        bid_id, draft_round_id, league_id, team_id,
-        category, is_passive_team, target_id, target_name,
-        bid_amount, submitted_at
-      FROM fantasy_post_release_bids
-      WHERE draft_round_id = ${draft_round_id}
-        AND league_id = ${league_id}
-        AND status = 'pending'
-      ORDER BY target_id, bid_amount DESC, submitted_at ASC
-    `;
+    // 1. Fetch pending bids for this draft round / window (and optional category filter)
+    let bids = [];
+    if (category) {
+      bids = await fantasySql`
+        SELECT 
+          bid_id, draft_round_id, league_id, team_id,
+          category, is_passive_team, target_id, target_name,
+          bid_amount, submitted_at
+        FROM fantasy_post_release_bids
+        WHERE (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+          AND (category ILIKE ${category} OR (${category === 'Passive Team'} AND is_passive_team = true))
+          AND status = 'pending'
+        ORDER BY target_id, bid_amount DESC, submitted_at ASC
+      `;
+    } else {
+      bids = await fantasySql`
+        SELECT 
+          bid_id, draft_round_id, league_id, team_id,
+          category, is_passive_team, target_id, target_name,
+          bid_amount, submitted_at
+        FROM fantasy_post_release_bids
+        WHERE (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+          AND status = 'pending'
+        ORDER BY target_id, bid_amount DESC, submitted_at ASC
+      `;
+    }
 
     if (bids.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No pending bids found to process',
+        message: `No pending bids found to process${category ? ` for category ${category}` : ''}`,
         awarded: [],
         ties: []
       });
     }
 
+    // Filter out invalid self-release bids if any slipped through
+    const validBids = [];
+    for (const b of bids) {
+      const selfRelease = await fantasySql`
+        SELECT release_id FROM fantasy_releases
+        WHERE team_id = ${b.team_id}
+          AND (window_id = ${draft_round_id} OR league_id = ${league_id})
+          AND (real_player_id = ${b.target_id} OR player_name = ${b.target_name} OR (is_passive_team = true AND ${b.is_passive_team || false} = true))
+      `;
+      if (selfRelease.length > 0) {
+        // Mark self-release bid as invalid
+        await fantasySql`
+          UPDATE fantasy_post_release_bids
+          SET status = 'invalid_self_release'
+          WHERE bid_id = ${b.bid_id}
+        `;
+      } else {
+        validBids.push(b);
+      }
+    }
+
     // Group bids by target_id
     const targetMap: Record<string, any[]> = {};
-    for (const b of bids) {
+    for (const b of validBids) {
       if (!targetMap[b.target_id]) targetMap[b.target_id] = [];
       targetMap[b.target_id].push(b);
     }
@@ -109,6 +144,7 @@ export async function POST(request: NextRequest) {
             UPDATE fantasy_teams
             SET supported_team_id = ${targetId},
                 supported_team_name = ${winningBid.target_name},
+                supported_team_price = ${bidAmount},
                 updated_at = NOW()
             WHERE team_id = ${winningTeamId}
           `;
@@ -138,7 +174,7 @@ export async function POST(request: NextRequest) {
           WHERE team_id = ${winningTeamId}
         `;
 
-        // Update bid statuses
+        // Update bid status
         await fantasySql`
           UPDATE fantasy_post_release_bids
           SET status = 'won'
@@ -166,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Processed post-release draft bids. Awarded: ${awarded.length}, Ties: ${ties.length}`,
+      message: `Processed post-release draft bids${category ? ` for category ${category}` : ''}. Awarded: ${awarded.length}, Ties: ${ties.length}`,
       awarded,
       ties
     });

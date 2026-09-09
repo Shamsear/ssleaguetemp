@@ -39,37 +39,41 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Query releases for this team in this window
+    // Query releases for this team in this window with resolved category
     const releases = await fantasySql`
-      SELECT category, is_passive_team, COUNT(*) as count
-      FROM fantasy_releases
-      WHERE team_id = ${teamId}
-        AND window_id = ${targetWindowId}
-      GROUP BY category, is_passive_team
+      SELECT 
+        CASE
+          WHEN fr.is_passive_team = true THEN 'Passive Team'
+          WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
+          WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 2 OR fdr.slot_name ILIKE '%Slot 2%') THEN 'RED 2'
+          WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' THEN 'RED 1'
+          ELSE UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, 'Red'))
+        END as resolved_category,
+        COUNT(*) as count
+      FROM fantasy_releases fr
+      LEFT JOIN fantasy_players fp ON (fr.real_player_id = fp.real_player_id OR fr.real_player_id = fp.id::text)
+      LEFT JOIN fantasy_draft_bids fdb ON (
+        (fdb.target_id::text = fp.id::text OR fdb.target_id::text = fp.real_player_id::text OR fdb.target_id::text = fr.real_player_id::text)
+        AND fdb.status = 'won'
+      )
+      LEFT JOIN fantasy_draft_rounds fdr ON fdb.round_id = fdr.id
+      WHERE fr.team_id = ${teamId}
+        AND (fr.window_id = ${targetWindowId} OR fr.league_id = ${leagueId})
+      GROUP BY 1
     `;
 
     const eligibleCategories: Record<string, number> = {};
     let totalCount = 0;
 
     for (const r of releases) {
-      const catName = r.is_passive_team ? 'Passive Team' : (r.category || 'Uncategorized');
+      const catName = r.resolved_category;
       const count = parseInt(r.count || '0');
 
       // Exact category
       eligibleCategories[catName] = (eligibleCategories[catName] || 0) + count;
 
-      if (!r.is_passive_team && catName) {
-        // Base category family (e.g. RED-1 -> RED, RED-2 -> RED, RED 1 -> RED)
-        const baseFamily = catName.replace(/[-_ ]?\d+$/i, '').trim();
-        if (baseFamily && baseFamily !== catName) {
-          eligibleCategories[baseFamily] = (eligibleCategories[baseFamily] || 0) + count;
-          
-          // Also allow sub-groups under the same base family (e.g. RED-1, RED-2)
-          eligibleCategories[`${baseFamily}-1`] = (eligibleCategories[`${baseFamily}-1`] || 0) + count;
-          eligibleCategories[`${baseFamily}-2`] = (eligibleCategories[`${baseFamily}-2`] || 0) + count;
-          eligibleCategories[`${baseFamily} 1`] = (eligibleCategories[`${baseFamily} 1`] || 0) + count;
-          eligibleCategories[`${baseFamily} 2`] = (eligibleCategories[`${baseFamily} 2`] || 0) + count;
-        }
+      if (catName.startsWith('RED')) {
+        eligibleCategories['RED'] = (eligibleCategories['RED'] || 0) + count;
       }
 
       totalCount += count;

@@ -1,7 +1,7 @@
 'use client';
 import { CheckCircle, Clock, AlertTriangle, Users, Play, ArrowLeft, Target, Timer, Flag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -333,7 +333,15 @@ export default function ProcessDraftPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const leagueId = params?.leagueId as string;
+  const windowId = searchParams.get('window_id');
+
+  useEffect(() => {
+    if (windowId && leagueId) {
+      router.replace(`/dashboard/committee/fantasy/${leagueId}/window-draft/process?window_id=${windowId}`);
+    }
+  }, [windowId, leagueId, router]);
 
   const [teams, setTeams] = useState<TeamSubmission[]>([]);
   const [totalTeams, setTotalTeams] = useState(0);

@@ -3,7 +3,7 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
 
 /**
  * GET /api/fantasy/releases?league_id=xxx&team_id=yyy&window_id=zzz
- * Fetch released players and passive teams log with window details
+ * Fetch released players and passive teams log with resolved category & window details
  */
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +33,13 @@ export async function GET(request: NextRequest) {
           tw.closes_at as window_closes_at,
           fr.real_player_id,
           fr.player_name,
-          fr.category,
+          CASE
+            WHEN fr.is_passive_team = true THEN 'Passive Team'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 2 OR fdr.slot_name ILIKE '%Slot 2%') THEN 'RED 2'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' THEN 'RED 1'
+            ELSE UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, 'Red'))
+          END as category,
           fr.is_passive_team,
           fr.purchase_price,
           fr.refund_amount,
@@ -42,6 +48,14 @@ export async function GET(request: NextRequest) {
         FROM fantasy_releases fr
         LEFT JOIN fantasy_teams ft ON fr.team_id = ft.team_id
         LEFT JOIN fantasy_transfer_windows tw ON fr.window_id = tw.window_id
+        LEFT JOIN fantasy_players fp ON (
+          (fr.real_player_id = fp.real_player_id OR fr.real_player_id = fp.id::text)
+        )
+        LEFT JOIN fantasy_draft_bids fdb ON (
+          (fdb.target_id::text = fp.id::text OR fdb.target_id::text = fp.real_player_id::text OR fdb.target_id::text = fr.real_player_id::text)
+          AND fdb.status = 'won'
+        )
+        LEFT JOIN fantasy_draft_rounds fdr ON fdb.round_id = fdr.id
         WHERE fr.team_id = ${teamId}
           ${windowId ? fantasySql`AND fr.window_id = ${windowId}` : fantasySql``}
         ORDER BY fr.released_at DESC
@@ -59,7 +73,13 @@ export async function GET(request: NextRequest) {
           tw.closes_at as window_closes_at,
           fr.real_player_id,
           fr.player_name,
-          fr.category,
+          CASE
+            WHEN fr.is_passive_team = true THEN 'Passive Team'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 1 OR fdr.slot_name ILIKE '%Slot 1%') THEN 'RED 1'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' AND (fdb.slot_index = 2 OR fdr.slot_name ILIKE '%Slot 2%') THEN 'RED 2'
+            WHEN UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, '')) = 'RED' THEN 'RED 1'
+            ELSE UPPER(COALESCE(NULLIF(fr.category, 'Unknown'), fp.category, 'Red'))
+          END as category,
           fr.is_passive_team,
           fr.purchase_price,
           fr.refund_amount,
@@ -68,6 +88,14 @@ export async function GET(request: NextRequest) {
         FROM fantasy_releases fr
         LEFT JOIN fantasy_teams ft ON fr.team_id = ft.team_id
         LEFT JOIN fantasy_transfer_windows tw ON fr.window_id = tw.window_id
+        LEFT JOIN fantasy_players fp ON (
+          (fr.real_player_id = fp.real_player_id OR fr.real_player_id = fp.id::text)
+        )
+        LEFT JOIN fantasy_draft_bids fdb ON (
+          (fdb.target_id::text = fp.id::text OR fdb.target_id::text = fp.real_player_id::text OR fdb.target_id::text = fr.real_player_id::text)
+          AND fdb.status = 'won'
+        )
+        LEFT JOIN fantasy_draft_rounds fdr ON fdb.round_id = fdr.id
         WHERE fr.league_id = ${leagueId}
           ${windowId ? fantasySql`AND fr.window_id = ${windowId}` : fantasySql``}
         ORDER BY fr.released_at DESC
