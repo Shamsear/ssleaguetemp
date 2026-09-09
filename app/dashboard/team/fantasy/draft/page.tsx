@@ -533,6 +533,38 @@ export default function TeamDraftPage() {
 
     const getCategoryInfo = (catName: string) => {
       const normCat = (catName || '').toUpperCase().trim();
+
+      let basePrice = 10;
+      if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+        basePrice = 30;
+      } else if (normCat === 'RED 1' || normCat === 'RED SLOT 1' || normCat === 'RED 2' || normCat === 'RED SLOT 2' || normCat === 'RED') {
+        basePrice = 25;
+      } else if (normCat === 'BLUE' || normCat.includes('BLUE')) {
+        basePrice = 15;
+      } else if (normCat === 'BLACK' || normCat.includes('BLACK')) {
+        basePrice = 20;
+      } else if (normCat === 'WHITE' || normCat.includes('WHITE')) {
+        basePrice = 10;
+      }
+
+      if (draftSettings?.category_settings?.slots && Array.isArray(draftSettings.category_settings.slots)) {
+        const matchingSlot = draftSettings.category_settings.slots.find((s: any) => {
+          const sName = (s.name || '').toUpperCase().trim();
+          const sList = (s.list_id || '').toUpperCase().trim();
+          if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+            return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED') || sList.includes('REAL_TEAM');
+          }
+          if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1') || sList === 'RED_LIST_1';
+          if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2') || sList === 'RED_LIST_2';
+          return sName.includes(normCat) || sList.includes(normCat.toLowerCase());
+        });
+        if (matchingSlot && matchingSlot.base_price) {
+          basePrice = Number(matchingSlot.base_price);
+        }
+      }
+
+      let slotIndex = 99;
+      let status = 'pending';
       const round = draftRounds.find((r: any) => {
         const sName = (r.slot_name || '').toUpperCase().trim();
         if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL TEAM')) {
@@ -543,20 +575,10 @@ export default function TeamDraftPage() {
         return sName.includes(normCat);
       });
       if (round) {
-        return {
-          slotIndex: Number(round.slot_index),
-          basePrice: Number(round.base_price) || 10,
-          status: round.status
-        };
+        slotIndex = Number(round.slot_index);
+        status = round.status;
       }
-      if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) return { slotIndex: 6, basePrice: 30, status: 'pending' };
-      if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return { slotIndex: 1, basePrice: 25, status: 'pending' };
-      if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return { slotIndex: 2, basePrice: 25, status: 'pending' };
-      if (normCat === 'RED') return { slotIndex: 1, basePrice: 25, status: 'pending' };
-      if (normCat === 'BLUE') return { slotIndex: 3, basePrice: 15, status: 'pending' };
-      if (normCat === 'BLACK') return { slotIndex: 4, basePrice: 20, status: 'pending' };
-      if (normCat === 'WHITE') return { slotIndex: 5, basePrice: 10, status: 'pending' };
-      return { slotIndex: 99, basePrice: 10, status: 'pending' };
+      return { slotIndex, basePrice, status };
     };
 
     const releaseCountsByCategory: Record<string, number> = {};
@@ -571,10 +593,19 @@ export default function TeamDraftPage() {
       releaseCountsByCategory[cat] = (releaseCountsByCategory[cat] || 0) + 1;
     });
 
+    const activeCategoryName = getCategoryNameForSlot(activeSlotIdx || activeSlotIndex || 1);
+    const activeNormCategory = (activeCategoryName || '').toUpperCase().trim().includes('PASSIVE') ? 'PASSIVE TEAM' : (activeCategoryName || '').toUpperCase().trim();
+
     let reserved = 0;
-    Object.entries(releaseCountsByCategory).forEach(([futureCat, count]) => {
-      const catInfo = getCategoryInfo(futureCat);
-      if (catInfo.slotIndex > activeSlotIdx && catInfo.status !== 'completed' && catInfo.status !== 'finalized') {
+    Object.entries(releaseCountsByCategory).forEach(([otherCat, count]) => {
+      const normCatKey = otherCat.toUpperCase().trim();
+      const normCategory = normCatKey.includes('PASSIVE') || normCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : normCatKey;
+      const catInfo = getCategoryInfo(normCategory);
+
+      const isOtherCategory = normCategory !== activeNormCategory;
+      const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
+
+      if (isOtherCategory && isRoundUncompleted) {
         reserved += count * catInfo.basePrice;
       }
     });

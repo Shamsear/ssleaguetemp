@@ -221,6 +221,37 @@ function PostWindowDraftProcessContent() {
       const getCategoryInfo = (catName: string) => {
         const normCat = (catName || '').toUpperCase().trim();
 
+        let basePrice = 10;
+        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+          basePrice = 30;
+        } else if (normCat === 'RED 1' || normCat === 'RED SLOT 1' || normCat === 'RED 2' || normCat === 'RED SLOT 2' || normCat === 'RED') {
+          basePrice = 25;
+        } else if (normCat === 'BLUE' || normCat.includes('BLUE')) {
+          basePrice = 15;
+        } else if (normCat === 'BLACK' || normCat.includes('BLACK')) {
+          basePrice = 20;
+        } else if (normCat === 'WHITE' || normCat.includes('WHITE')) {
+          basePrice = 10;
+        }
+
+        if (leagueSettings?.category_settings?.slots && Array.isArray(leagueSettings.category_settings.slots)) {
+          const matchingSlot = leagueSettings.category_settings.slots.find((s: any) => {
+            const sName = (s.name || '').toUpperCase().trim();
+            const sList = (s.list_id || '').toUpperCase().trim();
+            if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+              return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED') || sList.includes('REAL_TEAM');
+            }
+            if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1') || sList === 'RED_LIST_1';
+            if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2') || sList === 'RED_LIST_2';
+            return sName.includes(normCat) || sList.includes(normCat.toLowerCase());
+          });
+          if (matchingSlot && matchingSlot.base_price) {
+            basePrice = Number(matchingSlot.base_price);
+          }
+        }
+
+        let slotIndex = 99;
+        let status = 'pending';
         if (rounds && Array.isArray(rounds)) {
           const round = rounds.find((r: any) => {
             const sName = (r.slot_name || '').toUpperCase().trim();
@@ -232,25 +263,12 @@ function PostWindowDraftProcessContent() {
             return sName.includes(normCat);
           });
           if (round) {
-            return {
-              slotIndex: Number(round.slot_index),
-              basePrice: Number(round.base_price) || 10,
-              status: round.status
-            };
+            slotIndex = Number(round.slot_index);
+            status = round.status;
           }
         }
 
-        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
-          return { slotIndex: 6, basePrice: 30, status: 'pending' };
-        }
-        if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return { slotIndex: 1, basePrice: 25, status: 'pending' };
-        if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return { slotIndex: 2, basePrice: 25, status: 'pending' };
-        if (normCat === 'RED') return { slotIndex: 1, basePrice: 25, status: 'pending' };
-        if (normCat === 'BLUE') return { slotIndex: 3, basePrice: 15, status: 'pending' };
-        if (normCat === 'BLACK') return { slotIndex: 4, basePrice: 20, status: 'pending' };
-        if (normCat === 'WHITE') return { slotIndex: 5, basePrice: 10, status: 'pending' };
-
-        return { slotIndex: 99, basePrice: 10, status: 'pending' };
+        return { slotIndex, basePrice, status };
       };
 
       // Map releases by team
@@ -268,8 +286,9 @@ function PostWindowDraftProcessContent() {
         };
       });
 
-      // Calculate reserves for future rounds based on category base prices and uncompleted future slots
-      const activeInfo = getCategoryInfo(activeCategory);
+      // Calculate reserves for other uncompleted categories (supports random round ordering)
+      const activeCatKey = (activeCategory || '').toUpperCase().trim();
+      const activeNormCategory = activeCatKey.includes('PASSIVE') || activeCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : activeCatKey;
 
       Object.values(teamsMap).forEach((pTeam) => {
         const releaseCountsByCategory: Record<string, number> = {};
@@ -279,12 +298,15 @@ function PostWindowDraftProcessContent() {
         });
 
         let reserved = 0;
-        Object.entries(releaseCountsByCategory).forEach(([futureCat, count]) => {
-          const catInfo = getCategoryInfo(futureCat);
-          const isFuture = catInfo.slotIndex > activeInfo.slotIndex;
+        Object.entries(releaseCountsByCategory).forEach(([otherCat, count]) => {
+          const normCatKey = otherCat.toUpperCase().trim();
+          const normCategory = normCatKey.includes('PASSIVE') || normCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : normCatKey;
+          const catInfo = getCategoryInfo(normCategory);
+
+          const isOtherCategory = normCategory !== activeNormCategory;
           const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
 
-          if (isFuture && isRoundUncompleted) {
+          if (isOtherCategory && isRoundUncompleted) {
             reserved += count * catInfo.basePrice;
           }
         });
@@ -1366,7 +1388,7 @@ function PostWindowDraftProcessContent() {
                 <Users className="w-4 h-4 text-amber-500" /> Participating Teams & Budget Reservations
               </h3>
               <span className="text-[10px] font-bold text-slate-400 uppercase">
-                Max Bid = Budget - Reserved Funds (N_future × Base Price)
+                Max Allowed Bid = Current Budget - Reserved Funds (for rounds after {activeCategory})
               </span>
             </div>
 

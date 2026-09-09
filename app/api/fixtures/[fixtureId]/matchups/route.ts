@@ -574,38 +574,43 @@ export async function PATCH(
     if (deadlines.length > 0 && deadlines[0].scheduled_date) {
       const deadline = deadlines[0];
 
-      // Calculate result entry deadline for logging
-      const resultDate = new Date(deadline.scheduled_date);
+      let schedDateStr = '';
+      if (typeof deadline.scheduled_date === 'string') {
+        schedDateStr = deadline.scheduled_date.split('T')[0];
+      } else if (deadline.scheduled_date instanceof Date) {
+        const ist = new Date(deadline.scheduled_date.getTime() + (5.5 * 60 * 60 * 1000));
+        schedDateStr = ist.toISOString().split('T')[0];
+      } else {
+        schedDateStr = String(deadline.scheduled_date).split('T')[0];
+      }
+
+      const resultDate = new Date(schedDateStr);
       resultDate.setDate(resultDate.getDate() + (deadline.result_entry_deadline_day_offset || 2));
       const resultDateStr = resultDate.toISOString().split('T')[0];
+      const resultTime = deadline.result_entry_deadline_time || '00:30';
 
-      // Parse deadline time (HH:MM format)
-      const [hours, minutes] = deadline.result_entry_deadline_time.split(':').map(Number);
-
-      // Create deadline in IST (UTC+5:30)
-      const resultDeadline = new Date(resultDateStr);
-      resultDeadline.setUTCHours(hours - 5, minutes - 30, 0, 0); // Convert IST to UTC
-
+      const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
       const now = new Date();
 
       console.log('Result entry - Deadline info:', {
         now: now.toISOString(),
         deadline: resultDeadline.toISOString(),
-        isPassed: now >= resultDeadline,
-        note: 'Deadline check disabled - controlled by frontend phase logic'
+        isPassed: now >= resultDeadline
       });
 
-      // Deadline check commented out - frontend phase logic controls access
-      // if (now >= resultDeadline) {
-      //   return NextResponse.json(
-      //     { 
-      //       error: 'Result entry deadline has passed',
-      //       deadline: resultDeadline.toISOString(),
-      //       current_time: now.toISOString()
-      //     },
-      //     { status: 403 }
-      //   );
-      // }
+      const { is_admin, user_role } = body;
+      const isAdmin = is_admin || user_role === 'admin' || user_role === 'committee' || entered_by === 'admin';
+
+      if (!isAdmin && now >= resultDeadline) {
+        return NextResponse.json(
+          { 
+            error: 'Result entry deadline has passed',
+            deadline: resultDeadline.toISOString(),
+            current_time: now.toISOString()
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Update match results (MOTM is now at fixture level, not matchup level)

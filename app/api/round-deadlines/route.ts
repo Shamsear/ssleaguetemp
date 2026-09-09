@@ -90,6 +90,17 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (seasonId) {
+      // Get all round deadlines for a season
+      const roundDeadlines = await sql`
+        SELECT * FROM round_deadlines
+        WHERE season_id = ${seasonId}
+        ORDER BY round_number ASC, leg ASC
+      `;
+      const processed = await autoStartMatchDays(roundDeadlines);
+      return NextResponse.json({ success: true, roundDeadlines: processed });
+    }
+
     return NextResponse.json(
       { success: false, error: 'Missing required parameters' },
       { status: 400 }

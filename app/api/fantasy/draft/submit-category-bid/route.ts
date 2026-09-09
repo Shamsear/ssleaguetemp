@@ -126,7 +126,19 @@ export async function POST(request: NextRequest) {
 
       let foundSlotIndex = 99;
       let foundBasePrice = 10;
-      let foundStatus = 'pending';
+      if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
+        foundSlotIndex = 6; foundBasePrice = 30;
+      } else if (normCat === 'RED 1' || normCat === 'RED SLOT 1' || normCat === 'RED') {
+        foundSlotIndex = 1; foundBasePrice = 25;
+      } else if (normCat === 'RED 2' || normCat === 'RED SLOT 2') {
+        foundSlotIndex = 2; foundBasePrice = 25;
+      } else if (normCat === 'BLUE' || normCat.includes('BLUE')) {
+        foundSlotIndex = 3; foundBasePrice = 15;
+      } else if (normCat === 'BLACK' || normCat.includes('BLACK')) {
+        foundSlotIndex = 4; foundBasePrice = 20;
+      } else if (normCat === 'WHITE' || normCat.includes('WHITE')) {
+        foundSlotIndex = 5; foundBasePrice = 10;
+      }
 
       if (slots && Array.isArray(slots)) {
         const slot = slots.find((s: any) => {
@@ -141,28 +153,25 @@ export async function POST(request: NextRequest) {
         });
         if (slot) {
           foundSlotIndex = Number(slot.slot_index);
-          foundBasePrice = Number(slot.base_price) || 10;
+          if (slot.base_price) {
+            foundBasePrice = Number(slot.base_price);
+          }
         }
       }
 
-      if (foundSlotIndex === 99) {
-        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL')) {
-          foundSlotIndex = 6; foundBasePrice = 30;
-        } else if (normCat === 'RED 1' || normCat === 'RED SLOT 1' || normCat === 'RED') {
-          foundSlotIndex = 1; foundBasePrice = 25;
-        } else if (normCat === 'RED 2' || normCat === 'RED SLOT 2') {
-          foundSlotIndex = 2; foundBasePrice = 25;
-        } else if (normCat === 'BLUE') {
-          foundSlotIndex = 3; foundBasePrice = 15;
-        } else if (normCat === 'BLACK') {
-          foundSlotIndex = 4; foundBasePrice = 20;
-        } else if (normCat === 'WHITE') {
-          foundSlotIndex = 5; foundBasePrice = 10;
+      let foundStatus = 'pending';
+      const round = draftRounds?.find((r: any) => {
+        const sName = (r.slot_name || '').toUpperCase().trim();
+        if (normCat.includes('PASSIVE') || normCat.includes('SUPPORTED') || normCat.includes('REAL TEAM')) {
+          return sName.includes('REAL TEAM') || sName.includes('PASSIVE') || sName.includes('SUPPORTED');
         }
-      }
+        if (normCat === 'RED 1' || normCat === 'RED SLOT 1') return sName.includes('SLOT 1') || sName.includes('RED 1');
+        if (normCat === 'RED 2' || normCat === 'RED SLOT 2') return sName.includes('SLOT 2') || sName.includes('RED 2');
+        return sName.includes(normCat) || Number(r.slot_index) === foundSlotIndex;
+      });
 
-      const round = draftRounds?.find((r: any) => Number(r.slot_index) === foundSlotIndex);
       if (round) {
+        foundSlotIndex = Number(round.slot_index);
         foundStatus = round.status;
       }
 
@@ -194,15 +203,20 @@ export async function POST(request: NextRequest) {
       wonPostReleaseBids.map((b: any) => b.is_passive_team ? 'PASSIVE TEAM' : (b.category || '').toUpperCase().trim())
     );
 
+    const activeCatKey = (category || '').toUpperCase().trim();
+    const activeNormCategory = activeCatKey.includes('PASSIVE') || activeCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : activeCatKey;
+
     let reservedFunds = 0;
     for (const [catKey, count] of Object.entries(releaseCountsByCategory)) {
       const normCatKey = catKey.toUpperCase().trim();
-      const catInfo = getCategoryInfo(normCatKey);
-      const isFuture = catInfo.slotIndex > activeInfo.slotIndex;
-      const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
-      const isTeamUncompleted = !teamWonCats.has(normCatKey);
+      const normCategory = normCatKey.includes('PASSIVE') || normCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : normCatKey;
+      const catInfo = getCategoryInfo(normCategory);
 
-      if (isFuture && isRoundUncompleted && isTeamUncompleted) {
+      const isOtherCategory = normCategory !== activeNormCategory;
+      const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
+      const isTeamUncompleted = !teamWonCats.has(normCategory);
+
+      if (isOtherCategory && isRoundUncompleted && isTeamUncompleted) {
         reservedFunds += count * catInfo.basePrice;
       }
     }

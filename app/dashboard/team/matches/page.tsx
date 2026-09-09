@@ -305,10 +305,18 @@ export default function TeamMatchesPage() {
               away_deadline: awayDeadline,
               result_deadline: resultDeadline,
             };
-          } else {
+          } else if (now < resultDeadline) {
             return {
               phase: 'result_entry' as const,
               phase_label: 'Result Entry',
+              home_deadline: homeDeadline,
+              away_deadline: awayDeadline,
+              result_deadline: resultDeadline,
+            };
+          } else {
+            return {
+              phase: 'closed' as const,
+              phase_label: 'Closed',
               home_deadline: homeDeadline,
               away_deadline: awayDeadline,
               result_deadline: resultDeadline,
@@ -333,19 +341,7 @@ export default function TeamMatchesPage() {
             let away_deadline: Date | undefined;
             let result_deadline: Date | undefined;
 
-            if (fStatus === 'completed' || fStatus === 'finalized' || rStatus === 'completed' || rStatus === 'finalized') {
-              phase = 'closed';
-              phase_label = 'Closed';
-            } else if (fStatus === 'result_entry' || rStatus === 'result_entry') {
-              phase = 'result_entry';
-              phase_label = 'Result Entry';
-            } else if (fStatus === 'home_fixture' || rStatus === 'home_fixture') {
-              phase = 'home_fixture';
-              phase_label = 'Home Fixture Setup';
-            } else if (fStatus === 'fixture_entry' || rStatus === 'fixture_entry') {
-              phase = 'fixture_entry';
-              phase_label = 'Fixture Entry';
-            } else if (fStatus === 'closed' || rStatus === 'closed') {
+            if (fStatus === 'completed' || fStatus === 'finalized' || fStatus === 'closed' || rStatus === 'completed' || rStatus === 'finalized' || rStatus === 'closed') {
               phase = 'closed';
               phase_label = 'Closed';
             } else {

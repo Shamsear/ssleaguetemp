@@ -1479,6 +1479,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
     const isHomeFixtureSet = matchups.length > 0;
     const isPastHomeDeadline = now >= homeDeadline;
+    const isPastResultDeadline = now >= resultDeadline;
 
     if (!isHomeFixtureSet && !isPastHomeDeadline) {
       return {
@@ -1487,6 +1488,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         deadline: homeDeadline,
         formattedDate: `${scheduledDateStr} at ${homeTime} IST`,
         description: 'Home team must create player matchups before this deadline'
+      };
+    } else if (isPastResultDeadline) {
+      return {
+        type: 'closed',
+        label: 'Result Entry Closed',
+        deadline: resultDeadline,
+        formattedDate: `${resultDateStr} at ${resultTime} IST`,
+        description: 'The deadline for entering match results has passed. Result entry is closed.'
       };
     } else {
       return {
