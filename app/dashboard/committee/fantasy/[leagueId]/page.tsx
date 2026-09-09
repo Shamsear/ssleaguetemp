@@ -170,6 +170,18 @@ export default function FantasyLeagueDashboard() {
       badge: 'UPDATED',
     },
     {
+      title: 'Performers Breakdown',
+      description: 'View Team of the Day, Supporting Team of the Day, POD & POW breakdown (Drafted vs Free Agents)',
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      ),
+      href: `/dashboard/committee/fantasy/${leagueId}/performers`,
+      color: 'from-amber-500 to-yellow-600',
+      badge: 'NEW',
+    },
+    {
       title: 'Captain Windows',
       description: 'Manage captain selection windows per round',
       icon: (
