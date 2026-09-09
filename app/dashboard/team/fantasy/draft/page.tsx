@@ -400,21 +400,23 @@ export default function TeamDraftPage() {
   };
 
   const isSlotDisabled = (slotIdx: number) => {
-    if (!isBiddingStarted) return true;
+    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
+    if (round) {
+      if (round.status !== 'active') return true;
+    } else if (!isBiddingStarted) {
+      return true;
+    }
     if (isSlotRoundExpired(slotIdx)) return true;
     if (isSlotLocked(slotIdx)) return true;
     if (!isCategoryEligibleForSlot(slotIdx)) return true;
-    if (activeTransferWindow) return false;
-    const round = draftRounds.find((r: any) => r.slot_index === slotIdx);
-    if (!round || round.status !== 'active') return true;
     return false;
   };
 
   // Set up live countdown timer based on active slot's round / active window
   useEffect(() => {
-    const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex) || activeTransferWindow;
-    const opensAtStr = activeTransferWindow?.opens_at || activeRound?.opens_at;
-    const closesAtStr = activeTransferWindow?.closes_at || activeRound?.closes_at;
+    const activeRound = draftRounds.find((r: any) => r.slot_index === activeSlotIndex);
+    const opensAtStr = activeRound?.opens_at || activeTransferWindow?.opens_at;
+    const closesAtStr = activeRound?.closes_at || activeTransferWindow?.closes_at;
 
     if (!closesAtStr && !opensAtStr) {
       setTimeRemaining(0);
@@ -422,18 +424,29 @@ export default function TeamDraftPage() {
       return;
     }
 
-    const timer = setInterval(() => {
+    const updateTimer = () => {
       const opensAt = opensAtStr ? parseAsUTC(opensAtStr) : 0;
       const closesAt = closesAtStr ? parseAsUTC(closesAtStr) : 0;
       const now = Date.now();
 
-      if (opensAt > now) {
-        // Start time is in the future -> Scheduled pre-bidding mode!
+      if (activeRound?.status === 'closed' || activeRound?.status === 'completed') {
+        setIsBiddingStarted(false);
+        setTimeLabel('Closed');
+        setTimeRemaining(0);
+      } else if (activeRound?.status === 'active') {
+        setIsBiddingStarted(true);
+        if (closesAt > now) {
+          setTimeLabel('Closes In');
+          setTimeRemaining(closesAt - now);
+        } else {
+          setTimeLabel('Closed');
+          setTimeRemaining(0);
+        }
+      } else if (opensAt > now) {
         setIsBiddingStarted(false);
         setTimeLabel('Opens In');
         setTimeRemaining(opensAt - now);
       } else if (closesAt > now) {
-        // Bidding active!
         setIsBiddingStarted(true);
         setTimeLabel('Closes In');
         setTimeRemaining(closesAt - now);
@@ -441,9 +454,11 @@ export default function TeamDraftPage() {
         setIsBiddingStarted(false);
         setTimeLabel('Closed');
         setTimeRemaining(0);
-        clearInterval(timer);
       }
-    }, 1000);
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
   }, [draftRounds, activeSlotIndex, activeTransferWindow]);
