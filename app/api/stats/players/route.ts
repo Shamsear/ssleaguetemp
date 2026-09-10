@@ -544,7 +544,8 @@ export async function GET(request: NextRequest) {
             clean_sheets, motm_awards, points,
             NULL as base_points
           FROM realplayerstats 
-          WHERE team_id = ${teamId} AND tournament_id = ${tournamentId}
+          WHERE team_id = ${teamId} 
+            AND (season_id = ${seasonId} OR tournament_id = ${tournamentId})
           ORDER BY points DESC
         `;
       }
@@ -639,7 +640,7 @@ export async function GET(request: NextRequest) {
               contract_id, contract_start_season, contract_end_season,
               is_auto_registered, registration_date
             FROM player_seasons 
-            WHERE season_id = ${seasonIdFromTournament} AND category = ${category}
+            WHERE season_id = ${seasonIdFromTournament} AND UPPER(category) = UPPER(${category})
             ORDER BY ${sql(sortField)} DESC, player_name ASC
             LIMIT ${limit}
           `;
@@ -682,7 +683,7 @@ export async function GET(request: NextRequest) {
                 base_price
               FROM realplayerstats 
               WHERE (season_id = ${seasonIdClean} OR season_id = ${tournamentId} OR tournament_id = ${tournamentId})
-                AND category = ${category}
+                AND UPPER(category) = UPPER(${category})
               ORDER BY points DESC, goals_scored DESC, player_name ASC
               LIMIT ${limit}
             `;

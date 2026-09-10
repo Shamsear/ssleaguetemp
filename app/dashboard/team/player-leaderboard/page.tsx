@@ -1,11 +1,11 @@
 'use client';
 
 import { GloveIcon, SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Globe, Star, Trophy, User, Users, XCircle } from 'lucide-react';
+import { BarChart2, Filter, Globe, Star, Trophy, User, Users, XCircle } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTournamentContext } from '@/contexts/TournamentContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePlayerStats } from '@/hooks';
@@ -52,6 +52,45 @@ type SortField = 'points' | 'matches_played' | 'wins' | 'losses' | 'draws' | 'wi
 type SortOrder = 'asc' | 'desc';
 type TabType = 'all' | 'golden-boot' | 'golden-glove' | 'rankings';
 
+const getCategoryColor = (category: string) => {
+  const cat = (category || '').trim().toUpperCase();
+  if (cat === 'RED') return 'bg-rose-50 text-rose-700 border-rose-200/50';
+  if (cat === 'BLUE') return 'bg-blue-50 text-blue-700 border-blue-200/50';
+  if (cat === 'GOLD') return 'bg-amber-50 text-amber-700 border-amber-200/50';
+  if (cat === 'SILVER') return 'bg-slate-100 text-slate-700 border-slate-200/50';
+  if (cat === 'BLACK') return 'bg-slate-900 text-slate-100 border-slate-950';
+  if (cat === 'WHITE') return 'bg-white text-slate-800 border-slate-200';
+  return 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
+};
+
+const getCategoryPillStyle = (cat: string, isSelected: boolean) => {
+  if (isSelected) {
+    if (cat === 'RED') return 'bg-rose-600 text-white border-rose-700 shadow-md shadow-rose-500/20';
+    if (cat === 'BLACK') return 'bg-slate-900 text-white border-black shadow-md shadow-slate-900/30';
+    if (cat === 'BLUE') return 'bg-blue-600 text-white border-blue-700 shadow-md shadow-blue-500/20';
+    if (cat === 'WHITE') return 'bg-white text-slate-900 border-slate-300 ring-2 ring-slate-400/50 shadow-md';
+    return 'bg-slate-800 text-amber-400 border-slate-900 shadow-md';
+  }
+  // Unselected
+  if (cat === 'RED') return 'bg-rose-50 text-rose-700 hover:bg-rose-100/80 border-rose-200/60';
+  if (cat === 'BLACK') return 'bg-slate-100 text-slate-800 hover:bg-slate-200/80 border-slate-300/60';
+  if (cat === 'BLUE') return 'bg-blue-50 text-blue-700 hover:bg-blue-100/80 border-blue-200/60';
+  if (cat === 'WHITE') return 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200/60';
+  return 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border-slate-200/40';
+};
+
+const getCategoryBadgeStyle = (cat: string, isSelected: boolean) => {
+  if (isSelected) {
+    if (cat === 'WHITE') return 'bg-slate-200 text-slate-800';
+    return 'bg-white/20 text-white';
+  }
+  if (cat === 'RED') return 'bg-rose-200/60 text-rose-800';
+  if (cat === 'BLACK') return 'bg-slate-200 text-slate-800';
+  if (cat === 'BLUE') return 'bg-blue-200/60 text-blue-800';
+  if (cat === 'WHITE') return 'bg-slate-200 text-slate-700';
+  return 'bg-slate-200/60 text-slate-600';
+};
+
 export default function PlayerLeaderboardPage() {
   const { user, loading } = useAuth();
   const { selectedTournamentId, seasonId, setSeasonId } = useTournamentContext();
@@ -68,11 +107,10 @@ export default function PlayerLeaderboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showOverall, setShowOverall] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   // Use React Query hook for player stats from Neon
-  // If showOverall is true, use seasonId (all tournaments), otherwise use tournamentId (specific tournament)
-  // Use seasonId from context for team users, userSeasonId for committee admins
-  const effectiveSeasonId = user?.role === 'team' ? seasonId : userSeasonId;
+  const effectiveSeasonId = seasonId || userSeasonId || '';
   
   const { data: playerStatsData, isLoading: statsLoading } = usePlayerStats({
     tournamentId: showOverall ? undefined : (selectedTournamentId || undefined),
@@ -84,9 +122,38 @@ export default function PlayerLeaderboardPage() {
   const [sortField, setSortField] = useState<SortField>('points');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
+  const availableCategories = useMemo(() => {
+    const cats = new Set<string>();
+    players.forEach(p => {
+      const c = (p.category_name || '').trim().toUpperCase();
+      if (c && c !== 'UNKNOWN') cats.add(c);
+    });
+    const order = ['RED', 'BLACK', 'BLUE', 'WHITE'];
+    const sorted = Array.from(cats).sort((a, b) => {
+      const idxA = order.indexOf(a);
+      const idxB = order.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return ['all', ...sorted];
+  }, [players]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: players.length };
+    players.forEach(p => {
+      const c = (p.category_name || '').trim().toUpperCase();
+      if (c && c !== 'UNKNOWN') {
+        counts[c] = (counts[c] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [players]);
+
   useEffect(() => {
     const fetchTeamSeason = async () => {
-      if (!user || user.role !== 'team' || seasonId) return;
+      if (!user || seasonId) return;
 
       try {
         // Get active season
@@ -96,19 +163,21 @@ export default function PlayerLeaderboardPage() {
         
         if (seasonsList.length > 0) {
           const activeSeasonId = seasonsList[0].id;
+          let targetSeasonId = activeSeasonId;
           
-          // Check if team is registered for this season
-          const teamSeasonsRes = await fetch(`/api/team-seasons?user_id=${user.uid}&season_id=${activeSeasonId}`);
-          const teamSeasonsJson = await teamSeasonsRes.json();
-          const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
-          const teamSeasonSnapshot = allTeamSeasons.filter((ts: any) => ts.status === 'registered');
-          
-          if (teamSeasonSnapshot.length > 0) {
-            console.log('📝 [Player Leaderboard] Setting team season ID:', activeSeasonId);
-            setSeasonId(activeSeasonId);
-          } else {
-            console.log('⚠️ [Player Leaderboard] Team not registered for active season');
+          try {
+            const teamSeasonsRes = await fetch(`/api/team-seasons?user_id=${user.uid}&season_id=${activeSeasonId}`);
+            const teamSeasonsJson = await teamSeasonsRes.json();
+            const allTeamSeasons = teamSeasonsJson.data || teamSeasonsJson.teamSeasons || [];
+            if (allTeamSeasons.length > 0) {
+              targetSeasonId = allTeamSeasons[0].season_id || activeSeasonId;
+            }
+          } catch (e) {
+            console.error('[Player Leaderboard] Error checking team seasons:', e);
           }
+          
+          console.log('📝 [Player Leaderboard] Setting team season ID:', targetSeasonId);
+          setSeasonId(targetSeasonId);
         } else {
           console.log('⚠️ [Player Leaderboard] No active season found');
         }
@@ -122,7 +191,7 @@ export default function PlayerLeaderboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user || user.role !== 'team' || !effectiveSeasonId) return;
+      if (!user || !effectiveSeasonId) return;
 
       try {
         setIsLoading(true);
@@ -192,7 +261,30 @@ export default function PlayerLeaderboardPage() {
   useEffect(() => {
     let filtered = [...players];
 
-    // Tab filter
+    // Category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(
+        p => (p.category_name || '').trim().toUpperCase() === selectedCategory.trim().toUpperCase()
+      );
+    }
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (p) =>
+          normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
+          normalizeStr(p.player_id).includes(normalizeStr(searchTerm))
+      );
+    }
+
+    // Team filter
+    if (teamFilter === 'unassigned') {
+      filtered = filtered.filter((p) => !p.team_id);
+    } else if (teamFilter) {
+      filtered = filtered.filter((p) => p.team_id === teamFilter);
+    }
+
+    // Tab filters
     if (activeTab === 'golden-boot') {
       // Top 10 goal scorers
       filtered = filtered
@@ -215,47 +307,27 @@ export default function PlayerLeaderboardPage() {
       filtered = filtered
         .sort((a, b) => b.points - a.points)
         .slice(0, 20);
-    }
-
-    // Search filter (only for 'all' tab)
-    if (activeTab === 'all' && searchTerm) {
-      filtered = filtered.filter(
-        (p) =>
-          normalizeStr(p.name).includes(normalizeStr(searchTerm)) ||
-          normalizeStr(p.player_id).includes(normalizeStr(searchTerm))
-      );
-    }
-
-    // Team filter (only for 'all' tab)
-    if (activeTab === 'all') {
-      if (teamFilter === 'unassigned') {
-        filtered = filtered.filter((p) => !p.team_id);
-      } else if (teamFilter) {
-        filtered = filtered.filter((p) => p.team_id === teamFilter);
-      }
-    }
-
-    // Sort (only for 'all' tab)
-    if (activeTab === 'all') {
+    } else if (activeTab === 'all') {
+      // Sort (only for 'all' tab)
       filtered.sort((a, b) => {
         let aVal: any = a[sortField];
         let bVal: any = b[sortField];
 
         if (sortField === 'name') {
-          aVal = aVal.toLowerCase();
-          bVal = bVal.toLowerCase();
+          aVal = (aVal || '').toLowerCase();
+          bVal = (bVal || '').toLowerCase();
         }
 
         if (sortOrder === 'asc') {
-          return aVal > bVal ? 1 : -1;
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
         } else {
-          return aVal < bVal ? 1 : -1;
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
         }
       });
     }
 
     setFilteredPlayers(filtered);
-  }, [players, searchTerm, teamFilter, sortField, sortOrder, activeTab]);
+  }, [players, searchTerm, teamFilter, selectedCategory, sortField, sortOrder, activeTab]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -501,11 +573,47 @@ export default function PlayerLeaderboardPage() {
           </div>
         </div>
 
+        {/* Category Filter */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-5 mb-6 shadow-sm font-mono">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Category Filter</h3>
+            </div>
+            {selectedCategory !== 'all' && (
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className="text-[10px] text-amber-600 hover:text-amber-700 font-extrabold uppercase tracking-wider cursor-pointer"
+              >
+                Reset Filter
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1 -mx-1 px-1 items-center">
+            {availableCategories.map((cat) => {
+              const count = categoryCounts[cat] || 0;
+              const isSelected = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl border cursor-pointer shrink-0 flex items-center gap-1.5 ${getCategoryPillStyle(cat, isSelected)}`}
+                >
+                  <span>{cat === 'all' ? 'All Categories' : cat}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${getCategoryBadgeStyle(cat, isSelected)}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Filters - Only show for 'all' tab */}
         {activeTab === 'all' && (
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 sm:p-6 mb-6 font-mono shadow-sm">
             <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-4">Filters</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Search Players</label>
                 <input
@@ -529,6 +637,21 @@ export default function PlayerLeaderboardPage() {
                   {teams.map((team) => (
                     <option key={team.id} value={team.id}>
                       {team.team_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+                >
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat === 'all' ? 'All Categories' : cat} ({categoryCounts[cat] || 0})
                     </option>
                   ))}
                 </select>
@@ -700,7 +823,7 @@ export default function PlayerLeaderboardPage() {
                         </td>
                         <td className="px-4 py-3.5 text-left whitespace-nowrap">
                           {player.category_name && player.category_name !== 'Unknown' ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${getCategoryColor(player.category_name)}`}>
                               {player.category_name}
                             </span>
                           ) : (
@@ -790,7 +913,7 @@ export default function PlayerLeaderboardPage() {
                             {player.team_name || <span className="text-slate-400 italic">Unassigned</span>}
                           </p>
                           {player.category_name && player.category_name !== 'Unknown' && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800 mt-0.5">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase border mt-0.5 ${getCategoryColor(player.category_name)}`}>
                               {player.category_name}
                             </span>
                           )}
