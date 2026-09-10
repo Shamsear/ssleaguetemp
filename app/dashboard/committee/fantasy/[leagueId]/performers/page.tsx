@@ -466,7 +466,6 @@ export default function CommitteePerformersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                    <tbody className="divide-y divide-slate-100">
                       {roundPerf?.team_of_the_day?.map((t: any, idx: number) => {
                         const isExpanded = expandedTeamId === t.team_id;
                         return (
