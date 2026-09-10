@@ -140,6 +140,35 @@ export async function GET(request: NextRequest) {
       WHERE league_id = ${leagueId}
     `;
 
+    // Fetch detailed player points for each team in targetRound for itemized round breakdown
+    const roundPlayerDetails = await fantasySql`
+      SELECT 
+        fpp.team_id,
+        fpp.real_player_id,
+        fpp.player_name,
+        fpp.goals_scored,
+        fpp.goals_conceded,
+        fpp.result,
+        fpp.is_motm,
+        fpp.is_clean_sheet,
+        fpp.is_captain,
+        fpp.is_vice_captain,
+        fpp.base_points,
+        fpp.points_multiplier,
+        fpp.points_breakdown,
+        fpp.total_points
+      FROM fantasy_player_points fpp
+      WHERE fpp.league_id = ${leagueId} AND fpp.round_number = ${targetRound}
+      ORDER BY fpp.total_points DESC
+    `;
+
+    const teamPlayersMap = new Map<string, any[]>();
+    roundPlayerDetails.forEach((p: any) => {
+      const existing = teamPlayersMap.get(p.team_id) || [];
+      existing.push(p);
+      teamPlayersMap.set(p.team_id, existing);
+    });
+
     const todRows = allTeams.map((ft: any) => {
       const pData = playerPtsMap[ft.team_id];
       const bData = bonusPtsMap[ft.team_id];
@@ -170,7 +199,9 @@ export async function GET(request: NextRequest) {
         total_round_points,
         total_goals: pData ? Number(pData.total_goals) : 0,
         clean_sheets: pData ? Number(pData.clean_sheets) : 0,
-        supporting_team_name
+        supporting_team_name,
+        players: teamPlayersMap.get(ft.team_id) || [],
+        passive_breakdown: bData?.bonus_breakdown || null
       };
     });
 
@@ -223,6 +254,7 @@ export async function GET(request: NextRequest) {
         fpp.is_clean_sheet,
         fpp.is_captain,
         fpp.is_vice_captain,
+        fpp.points_breakdown,
         COALESCE(fpp.base_points, 0) as base_points,
         COALESCE(fpp.total_points, 0) as total_points
       FROM fantasy_player_points fpp

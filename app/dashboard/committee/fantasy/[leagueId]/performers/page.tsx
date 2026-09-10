@@ -123,7 +123,11 @@ export default function CommitteePerformersPage() {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [data, setData] = useState<PerformersData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+
+  const toggleExpandTeam = (tId: string) => {
+    setExpandedTeamId(prev => prev === tId ? null : tId);
+  };
 
   const loadData = async (rd?: number | null, wk?: number) => {
     if (!leagueId) return;
@@ -462,30 +466,120 @@ export default function CommitteePerformersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {roundPerf?.team_of_the_day?.map((t, idx) => (
-                        <tr key={t.team_id} className={`hover:bg-slate-50/60 transition ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}>
-                          <td className="px-6 py-3.5">
-                            <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
-                              idx === 0 ? 'bg-amber-500 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {idx + 1}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3.5 text-slate-900 font-extrabold flex items-center gap-2">
-                            <span>{t.team_name}</span>
-                            {idx === 0 && <Crown className="w-4 h-4 text-amber-500 fill-amber-300 shrink-0" />}
-                          </td>
-                          <td className="px-6 py-3.5 text-slate-600">{t.owner_name}</td>
-                          <td className="px-6 py-3.5 text-emerald-700 font-bold">
-                            {t.supporting_team_name || 'N/A'}
-                          </td>
-                          <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
-                          <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
-                          <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm">
-                            ₹{t.total_round_points} Pts
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-slate-100">
+                      {roundPerf?.team_of_the_day?.map((t: any, idx: number) => {
+                        const isExpanded = expandedTeamId === t.team_id;
+                        return (
+                          <React.Fragment key={t.team_id}>
+                            <tr 
+                              onClick={() => toggleExpandTeam(t.team_id)}
+                              className={`hover:bg-slate-50/80 transition cursor-pointer ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}
+                            >
+                              <td className="px-6 py-3.5">
+                                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
+                                  idx === 0 ? 'bg-amber-500 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {idx + 1}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3.5 text-slate-900 font-extrabold flex items-center gap-2">
+                                <span>{t.team_name}</span>
+                                {idx === 0 && <Crown className="w-4 h-4 text-amber-500 fill-amber-300 shrink-0" />}
+                              </td>
+                              <td className="px-6 py-3.5 text-slate-600">{t.owner_name}</td>
+                              <td className="px-6 py-3.5 text-emerald-700 font-bold">
+                                {t.supporting_team_name || 'N/A'}
+                              </td>
+                              <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
+                              <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
+                              <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm flex items-center justify-end gap-2">
+                                <span>₹{t.total_round_points} Pts</span>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </td>
+                            </tr>
+
+                            {/* Itemized Round Breakdown Drawer */}
+                            {isExpanded && (
+                              <tr className="bg-slate-50/90 border-b border-slate-200/80">
+                                <td colSpan={7} className="p-4 space-y-3">
+                                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                      <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                      Round {data?.target_round} Breakdown for {t.team_name}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                      Owner: {t.owner_name}
+                                    </span>
+                                  </div>
+
+                                  {/* Squad Player Breakdown */}
+                                  <div className="space-y-2">
+                                    <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                      Squad Players Performance (Round {data?.target_round})
+                                    </h5>
+                                    {(!t.players || t.players.length === 0) ? (
+                                      <p className="text-[10px] text-slate-400 italic">No player points recorded for Round {data?.target_round}</p>
+                                    ) : (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {t.players.map((p: any) => {
+                                          const bd = typeof p.points_breakdown === 'string' ? JSON.parse(p.points_breakdown || '{}') : (p.points_breakdown || {});
+                                          return (
+                                            <div key={p.real_player_id} className="bg-white border border-slate-200 p-2.5 rounded-xl space-y-1.5 shadow-sm">
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                  <span className="font-black text-slate-900 text-xs truncate">{p.player_name}</span>
+                                                  {p.is_captain && <span className="px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded uppercase">Captain (2x)</span>}
+                                                  {p.is_vice_captain && <span className="px-1.5 py-0.5 bg-slate-700 text-amber-300 font-black text-[9px] rounded uppercase">VC</span>}
+                                                </div>
+                                                <span className="font-black text-indigo-600 text-xs">{p.total_points} Pts</span>
+                                              </div>
+
+                                              {/* Itemized Chips */}
+                                              <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold">
+                                                {bd.match_played > 0 && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">Played +{bd.match_played}</span>}
+                                                {bd.goals > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Goals +{bd.goals}</span>}
+                                                {bd.result !== undefined && bd.result !== 0 && (
+                                                  <span className={`${bd.result > 0 ? 'bg-indigo-100 text-indigo-800' : 'bg-rose-100 text-rose-800'} px-1.5 py-0.5 rounded`}>
+                                                    Result {bd.result > 0 ? `+${bd.result}` : bd.result}
+                                                  </span>
+                                                )}
+                                                {bd.clean_sheet > 0 && <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">CS +{bd.clean_sheet}</span>}
+                                                {bd.motm > 0 && <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">MOTM +{bd.motm}</span>}
+                                                {bd.hat_trick > 0 && <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">Hat-Trick +{bd.hat_trick}</span>}
+                                                {bd.fines < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Fines {bd.fines}</span>}
+                                                {bd.substitution < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Sub {bd.substitution}</span>}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Supporting Team Breakdown */}
+                                  <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                                    <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-500">
+                                      <span>Supporting Team ({t.supporting_team_name || 'N/A'}) — Round {data?.target_round}</span>
+                                      <span className="text-emerald-700 font-black">+{t.passive_points} Pts</span>
+                                    </div>
+                                    {t.passive_breakdown ? (
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold">
+                                        {Object.entries(typeof t.passive_breakdown === 'string' ? JSON.parse(t.passive_breakdown) : t.passive_breakdown).map(([k, v]: [string, any]) => (
+                                          <span key={k} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg uppercase">
+                                            {k.replace(/_/g, ' ')}: {Number(v) > 0 ? `+${v}` : v} pts
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-[10px] text-slate-400 italic">No supporting team bonus for Round {data?.target_round}</p>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
 
                       {(!roundPerf?.team_of_the_day || roundPerf.team_of_the_day.length === 0) && (
                         <tr>
