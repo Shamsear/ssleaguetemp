@@ -60,13 +60,20 @@ export async function GET(request: NextRequest) {
             f.away_team_name,
             f.motm_player_id,
             f.status,
-            f.tournament_id
+            f.tournament_id,
+            rps_home.category as home_category,
+            rps_away.category as away_category
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.season_id = ${seasonId}
             AND f.round_number >= ${startNum}
             AND f.round_number <= ${endNum}
             AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -84,14 +91,21 @@ export async function GET(request: NextRequest) {
             f.away_team_id,
             f.away_team_name,
             f.motm_player_id,
-            f.status
+            f.status,
+            rps_home.category as home_category,
+            rps_away.category as away_category
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
             AND f.season_id = ${seasonId}
             AND f.round_number >= ${startNum}
             AND f.round_number <= ${endNum}
             AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -117,12 +131,19 @@ export async function GET(request: NextRequest) {
             f.away_team_name,
             f.motm_player_id,
             f.status,
-            f.tournament_id
+            f.tournament_id,
+            rps_home.category as home_category,
+            rps_away.category as away_category
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.season_id = ${seasonId}
             AND f.round_number <= ${roundNum}
             AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -140,13 +161,20 @@ export async function GET(request: NextRequest) {
             f.away_team_id,
             f.away_team_name,
             f.motm_player_id,
-            f.status
+            f.status,
+            rps_home.category as home_category,
+            rps_away.category as away_category
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
             AND f.season_id = ${seasonId}
             AND f.round_number <= ${roundNum}
             AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -171,11 +199,18 @@ export async function GET(request: NextRequest) {
             f.away_team_name,
             f.motm_player_id,
             f.status,
-            f.tournament_id
+            f.tournament_id,
+            rps_home.category as home_category,
+            rps_away.category as away_category
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.season_id = ${seasonId}
             AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -193,12 +228,19 @@ export async function GET(request: NextRequest) {
             f.away_team_id,
             f.away_team_name,
             f.motm_player_id,
-            f.status
+            f.status,
+            rps_home.category as home_category,
+            rps_away.category as away_category
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
             AND f.season_id = ${seasonId}
             AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -208,18 +250,7 @@ export async function GET(request: NextRequest) {
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
     const usesCategoryPoints = seasonNum >= 18;
 
-    // Fetch Firestore categories to calculate category points dynamically
-    const categoriesSnapshot = await adminDb.collection('categories').get();
-    const categoriesMap = new Map();
-    categoriesSnapshot.docs.forEach((doc: any) => {
-      const data = doc.data();
-      categoriesMap.set(doc.id.toLowerCase(), data);
-      if (data.name) {
-        categoriesMap.set(data.name.toLowerCase(), data);
-      }
-    });
-
-    // Fetch Firestore realplayers collection to get their assigned categories
+    // Fetch Firestore realplayers collection to get photos and fallback categories
     const firebasePlayersSnapshot = await adminDb.collection('realplayers').get();
     const firebasePlayersMap = new Map();
     firebasePlayersSnapshot.docs.forEach((doc: any) => {
@@ -227,49 +258,42 @@ export async function GET(request: NextRequest) {
       firebasePlayersMap.set(String(data.player_id), data);
     });
 
-    const getCategoryBasedPoints = (player_id: string, opponent_id: string, gd: number) => {
-      const playerDetails = firebasePlayersMap.get(String(player_id));
-      const opponentDetails = firebasePlayersMap.get(String(opponent_id));
-
-      if (!playerDetails || !opponentDetails) {
-        return Math.max(-5, Math.min(5, gd));
+    // Helper to calculate opponent category points matching syncPlayerStatsForSeason / realplayerstats
+    const getPointsForOpponentCategory = (oppCategory: string, outcome: 'win' | 'draw' | 'loss'): number => {
+      const cat = (oppCategory || '').toLowerCase();
+      if (cat.includes('red') || cat === 'r') {
+        if (outcome === 'win') return 8;
+        if (outcome === 'draw') return 4;
+        return -3;
       }
-
-      const playerCat = (playerDetails.category || playerDetails.category_name || '').trim().toLowerCase();
-      const opponentCat = (opponentDetails.category || opponentDetails.category_name || '').trim().toLowerCase();
-
-      const playerCatConfig = categoriesMap.get(playerCat);
-      const opponentCatConfig = categoriesMap.get(opponentCat);
-
-      if (!playerCatConfig || !opponentCatConfig) {
-        return Math.max(-5, Math.min(5, gd));
+      if (cat.includes('black')) {
+        if (outcome === 'win') return 7;
+        if (outcome === 'draw') return 3;
+        return -4;
       }
-
-      const levelDiff = Math.abs((Number(playerCatConfig.priority) || 1) - (Number(opponentCatConfig.priority) || 1));
-      const outcome = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
-
-      if (outcome === 'win') {
-        if (levelDiff === 0) return Number(playerCatConfig.points_same_category) || 0;
-        if (levelDiff === 1) return Number(playerCatConfig.points_one_level_diff) || 0;
-        if (levelDiff === 2) return Number(playerCatConfig.points_two_level_diff) || 0;
-        return Number(playerCatConfig.points_three_level_diff) || 0;
-      } else if (outcome === 'draw') {
-        if (levelDiff === 0) return Number(playerCatConfig.draw_same_category) || 0;
-        if (levelDiff === 1) return Number(playerCatConfig.draw_one_level_diff) || 0;
-        if (levelDiff === 2) return Number(playerCatConfig.draw_two_level_diff) || 0;
-        return Number(playerCatConfig.draw_three_level_diff) || 0;
-      } else {
-        if (levelDiff === 0) return Number(playerCatConfig.loss_same_category) || 0;
-        if (levelDiff === 1) return Number(playerCatConfig.loss_one_level_diff) || 0;
-        if (levelDiff === 2) return Number(playerCatConfig.loss_two_level_diff) || 0;
-        return Number(playerCatConfig.loss_three_level_diff) || 0;
+      if (cat.includes('blue') || cat === 'b') {
+        if (outcome === 'win') return 6;
+        if (outcome === 'draw') return 2;
+        return -5;
       }
+      if (cat.includes('white') || cat === 'w') {
+        if (outcome === 'win') return 5;
+        if (outcome === 'draw') return 1;
+        return -6;
+      }
+      // Default to RED tier if unknown
+      if (outcome === 'win') return 8;
+      if (outcome === 'draw') return 4;
+      return -3;
     };
 
     // Aggregate stats for each player
     const playerStatsMap = new Map<string, any>();
 
     matchups.forEach((matchup: any) => {
+      const homeGoals = Number(matchup.home_goals) || 0;
+      const awayGoals = Number(matchup.away_goals) || 0;
+
       // Process home player
       if (matchup.home_player_id && matchup.home_player_name) {
         if (!playerStatsMap.has(matchup.home_player_id)) {
@@ -277,7 +301,7 @@ export async function GET(request: NextRequest) {
             player_id: matchup.home_player_id,
             player_name: matchup.home_player_name,
             team_name: matchup.home_team_name,
-            
+            category: matchup.home_category || null,
             matches_played: 0,
             wins: 0,
             draws: 0,
@@ -286,30 +310,36 @@ export async function GET(request: NextRequest) {
             goals_conceded: 0,
             clean_sheets: 0,
             motm_awards: 0,
-            points: 0, // Track points based on GD per match
+            points: 0,
             rounds_played: new Set(),
           });
+        } else {
+          const p = playerStatsMap.get(matchup.home_player_id);
+          if (!p.category && matchup.home_category) {
+            p.category = matchup.home_category;
+          }
         }
 
         const player = playerStatsMap.get(matchup.home_player_id);
         player.matches_played++;
-        player.goals_scored += matchup.home_goals || 0;
-        player.goals_conceded += matchup.away_goals || 0;
+        player.goals_scored += homeGoals;
+        player.goals_conceded += awayGoals;
         player.rounds_played.add(matchup.round_number);
 
-        // Calculate goal difference for this match
-        const matchGD = (matchup.home_goals || 0) - (matchup.away_goals || 0);
-        // Calculate points based on category diff or goal difference
+        // Goal difference and result for this match
+        const matchGD = homeGoals - awayGoals;
+        const outcome = matchGD > 0 ? 'win' : matchGD === 0 ? 'draw' : 'loss';
+        const oppCat = matchup.away_category || (firebasePlayersMap.get(String(matchup.away_player_id))?.category) || 'RED';
         const matchPoints = usesCategoryPoints 
-          ? getCategoryBasedPoints(matchup.home_player_id, matchup.away_player_id, matchGD)
+          ? getPointsForOpponentCategory(oppCat, outcome)
           : Math.max(-5, Math.min(5, matchGD));
         player.points += matchPoints;
 
-        if (matchup.home_goals > matchup.away_goals) player.wins++;
-        else if (matchup.home_goals === matchup.away_goals) player.draws++;
+        if (outcome === 'win') player.wins++;
+        else if (outcome === 'draw') player.draws++;
         else player.losses++;
 
-        if (matchup.away_goals === 0) player.clean_sheets++;
+        if (awayGoals === 0) player.clean_sheets++;
         if (matchup.motm_player_id === matchup.home_player_id) player.motm_awards++;
       }
 
@@ -320,7 +350,7 @@ export async function GET(request: NextRequest) {
             player_id: matchup.away_player_id,
             player_name: matchup.away_player_name,
             team_name: matchup.away_team_name,
-            
+            category: matchup.away_category || null,
             matches_played: 0,
             wins: 0,
             draws: 0,
@@ -329,30 +359,36 @@ export async function GET(request: NextRequest) {
             goals_conceded: 0,
             clean_sheets: 0,
             motm_awards: 0,
-            points: 0, // Track points based on GD per match
+            points: 0,
             rounds_played: new Set(),
           });
+        } else {
+          const p = playerStatsMap.get(matchup.away_player_id);
+          if (!p.category && matchup.away_category) {
+            p.category = matchup.away_category;
+          }
         }
 
         const player = playerStatsMap.get(matchup.away_player_id);
         player.matches_played++;
-        player.goals_scored += matchup.away_goals || 0;
-        player.goals_conceded += matchup.home_goals || 0;
+        player.goals_scored += awayGoals;
+        player.goals_conceded += homeGoals;
         player.rounds_played.add(matchup.round_number);
 
-        // Calculate goal difference for this match
-        const matchGD = (matchup.away_goals || 0) - (matchup.home_goals || 0);
-        // Calculate points based on category diff or goal difference
+        // Goal difference and result for this match
+        const matchGD = awayGoals - homeGoals;
+        const outcome = matchGD > 0 ? 'win' : matchGD === 0 ? 'draw' : 'loss';
+        const oppCat = matchup.home_category || (firebasePlayersMap.get(String(matchup.home_player_id))?.category) || 'RED';
         const matchPoints = usesCategoryPoints 
-          ? getCategoryBasedPoints(matchup.away_player_id, matchup.home_player_id, matchGD)
+          ? getPointsForOpponentCategory(oppCat, outcome)
           : Math.max(-5, Math.min(5, matchGD));
         player.points += matchPoints;
 
-        if (matchup.away_goals > matchup.home_goals) player.wins++;
-        else if (matchup.away_goals === matchup.home_goals) player.draws++;
+        if (outcome === 'win') player.wins++;
+        else if (outcome === 'draw') player.draws++;
         else player.losses++;
 
-        if (matchup.home_goals === 0) player.clean_sheets++;
+        if (homeGoals === 0) player.clean_sheets++;
         if (matchup.motm_player_id === matchup.away_player_id) player.motm_awards++;
       }
     });
@@ -467,8 +503,8 @@ export async function GET(request: NextRequest) {
         }
         
         const playerDetails = firebasePlayersMap.get(String(player.player_id));
+        player.category = player.category || playerDetails?.category || playerDetails?.category_name || 'RED';
         if (playerDetails) {
-          player.category = playerDetails.category || playerDetails.category_name || null;
           player.photo_position_x_circle = playerDetails.photo_position_x_circle ?? null;
           player.photo_position_y_circle = playerDetails.photo_position_y_circle ?? null;
           player.photo_scale_circle = playerDetails.photo_scale_circle ?? null;
@@ -510,25 +546,34 @@ export async function GET(request: NextRequest) {
       return b.goals_scored - a.goals_scored;
     });
 
-    console.log(`[Player Stats By Round] Returning ${playerStats.length} players for round ${roundNumber || 'all'}`);
-    if (playerStats.length > 0) {
+    const categoryParam = searchParams.get('category');
+    let finalPlayerStats = playerStats;
+    if (categoryParam && categoryParam.toLowerCase() !== 'all') {
+      finalPlayerStats = playerStats.filter((p: any) => (p.category || '').trim().toUpperCase() === categoryParam.trim().toUpperCase());
+    }
+
+    console.log(`[Player Stats By Round] Returning ${finalPlayerStats.length} players for round ${roundNumber || 'all'} (category: ${categoryParam || 'all'})`);
+    if (finalPlayerStats.length > 0) {
       console.log(`[Player Stats By Round] Sample player (full data):`, {
-        name: playerStats[0].player_name,
-        team_name: playerStats[0].team_name,
-        matches: playerStats[0].matches_played,
-        wins: playerStats[0].wins,
-        rounds: playerStats[0].rounds_played,
-        photo_url: (playerStats[0] as any).photo_url,
-        team_logo: (playerStats[0] as any).team_logo,
-        allKeys: Object.keys(playerStats[0])
+        name: finalPlayerStats[0].player_name,
+        team_name: finalPlayerStats[0].team_name,
+        category: finalPlayerStats[0].category,
+        matches: finalPlayerStats[0].matches_played,
+        wins: finalPlayerStats[0].wins,
+        points: finalPlayerStats[0].points,
+        rounds: finalPlayerStats[0].rounds_played,
+        photo_url: (finalPlayerStats[0] as any).photo_url,
+        team_logo: (finalPlayerStats[0] as any).team_logo,
+        allKeys: Object.keys(finalPlayerStats[0])
       });
     }
 
     return NextResponse.json({
       success: true,
-      players: playerStats,
+      players: finalPlayerStats,
       round_filter: roundNumber || 'all',
-      total_players: playerStats.length,
+      category_filter: categoryParam || 'all',
+      total_players: finalPlayerStats.length,
     });
   } catch (error: any) {
     console.error('Error fetching player stats by round:', error);

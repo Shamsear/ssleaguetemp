@@ -9,7 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import TournamentSelector from '@/components/TournamentSelector';
 import PosterStudio from '@/components/PosterStudio';
-import { ArrowLeft, Award, BarChart2, Calendar, ClipboardList, Download, FileSpreadsheet, Search, Trophy, User, Users } from 'lucide-react';
+import { ArrowLeft, Award, BarChart2, Calendar, ClipboardList, Download, FileSpreadsheet, Filter, Search, Trophy, User, Users } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -18,6 +18,7 @@ interface PlayerStats {
   player_id: string;
   player_name: string;
   team_name: string;
+  category?: string;
   matches_played: number;
   wins: number;
   draws: number;
@@ -61,6 +62,34 @@ const getCategoryColor = (category: string) => {
   return 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
 };
 
+const getCategoryPillStyle = (cat: string, isSelected: boolean) => {
+  if (isSelected) {
+    if (cat === 'RED') return 'bg-rose-600 text-white border-rose-700 shadow-md shadow-rose-500/20';
+    if (cat === 'BLACK') return 'bg-slate-900 text-white border-black shadow-md shadow-slate-900/30';
+    if (cat === 'BLUE') return 'bg-blue-600 text-white border-blue-700 shadow-md shadow-blue-500/20';
+    if (cat === 'WHITE') return 'bg-white text-slate-900 border-slate-300 ring-2 ring-slate-400/50 shadow-md';
+    return 'bg-slate-800 text-amber-400 border-slate-900 shadow-md';
+  }
+  // Unselected
+  if (cat === 'RED') return 'bg-rose-50 text-rose-700 hover:bg-rose-100/80 border-rose-200/60';
+  if (cat === 'BLACK') return 'bg-slate-100 text-slate-800 hover:bg-slate-200/80 border-slate-300/60';
+  if (cat === 'BLUE') return 'bg-blue-50 text-blue-700 hover:bg-blue-100/80 border-blue-200/60';
+  if (cat === 'WHITE') return 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200/60';
+  return 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border-slate-200/40';
+};
+
+const getCategoryBadgeStyle = (cat: string, isSelected: boolean) => {
+  if (isSelected) {
+    if (cat === 'WHITE') return 'bg-slate-200 text-slate-800';
+    return 'bg-white/20 text-white';
+  }
+  if (cat === 'RED') return 'bg-rose-200/60 text-rose-800';
+  if (cat === 'BLACK') return 'bg-slate-200 text-slate-800';
+  if (cat === 'BLUE') return 'bg-blue-200/60 text-blue-800';
+  if (cat === 'WHITE') return 'bg-slate-200 text-slate-700';
+  return 'bg-slate-200/60 text-slate-600';
+};
+
 export default function PlayerStatsByRoundPage() {
   const { user, loading } = useAuth();
   const { selectedTournamentId } = useTournamentContext();
@@ -74,9 +103,39 @@ export default function PlayerStatsByRoundPage() {
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [teamSearchTerm, setTeamSearchTerm] = useState('');
   const [selectedRound, setSelectedRound] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [maxRounds, setMaxRounds] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'golden-boot' | 'golden-glove' | 'golden-ball' | 'top-20' | 'by-week'>('all');
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
+
+  const availableCategories = React.useMemo(() => {
+    const cats = new Set<string>();
+    playerStats.forEach(p => {
+      const c = (p.category || '').trim().toUpperCase();
+      if (c) cats.add(c);
+    });
+    const order = ['RED', 'BLACK', 'BLUE', 'WHITE'];
+    const sorted = Array.from(cats).sort((a, b) => {
+      const idxA = order.indexOf(a);
+      const idxB = order.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return ['all', ...sorted];
+  }, [playerStats]);
+
+  const categoryCounts = React.useMemo(() => {
+    const counts: Record<string, number> = { all: playerStats.length };
+    playerStats.forEach(p => {
+      const c = (p.category || '').trim().toUpperCase();
+      if (c) {
+        counts[c] = (counts[c] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [playerStats]);
 
   // Define week ranges
   const weekRanges = [
@@ -232,6 +291,13 @@ export default function PlayerStatsByRoundPage() {
            normalizeStr(player.team_name).includes(normalizeStr(searchTerm));
   });
 
+  // Apply category filter
+  if (selectedCategory !== 'all') {
+    filteredPlayers = filteredPlayers.filter(
+      p => (p.category || '').trim().toUpperCase() === selectedCategory
+    );
+  }
+
   // Apply tab filters
   if (activeTab === 'golden-boot') {
     filteredPlayers = filteredPlayers
@@ -317,6 +383,7 @@ export default function PlayerStatsByRoundPage() {
       const exportData = filteredPlayers.map((player, index) => ({
         'Rank': index + 1,
         'Player Name': player.player_name,
+        'Category': player.category || 'N/A',
         'Team': player.team_name,
         'Points': player.points,
         'Matches Played': player.matches_played,
@@ -333,17 +400,18 @@ export default function PlayerStatsByRoundPage() {
 
       const workbook = new ExcelJS.Workbook();
       const sheetName = selectedRound === 'all'
-        ? 'All Rounds'
-        : `Rounds 1-${selectedRound}`;
+        ? (selectedCategory !== 'all' ? `All - ${selectedCategory}` : 'All Rounds')
+        : (selectedCategory !== 'all' ? `R1-${selectedRound} ${selectedCategory}` : `Rounds 1-${selectedRound}`);
       const worksheet = workbook.addWorksheet(sheetName);
       if (exportData.length > 0) {
         worksheet.columns = Object.keys(exportData[0]).map(key => ({ header: key, key, width: Math.max(key.length + 2, 12) }));
         exportData.forEach(row => worksheet.addRow(row));
       }
 
+      const catSuffix = selectedCategory !== 'all' ? `_${selectedCategory.toLowerCase()}` : '';
       const fileName = selectedRound === 'all'
-        ? `player_stats_all_rounds_${new Date().toISOString().split('T')[0]}.xlsx`
-        : `player_stats_rounds_1_to_${selectedRound}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        ? `player_stats_all_rounds${catSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`
+        : `player_stats_rounds_1_to_${selectedRound}${catSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -565,6 +633,45 @@ export default function PlayerStatsByRoundPage() {
             </div>
           </div>
         )}
+
+        {/* Category Filter */}
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-5 shadow-sm font-mono">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Category Filter</h3>
+            </div>
+            {selectedCategory !== 'all' && (
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className="text-[10px] text-amber-600 hover:text-amber-700 font-extrabold uppercase tracking-wider cursor-pointer"
+              >
+                Reset Filter
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 mb-3">
+            Filter players and rankings by player tier category
+          </p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1 -mx-1 px-1 items-center">
+            {availableCategories.map((cat) => {
+              const count = categoryCounts[cat] || 0;
+              const isSelected = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl border cursor-pointer shrink-0 flex items-center gap-1.5 ${getCategoryPillStyle(cat, isSelected)}`}
+                >
+                  <span>{cat === 'all' ? 'All Categories' : cat}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${getCategoryBadgeStyle(cat, isSelected)}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Search and Export */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
@@ -850,7 +957,14 @@ export default function PlayerStatsByRoundPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="text-xs font-black text-slate-800">{player.player_name}</h3>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="text-xs font-black text-slate-800">{player.player_name}</h3>
+                          {player.category && (
+                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-lg border uppercase tracking-wider ${getCategoryColor(player.category)}`}>
+                              {player.category}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1 mt-0.5">
                           {player.team_logo && (
                             <div className="w-3.5 h-3.5 overflow-hidden rounded">
@@ -956,6 +1070,7 @@ export default function PlayerStatsByRoundPage() {
             {activeTab === 'top-20' && ' • Top 20 by points'}
             {activeTab !== 'by-week' && selectedRound !== 'all' && ` • Cumulative stats from Round 1 to Round ${selectedRound}`}
             {activeTab !== 'by-week' && selectedRound === 'all' && ` • All rounds (complete season)`}
+            {selectedCategory !== 'all' && ` • Filtered by Category: ${selectedCategory}`}
           </p>
           {activeTab === 'golden-ball' && (
             <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">
