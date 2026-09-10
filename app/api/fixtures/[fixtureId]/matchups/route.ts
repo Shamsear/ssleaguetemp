@@ -3,6 +3,7 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
 /**
  * Distribute match rewards (eCoin & SSCoin) to teams based on match result
@@ -871,33 +872,13 @@ export async function PATCH(
       // Don't fail the entire request if fantasy calculation fails
     }
 
-    // Update real player stats & POTD / MOTM awards in realplayerstats table
+    // Update real player stats & POTD / MOTM awards directly in database
     try {
-      console.log('⚽ Updating real player stats and POTD awards...');
-      const host = request.headers.get('host');
-      const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
-      await fetch(`${baseUrl}/api/realplayers/update-points`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fixture_id: fixtureId,
-          season_id: season_id,
-          matchups: results
-        })
-      });
-      await fetch(`${baseUrl}/api/realplayers/update-stats`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          season_id: season_id,
-          fixture_id: fixtureId,
-          matchups: results,
-          motm_player_id: motm_player_id
-        })
-      });
+      console.log('⚽ Syncing real player stats for season:', season_id);
+      await syncPlayerStatsForSeason(season_id);
+      console.log('✅ Real player stats synced successfully');
     } catch (rpsError) {
-      console.error('Failed to update realplayerstats:', rpsError);
+      console.error('Failed to sync realplayerstats:', rpsError);
     }
 
     return NextResponse.json({

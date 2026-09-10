@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
 /**
  * PATCH - Mark specific matchups as NULL
@@ -82,6 +83,17 @@ export async function PATCH(
         ${fixture.season_id}
       )
     `;
+
+        // Re-sync player stats for this season to account for null / un-null status
+        if (fixture.season_id) {
+            try {
+                console.log('⚽ Re-syncing player stats after marking null for season:', fixture.season_id);
+                await syncPlayerStatsForSeason(fixture.season_id);
+                console.log('✅ Player stats re-synced after marking null');
+            } catch (syncErr) {
+                console.error('Failed to sync player stats after mark-null:', syncErr);
+            }
+        }
 
         return NextResponse.json({
             success: true,

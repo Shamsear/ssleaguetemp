@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
 // GET - Fetch a single fixture by ID
 export async function GET(
@@ -282,6 +283,17 @@ export async function PATCH(
         updated_at = NOW()
       WHERE id = ${fixtureId}
     `;
+
+    // Re-sync player stats if MOTM was updated
+    if (season_id && motm_player_id !== undefined) {
+      try {
+        console.log('⚽ Re-syncing player stats after MOTM update for season:', season_id);
+        await syncPlayerStatsForSeason(season_id);
+        console.log('✅ Player stats re-synced after MOTM update');
+      } catch (syncErr) {
+        console.error('Failed to sync player stats after MOTM update:', syncErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
 /**
  * POST - Declare a Walkover (one team absent)
@@ -133,6 +134,17 @@ export async function POST(
       });
     } catch (fantasyErr) {
       console.error('Failed to revert fantasy points on declare-wo:', fantasyErr);
+    }
+
+    // Sync player stats for this season to ensure all stats reflect completed fixtures accurately
+    if (fixture.season_id) {
+      try {
+        console.log('⚽ Syncing player stats on declare-wo for season:', fixture.season_id);
+        await syncPlayerStatsForSeason(fixture.season_id);
+        console.log('✅ Player stats synced on declare-wo');
+      } catch (syncErr) {
+        console.error('Failed to sync player stats on declare-wo:', syncErr);
+      }
     }
 
     return NextResponse.json({

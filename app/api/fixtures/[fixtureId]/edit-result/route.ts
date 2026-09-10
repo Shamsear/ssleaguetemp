@@ -4,6 +4,7 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { triggerNews } from '@/lib/news/trigger';
 import { triggerPlayerOfMatchPoll } from '@/lib/polls/auto-trigger';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
 /**
  * Revert match rewards that were previously distributed
@@ -335,49 +336,6 @@ export async function PATCH(
       SELECT * FROM matchups WHERE fixture_id = ${fixtureId}
     `;
 
-    // Step 1: Revert old stats
-    console.log('Reverting old stats...');
-    const revertStatsRes = await fetch(`${baseUrl}/api/realplayers/revert-fixture-stats`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        season_id: seasonId,
-        fixture_id: fixtureId,
-        matchups: oldMatchups.map((m: any) => ({
-          home_player_id: m.home_player_id,
-          home_player_name: m.home_player_name,
-          away_player_id: m.away_player_id,
-          away_player_name: m.away_player_name,
-          home_goals: m.home_goals,
-          away_goals: m.away_goals,
-        }))
-      })
-    });
-
-    if (!revertStatsRes.ok) {
-      throw new Error('Failed to revert stats');
-    }
-
-    // Step 2: Revert old points
-    console.log('Reverting old points...');
-    const revertPointsRes = await fetch(`${baseUrl}/api/realplayers/revert-fixture-points`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fixture_id: fixtureId,
-        season_id: seasonId,
-        matchups: oldMatchups.map((m: any) => ({
-          home_player_id: m.home_player_id,
-          away_player_id: m.away_player_id,
-          home_goals: m.home_goals,
-          away_goals: m.away_goals,
-        }))
-      })
-    });
-
-    if (!revertPointsRes.ok) {
-      throw new Error('Failed to revert points');
-    }
 
     // Step 3: Update matchups with new scores and sub penalties
     console.log('Updating matchups...');
@@ -523,38 +481,13 @@ export async function PATCH(
       console.log(`ℹ️ Skipping match rewards distribution/reversion for Season ${seasonNum}`);
     }
 
-    // Step 6: Apply new stats
-    console.log('Applying new stats...');
-    const applyStatsRes = await fetch(`${baseUrl}/api/realplayers/update-stats`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        season_id: seasonId,
-        fixture_id: fixtureId,
-        matchups: matchups,
-        motm_player_id: fixture.motm_player_id || null,
-      })
-    });
-
-    if (!applyStatsRes.ok) {
-      throw new Error('Failed to apply new stats');
-    }
-
-    // Step 7: Apply new points (skip salary deduction since it was already done on initial submit)
-    console.log('Applying new points...');
-    const applyPointsRes = await fetch(`${baseUrl}/api/realplayers/update-points`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fixture_id: fixtureId,
-        season_id: seasonId,
-        matchups: matchups,
-        skip_salary_deduction: true, // Don't deduct salary again on edit
-      })
-    });
-
-    if (!applyPointsRes.ok) {
-      throw new Error('Failed to apply new points');
+    // Step 6: Recalculate real player stats and points directly from source of truth in database
+    console.log('⚽ Syncing real player stats for season:', seasonId);
+    try {
+      await syncPlayerStatsForSeason(seasonId);
+      console.log('✅ Real player stats synced successfully');
+    } catch (rpsError) {
+      console.error('Failed to sync realplayerstats on edit:', rpsError);
     }
 
     // Step 7.1: Adjust salaries for player swaps
