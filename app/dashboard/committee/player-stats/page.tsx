@@ -146,40 +146,16 @@ export default function PlayerStatsPage() {
       const response = await fetchWithTokenRefresh(`/api/committee/player-stats?season_id=${selectedSeason}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('[Player Stats Page] Loaded players:', data.players?.length);
-        if (data.players?.length > 0) {
-          console.log('[Player Stats Page] First player base_points:', data.players[0].base_points);
-        }
         setPlayers(data.players || []);
-        
-        // Load total points for all players
-        loadAllPlayerTotalPoints(data.players || []);
+        setPlayerTotalPoints(new Map());
+        setMatchdayStats(new Map());
+        setExpandedPlayer(null);
       }
     } catch (error: any) {
       console.error('Error loading players:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadAllPlayerTotalPoints = async (playersList: PlayerStats[]) => {
-    const newPlayerTotalPoints = new Map<string, number>();
-    
-    // Load total points for each player in parallel
-    const promises = playersList.map(async (player) => {
-      try {
-        const response = await fetchWithTokenRefresh(`/api/committee/player-matchday-stats?player_id=${player.id}&season_id=${selectedSeason}`);
-        if (response.ok) {
-          const data = await response.json();
-          newPlayerTotalPoints.set(player.id, data.totalPoints || 0);
-        }
-      } catch (error: any) {
-        console.error(`Error loading total points for ${player.player_name}:`, error);
-      }
-    });
-    
-    await Promise.all(promises);
-    setPlayerTotalPoints(newPlayerTotalPoints);
   };
 
   const loadMatchdayStats = async (playerId: string) => {
@@ -574,15 +550,6 @@ export default function PlayerStatsPage() {
                       <SortIcon field="points" />
                     </div>
                   </th>
-                  <th
-                    onClick={() => handleSort('base_points')}
-                    className="px-4 py-3.5 font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      Base
-                      <SortIcon field="base_points" />
-                    </div>
-                  </th>
                   <th className="px-4 py-3.5 font-bold uppercase tracking-wider">
                     Change
                   </th>
@@ -642,7 +609,7 @@ export default function PlayerStatsPage() {
               <tbody className="bg-white/40 divide-y divide-slate-100/60">
                 {filteredPlayers.length === 0 ? (
                   <tr>
-                    <td colSpan={13} className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={12} className="px-6 py-12 text-center text-slate-400">
                       <span className="text-4xl mb-3 block">👤</span>
                       <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
                       <p className="text-[10px] text-slate-400 uppercase font-semibold">Verify search input or try a different season</p>
@@ -653,10 +620,9 @@ export default function PlayerStatsPage() {
                     const hasEdits = editedPlayers.has(player.id);
                     const currentPointsValue = getPlayerValue(player, 'points');
                     const currentPoints = typeof currentPointsValue === 'string' ? parseInt(currentPointsValue) || 100 : currentPointsValue;
-                    const currentBasePointsValue = getPlayerValue(player, 'base_points');
-                    const currentBasePoints = typeof currentBasePointsValue === 'string' ? parseInt(currentBasePointsValue) || 0 : currentBasePointsValue;
-                    const change = currentBasePoints > 0 ? currentPoints - currentBasePoints : 0;
+                    const hasTotal = playerTotalPoints.has(player.id);
                     const totalPoints = playerTotalPoints.get(player.id) || 0;
+                    const discrepancy = hasTotal ? currentPoints - totalPoints : null;
                     const predictions = getPredictedChanges(player);
 
                     return (
@@ -732,43 +698,23 @@ export default function PlayerStatsPage() {
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap text-xs font-extrabold text-slate-600">
-                            {editMode ? (
-                              <input
-                                type="number"
-                                value={getPlayerValue(player, 'base_points')}
-                                onChange={(e) => updatePlayerValue(player.id, 'base_points', e.target.value === '' ? '' : parseInt(e.target.value))}
-                                onBlur={(e) => {
-                                  const val = parseInt(e.target.value);
-                                  if (isNaN(val)) {
-                                    updatePlayerValue(player.id, 'base_points', 0);
-                                  }
-                                }}
-                                className="w-16 px-1.5 py-0.5 text-xs border border-slate-300 rounded text-center font-semibold text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 font-mono"
-                                placeholder="0"
-                              />
-                            ) : (
-                              player.base_points || 0
-                            )}
-                          </td>
                           <td className="px-4 py-3.5 whitespace-nowrap">
-                            {player.base_points > 0 ? (
+                            {hasTotal && discrepancy !== null ? (
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black border ${
-                                change > 0 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
-                                  : change < 0
-                                  ? 'bg-rose-50 text-rose-700 border-rose-200/50'
-                                  : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                                discrepancy === 0
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50'
+                                  : discrepancy > 0
+                                  ? 'bg-amber-50 text-amber-700 border-amber-300'
+                                  : 'bg-rose-50 text-rose-700 border-rose-300'
                               }`}>
-                                {change > 0 ? '↑' : change < 0 ? '↓' : '='} 
-                                {change > 0 ? '+' : ''}{change}
+                                {discrepancy === 0 ? '0' : (discrepancy > 0 ? `+${discrepancy}` : discrepancy)}
                               </span>
                             ) : (
                               <span className="text-xs text-slate-400 font-bold">-</span>
                             )}
                           </td>
                           <td className="px-4 py-3.5 whitespace-nowrap">
-                            {playerTotalPoints.has(player.id) ? (
+                            {hasTotal ? (
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black border uppercase tracking-wider ${
                                 totalPoints > 0 
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
@@ -881,7 +827,7 @@ export default function PlayerStatsPage() {
                         {/* Expanded Matchday Stats Drawer inside the table */}
                         {expandedPlayer === player.id && matchdayStats.has(player.id) && (
                           <tr className="bg-slate-50/[0.15]">
-                            <td colSpan={13} className="px-6 py-6 border-t border-b border-slate-100">
+                            <td colSpan={12} className="px-6 py-6 border-t border-b border-slate-100">
                               <div className="console-card bg-white border border-slate-200/60 rounded-xl p-5 shadow-inner font-mono">
                                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
                                   <span className="text-base"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /></span>
@@ -1022,7 +968,7 @@ export default function PlayerStatsPage() {
                         {/* Edit Mode preview changes row */}
                         {editMode && hasEdits && predictions.starRatingChanged && (
                           <tr key={`${player.id}-preview`} className="bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 font-mono">
-                            <td colSpan={13} className="px-6 py-3 text-left">
+                            <td colSpan={12} className="px-6 py-3 text-left">
                               <div className="flex items-center gap-4 text-xs">
                                 <span className="font-extrabold text-slate-700 uppercase tracking-wider"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Star Rating Change:</span>
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">
@@ -1057,10 +1003,9 @@ export default function PlayerStatsPage() {
                 const hasEdits = editedPlayers.has(player.id);
                 const currentPointsValue = getPlayerValue(player, 'points');
                 const currentPoints = typeof currentPointsValue === 'string' ? parseInt(currentPointsValue) || 100 : currentPointsValue;
-                const currentBasePointsValue = getPlayerValue(player, 'base_points');
-                const currentBasePoints = typeof currentBasePointsValue === 'string' ? parseInt(currentBasePointsValue) || 0 : currentBasePointsValue;
-                const change = currentBasePoints > 0 ? currentPoints - currentBasePoints : 0;
+                const hasTotal = playerTotalPoints.has(player.id);
                 const totalPoints = playerTotalPoints.get(player.id) || 0;
+                const discrepancy = hasTotal ? currentPoints - totalPoints : null;
                 const predictions = getPredictedChanges(player);
 
                 return (
@@ -1172,31 +1117,18 @@ export default function PlayerStatsPage() {
                     </div>
 
                     {/* Points Details Row */}
-                    <div className="grid grid-cols-3 gap-2 mt-2 text-center text-xs font-mono">
-                      <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
-                        <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Base</p>
-                        {editMode ? (
-                          <input
-                            type="number"
-                            value={getPlayerValue(player, 'base_points')}
-                            onChange={(e) => updatePlayerValue(player.id, 'base_points', e.target.value === '' ? '' : parseInt(e.target.value))}
-                            onBlur={(e) => {
-                              const val = parseInt(e.target.value);
-                              if (isNaN(val)) {
-                                updatePlayerValue(player.id, 'base_points', 0);
-                              }
-                            }}
-                            className="w-full px-1 py-0.5 text-[11px] border border-slate-300 rounded text-center text-slate-800 bg-white"
-                          />
-                        ) : (
-                          <p className="font-extrabold text-slate-800">{player.base_points || 0}</p>
-                        )}
-                      </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2 text-center text-xs font-mono">
                       <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Change</p>
-                        {currentBasePoints > 0 ? (
-                          <span className={`font-black text-[10px] ${change > 0 ? 'text-emerald-650' : change < 0 ? 'text-rose-650' : 'text-slate-600'}`}>
-                            {change > 0 ? '+' : ''}{change}
+                        {hasTotal && discrepancy !== null ? (
+                          <span className={`font-black text-[10px] ${
+                            discrepancy === 0 
+                              ? 'text-emerald-600' 
+                              : discrepancy > 0 
+                              ? 'text-amber-600' 
+                              : 'text-rose-600'
+                          }`}>
+                            {discrepancy === 0 ? '0' : (discrepancy > 0 ? `+${discrepancy}` : discrepancy)}
                           </span>
                         ) : (
                           <span className="text-slate-400 font-bold">-</span>
@@ -1204,9 +1136,13 @@ export default function PlayerStatsPage() {
                       </div>
                       <div className="bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/40">
                         <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Total</p>
-                        <span className={`font-black text-[10px] ${totalPoints > 0 ? 'text-emerald-650' : totalPoints < 0 ? 'text-rose-650' : 'text-slate-700'}`}>
-                          {totalPoints > 0 ? '+' : ''}{totalPoints}
-                        </span>
+                        {hasTotal ? (
+                          <span className={`font-black text-[10px] ${totalPoints > 0 ? 'text-emerald-650' : totalPoints < 0 ? 'text-rose-650' : 'text-slate-700'}`}>
+                            {totalPoints > 0 ? '+' : ''}{totalPoints}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-bold">-</span>
+                        )}
                       </div>
                     </div>
 
