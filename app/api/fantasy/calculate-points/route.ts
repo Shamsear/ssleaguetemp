@@ -552,15 +552,6 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
   try {
     const sql = getFantasyDb();
     
-    // Determine active completed round threshold dynamically
-    const completedRounds = await sql`
-      SELECT MAX(slot_index) as max_completed
-      FROM fantasy_draft_rounds
-      WHERE league_id = ${fantasy_league_id}
-        AND status IN ('completed', 'finalized')
-    `;
-    const maxCompletedRound = Number(completedRounds[0]?.max_completed || 6);
-
     // Recalculate player_points, passive_points, and total_points for ALL fantasy teams in the league
     await sql`
       WITH player_totals AS (
@@ -569,7 +560,6 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
           COALESCE(SUM(total_points), 0) as calc_player_points
         FROM fantasy_player_points
         WHERE league_id = ${fantasy_league_id}
-          AND round_number <= ${maxCompletedRound}
         GROUP BY team_id
       ),
       passive_totals AS (
@@ -578,7 +568,6 @@ export async function syncAllFantasyTeamTotals(fantasy_league_id: string) {
           COALESCE(SUM(total_bonus), 0) as calc_passive_points
         FROM fantasy_team_bonus_points
         WHERE league_id = ${fantasy_league_id}
-          AND round_number <= ${maxCompletedRound}
         GROUP BY team_id
       )
       UPDATE fantasy_teams ft
