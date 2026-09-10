@@ -77,7 +77,8 @@ export async function GET(request: NextRequest) {
       let name = b.target_team_name;
       const raw = (b.target_id || '').toUpperCase();
       if (!name || name === b.target_id || name.startsWith('SSPSLT')) {
-        if (raw.includes('SSPSLT0015')) name = 'LEGENDS FC';
+        if (raw.includes('SSPSLT0018')) name = 'TITANS FC';
+        else if (raw.includes('SSPSLT0015')) name = 'LEGENDS FC';
         else if (raw.includes('SSPSLT0021')) name = 'LOS GALACTICOS';
         else if (raw.includes('SSPSLT0005')) name = 'TM ASGARDIANS';
         else if (raw.includes('SSPSLT0006')) name = 'PES GUARDIANS';
@@ -180,7 +181,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 5. SUPPORTING TEAM OF THE DAY (STOD): Passive team bonus points in target round
-    const stodRows = await fantasySql`
+    const stodRawRows = await fantasySql`
       SELECT 
         ftbp.team_id as fantasy_team_id,
         ft.team_name as fantasy_team_name,
@@ -190,10 +191,20 @@ export async function GET(request: NextRequest) {
         ftbp.bonus_breakdown,
         COALESCE(ftbp.total_bonus, 0) as supporting_points
       FROM fantasy_team_bonus_points ftbp
-      LEFT JOIN fantasy_teams ft ON ftbp.team_id = ft.team_id
+      JOIN fantasy_teams ft ON ftbp.team_id = ft.team_id
       WHERE ftbp.league_id = ${leagueId} AND ftbp.round_number = ${targetRound}
       ORDER BY supporting_points DESC
     `;
+
+    // Deduplicate STOD rows per fantasy team
+    const stodSeenMap = new Map();
+    stodRawRows.forEach((r: any) => {
+      if (!stodSeenMap.has(r.fantasy_team_id)) {
+        stodSeenMap.set(r.fantasy_team_id, r);
+      }
+    });
+    const stodRows = Array.from(stodSeenMap.values());
+    stodRows.sort((a, b) => Number(b.supporting_points) - Number(a.supporting_points));
 
     // 6. PLAYER OF THE DAY (POD): Drafted vs Free Agent players in target round (respecting window draft status in that round)
     const podRows = await fantasySql`
