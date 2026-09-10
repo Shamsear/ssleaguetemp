@@ -310,11 +310,19 @@ async function processPlayer(params: {
     sql, pointsCalculated, teamPointsMap
   } = params;
 
-  // Determine target teams based on round_number
+  // Determine target teams based on round_number dynamically from fantasy_transfer_windows
   let targetSquads: Array<{ team_id: string; is_captain: boolean; is_vice_captain: boolean }> = [];
 
-  if (round_number <= 6) {
-    // Rounds 1-6: Find team that drafted this player in slots 1-5
+  const [firstWin] = await sql`
+    SELECT MIN(start_round) as first_start
+    FROM fantasy_transfer_windows
+    WHERE league_id = ${fantasy_league_id}
+      AND start_round IS NOT NULL
+  `;
+  const firstWindowStartRound = Number(firstWin?.first_start || 7);
+
+  if (round_number < firstWindowStartRound) {
+    // Before first transfer window (e.g. Rounds 1-6): Find team that drafted this player in slots 1-5
     const draftBids = await sql`
       SELECT team_id
       FROM fantasy_draft_bids

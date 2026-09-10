@@ -204,11 +204,20 @@ async function awardTeamBonus(params: {
     WHERE league_id = ${fantasy_league_id}
   `;
 
+  // Dynamically query earliest transfer window start_round for this league
+  const windowRows = await fantasySql`
+    SELECT MIN(start_round) as first_start
+    FROM fantasy_transfer_windows
+    WHERE league_id = ${fantasy_league_id}
+      AND start_round IS NOT NULL
+  `;
+  const firstWindowStartRound = Number(windowRows[0]?.first_start || 7);
+
   // Filter teams based on round number:
-  // Rounds 1-6: use original draft supported team (slot 6)
-  // Rounds 7+: use current supported_team_id
+  // Before first window: use original draft supported team (slot 6)
+  // Post transfer window: use current supported_team_id
   const fantasyTeams = allFantasyTeams.filter((team: any) => {
-    const activeSupportedTeamId = (round_number <= 6)
+    const activeSupportedTeamId = (round_number < firstWindowStartRound)
       ? (draftSupportedMap.get(team.team_id) || null)
       : (team.supported_team_id || null);
 
