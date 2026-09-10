@@ -355,6 +355,15 @@ async function processPlayer(params: {
     }
   }
 
+  // If no fantasy team owns this player (free agent), add unassigned target so base points are recorded in fantasy_player_points
+  if (targetSquads.length === 0) {
+    targetSquads = [{
+      team_id: 'unassigned',
+      is_captain: false,
+      is_vice_captain: false,
+    }];
+  }
+
   // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
   const getCategoryResultPts = (oppCat: string, outcome: string): number => {
     const cat = (oppCat || '').toLowerCase();
@@ -407,6 +416,7 @@ async function processPlayer(params: {
 
     let isCaptain = squad.is_captain;
     let isViceCaptain = squad.is_vice_captain;
+    let selectionsHasCaptain = false;
 
     if (windows.length > 0) {
       const windowId = windows[0].window_id;
@@ -422,11 +432,12 @@ async function processPlayer(params: {
       if (selections.length > 0) {
         isCaptain = selections[0].captain_player_id === player_id;
         isViceCaptain = selections[0].vice_captain_player_id === player_id;
+        selectionsHasCaptain = !!selections[0].captain_player_id;
       }
     }
 
-    let multiplier = isCaptain ? 2 : isViceCaptain ? 1.5 : 1;
-    let multiplierPercentage = isCaptain ? 200 : isViceCaptain ? 150 : 100;
+    let multiplier = isCaptain ? 2 : (isViceCaptain && !selectionsHasCaptain) ? 2 : 1;
+    let multiplierPercentage = multiplier * 100;
     const final_points = Math.round(base_points * multiplier);
 
     await sql`
