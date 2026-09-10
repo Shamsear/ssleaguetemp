@@ -7,7 +7,7 @@ import { GloveIcon } from '@/components/ui/CustomIcons';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
-import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity } from 'lucide-react';
+import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { db } from '@/lib/firebase/client';
 
 import PlayerPhoto from '@/components/PlayerPhoto';
@@ -83,6 +83,9 @@ export default function PlayerStatsPage() {
   const [playerTotalPoints, setPlayerTotalPoints] = useState<Map<string, number>>(new Map());
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [loadingTotals, setLoadingTotals] = useState<boolean>(false);
 
   useEffect(() => {
     const loadActiveSeason = async () => {
@@ -150,6 +153,7 @@ export default function PlayerStatsPage() {
         setPlayerTotalPoints(new Map());
         setMatchdayStats(new Map());
         setExpandedPlayer(null);
+        setCurrentPage(1);
       }
     } catch (error: any) {
       console.error('Error loading players:', error);
@@ -314,6 +318,7 @@ export default function PlayerStatsPage() {
       setSortBy(column);
       setSortOrder('desc');
     }
+    setCurrentPage(1);
   };
 
   const filteredPlayers = players
@@ -335,6 +340,68 @@ export default function PlayerStatsPage() {
         ? (aVal as number) - (bVal as number)
         : (bVal as number) - (aVal as number);
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(filteredPlayers.length, startIndex + pageSize);
+  const paginatedPlayers = filteredPlayers.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  // Automatically load total points for all players on the current page
+  useEffect(() => {
+    if (!selectedSeason || paginatedPlayers.length === 0) return;
+
+    const needed = paginatedPlayers.filter(p => !playerTotalPoints.has(p.id));
+    if (needed.length === 0) return;
+
+    let isSubscribed = true;
+    setLoadingTotals(true);
+
+    const fetchPageTotals = async () => {
+      try {
+        const results = await Promise.all(
+          needed.map(async (p) => {
+            try {
+              const res = await fetchWithTokenRefresh(
+                `/api/committee/player-matchday-stats?player_id=${p.id}&season_id=${selectedSeason}`
+              );
+              if (res.ok) {
+                const data = await res.json();
+                return { id: p.id, total: data.totalPoints ?? 0 };
+              }
+            } catch (err) {
+              console.error(`Error loading total for ${p.player_name}:`, err);
+            }
+            return { id: p.id, total: 0 };
+          })
+        );
+
+        if (isSubscribed) {
+          setPlayerTotalPoints(prev => {
+            const next = new Map(prev);
+            results.forEach(r => next.set(r.id, r.total));
+            return next;
+          });
+        }
+      } finally {
+        if (isSubscribed) {
+          setLoadingTotals(false);
+        }
+      }
+    };
+
+    fetchPageTotals();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [selectedSeason, currentPage, pageSize, paginatedPlayers.map(p => p.id).join(',')]);
 
   const SortIcon = ({ field }: { field: keyof PlayerStats }) => {
     if (sortBy !== field) {
@@ -491,7 +558,10 @@ export default function PlayerStatsPage() {
                 type="text"
                 placeholder="Search player or team name..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full py-2 px-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
               />
             </div>
@@ -616,7 +686,7 @@ export default function PlayerStatsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredPlayers.map((player) => {
+                  paginatedPlayers.map((player) => {
                     const hasEdits = editedPlayers.has(player.id);
                     const currentPointsValue = getPlayerValue(player, 'points');
                     const currentPoints = typeof currentPointsValue === 'string' ? parseInt(currentPointsValue) || 100 : currentPointsValue;
@@ -709,6 +779,8 @@ export default function PlayerStatsPage() {
                               }`}>
                                 {discrepancy === 0 ? '0' : (discrepancy > 0 ? `+${discrepancy}` : discrepancy)}
                               </span>
+                            ) : loadingTotals ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500 mx-auto"></div>
                             ) : (
                               <span className="text-xs text-slate-400 font-bold">-</span>
                             )}
@@ -724,6 +796,8 @@ export default function PlayerStatsPage() {
                               }`}>
                                 {totalPoints > 0 ? '+' : ''}{totalPoints}
                               </span>
+                            ) : loadingTotals ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500 mx-auto"></div>
                             ) : (
                               <span className="text-[10px] text-slate-400 font-bold">-</span>
                             )}
@@ -998,7 +1072,7 @@ export default function PlayerStatsPage() {
                 <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-1">No Players Found</h3>
               </div>
             ) : (
-              filteredPlayers.map((player) => {
+              paginatedPlayers.map((player) => {
                 const isExpanded = expandedPlayer === player.id;
                 const hasEdits = editedPlayers.has(player.id);
                 const currentPointsValue = getPlayerValue(player, 'points');
@@ -1130,6 +1204,8 @@ export default function PlayerStatsPage() {
                           }`}>
                             {discrepancy === 0 ? '0' : (discrepancy > 0 ? `+${discrepancy}` : discrepancy)}
                           </span>
+                        ) : loadingTotals ? (
+                          <div className="animate-spin rounded-full h-2.5 w-2.5 border-b-2 border-amber-500 mx-auto my-0.5"></div>
                         ) : (
                           <span className="text-slate-400 font-bold">-</span>
                         )}
@@ -1140,6 +1216,8 @@ export default function PlayerStatsPage() {
                           <span className={`font-black text-[10px] ${totalPoints > 0 ? 'text-emerald-650' : totalPoints < 0 ? 'text-rose-650' : 'text-slate-700'}`}>
                             {totalPoints > 0 ? '+' : ''}{totalPoints}
                           </span>
+                        ) : loadingTotals ? (
+                          <div className="animate-spin rounded-full h-2.5 w-2.5 border-b-2 border-amber-500 mx-auto my-0.5"></div>
                         ) : (
                           <span className="text-slate-400 font-bold">-</span>
                         )}
@@ -1248,6 +1326,87 @@ export default function PlayerStatsPage() {
               })
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {filteredPlayers.length > 0 && (
+            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+              <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2">
+                <span>
+                  Showing <span className="text-slate-800 font-extrabold">{startIndex + 1}</span> to{' '}
+                  <span className="text-slate-800 font-extrabold">{endIndex}</span> of{' '}
+                  <span className="text-slate-800 font-extrabold">{filteredPlayers.length}</span> players
+                </span>
+                {loadingTotals && (
+                  <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    <span className="animate-spin rounded-full h-2 w-2 border-b border-amber-600"></span>
+                    Loading page totals...
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Page Size Selector */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white border border-slate-200/80 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+
+                {/* Page Navigation Buttons */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={safeCurrentPage === 1}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="First Page"
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={safeCurrentPage === 1}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <span className="px-3 py-1 text-[11px] font-bold text-slate-700 bg-white border border-slate-200/60 rounded-lg">
+                    Page <span className="text-slate-900 font-extrabold">{safeCurrentPage}</span> of{' '}
+                    <span className="text-slate-900 font-extrabold">{totalPages}</span>
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={safeCurrentPage === totalPages}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Next Page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={safeCurrentPage === totalPages}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Last Page"
+                  >
+                    <ChevronsRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {filteredPlayers.length === 0 && (
