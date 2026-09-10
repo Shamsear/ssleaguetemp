@@ -17,7 +17,20 @@ import { adminDb } from '@/lib/neon/admin-db-wrapper';
 export async function POST(request: NextRequest) {
   try {
     const tournamentDb = getTournamentDb();
-    console.log('🔄 Starting Full Real Player Stats Recalculation...');
+
+    let requestedSeasonId: string | null = null;
+    try {
+      const body = await request.json();
+      requestedSeasonId = body?.season_id || body?.seasonId || null;
+    } catch {
+      // Body might be empty
+    }
+    if (!requestedSeasonId) {
+      const { searchParams } = new URL(request.url);
+      requestedSeasonId = searchParams.get('season_id') || searchParams.get('seasonId') || null;
+    }
+
+    console.log(`🔄 Starting Real Player Stats Recalculation${requestedSeasonId ? ` for season ${requestedSeasonId}` : ' (All Seasons)'}...`);
 
     // 1. Fetch categories for category-based points calculation
     const categoriesMap = new Map<string, any>();
@@ -40,38 +53,91 @@ export async function POST(request: NextRequest) {
       categoriesMap.set('white', { priority: 4, points_same_category: 8, points_one_level_diff: 7, draw_same_category: 4, loss_same_category: 1 });
     }
 
-    // 2. Fetch completed fixtures & matchups
-    const completedFixtures = await tournamentDb`
-      SELECT id, season_id, round_number, motm_player_id
-      FROM fixtures
-      WHERE status = 'completed'
-      ORDER BY round_number ASC
-    `;
+    // Helper for category-based points
+    const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
+      const cat = (oppCategory || '').toLowerCase();
+      if (cat.includes('red') || cat === 'r') {
+        if (outcome === 'win') return 8;
+        if (outcome === 'draw') return 4;
+        return -3;
+      }
+      if (cat.includes('black')) {
+        if (outcome === 'win') return 7;
+        if (outcome === 'draw') return 3;
+        return -4;
+      }
+      if (cat.includes('blue') || cat === 'b') {
+        if (outcome === 'win') return 6;
+        if (outcome === 'draw') return 2;
+        return -5;
+      }
+      if (cat.includes('white') || cat === 'w') {
+        if (outcome === 'win') return 5;
+        if (outcome === 'draw') return 1;
+        return -6;
+      }
+      if (outcome === 'win') return 8;
+      if (outcome === 'draw') return 4;
+      return -3;
+    };
+
+    // 2. Fetch completed fixtures
+    const completedFixtures = requestedSeasonId
+      ? await tournamentDb`
+          SELECT id, season_id, round_number, motm_player_id
+          FROM fixtures
+          WHERE status = 'completed' AND season_id = ${requestedSeasonId}
+          ORDER BY round_number ASC
+        `
+      : await tournamentDb`
+          SELECT id, season_id, round_number, motm_player_id
+          FROM fixtures
+          WHERE status = 'completed'
+          ORDER BY round_number ASC
+        `;
 
     const fixtureMotmMap = new Map<string, string>();
     completedFixtures.forEach((f: any) => {
       if (f.motm_player_id) fixtureMotmMap.set(f.id, f.motm_player_id);
     });
 
-    const matchups = await tournamentDb`
-      SELECT 
-        m.*,
-        f.season_id,
-        f.round_number,
-        rps_home.category as home_category,
-        rps_away.category as away_category
-      FROM matchups m
-      JOIN fixtures f ON m.fixture_id = f.id
-      LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
-      LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
-      WHERE f.status = 'completed'
-        AND m.home_goals IS NOT NULL
-        AND m.away_goals IS NOT NULL
-    `;
+    // 3. Fetch completed matchups
+    const matchups = requestedSeasonId
+      ? await tournamentDb`
+          SELECT 
+            m.*,
+            f.season_id,
+            f.round_number,
+            rps_home.category as home_category,
+            rps_away.category as away_category
+          FROM matchups m
+          JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
+          WHERE f.status = 'completed'
+            AND f.season_id = ${requestedSeasonId}
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+        `
+      : await tournamentDb`
+          SELECT 
+            m.*,
+            f.season_id,
+            f.round_number,
+            rps_home.category as home_category,
+            rps_away.category as away_category
+          FROM matchups m
+          JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
+          WHERE f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+        `;
 
     console.log(`📊 Processing ${completedFixtures.length} completed fixtures and ${matchups.length} matchups...`);
 
-    // 3. Aggregate player stats
+    // 4. Aggregate player stats
     interface PlayerStatAccumulator {
       statsId: string;
       playerId: string;
@@ -93,9 +159,36 @@ export async function POST(request: NextRequest) {
 
     const playerAccumulators = new Map<string, PlayerStatAccumulator>();
 
+    // Pre-populate with all existing players in realplayerstats so players with 0 matches reset correctly
+    const existingPlayers = requestedSeasonId
+      ? await tournamentDb`
+          SELECT id, player_id, player_name, season_id, team, team_id, category
+          FROM realplayerstats
+          WHERE season_id = ${requestedSeasonId}
+        `
+      : await tournamentDb`
+          SELECT id, player_id, player_name, season_id, team, team_id, category
+          FROM realplayerstats
+        `;
+
+    for (const p of existingPlayers) {
+      const key = `${p.player_id}_${p.season_id}`;
+      playerAccumulators.set(key, {
+        statsId: p.id || `${p.player_id}_${p.season_id}`,
+        playerId: p.player_id,
+        playerName: p.player_name,
+        seasonId: p.season_id,
+        team: p.team || '',
+        teamId: p.team_id || '',
+        category: p.category || 'RED',
+        matches: [],
+        processedFixtures: [],
+      });
+    }
+
     for (const m of matchups) {
       if (m.is_null) continue;
-      const seasonId = m.season_id || 'SSPSLS18';
+      const seasonId = m.season_id || requestedSeasonId || 'SSPSLS18';
 
       // Home Player
       if (m.home_player_id) {
@@ -109,7 +202,7 @@ export async function POST(request: NextRequest) {
             seasonId: seasonId,
             team: m.home_team_name || '',
             teamId: m.home_team_id || '',
-            category: m.home_category || 'Red',
+            category: m.home_category || 'RED',
             matches: [],
             processedFixtures: [],
           });
@@ -121,7 +214,7 @@ export async function POST(request: NextRequest) {
           goalsConceded: Number(m.away_goals) || 0,
           isMotm: fixtureMotmMap.get(m.fixture_id) === pId,
           fixtureId: m.fixture_id,
-          opponentCat: m.away_category || '',
+          opponentCat: m.away_category || 'RED',
         });
         if (!acc.processedFixtures.includes(m.fixture_id)) {
           acc.processedFixtures.push(m.fixture_id);
@@ -140,7 +233,7 @@ export async function POST(request: NextRequest) {
             seasonId: seasonId,
             team: m.away_team_name || '',
             teamId: m.away_team_id || '',
-            category: m.away_category || 'Red',
+            category: m.away_category || 'RED',
             matches: [],
             processedFixtures: [],
           });
@@ -152,7 +245,7 @@ export async function POST(request: NextRequest) {
           goalsConceded: Number(m.home_goals) || 0,
           isMotm: fixtureMotmMap.get(m.fixture_id) === pId,
           fixtureId: m.fixture_id,
-          opponentCat: m.home_category || '',
+          opponentCat: m.home_category || 'RED',
         });
         if (!acc.processedFixtures.includes(m.fixture_id)) {
           acc.processedFixtures.push(m.fixture_id);
@@ -162,10 +255,10 @@ export async function POST(request: NextRequest) {
 
     let updatedCount = 0;
 
-    // 4. Calculate points and update database
-    for (const [key, pData] of playerAccumulators.entries()) {
-      const playerCat = pData.category.toLowerCase();
-      const playerCatConfig = categoriesMap.get(playerCat) || categoriesMap.get('red');
+    // 5. Calculate points and update database
+    for (const [, pData] of playerAccumulators.entries()) {
+      const seasonNum = parseInt(pData.seasonId.replace(/\D/g, '')) || 0;
+      const usesCategoryPoints = seasonNum >= 18;
 
       let totalPoints = 0;
       let matchesPlayed = pData.matches.length;
@@ -189,34 +282,12 @@ export async function POST(request: NextRequest) {
         else if (res === 'draw') draws++;
         else losses++;
 
-        const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
-          const cat = (oppCategory || '').toLowerCase();
-          if (cat.includes('red') || cat === 'r') {
-            if (outcome === 'win') return 8;
-            if (outcome === 'draw') return 4;
-            return -3;
-          }
-          if (cat.includes('black')) {
-            if (outcome === 'win') return 7;
-            if (outcome === 'draw') return 3;
-            return -4;
-          }
-          if (cat.includes('blue') || cat === 'b') {
-            if (outcome === 'win') return 6;
-            if (outcome === 'draw') return 2;
-            return -5;
-          }
-          if (cat.includes('white') || cat === 'w') {
-            if (outcome === 'win') return 5;
-            if (outcome === 'draw') return 1;
-            return -6;
-          }
-          if (outcome === 'win') return 8;
-          if (outcome === 'draw') return 4;
-          return -3;
-        };
-
-        const matchPoints = getPointsForOpponentCategory(match.opponentCat, res);
+        let matchPoints = 0;
+        if (usesCategoryPoints) {
+          matchPoints = getPointsForOpponentCategory(match.opponentCat, res);
+        } else {
+          matchPoints = Math.max(-5, Math.min(5, gd));
+        }
 
         totalPoints += matchPoints;
       }
@@ -260,7 +331,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Real player stats recalculated successfully',
+      message: `Real player stats recalculated successfully${requestedSeasonId ? ` for ${requestedSeasonId}` : ''}`,
       fixturesProcessed: completedFixtures.length,
       matchupsProcessed: matchups.length,
       playersUpdated: updatedCount,

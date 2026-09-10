@@ -7,7 +7,7 @@ import { GloveIcon } from '@/components/ui/CustomIcons';
 import { useRouter } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import Link from 'next/link';
-import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { BarChart2, ArrowLeft, Pencil, Check, Search, Calendar, Users, Trophy, ClipboardList, ShieldAlert, CheckCircle, Star, Activity, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw } from 'lucide-react';
 import { db } from '@/lib/firebase/client';
 
 import PlayerPhoto from '@/components/PlayerPhoto';
@@ -86,6 +86,40 @@ export default function PlayerStatsPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
   const [loadingTotals, setLoadingTotals] = useState<boolean>(false);
+  const [recalculating, setRecalculating] = useState<boolean>(false);
+  const [recalcSuccess, setRecalcSuccess] = useState<string | null>(null);
+
+  const handleRecalculateStats = async () => {
+    if (!selectedSeason) return;
+    if (!confirm(`Recalculate all player statistics for ${selectedSeason}?\n\nThis will re-evaluate Matches Played, W/D/L, Goals, Clean Sheets, and Points across all completed fixtures.`)) {
+      return;
+    }
+
+    setRecalculating(true);
+    setRecalcSuccess(null);
+    try {
+      const response = await fetchWithTokenRefresh('/api/admin/recalculate-all-player-stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ season_id: selectedSeason }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRecalcSuccess(`Stats recalculated successfully! Updated ${data.playersUpdated || 0} players across ${data.fixturesProcessed || 0} completed fixtures.`);
+        setPlayerTotalPoints(new Map());
+        setMatchdayStats(new Map());
+        await loadPlayers();
+      } else {
+        const err = await response.json();
+        alert(`Recalculation failed: ${err.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      console.error('Error recalculating player stats:', err);
+      alert(`Error recalculating stats: ${err.message || 'Unknown error'}`);
+    } finally {
+      setRecalculating(false);
+    }
+  };
 
   useEffect(() => {
     const loadActiveSeason = async () => {
@@ -503,17 +537,48 @@ export default function PlayerStatsPage() {
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={toggleEditMode}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-amber-400 border border-slate-900 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5 font-mono"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  Edit Mode
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRecalculateStats}
+                    disabled={recalculating}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5 font-mono disabled:opacity-50"
+                    title="Recalculate all player stats from completed matchdays"
+                  >
+                    {recalculating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                        Syncing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Sync Stats
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={toggleEditMode}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-amber-400 border border-slate-900 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5 font-mono"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit Mode
+                  </button>
+                </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Recalculation success notification */}
+        {recalcSuccess && (
+          <div className="console-card bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 shadow-sm font-mono flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <p className="text-xs uppercase font-extrabold tracking-wide">{recalcSuccess}</p>
+            </div>
+            <button onClick={() => setRecalcSuccess(null)} className="text-emerald-700 hover:text-emerald-900 text-sm font-bold uppercase">&times;</button>
+          </div>
+        )}
 
         {/* Edit mode warning notification */}
         {editMode && (
