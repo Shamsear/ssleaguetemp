@@ -360,7 +360,7 @@ export default function CommitteePerformersPage() {
                       <p className="text-[11px] font-extrabold opacity-80 uppercase">Owner: {todWinner.owner_name}</p>
                       <div className="mt-3 pt-2 border-t border-slate-950/15 flex items-baseline justify-between">
                         <span className="text-[10px] font-black uppercase">Total Score:</span>
-                        <span className="text-2xl font-black">₹{todWinner.total_round_points} Pts</span>
+                        <span className="text-2xl font-black">{todWinner.total_round_points} Pts</span>
                       </div>
                       <p className="text-[9px] font-extrabold opacity-75 mt-0.5">
                         Squad Pts: {todWinner.player_points} | Supporting Pts: {todWinner.passive_points}
@@ -493,7 +493,7 @@ export default function CommitteePerformersPage() {
                               <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
                               <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
                               <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm flex items-center justify-end gap-2">
-                                <span>₹{t.total_round_points} Pts</span>
+                                <span>{t.total_round_points} Pts</span>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                               </td>
                             </tr>
@@ -523,19 +523,25 @@ export default function CommitteePerformersPage() {
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {t.players.map((p: any) => {
                                           const bd = typeof p.points_breakdown === 'string' ? JSON.parse(p.points_breakdown || '{}') : (p.points_breakdown || {});
+                                          const isDNP = p.did_not_play || p.result === 'dnp';
                                           return (
-                                            <div key={p.real_player_id} className="bg-white border border-slate-200 p-2.5 rounded-xl space-y-1.5 shadow-sm">
+                                            <div key={p.real_player_id} className={`bg-white border p-2.5 rounded-xl space-y-1.5 shadow-sm ${isDNP ? 'border-dashed border-slate-200 opacity-75' : 'border-slate-200'}`}>
                                               <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 min-w-0">
-                                                  <span className="font-black text-slate-900 text-xs truncate">{p.player_name}</span>
+                                                  <span className={`font-black text-xs truncate ${isDNP ? 'text-slate-600' : 'text-slate-900'}`}>{p.player_name}</span>
                                                   {p.is_captain && <span className="px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded uppercase">Captain (2x)</span>}
                                                   {p.is_vice_captain && <span className="px-1.5 py-0.5 bg-slate-700 text-amber-300 font-black text-[9px] rounded uppercase">VC</span>}
                                                 </div>
-                                                <span className="font-black text-indigo-600 text-xs">{p.total_points} Pts</span>
+                                                <span className={`font-black text-xs ${isDNP ? 'text-slate-400' : Number(p.total_points) < 0 ? 'text-rose-600' : 'text-indigo-600'}`}>
+                                                  {p.total_points} Pts
+                                                </span>
                                               </div>
 
                                               {/* Itemized Chips */}
                                               <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold">
+                                                {isDNP && (
+                                                  <span className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded italic">Did Not Play (DNP)</span>
+                                                )}
                                                 {bd.match_played > 0 && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">Played +{bd.match_played}</span>}
                                                 {bd.goals > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Goals +{bd.goals}</span>}
                                                 {bd.result !== undefined && bd.result !== 0 && (
@@ -562,17 +568,22 @@ export default function CommitteePerformersPage() {
                                       <span>Supporting Team ({t.supporting_team_name || 'N/A'}) — Round {data?.target_round}</span>
                                       <span className="text-emerald-700 font-black">+{t.passive_points} Pts</span>
                                     </div>
-                                    {t.passive_breakdown ? (
-                                      <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold">
-                                        {Object.entries(typeof t.passive_breakdown === 'string' ? JSON.parse(t.passive_breakdown) : t.passive_breakdown).map(([k, v]: [string, any]) => (
-                                          <span key={k} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg uppercase">
-                                            {k.replace(/_/g, ' ')}: {Number(v) > 0 ? `+${v}` : v} pts
-                                          </span>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <p className="text-[10px] text-slate-400 italic">No supporting team bonus for Round {data?.target_round}</p>
-                                    )}
+                                    {(() => {
+                                      const pbd = typeof t.passive_breakdown === 'string' ? JSON.parse(t.passive_breakdown || '{}') : (t.passive_breakdown || {});
+                                      const entries = Object.entries(pbd);
+                                      if (entries.length === 0) {
+                                        return <p className="text-[10px] text-slate-400 italic">No supporting team bonus for Round {data?.target_round}</p>;
+                                      }
+                                      return (
+                                        <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold">
+                                          {entries.map(([k, v]: [string, any]) => (
+                                            <span key={k} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg uppercase">
+                                              {k.replace(/_/g, ' ')}: {Number(v) > 0 ? `+${v}` : v} pts
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                 </td>
                               </tr>
@@ -725,7 +736,7 @@ export default function CommitteePerformersPage() {
                       <p className="text-[11px] font-extrabold opacity-80 uppercase">Owner: {towWinner.owner_name}</p>
                       <div className="mt-3 pt-2 border-t border-slate-950/15 flex items-baseline justify-between">
                         <span className="text-[10px] font-black uppercase">Week Score:</span>
-                        <span className="text-2xl font-black">₹{towWinner.total_week_points} Pts</span>
+                        <span className="text-2xl font-black">{towWinner.total_week_points} Pts</span>
                       </div>
                       <p className="text-[9px] font-extrabold opacity-75 mt-0.5">
                         Squad Pts: {towWinner.player_points} | Supporting Pts: {towWinner.passive_points}
@@ -848,7 +859,7 @@ export default function CommitteePerformersPage() {
                           <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
                           <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
                           <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm">
-                            ₹{t.total_week_points} Pts
+                            {t.total_week_points} Pts
                           </td>
                         </tr>
                       ))}
