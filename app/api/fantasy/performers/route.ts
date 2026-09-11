@@ -124,21 +124,104 @@ export async function GET(request: NextRequest) {
       SELECT 
         team_id,
         real_team_name,
-        COALESCE(SUM(total_bonus), 0) as passive_points
+        total_bonus,
+        bonus_breakdown
       FROM fantasy_team_bonus_points
       WHERE league_id = ${leagueId} AND round_number = ${targetRound}
-      GROUP BY team_id, real_team_name
     `;
-    const bonusPtsMap: Record<string, any> = {};
+    const bonusPtsMap = new Map<string, any>();
     bonusPtsRows.forEach((r: any) => {
-      bonusPtsMap[r.team_id] = r;
+      let bd: any = {};
+      try {
+        bd = typeof r.bonus_breakdown === 'string' ? JSON.parse(r.bonus_breakdown) : (r.bonus_breakdown || {});
+      } catch (e) {
+        bd = {};
+      }
+      const existing = bonusPtsMap.get(r.team_id);
+      if (!existing) {
+        bonusPtsMap.set(r.team_id, {
+          team_id: r.team_id,
+          real_team_name: r.real_team_name,
+          passive_points: Number(r.total_bonus || 0),
+          bonus_breakdown: bd
+        });
+      } else {
+        existing.passive_points += Number(r.total_bonus || 0);
+        if (bd && typeof bd === 'object') {
+          Object.entries(bd).forEach(([k, v]) => {
+            existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
+          });
+        }
+      }
     });
 
     const allTeams = await fantasySql`
-      SELECT team_id, team_name, owner_name
+      SELECT team_id, team_name, owner_name, supported_team_id, supported_team_name
       FROM fantasy_teams
       WHERE league_id = ${leagueId}
+      ORDER BY team_name
     `;
+
+    // 4b. Window and squad reconstruction for targetRound
+    const firstWinRows = await fantasySql`
+      SELECT MIN(start_round) as first_start
+      FROM fantasy_transfer_windows
+      WHERE league_id = ${leagueId} AND start_round IS NOT NULL
+    `;
+    const firstWindowStartRound = Number(firstWinRows[0]?.first_start || 7);
+
+    // Fetch Captain History for targetRound
+    const capWinRows = await fantasySql`
+      SELECT window_id FROM fantasy_captain_windows
+      WHERE league_id = ${leagueId} AND ${targetRound} >= start_round AND ${targetRound} <= end_round
+      LIMIT 1
+    `;
+    const capHistMap = new Map<string, any>();
+    if (capWinRows.length > 0 && capWinRows[0].window_id) {
+      const capHist = await fantasySql`
+        SELECT team_id, captain_player_id, vice_captain_player_id
+        FROM fantasy_captain_history
+        WHERE league_id = ${leagueId} AND window_id = ${capWinRows[0].window_id}
+      `;
+      capHist.forEach((c: any) => capHistMap.set(c.team_id, c));
+    }
+
+    const currentSquad = await fantasySql`
+      SELECT team_id, real_player_id, player_name, position, real_team_name, is_captain, is_vice_captain, acquisition_type
+      FROM fantasy_squad
+      WHERE league_id = ${leagueId}
+    `;
+
+    const releases = await fantasySql`
+      SELECT team_id, real_player_id, player_name, category, window_id
+      FROM fantasy_releases
+      WHERE league_id = ${leagueId} AND is_passive_team = false
+    `;
+
+    const teamSquadMap = new Map<string, any[]>();
+    allTeams.forEach((ft: any) => {
+      let squadList: any[] = [];
+      if (targetRound < firstWindowStartRound) {
+        const retained = currentSquad.filter((s: any) => s.team_id === ft.team_id && s.acquisition_type !== 'post_release_draft');
+        const rel = releases.filter((r: any) => r.team_id === ft.team_id);
+        squadList = [...retained, ...rel];
+      } else {
+        squadList = currentSquad.filter((s: any) => s.team_id === ft.team_id);
+      }
+
+      const cap = capHistMap.get(ft.team_id);
+      squadList = squadList.map((p: any) => {
+        const isCaptain = cap ? cap.captain_player_id === p.real_player_id : !!p.is_captain;
+        const isViceCaptain = cap ? cap.vice_captain_player_id === p.real_player_id : !!p.is_vice_captain;
+        return {
+          ...p,
+          is_captain: isCaptain,
+          is_vice_captain: isViceCaptain
+        };
+      });
+
+      teamSquadMap.set(ft.team_id, squadList);
+    });
 
     // Fetch detailed player points for each team in targetRound for itemized round breakdown
     const roundPlayerDetails = await fantasySql`
@@ -162,31 +245,79 @@ export async function GET(request: NextRequest) {
       ORDER BY fpp.total_points DESC
     `;
 
-    const teamPlayersMap = new Map<string, any[]>();
-    roundPlayerDetails.forEach((p: any) => {
-      const existing = teamPlayersMap.get(p.team_id) || [];
-      existing.push(p);
-      teamPlayersMap.set(p.team_id, existing);
-    });
-
     const todRows = allTeams.map((ft: any) => {
       const pData = playerPtsMap[ft.team_id];
-      const bData = bonusPtsMap[ft.team_id];
+      const bData = bonusPtsMap.get(ft.team_id);
 
-      const player_points = pData ? Number(pData.player_points) : 0;
+      const squadList = teamSquadMap.get(ft.team_id) || [];
+      const matchedIds = new Set<string>();
+
+      const players = squadList.map((sq: any) => {
+        matchedIds.add(sq.real_player_id);
+        const fpp = roundPlayerDetails.find(
+          (p: any) => p.real_player_id === sq.real_player_id && (p.team_id === ft.team_id || p.team_id === 'unassigned')
+        );
+        if (fpp) {
+          return {
+            ...fpp,
+            player_name: fpp.player_name || sq.player_name,
+            is_captain: sq.is_captain || fpp.is_captain,
+            is_vice_captain: sq.is_vice_captain || fpp.is_vice_captain,
+            did_not_play: false
+          };
+        } else {
+          return {
+            team_id: ft.team_id,
+            real_player_id: sq.real_player_id,
+            player_name: sq.player_name,
+            goals_scored: 0,
+            goals_conceded: 0,
+            result: 'dnp',
+            is_motm: false,
+            is_clean_sheet: false,
+            is_captain: sq.is_captain,
+            is_vice_captain: sq.is_vice_captain,
+            base_points: 0,
+            points_multiplier: sq.is_captain ? 200 : 100,
+            points_breakdown: {},
+            total_points: 0,
+            did_not_play: true
+          };
+        }
+      });
+
+      // Also append any player who played for this team in roundPlayerDetails if not in squad list
+      roundPlayerDetails
+        .filter((p: any) => p.team_id === ft.team_id && !matchedIds.has(p.real_player_id))
+        .forEach((p: any) => {
+          players.push({
+            ...p,
+            did_not_play: false
+          });
+        });
+
+      // Sort players: total_points DESC, captain first
+      players.sort((a: any, b: any) => {
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        if (a.is_captain) return -1;
+        if (b.is_captain) return 1;
+        return 0;
+      });
+
+      const player_points = pData ? Number(pData.player_points) : players.reduce((sum, p) => sum + Number(p.total_points || 0), 0);
       const passive_points = bData ? Number(bData.passive_points) : 0;
       const total_round_points = player_points + passive_points;
 
       let supporting_team_name = bData?.real_team_name;
       if (!supporting_team_name) {
-        if (targetRound >= 7) {
+        if (targetRound >= firstWindowStartRound) {
           const wonNew = postReleasePassiveWon.find((b: any) => b.team_id === ft.team_id);
           const wasRel = passiveReleases.find((r: any) => r.team_id === ft.team_id);
           if (wonNew) supporting_team_name = wonNew.target_name || wonNew.target_id;
           else if (wasRel) supporting_team_name = 'None (Released)';
-          else supporting_team_name = initialSupportedTeamMap[ft.team_id] || 'N/A';
+          else supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
         } else {
-          supporting_team_name = initialSupportedTeamMap[ft.team_id] || 'N/A';
+          supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
         }
       }
 
@@ -200,7 +331,7 @@ export async function GET(request: NextRequest) {
         total_goals: pData ? Number(pData.total_goals) : 0,
         clean_sheets: pData ? Number(pData.clean_sheets) : 0,
         supporting_team_name,
-        players: teamPlayersMap.get(ft.team_id) || [],
+        players,
         passive_breakdown: bData?.bonus_breakdown || null
       };
     });
@@ -227,11 +358,31 @@ export async function GET(request: NextRequest) {
       ORDER BY supporting_points DESC
     `;
 
-    // Deduplicate STOD rows per fantasy team
-    const stodSeenMap = new Map();
+    // Deduplicate & aggregate STOD rows per fantasy team
+    const stodSeenMap = new Map<string, any>();
     stodRawRows.forEach((r: any) => {
-      if (!stodSeenMap.has(r.fantasy_team_id)) {
-        stodSeenMap.set(r.fantasy_team_id, r);
+      const existing = stodSeenMap.get(r.fantasy_team_id);
+      if (!existing) {
+        let bd: any = {};
+        try {
+          bd = typeof r.bonus_breakdown === 'string' ? JSON.parse(r.bonus_breakdown) : (r.bonus_breakdown || {});
+        } catch (e) {
+          bd = {};
+        }
+        stodSeenMap.set(r.fantasy_team_id, {
+          ...r,
+          supporting_points: Number(r.supporting_points || 0),
+          bonus_breakdown: bd
+        });
+      } else {
+        existing.supporting_points += Number(r.supporting_points || 0);
+        let bd: any = {};
+        try {
+          bd = typeof r.bonus_breakdown === 'string' ? JSON.parse(r.bonus_breakdown) : (r.bonus_breakdown || {});
+        } catch (e) {}
+        Object.entries(bd).forEach(([k, v]) => {
+          existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
+        });
       }
     });
     const stodRows = Array.from(stodSeenMap.values());
@@ -264,8 +415,9 @@ export async function GET(request: NextRequest) {
       ORDER BY fpp.base_points DESC, fpp.total_points DESC
     `;
 
-    const draftedPOD = podRows.filter((p: any) => Boolean(p.fantasy_team_id));
-    const freeAgentPOD = podRows.filter((p: any) => !p.fantasy_team_id);
+    const isDrafted = (p: any) => Boolean(p.fantasy_team_id) && p.fantasy_team_id !== 'unassigned';
+    const draftedPOD = podRows.filter(isDrafted);
+    const freeAgentPOD = podRows.filter((p: any) => !isDrafted(p));
 
     // 7. TEAM OF THE WEEK (TOW): Fantasy Team score across 6-round week block
     const startR = targetWeek.startRound;
@@ -361,8 +513,8 @@ export async function GET(request: NextRequest) {
       ORDER BY player_base_points DESC, player_total_points DESC
     `;
 
-    const draftedPOW = powRows.filter((p: any) => Boolean(p.fantasy_team_id));
-    const freeAgentPOW = powRows.filter((p: any) => !p.fantasy_team_id);
+    const draftedPOW = powRows.filter(isDrafted);
+    const freeAgentPOW = powRows.filter((p: any) => !isDrafted(p));
 
     return NextResponse.json({
       available_rounds: availableRounds,
