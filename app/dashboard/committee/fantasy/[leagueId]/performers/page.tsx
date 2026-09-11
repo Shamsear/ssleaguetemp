@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Trophy, ArrowLeft, Crown, Star, Shield, Award, Calendar, 
-  ChevronRight, Users, User, Flame, RefreshCw, Zap, Medal, Filter 
+  ChevronRight, ChevronDown, Users, User, Flame, RefreshCw, Zap, Medal, Filter 
 } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { useAuth } from '@/contexts/AuthContext';
@@ -123,6 +123,7 @@ export default function CommitteePerformersPage() {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [data, setData] = useState<PerformersData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
 
   const toggleExpandTeam = (tId: string) => {
