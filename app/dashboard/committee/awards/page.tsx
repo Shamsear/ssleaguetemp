@@ -21,7 +21,9 @@ import {
   ChevronRight,
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -32,6 +34,7 @@ interface Award {
   award_type: string;
   player_id?: string;
   player_name?: string;
+  category?: string;
   team_id?: string;
   team_name?: string;
   round_number?: number;
@@ -44,11 +47,90 @@ interface Award {
 interface Candidate {
   player_id?: string;
   player_name?: string;
+  category?: string;
   team_id?: string;
   team_name?: string;
   performance_stats: any;
   fixture_id?: string;
   result?: string;
+}
+
+function getCategoryBadgeStyle(category?: string) {
+  if (!category) return 'bg-slate-100 text-slate-700 border border-slate-300';
+  const c = category.toUpperCase().trim();
+  if (c === 'RED') return 'bg-rose-100 text-rose-800 border border-rose-300';
+  if (c === 'BLUE') return 'bg-blue-100 text-blue-800 border border-blue-300';
+  if (c === 'BLACK') return 'bg-slate-900 text-slate-100 border border-slate-700';
+  if (c === 'WHITE') return 'bg-slate-100 text-slate-800 border border-slate-300';
+  return 'bg-purple-100 text-purple-800 border border-purple-300';
+}
+
+function generateNomineeWhatsAppMessage(
+  candidate: Candidate,
+  tab: AwardTab,
+  tournamentName: string,
+  round: number,
+  week: number,
+  category?: string,
+  isWinner: boolean = false
+): string {
+  const awardTitles: Record<AwardTab, string> = {
+    POTD: '🌟 PLAYER OF THE DAY (POTD)',
+    POTW: '🔥 PLAYER OF THE WEEK (POTW)',
+    TOD: '🛡️ TEAM OF THE DAY (TOD)',
+    TOW: '👑 TEAM OF THE WEEK (TOW)',
+    POTS: '🏆 PLAYER OF THE SEASON (POTS)',
+    TOTS: '🏆 TEAM OF THE SEASON (TOTS)',
+  };
+
+  const isPlayerAward = ['POTD', 'POTW', 'POTS'].includes(tab);
+  const isRoundAward = ['POTD', 'TOD'].includes(tab);
+  const isWeekAward = ['POTW', 'TOW'].includes(tab);
+
+  let msg = isWinner 
+    ? `🏆 *SS LEAGUE - OFFICIAL AWARD WINNER* 🏆\n`
+    : `🏆 *SS LEAGUE - AWARD NOMINEE* 🏆\n`;
+  msg += `------------------------------\n`;
+  msg += `🎖️ *Award:* ${awardTitles[tab]}\n`;
+  if (tournamentName) {
+    msg += `🏟️ *Tournament:* ${tournamentName}\n`;
+  }
+  if (isRoundAward) {
+    msg += `📅 *Round:* Round ${round}\n`;
+  } else if (isWeekAward) {
+    const weekRanges: Record<number, string> = {
+      1: 'Rounds 1-7',
+      2: 'Rounds 8-13',
+      3: 'Rounds 14-20',
+      4: 'Rounds 21-26',
+    };
+    msg += `📅 *Week:* Week ${week} (${weekRanges[week] || `Week ${week}`})\n`;
+  } else {
+    msg += `📅 *Period:* Full Season\n`;
+  }
+
+  msg += `------------------------------\n`;
+
+  if (isPlayerAward) {
+    msg += `👤 *${isWinner ? 'Winner' : 'Nominee'}:* ${candidate.player_name || 'N/A'}\n`;
+    if (category) {
+      msg += `🏷️ *Category:* ${category.toUpperCase()}\n`;
+    }
+    if (candidate.team_name) {
+      msg += `👥 *Team:* ${candidate.team_name}\n`;
+    }
+  } else {
+    msg += `👥 *${isWinner ? 'Winning Team' : 'Team Nominee'}:* ${candidate.team_name || 'N/A'}\n`;
+  }
+
+  if (candidate.result) {
+    msg += `⚽ *Match Result:* ${candidate.result}\n`;
+  }
+
+  msg += `------------------------------\n`;
+  msg += `🎮 *SS League Awards Committee*`;
+
+  return msg;
 }
 
 export default function AwardsManagementPage() {
@@ -64,6 +146,9 @@ export default function AwardsManagementPage() {
   const [awards, setAwards] = useState<Award[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+
+  const [playerCategories, setPlayerCategories] = useState<Record<string, string>>({});
+  const [copiedCandidateId, setCopiedCandidateId] = useState<string | null>(null);
 
   const [loading_data, setLoadingData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +183,112 @@ export default function AwardsManagementPage() {
 
     fetchTournaments();
   }, [userSeasonId]);
+
+  // Fetch player categories for the season
+  useEffect(() => {
+    const fetchPlayerCategories = async () => {
+      if (!userSeasonId) return;
+
+      try {
+        const response = await fetchWithTokenRefresh(`/api/player-seasons?season_id=${userSeasonId}`);
+        const result = await response.json();
+
+        if (result.players && Array.isArray(result.players)) {
+          const map: Record<string, string> = {};
+          result.players.forEach((p: any) => {
+            if (p.player_id && p.category) {
+              map[p.player_id] = p.category;
+            }
+            if (p.player_name && p.category) {
+              map[p.player_name.trim().toLowerCase()] = p.category;
+            }
+          });
+          setPlayerCategories(map);
+        }
+      } catch (err) {
+        console.error('Error fetching player categories:', err);
+      }
+    };
+
+    fetchPlayerCategories();
+  }, [userSeasonId]);
+
+  const getCandidateCategory = (candidate: Candidate) => {
+    if (candidate.category) return candidate.category;
+    if (candidate.player_id && playerCategories[candidate.player_id]) {
+      return playerCategories[candidate.player_id];
+    }
+    if (candidate.player_name && playerCategories[candidate.player_name.trim().toLowerCase()]) {
+      return playerCategories[candidate.player_name.trim().toLowerCase()];
+    }
+    return '';
+  };
+
+  const getAwardCategory = (award: Award) => {
+    if (award.category) return award.category;
+    if (award.player_id && playerCategories[award.player_id]) {
+      return playerCategories[award.player_id];
+    }
+    if (award.player_name && playerCategories[award.player_name.trim().toLowerCase()]) {
+      return playerCategories[award.player_name.trim().toLowerCase()];
+    }
+    return '';
+  };
+
+  const handleCopyWhatsApp = (candidate: Candidate, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cat = getCandidateCategory(candidate);
+    const currentTournament = availableTournaments.find(t => t.id === tournamentId);
+    const tournamentName = currentTournament ? currentTournament.name : tournamentId;
+
+    const message = generateNomineeWhatsAppMessage(
+      candidate,
+      activeTab,
+      tournamentName,
+      currentRound,
+      currentWeek,
+      cat,
+      false
+    );
+
+    navigator.clipboard.writeText(message);
+    const candidateId = candidate.player_id || candidate.team_id || '';
+    setCopiedCandidateId(candidateId);
+    setTimeout(() => {
+      setCopiedCandidateId(null);
+    }, 2000);
+  };
+
+  const handleCopyWinnerWhatsApp = (award: Award) => {
+    const cat = getAwardCategory(award);
+    const currentTournament = availableTournaments.find(t => t.id === tournamentId);
+    const tournamentName = currentTournament ? currentTournament.name : tournamentId;
+
+    const fakeCandidate: Candidate = {
+      player_id: award.player_id,
+      player_name: award.player_name,
+      team_id: award.team_id,
+      team_name: award.team_name,
+      category: cat,
+      performance_stats: award.performance_stats,
+    };
+
+    const message = generateNomineeWhatsAppMessage(
+      fakeCandidate,
+      activeTab,
+      tournamentName,
+      award.round_number || currentRound,
+      award.week_number || currentWeek,
+      cat,
+      true
+    );
+
+    navigator.clipboard.writeText(message);
+    setCopiedCandidateId(award.id);
+    setTimeout(() => {
+      setCopiedCandidateId(null);
+    }, 2000);
+  };
 
   // Fetch max rounds when tournament changes
   useEffect(() => {
@@ -457,14 +648,46 @@ export default function AwardsManagementPage() {
                   <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider font-mono">
                     CURRENT WINNER
                   </span>
-                  <h3 className="text-xl font-extrabold text-emerald-800">
-                    {currentAward.player_name || currentAward.team_name}
-                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xl font-extrabold text-emerald-800">
+                      {currentAward.player_name || currentAward.team_name}
+                    </h3>
+                    {getAwardCategory(currentAward) && (
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${getCategoryBadgeStyle(getAwardCategory(currentAward))}`}>
+                        {getAwardCategory(currentAward)}
+                      </span>
+                    )}
+                    {currentAward.team_name && currentAward.player_name && (
+                      <span className="text-xs font-bold text-emerald-600 font-mono">
+                        ({currentAward.team_name})
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-emerald-600 font-bold">
                     Selected by {currentAward.selected_by_name}
                   </p>
                 </div>
-                <div>
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyWinnerWhatsApp(currentAward)}
+                    className={`px-3.5 py-2.5 rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer border ${
+                      copiedCandidateId === currentAward.id
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300 ring-2 ring-emerald-500/20'
+                        : 'bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-300'
+                    }`}
+                    title="Copy Winner WhatsApp Message"
+                  >
+                    {copiedCandidateId === currentAward.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied Winner!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-emerald-600" /> Copy Winner
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={() => handleDeleteAward(currentAward.id)}
                     className="w-full sm:w-auto px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-mono text-xs uppercase font-extrabold shadow-sm transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
@@ -508,9 +731,9 @@ export default function AwardsManagementPage() {
                 {candidates.map((candidate, idx) => {
                   const candidateId = candidate.player_id || candidate.team_id || `candidate-${idx}`;
                   const isSelected = selectedCandidate === candidateId;
+                  const category = getCandidateCategory(candidate);
 
                   return (
-
                     <div
                       key={candidateId}
                       onClick={() => setSelectedCandidate(candidateId)}
@@ -522,29 +745,68 @@ export default function AwardsManagementPage() {
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="font-extrabold text-sm text-slate-800 truncate">
-                            {candidate.player_name || candidate.team_name}
-                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-extrabold text-sm text-slate-800 truncate">
+                              {candidate.player_name || candidate.team_name}
+                            </p>
+                            {category && (
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${getCategoryBadgeStyle(category)}`}>
+                                {category}
+                              </span>
+                            )}
+                            {candidate.team_name && candidate.player_name && (
+                              <span className="text-[11px] font-bold text-slate-500 font-mono">
+                                ({candidate.team_name})
+                              </span>
+                            )}
+                          </div>
                           {candidate.result && (
                             <p className="text-[10px] text-slate-500 font-mono mt-1 font-bold">{candidate.result}</p>
                           )}
-                           {candidate.performance_stats && (
-                             <div className="flex flex-wrap gap-1.5 mt-2">
-                               {Object.entries(candidate.performance_stats).map(([key, value]) => (
-                                 <span key={key} className="px-2 py-0.5 bg-slate-200/60 border border-slate-300/30 rounded-md text-[9px] font-bold text-slate-650 uppercase">
-                                   {key}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value as any)}
-                                 </span>
-                               ))}
-                             </div>
-                           )}
+                          {candidate.performance_stats && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {Object.entries(candidate.performance_stats).map(([key, value]) => (
+                                <span key={key} className="px-2 py-0.5 bg-slate-200/60 border border-slate-300/30 rounded-md text-[9px] font-bold text-slate-650 uppercase">
+                                  {key}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value as any)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        {isSelected && (
-                          <span className="text-amber-500 text-lg font-black shrink-0 sm:mr-2">Yes</span>
-                        )}
+
+                        <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyWhatsApp(candidate, e)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-[10px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
+                              copiedCandidateId === candidateId
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 ring-2 ring-emerald-500/20'
+                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 hover:border-emerald-300 shadow-sm'
+                            }`}
+                            title="Copy WhatsApp Message"
+                          >
+                            {copiedCandidateId === candidateId ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>WhatsApp</span>
+                              </>
+                            )}
+                          </button>
+
+                          {isSelected && (
+                            <span className="text-amber-700 bg-amber-100 border border-amber-300 px-2 py-1 rounded-lg text-[10px] font-black shrink-0 uppercase tracking-wider">
+                              Selected
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-  );
+                  );
                 })}
               </div>
             ) : (

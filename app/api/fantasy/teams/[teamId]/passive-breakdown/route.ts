@@ -12,7 +12,13 @@ export async function GET(
   try {
     const { teamId } = await params;
 
-    console.log('🔍 [Passive Breakdown] Request for teamId:', teamId);
+    const { searchParams } = new URL(request.url);
+    const startRoundParam = searchParams.get('start_round');
+    const endRoundParam = searchParams.get('end_round');
+    const startRound = startRoundParam ? parseInt(startRoundParam, 10) : null;
+    const endRound = endRoundParam ? parseInt(endRoundParam, 10) : null;
+
+    console.log('🔍 [Passive Breakdown] Request for teamId:', teamId, { startRound, endRound });
 
     if (!teamId) {
       return NextResponse.json(
@@ -76,36 +82,100 @@ export async function GET(
 
     const isFantasyTeam = teamInfo.length > 0;
 
+    // Resolve window-specific supported team if before window 1
+    if (isFantasyTeam && endRound !== null && endRound <= 6) {
+      const slot6Bids = await fantasySql`
+        SELECT fdb.target_id, ft.team_name as target_team_name
+        FROM fantasy_draft_bids fdb
+        LEFT JOIN fantasy_teams ft ON (
+          fdb.target_id = ft.team_id 
+          OR fdb.target_id LIKE (ft.team_id || '_%')
+          OR ft.team_id = SPLIT_PART(fdb.target_id, '_', 1)
+        )
+        WHERE fdb.team_id = ${teamId} AND fdb.slot_index = 6 AND fdb.status = 'won'
+        LIMIT 1
+      `;
+      if (slot6Bids.length > 0) {
+        let sName = slot6Bids[0].target_team_name;
+        const raw = (slot6Bids[0].target_id || '').toUpperCase();
+        if (!sName || sName === slot6Bids[0].target_id || sName.startsWith('SSPSLT')) {
+          if (raw.includes('SSPSLT0018')) sName = 'TITANS FC';
+          else if (raw.includes('SSPSLT0015')) sName = 'LEGENDS FC';
+          else if (raw.includes('SSPSLT0021')) sName = 'LOS GALACTICOS';
+          else if (raw.includes('SSPSLT0005')) sName = 'TM ASGARDIANS';
+          else if (raw.includes('SSPSLT0006')) sName = 'PES GUARDIANS';
+          else if (raw.includes('SSPSLT0001')) sName = 'CLASSIC TENS';
+          else if (raw.includes('SSPSLT0041')) sName = 'ANDIMUKK FC';
+          else if (raw.includes('SSPSLT0027')) sName = 'PES GUARDIANS';
+          else if (raw.includes('SSPSLT0003')) sName = 'RED PANTHERS';
+          else if (raw.includes('SSPSLT0004')) sName = 'RED HAWKS FC';
+          else sName = slot6Bids[0].target_id;
+        }
+        team.supported_team_id = slot6Bids[0].target_id;
+        team.supported_team_name = sName;
+      }
+    }
+
     // Get passive points breakdown by round:
     // If this is a fantasy team, filter strictly by team_id (its earned passive points).
     // If it's a real tournament team, filter strictly by real_team_id (its performance bonuses).
     const bonusBreakdown = isFantasyTeam
-      ? await fantasySql`
-          SELECT 
-            fixture_id,
-            round_number,
-            real_team_id,
-            real_team_name,
-            bonus_breakdown,
-            total_bonus,
-            calculated_at
-          FROM fantasy_team_bonus_points
-          WHERE team_id = ${teamId}
-          ORDER BY round_number ASC, calculated_at DESC
-        `
-      : await fantasySql`
-          SELECT 
-            fixture_id,
-            round_number,
-            real_team_id,
-            real_team_name,
-            bonus_breakdown,
-            total_bonus,
-            calculated_at
-          FROM fantasy_team_bonus_points
-          WHERE real_team_id = ${teamId} OR real_team_id LIKE ${teamId + '_%'}
-          ORDER BY round_number ASC, calculated_at DESC
-        `;
+      ? (startRound !== null && endRound !== null
+          ? await fantasySql`
+              SELECT 
+                fixture_id,
+                round_number,
+                real_team_id,
+                real_team_name,
+                bonus_breakdown,
+                total_bonus,
+                calculated_at
+              FROM fantasy_team_bonus_points
+              WHERE team_id = ${teamId}
+                AND round_number BETWEEN ${startRound} AND ${endRound}
+              ORDER BY round_number ASC, calculated_at DESC
+            `
+          : await fantasySql`
+              SELECT 
+                fixture_id,
+                round_number,
+                real_team_id,
+                real_team_name,
+                bonus_breakdown,
+                total_bonus,
+                calculated_at
+              FROM fantasy_team_bonus_points
+              WHERE team_id = ${teamId}
+              ORDER BY round_number ASC, calculated_at DESC
+            `)
+      : (startRound !== null && endRound !== null
+          ? await fantasySql`
+              SELECT 
+                fixture_id,
+                round_number,
+                real_team_id,
+                real_team_name,
+                bonus_breakdown,
+                total_bonus,
+                calculated_at
+              FROM fantasy_team_bonus_points
+              WHERE (real_team_id = ${teamId} OR real_team_id LIKE ${teamId + '_%'})
+                AND round_number BETWEEN ${startRound} AND ${endRound}
+              ORDER BY round_number ASC, calculated_at DESC
+            `
+          : await fantasySql`
+              SELECT 
+                fixture_id,
+                round_number,
+                real_team_id,
+                real_team_name,
+                bonus_breakdown,
+                total_bonus,
+                calculated_at
+              FROM fantasy_team_bonus_points
+              WHERE real_team_id = ${teamId} OR real_team_id LIKE ${teamId + '_%'}
+              ORDER BY round_number ASC, calculated_at DESC
+            `);
 
     // Fetch fixture details for context (opponent name and score)
     const { getTournamentDb } = await import('@/lib/neon/tournament-config');

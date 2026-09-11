@@ -222,6 +222,132 @@ export async function GET(
       ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
     `;
 
+    const { searchParams } = new URL(request.url);
+    const startRoundParam = searchParams.get('start_round');
+    const endRoundParam = searchParams.get('end_round');
+    const startRound = startRoundParam ? parseInt(startRoundParam, 10) : null;
+    const endRound = endRoundParam ? parseInt(endRoundParam, 10) : null;
+
+    // Detect rounds and build available_windows dynamically
+    const roundsRows = await sql`
+      SELECT DISTINCT round_number 
+      FROM (
+        SELECT round_number FROM fantasy_player_points WHERE league_id = ${league.league_id}
+        UNION
+        SELECT round_number FROM fantasy_team_bonus_points WHERE league_id = ${league.league_id}
+      ) t
+      ORDER BY round_number ASC
+    `;
+    const availableRounds = roundsRows.map((r: any) => Number(r.round_number)).filter(Boolean);
+    const maxRound = availableRounds.length > 0 ? Math.max(...availableRounds) : 1;
+
+    // Query captain/transfer windows
+    const capWindows = await sql`
+      SELECT window_id, round_name, start_round, end_round
+      FROM fantasy_captain_windows
+      WHERE league_id = ${league.league_id} AND start_round IS NOT NULL AND end_round IS NOT NULL
+      ORDER BY start_round ASC
+    `;
+
+    const availableWindows: Array<{
+      id: string;
+      label: string;
+      start_round: number | null;
+      end_round: number | null;
+      is_current?: boolean;
+    }> = [
+      {
+        id: 'all',
+        label: `All Rounds (1–${maxRound})`,
+        start_round: null,
+        end_round: null,
+        is_current: startRound === null && endRound === null
+      }
+    ];
+
+    if (capWindows.length > 0) {
+      capWindows.forEach((cw: any, idx: number) => {
+        const s = Number(cw.start_round);
+        const e = Number(cw.end_round);
+        const isSelected = startRound === s && endRound === e;
+        availableWindows.push({
+          id: `win_${idx + 1}`,
+          label: `Week ${idx + 1} (Rounds ${s}–${e})`,
+          start_round: s,
+          end_round: e,
+          is_current: isSelected
+        });
+      });
+    } else {
+      const totalWeeksCount = Math.max(1, Math.ceil(maxRound / 6));
+      for (let w = 1; w <= totalWeeksCount; w++) {
+        const s = (w - 1) * 6 + 1;
+        const e = w * 6;
+        availableWindows.push({
+          id: `week_${w}`,
+          label: `Week ${w} (Rounds ${s}–${e})`,
+          start_round: s,
+          end_round: e,
+          is_current: startRound === s && endRound === e
+        });
+      }
+    }
+
+    // Process teams with window points if startRound & endRound are specified
+    let processedTeams = teams.map((team: any) => ({
+      id: team.team_id,
+      team_name: team.team_name,
+      owner_name: team.owner_name,
+      total_points: Number(team.total_points) || 0,
+      player_points: (Number(team.total_points) || 0) - (Number(team.passive_points) || 0),
+      rank: team.rank || null,
+      player_count: Number(team.player_count) || 0,
+      draft_submitted: team.draft_submitted || false,
+      supported_team_id: team.supported_team_id || null,
+      supported_team_name: team.supported_team_name || null,
+      passive_points: Number(team.passive_points) || 0,
+      budget_remaining: Number(team.budget_remaining) || 0,
+    }));
+
+    if (startRound !== null && endRound !== null) {
+      const playerPointsRows = await sql`
+        SELECT team_id, COALESCE(SUM(total_points), 0) as player_points
+        FROM fantasy_player_points
+        WHERE league_id = ${league.league_id} AND round_number BETWEEN ${startRound} AND ${endRound}
+        GROUP BY team_id
+      `;
+      const playerPointsMap = Object.fromEntries(playerPointsRows.map((p: any) => [p.team_id, Number(p.player_points)]));
+
+      const bonusPointsRows = await sql`
+        SELECT team_id, COALESCE(SUM(total_bonus), 0) as passive_points
+        FROM fantasy_team_bonus_points
+        WHERE league_id = ${league.league_id} AND round_number BETWEEN ${startRound} AND ${endRound}
+        GROUP BY team_id
+      `;
+      const bonusPointsMap = Object.fromEntries(bonusPointsRows.map((b: any) => [b.team_id, Number(b.passive_points)]));
+
+      processedTeams = processedTeams.map((t: any) => {
+        const pPts = playerPointsMap[t.id] || 0;
+        const bPts = bonusPointsMap[t.id] || 0;
+        return {
+          ...t,
+          player_points: pPts,
+          passive_points: bPts,
+          total_points: pPts + bPts,
+        };
+      });
+
+      processedTeams.sort((a: any, b: any) => {
+        const diff = b.total_points - a.total_points;
+        if (diff !== 0) return diff;
+        return b.player_points - a.player_points;
+      });
+
+      processedTeams.forEach((t: any, idx: number) => {
+        t.rank = idx + 1;
+      });
+    }
+
     // Get scoring rules (if table exists)
     let scoringRules = [];
     try {
@@ -258,19 +384,12 @@ export async function GET(
         created_at: league.created_at,
         updated_at: league.updated_at,
       },
-      teams: teams.map((team: any) => ({
-        id: team.team_id,
-        team_name: team.team_name,
-        owner_name: team.owner_name,
-        total_points: Number(team.total_points) || 0,
-        rank: team.rank || null,
-        player_count: Number(team.player_count) || 0,
-        draft_submitted: team.draft_submitted || false,
-        supported_team_id: team.supported_team_id || null,
-        supported_team_name: team.supported_team_name || null,
-        passive_points: Number(team.passive_points) || 0,
-        budget_remaining: Number(team.budget_remaining) || 0,
-      })),
+      available_windows: availableWindows,
+      selected_window: {
+        start_round: startRound,
+        end_round: endRound
+      },
+      teams: processedTeams,
       scoring_rules: scoringRules.map((rule: any) => ({
         id: rule.id,
         rule_type: rule.rule_type,

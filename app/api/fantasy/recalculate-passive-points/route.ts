@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
 
                 const homeBonuses = await awardTeamBonus({
                     fantasy_league_id: league.league_id,
+                    season_id: league.season_id,
                     real_team_id: fixture.home_team_id,
                     fixture_id: fixture.fixture_id,
                     round_number: fixture.round_number,
@@ -133,10 +134,12 @@ export async function POST(request: NextRequest) {
                     goals_conceded: fixture.away_score,
                     teamScoringRules,
                     fantasyDb,
+                    tournamentDb,
                 });
 
                 const awayBonuses = await awardTeamBonus({
                     fantasy_league_id: league.league_id,
+                    season_id: league.season_id,
                     real_team_id: fixture.away_team_id,
                     fixture_id: fixture.fixture_id,
                     round_number: fixture.round_number,
@@ -144,6 +147,7 @@ export async function POST(request: NextRequest) {
                     goals_conceded: fixture.home_score,
                     teamScoringRules,
                     fantasyDb,
+                    tournamentDb,
                 });
 
                 leagueBonusPoints += homeBonuses + awayBonuses;
@@ -214,6 +218,7 @@ export async function POST(request: NextRequest) {
 
 async function awardTeamBonus(params: {
   fantasy_league_id: string;
+  season_id?: string;
   real_team_id: string;
   fixture_id: string;
   round_number: number;
@@ -221,9 +226,11 @@ async function awardTeamBonus(params: {
   goals_conceded: number;
   teamScoringRules: Map<string, number>;
   fantasyDb: any;
+  tournamentDb?: any;
 }): Promise<number> {
   const {
     fantasy_league_id,
+    season_id,
     real_team_id,
     fixture_id,
     round_number,
@@ -231,15 +238,37 @@ async function awardTeamBonus(params: {
     goals_conceded,
     teamScoringRules,
     fantasyDb,
+    tournamentDb,
   } = params;
 
-  // Find all fantasy teams affiliated with this real team
-  const fantasyTeams = await fantasyDb`
-    SELECT team_id, team_name, supported_team_id, supported_team_name
-    FROM fantasy_teams
-    WHERE league_id = ${fantasy_league_id}
-      AND (supported_team_id = ${real_team_id} OR supported_team_id LIKE ${real_team_id + '_%'})
+  // Resolve supported teams based on round number (Transfer Window 1 awareness)
+  const [firstWin] = await fantasyDb`
+    SELECT MIN(start_round) as first_start
+    FROM fantasy_transfer_windows
+    WHERE league_id = ${fantasy_league_id} AND start_round IS NOT NULL
   `;
+  const firstWindowStartRound = Number(firstWin?.first_start || 7);
+
+  let fantasyTeams: any[] = [];
+  if (round_number < firstWindowStartRound) {
+    const slot6Bids = await fantasyDb`
+      SELECT fdb.team_id, ft.team_name, fdb.target_id as supported_team_id, ft.supported_team_name
+      FROM fantasy_draft_bids fdb
+      JOIN fantasy_teams ft ON fdb.team_id = ft.team_id
+      WHERE fdb.league_id = ${fantasy_league_id}
+        AND fdb.slot_index = 6
+        AND fdb.status = 'won'
+        AND (fdb.target_id = ${real_team_id} OR fdb.target_id LIKE ${real_team_id + '_%'} OR fdb.target_id LIKE ${'%' + real_team_id + '%'})
+    `;
+    fantasyTeams = slot6Bids;
+  } else {
+    fantasyTeams = await fantasyDb`
+      SELECT team_id, team_name, supported_team_id, supported_team_name
+      FROM fantasy_teams
+      WHERE league_id = ${fantasy_league_id}
+        AND (supported_team_id = ${real_team_id} OR supported_team_id LIKE ${real_team_id + '_%'})
+    `;
+  }
 
   if (fantasyTeams.length === 0) return 0;
 
@@ -251,7 +280,35 @@ async function awardTeamBonus(params: {
   const bonus_breakdown: any = {};
   let total_bonus = 0;
 
-  // Apply S16 team scoring rules dynamically
+  // Check TOD (Team of the Day) award from admin
+  let isTod = false;
+  let isTow = false;
+  if (tournamentDb) {
+    try {
+      const tod = await tournamentDb`
+        SELECT id FROM awards
+        WHERE (award_type = 'TOD' OR award_type = 'Team of the Day')
+          AND team_id = ${real_team_id}
+          AND round_number = ${round_number}
+        LIMIT 1
+      `;
+      isTod = tod.length > 0;
+
+      const weekNum = Math.ceil(round_number / 7);
+      const tow = await tournamentDb`
+        SELECT id FROM awards
+        WHERE (award_type = 'TOW' OR award_type = 'Team of the Week')
+          AND team_id = ${real_team_id}
+          AND (round_number = ${round_number} OR week_number = ${weekNum})
+        LIMIT 1
+      `;
+      isTow = tow.length > 0;
+    } catch (err) {
+      console.error('Error checking team awards:', err);
+    }
+  }
+
+  // Apply team scoring rules dynamically
   teamScoringRules.forEach((points, ruleType) => {
     let applies = false;
     switch (ruleType) {
@@ -272,6 +329,12 @@ async function awardTeamBonus(params: {
         break;
       case 'concedes_15_plus_goals':
         applies = goals_conceded >= 15;
+        break;
+      case 'team_of_the_day':
+        applies = isTod;
+        break;
+      case 'team_of_the_week':
+        applies = isTow;
         break;
     }
     if (applies) {

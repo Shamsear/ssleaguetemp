@@ -197,15 +197,16 @@ export async function POST(request: NextRequest) {
       )
     `;
 
-    // If TOD award, recalculate passive team bonus points
-    if (award_type === 'TOD' || award_type === 'Team of the Day') {
+    // If fantasy award (POTD, POTW, TOD, TOW), recalculate all points
+    const fantasyAwardTypes = ['POTD', 'POTW', 'TOD', 'TOW', 'Team of the Day', 'Team of the Week', 'Player of the Day', 'Player of the Week'];
+    if (fantasyAwardTypes.includes(award_type)) {
       try {
         const host = request.headers.get('host');
         const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
-        await fetch(`${baseUrl}/api/fantasy/recalculate-passive-points`, { method: 'POST' });
+        await fetch(`${baseUrl}/api/admin/fantasy/recalculate-all-points`, { method: 'POST' });
       } catch (err) {
-        console.error('Failed to auto-recalculate passive points for TOD:', err);
+        console.error('Failed to auto-recalculate fantasy points for award:', err);
       }
     }
 
@@ -246,14 +247,14 @@ export async function DELETE(request: NextRequest) {
       DELETE FROM awards WHERE id = ${id}
     `;
 
-    if (existingAward.length > 0 && (existingAward[0].award_type === 'TOD' || existingAward[0].award_type === 'Team of the Day')) {
+    if (existingAward.length > 0 && ['POTD', 'POTW', 'TOD', 'TOW', 'Team of the Day', 'Team of the Week', 'Player of the Day', 'Player of the Week'].includes(existingAward[0].award_type)) {
       try {
         const host = request.headers.get('host');
         const protocol = request.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${protocol}://${host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
-        await fetch(`${baseUrl}/api/fantasy/recalculate-passive-points`, { method: 'POST' });
+        await fetch(`${baseUrl}/api/admin/fantasy/recalculate-all-points`, { method: 'POST' });
       } catch (err) {
-        console.error('Failed to auto-recalculate passive points for deleted TOD:', err);
+        console.error('Failed to auto-recalculate fantasy points for deleted award:', err);
       }
     }
 

@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 
+async function getPlayerCategoriesMap(sql: any, seasonId: string): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (!seasonId) return map;
+
+  try {
+    const ps = await sql`
+      SELECT player_id, category
+      FROM player_seasons
+      WHERE season_id = ${seasonId}
+    `;
+    ps.forEach((p: any) => {
+      if (p.player_id && p.category) map.set(p.player_id, p.category);
+    });
+  } catch (err) {
+    console.error('Error fetching player categories from player_seasons:', err);
+  }
+
+  try {
+    const rps = await sql`
+      SELECT player_id, category
+      FROM realplayerstats
+      WHERE season_id = ${seasonId}
+    `;
+    rps.forEach((p: any) => {
+      if (p.player_id && p.category && !map.has(p.player_id)) {
+        map.set(p.player_id, p.category);
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching player categories from realplayerstats:', err);
+  }
+
+  return map;
+}
+
 /**
  * GET /api/awards/eligible
  * Get eligible candidates for awards
@@ -80,6 +115,8 @@ export async function GET(request: NextRequest) {
         console.log(`📊 Found ${fixtures.length} completed fixtures in round ${roundNumber}`);
         console.log(`🏆 Fixtures with MOTM: ${fixtures.filter((f: any) => f.motm_player_id).length}`);
 
+        const categoryMap = await getPlayerCategoriesMap(sql, seasonId);
+
         // Create candidates from MOTM winners with their match stats
         for (const fixture of fixtures) {
           if (fixture.motm_player_id && fixture.motm_player_name) {
@@ -117,6 +154,7 @@ export async function GET(request: NextRequest) {
             candidates.push({
               player_id: fixture.motm_player_id,
               player_name: fixture.motm_player_name,
+              category: categoryMap.get(fixture.motm_player_id) || null,
               team_id: fixture.home_team_id,
               team_name: playerTeam,
               fixture_id: fixture.fixture_id,
@@ -248,12 +286,15 @@ export async function GET(request: NextRequest) {
           }
         });
 
+        const potwCategoryMap = await getPlayerCategoriesMap(sql, seasonId);
+
         // Convert to candidates array and sort by goals
         candidates = Array.from(playerMap.values())
           .map((player: any) => ({
             player_id: player.player_id,
             player_name: player.player_name,
             team_name: player.team_name,
+            category: potwCategoryMap.get(player.player_id) || null,
             performance_stats: {
               matches_played: player.matches_played,
               total_goals: player.total_goals,
@@ -543,6 +584,7 @@ export async function GET(request: NextRequest) {
               SELECT 
                 ps.player_id,
                 ps.player_name,
+                ps.category,
                 ps.team_id,
                 ps.goals_scored,
                 ps.assists,
@@ -564,6 +606,7 @@ export async function GET(request: NextRequest) {
               SELECT 
                 ps.player_id,
                 ps.player_name,
+                ps.category,
                 ps.team_id,
                 ps.goals_scored,
                 ps.assists,
@@ -585,6 +628,7 @@ export async function GET(request: NextRequest) {
           candidates = players.map((p: any) => ({
             player_id: p.player_id,
             player_name: p.player_name,
+            category: p.category || null,
             team_id: p.team_id,
             performance_stats: {
               goals: p.goals_scored,

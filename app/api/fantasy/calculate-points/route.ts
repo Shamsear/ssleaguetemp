@@ -322,21 +322,69 @@ async function processPlayer(params: {
   const firstWindowStartRound = Number(firstWin?.first_start || 7);
 
   if (round_number < firstWindowStartRound) {
-    // Before first transfer window (e.g. Rounds 1-6): Find team that drafted this player in slots 1-5
-    const draftBids = await sql`
-      SELECT team_id
-      FROM fantasy_draft_bids
+    // Before first transfer window (e.g. Rounds 1-6):
+    // 1. Check retained players from original draft (acquisition_type != 'post_release_draft')
+    const squadDraft = await sql`
+      SELECT team_id, is_captain, is_vice_captain
+      FROM fantasy_squad
       WHERE league_id = ${fantasy_league_id}
-        AND target_id = ${player_id}
-        AND slot_index BETWEEN 1 AND 5
-        AND status = 'won'
+        AND real_player_id = ${player_id}
+        AND acquisition_type != 'post_release_draft'
     `;
-    if (draftBids.length > 0) {
-      targetSquads = draftBids.map((b: any) => ({
-        team_id: b.team_id,
-        is_captain: false,
-        is_vice_captain: false,
+    if (squadDraft.length > 0) {
+      targetSquads = squadDraft.map((s: any) => ({
+        team_id: s.team_id,
+        is_captain: s.is_captain || false,
+        is_vice_captain: s.is_vice_captain || false,
       }));
+    } else {
+      // 2. Check released players from transfer window 1 (they were drafted by that team for rounds 1-6)
+      const releases = await sql`
+        SELECT team_id
+        FROM fantasy_releases
+        WHERE league_id = ${fantasy_league_id}
+          AND real_player_id = ${player_id}
+          AND is_passive_team = false
+      `;
+      if (releases.length > 0) {
+        targetSquads = releases.map((r: any) => ({
+          team_id: r.team_id,
+          is_captain: false,
+          is_vice_captain: false,
+        }));
+      } else {
+        // 3. Fallback: Check fantasy_draft_bids
+        const draftBids = await sql`
+          SELECT team_id
+          FROM fantasy_draft_bids
+          WHERE league_id = ${fantasy_league_id}
+            AND target_id = ${player_id}
+            AND slot_index BETWEEN 1 AND 5
+            AND status = 'won'
+        `;
+        if (draftBids.length > 0) {
+          targetSquads = draftBids.map((b: any) => ({
+            team_id: b.team_id,
+            is_captain: false,
+            is_vice_captain: false,
+          }));
+        } else {
+          // 4. Fallback: Check fantasy_players drafted_by_team_id
+          const [fp] = await sql`
+            SELECT drafted_by_team_id
+            FROM fantasy_players
+            WHERE league_id = ${fantasy_league_id}
+              AND real_player_id = ${player_id}
+          `;
+          if (fp?.drafted_by_team_id && fp.drafted_by_team_id !== 'unassigned') {
+            targetSquads = [{
+              team_id: fp.drafted_by_team_id,
+              is_captain: false,
+              is_vice_captain: false,
+            }];
+          }
+        }
+      }
     }
   } else {
     // Rounds 7+: Find team in current fantasy_squad
@@ -355,13 +403,9 @@ async function processPlayer(params: {
     }
   }
 
-  // If no fantasy team owns this player (free agent), add unassigned target so base points are recorded in fantasy_player_points
+  // If no fantasy team owns this player (free agent), skip as fantasy_player_points has foreign key constraint to fantasy_teams
   if (targetSquads.length === 0) {
-    targetSquads = [{
-      team_id: 'unassigned',
-      is_captain: false,
-      is_vice_captain: false,
-    }];
+    return;
   }
 
   // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
@@ -396,6 +440,57 @@ async function processPlayer(params: {
   if (goals_conceded >= 4) points_breakdown.concedes_4_plus = scoringRules.get('concedes_4_plus_goals') || 0;
   if (goals_conceded >= 15) points_breakdown.concedes_15_plus = scoringRules.get('concedes_15_plus_goals') || 0;
   points_breakdown.match_played = scoringRules.get('match_played') || 0;
+
+  // Check if player won POTD (Player of the Day) award from admin for this round
+  try {
+    const tournamentDb = getTournamentDb();
+    const potdAwards = await tournamentDb`
+      SELECT id FROM awards
+      WHERE award_type = 'POTD'
+        AND player_id = ${player_id}
+        AND round_number = ${round_number}
+      LIMIT 1
+    `;
+    if (potdAwards.length > 0) {
+      const existingFpp = await sql`
+        SELECT id FROM fantasy_player_points
+        WHERE league_id = ${fantasy_league_id}
+          AND real_player_id = ${player_id}
+          AND round_number = ${round_number}
+          AND fixture_id != ${fixture_id}
+          AND (points_breakdown->>'potd') IS NOT NULL
+        LIMIT 1
+      `;
+      if (existingFpp.length === 0) {
+        points_breakdown.potd = scoringRules.get('player_of_the_day') || scoringRules.get('potd') || scoringRules.get('motm') || 5;
+      }
+    }
+
+    // Check if player won POTW (Player of the Week) award from admin
+    const weekNum = Math.ceil(round_number / 7);
+    const potwAwards = await tournamentDb`
+      SELECT id FROM awards
+      WHERE award_type = 'POTW'
+        AND player_id = ${player_id}
+        AND week_number = ${weekNum}
+      LIMIT 1
+    `;
+    if (potwAwards.length > 0) {
+      const existingFppWeek = await sql`
+        SELECT id FROM fantasy_player_points
+        WHERE league_id = ${fantasy_league_id}
+          AND real_player_id = ${player_id}
+          AND fixture_id != ${fixture_id}
+          AND (points_breakdown->>'potw') IS NOT NULL
+        LIMIT 1
+      `;
+      if (existingFppWeek.length === 0) {
+        points_breakdown.potw = scoringRules.get('player_of_the_week') || scoringRules.get('potw') || 10;
+      }
+    }
+  } catch (err) {
+    console.error('Error checking player awards:', err);
+  }
 
   const base_points = Object.keys(points_breakdown)
     .filter(k => k !== 'opponent_player_id')

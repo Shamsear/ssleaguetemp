@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
-import { Activity, AlertTriangle, Award, BarChart2, CheckCircle, ChevronDown, Crown, Gift, Handshake, Shield as ShieldIcon, Star, Target, TrendingUp, Trophy, XCircle, ArrowLeft } from 'lucide-react';
+import { Activity, AlertTriangle, Award, BarChart2, CheckCircle, ChevronDown, Crown, Gift, Handshake, Shield as ShieldIcon, Star, Target, TrendingUp, Trophy, XCircle, ArrowLeft, Filter } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import ShareableTeamCard from '@/components/fantasy/ShareableTeamCard';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -24,6 +24,14 @@ interface FantasyTeam {
   budget_remaining?: number;
 }
 
+interface WindowOption {
+  id: string;
+  label: string;
+  start_round: number | null;
+  end_round: number | null;
+  is_current?: boolean;
+}
+
 interface Player {
   draft_id: string;
   real_player_id: string;
@@ -32,10 +40,16 @@ interface Player {
   matches_played: number;
   average_points: number;
   position?: string;
+  category?: string;
   real_team_name?: string;
   purchase_price?: number;
   is_captain?: boolean;
   is_vice_captain?: boolean;
+  is_released?: boolean;
+  goals_scored?: number;
+  clean_sheets?: number;
+  motm?: number;
+  photo_url?: string | null;
 }
 
 export default function FantasyTeamsPage() {
@@ -50,6 +64,10 @@ export default function FantasyTeamsPage() {
   const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
+
+  // Available windows and active window state
+  const [availableWindows, setAvailableWindows] = useState<WindowOption[]>([]);
+  const [selectedWindow, setSelectedWindow] = useState<WindowOption | null>(null);
 
   // Expandable player state
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
@@ -102,52 +120,69 @@ export default function FantasyTeamsPage() {
     }
   }, [leagueId]);
 
-  useEffect(() => {
-    const loadLeagueData = async () => {
-      if (!leagueId) return;
+  const loadLeagueData = async (win?: WindowOption | null) => {
+    if (!leagueId) return;
 
-      try {
-        const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${leagueId}`);
-        if (!response.ok) throw new Error('Failed to load league');
-
-        const data = await response.json();
-        setLeague(data.league);
-        setTeams(data.teams || []);
-        
-        // Debug: Check budget values
-        console.log('<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams loaded:', data.teams?.slice(0, 3).map((t: any) => ({
-          name: t.team_name,
-          budget: t.budget_remaining,
-          points: t.total_points
-        })));
-        
-        // Auto-select first team
-        if (data.teams && data.teams.length > 0) {
-          loadTeamPlayers(data.teams[0]);
-        }
-      } catch (error: any) {
-        console.error('Error loading league:', error);
-        showAlert({
-          type: 'error',
-          title: 'Error',
-          message: 'Failed to load fantasy league data',
-        });
-      } finally {
-        setIsLoading(false);
+    try {
+      let url = `/api/fantasy/leagues/${leagueId}`;
+      if (win && win.start_round !== null && win.end_round !== null) {
+        url += `?start_round=${win.start_round}&end_round=${win.end_round}`;
       }
-    };
 
-    if (user) {
+      const response = await fetchWithTokenRefresh(url);
+      if (!response.ok) throw new Error('Failed to load league');
+
+      const data = await response.json();
+      setLeague(data.league);
+      setTeams(data.teams || []);
+      
+      if (data.available_windows && data.available_windows.length > 0) {
+        setAvailableWindows(data.available_windows);
+        if (!selectedWindow && !win) {
+          const defWin = data.available_windows.find((w: any) => w.id === 'all') || data.available_windows[0];
+          setSelectedWindow(defWin);
+        }
+      }
+      
+      // Auto-select or update currently selected team
+      if (data.teams && data.teams.length > 0) {
+        const currentTargetId = selectedTeam?.id;
+        const matchingTeam = currentTargetId 
+          ? data.teams.find((t: any) => t.id === currentTargetId) || data.teams[0]
+          : data.teams[0];
+        loadTeamPlayers(matchingTeam, win || selectedWindow);
+      }
+    } catch (error: any) {
+      console.error('Error loading league:', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load fantasy league data',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && leagueId) {
       loadLeagueData();
     }
   }, [user, leagueId]);
 
-  const loadTeamPlayers = async (team: FantasyTeam) => {
+  const loadTeamPlayers = async (team: FantasyTeam, win?: WindowOption | null) => {
     setSelectedTeam(team);
     setIsLoadingPlayers(true);
 
+    const activeWin = win !== undefined ? win : selectedWindow;
+
     try {
-      const response = await fetchWithTokenRefresh(`/api/fantasy/teams/${team.id}`);
+      let url = `/api/fantasy/teams/${team.id}?league_id=${leagueId}`;
+      if (activeWin && activeWin.start_round !== null && activeWin.end_round !== null) {
+        url += `&start_round=${activeWin.start_round}&end_round=${activeWin.end_round}`;
+      }
+
+      const response = await fetchWithTokenRefresh(url);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -164,7 +199,16 @@ export default function FantasyTeamsPage() {
       }
 
       const data = await response.json();
+      if (data.team) {
+        setSelectedTeam((prev) => ({
+          ...(prev || team),
+          ...data.team,
+        }));
+      }
       setTeamPlayers(data.players || []);
+      if (data.available_windows && availableWindows.length === 0) {
+        setAvailableWindows(data.available_windows);
+      }
     } catch (error: any) {
       console.error('Error loading team players:', error);
       showAlert({
@@ -176,6 +220,15 @@ export default function FantasyTeamsPage() {
     } finally {
       setIsLoadingPlayers(false);
     }
+  };
+
+  const handleWindowChange = (win: WindowOption) => {
+    setSelectedWindow(win);
+    setExpandedPlayer(null);
+    setPlayerData(null);
+    setShowPassiveBreakdown(false);
+    setPassiveData(null);
+    loadLeagueData(win);
   };
 
   const togglePlayerBreakdown = async (playerId: string) => {
@@ -192,13 +245,18 @@ export default function FantasyTeamsPage() {
     setPlayerData(null);
 
     try {
-      // Fetch player match details from API - pass team_id to get correct data
+      // Fetch player match details from API - pass team_id and window to get correct data
       const teamId = selectedTeam?.id;
       if (!teamId) {
         throw new Error('No team selected');
       }
       
-      const response = await fetchWithTokenRefresh(`/api/fantasy/players/${playerId}/matches?league_id=${leagueId}&team_id=${teamId}`);
+      let url = `/api/fantasy/players/${playerId}/matches?league_id=${leagueId}&team_id=${teamId}`;
+      if (selectedWindow && selectedWindow.start_round !== null && selectedWindow.end_round !== null) {
+        url += `&start_round=${selectedWindow.start_round}&end_round=${selectedWindow.end_round}`;
+      }
+
+      const response = await fetchWithTokenRefresh(url);
       
       if (!response.ok) {
         throw new Error('Failed to load player match data');
@@ -228,7 +286,12 @@ export default function FantasyTeamsPage() {
     setPassiveData(null);
 
     try {
-      const response = await fetchWithTokenRefresh(`/api/fantasy/teams/${selectedTeam.id}/passive-breakdown`);
+      let url = `/api/fantasy/teams/${selectedTeam.id}/passive-breakdown`;
+      if (selectedWindow && selectedWindow.start_round !== null && selectedWindow.end_round !== null) {
+        url += `?start_round=${selectedWindow.start_round}&end_round=${selectedWindow.end_round}`;
+      }
+
+      const response = await fetchWithTokenRefresh(url);
       
       if (!response.ok) {
         throw new Error('Failed to load passive points breakdown');
@@ -285,7 +348,7 @@ export default function FantasyTeamsPage() {
               Fantasy Team Rosters
             </h1>
             <p className="text-xs text-slate-400 font-mono mt-1">
-              {league.name} — Manager Squad breakdown
+              {league.name} — Manager Squad breakdown by Transfer Window &amp; Week Block
             </p>
           </div>
           <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-amber-400 shadow-sm shrink-0">
@@ -295,11 +358,48 @@ export default function FantasyTeamsPage() {
           </div>
         </div>
 
+        {/* Window Selector Tabs (Pills) */}
+        {availableWindows.length > 0 && (
+          <div className="console-card bg-white border border-slate-200/60 p-4 rounded-3xl shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                <Filter className="w-4 h-4 text-amber-500" /> SELECT WINDOW / ROUND BLOCK:
+              </span>
+              <span className="text-[10px] font-bold text-amber-600 uppercase">
+                Viewing: {selectedWindow?.label || 'All Rounds'}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {availableWindows.map((win) => {
+                const isSelected = (selectedWindow?.id === win.id) || (!selectedWindow && win.id === 'all');
+                return (
+                  <button
+                    key={win.id}
+                    onClick={() => handleWindowChange(win)}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-2 ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 font-extrabold border border-amber-600 shadow-sm'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60'
+                    }`}
+                  >
+                    <span>{win.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Teams List */}
           <div className="lg:col-span-1">
             <div className="console-card bg-white border border-slate-200/60 p-6 rounded-3xl shadow-sm space-y-4">
-              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Teams ({teams.length})</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Teams ({teams.length})</h2>
+                <span className="text-[9px] font-bold text-amber-600 uppercase">
+                  {selectedWindow?.start_round ? `R${selectedWindow.start_round}–R${selectedWindow.end_round}` : 'All Rds'}
+                </span>
+              </div>
               
               <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                 {teams.length === 0 ? (
@@ -314,7 +414,7 @@ export default function FantasyTeamsPage() {
                   teams.map((team) => (
                     <button
                       key={team.id}
-                      onClick={() => loadTeamPlayers(team)}
+                      onClick={() => loadTeamPlayers(team, selectedWindow)}
                       className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
                         selectedTeam?.id === team.id
                           ? 'bg-slate-800 border-slate-900 text-amber-400 shadow-sm'
@@ -350,7 +450,14 @@ export default function FantasyTeamsPage() {
                   <div className="mb-6 pb-4 border-b border-slate-100">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                       <div>
-                        <h2 className="text-sm font-black text-slate-850 uppercase tracking-wider">{selectedTeam.team_name}</h2>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-sm font-black text-slate-850 uppercase tracking-wider">{selectedTeam.team_name}</h2>
+                          {selectedWindow && (
+                            <span className="px-2 py-0.5 bg-amber-100 border border-amber-300 text-amber-800 text-[9px] font-black rounded-md uppercase">
+                              {selectedWindow.label}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Owner: {selectedTeam.owner_name}</p>
                       </div>
                       <ShareableTeamCard
@@ -560,17 +667,28 @@ export default function FantasyTeamsPage() {
                                 {index + 1}
                               </div>
                               <div className="flex-1 text-left font-mono">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <p className="font-bold text-xs uppercase text-slate-800">{player.player_name}</p>
                                   {player.is_captain && (
-                                    <span title="Captain (2x points)"><Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /></span>
+                                    <span title="Captain (2x points)" className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded uppercase shadow-sm">
+                                      <Crown className="w-3 h-3 text-slate-950 fill-amber-300" /> C (2x)
+                                    </span>
                                   )}
                                   {player.is_vice_captain && (
-                                    <span title="Vice-Captain (1.5x points)"><Star className="w-3.5 h-3.5 text-amber-405 fill-amber-405" /></span>
+                                    <span title="Vice-Captain (1.5x points)" className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-800 text-amber-300 font-black text-[9px] rounded uppercase shadow-sm">
+                                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" /> VC (1.5x)
+                                    </span>
+                                  )}
+                                  {player.is_released && (
+                                    <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 border border-rose-300 font-black text-[9px] rounded uppercase">
+                                      Released W1
+                                    </span>
                                   )}
                                 </div>
                                 <p className="text-[9px] text-slate-400 font-bold uppercase">
-                                  {player.real_team_name || 'Real Player'}
+                                  {player.category ? `${player.category} • ` : ''}{player.real_team_name || 'Real Player'}
+                                  {player.matches_played !== undefined ? ` • ${player.matches_played} matches` : ''}
+                                  {player.goals_scored !== undefined && player.goals_scored > 0 ? ` • ${player.goals_scored} goals` : ''}
                                 </p>
                               </div>
                             </div>

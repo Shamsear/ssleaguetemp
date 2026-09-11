@@ -37,6 +37,8 @@ interface PerformersData {
       total_goals: number;
       clean_sheets: number;
       supporting_team_name?: string;
+      players?: Array<any>;
+      passive_breakdown?: any;
     }>;
     supporting_team_of_the_day: Array<{
       fantasy_team_id: string;
@@ -53,22 +55,50 @@ interface PerformersData {
       fantasy_team_id: string;
       fantasy_team_name: string;
       fantasy_owner_name?: string;
+      category?: string;
       position?: string;
       real_team_name?: string;
       goals_scored: number;
+      goals_conceded?: number;
+      result?: string;
+      opponent_name?: string;
+      opponent_category?: string;
+      matches?: Array<{
+        goals_scored: number;
+        goals_conceded: number;
+        result?: string;
+        opponent_name?: string;
+        opponent_category?: string;
+      }>;
       base_points: number;
       total_points: number;
+      points_breakdown?: any;
+      fixtures_count?: number;
       is_captain?: boolean;
       is_vice_captain?: boolean;
     }>;
     player_of_the_day_free_agent: Array<{
       real_player_id: string;
       player_name: string;
+      category?: string;
       position?: string;
       real_team_name?: string;
       goals_scored: number;
+      goals_conceded?: number;
+      result?: string;
+      opponent_name?: string;
+      opponent_category?: string;
+      matches?: Array<{
+        goals_scored: number;
+        goals_conceded: number;
+        result?: string;
+        opponent_name?: string;
+        opponent_category?: string;
+      }>;
       base_points: number;
       total_points: number;
+      points_breakdown?: any;
+      fixtures_count?: number;
     }>;
   };
   week_performers: {
@@ -81,6 +111,9 @@ interface PerformersData {
       total_week_points: number;
       total_goals: number;
       clean_sheets: number;
+      supporting_team_name?: string;
+      players?: Array<any>;
+      passive_breakdown?: any;
     }>;
     supporting_team_of_the_week: Array<{
       fantasy_team_id: string;
@@ -95,22 +128,93 @@ interface PerformersData {
       fantasy_team_id: string;
       fantasy_team_name: string;
       fantasy_owner_name?: string;
+      category?: string;
       position?: string;
       real_team_name?: string;
       total_goals: number;
       player_base_points: number;
       player_total_points: number;
+      points_breakdown?: any;
+      matches_played?: number;
+      rounds?: Array<{
+        round_number: number;
+        base_points: number;
+        total_points: number;
+        goals_scored: number;
+        goals_conceded?: number;
+        is_motm: boolean;
+        is_clean_sheet: boolean;
+        result: any;
+        opponent_name?: string;
+        opponent_category?: string;
+        breakdown?: any;
+      }>;
     }>;
     player_of_the_week_free_agent: Array<{
       real_player_id: string;
       player_name: string;
+      category?: string;
       position?: string;
       real_team_name?: string;
       total_goals: number;
       player_base_points: number;
       player_total_points: number;
+      points_breakdown?: any;
+      matches_played?: number;
+      rounds?: Array<{
+        round_number: number;
+        base_points: number;
+        total_points: number;
+        goals_scored: number;
+        goals_conceded?: number;
+        is_motm: boolean;
+        is_clean_sheet: boolean;
+        result: any;
+        opponent_name?: string;
+        opponent_category?: string;
+        breakdown?: any;
+      }>;
     }>;
   };
+}
+
+function getCategoryBadgeStyle(category?: string) {
+  if (!category) return 'bg-slate-100 text-slate-600 border border-slate-200';
+  const c = category.toUpperCase().trim();
+  if (c === 'RED') return 'bg-rose-100 text-rose-800 border border-rose-300';
+  if (c === 'BLUE') return 'bg-blue-100 text-blue-800 border border-blue-300';
+  if (c === 'BLACK') return 'bg-slate-900 text-slate-100 border border-slate-700';
+  if (c === 'WHITE') return 'bg-slate-100 text-slate-800 border border-slate-300';
+  return 'bg-purple-100 text-purple-800 border border-purple-300';
+}
+
+function renderPlayerChips(breakdown: any, fixturesCount?: number) {
+  const bd = typeof breakdown === 'string' ? JSON.parse(breakdown || '{}') : (breakdown || {});
+  return (
+    <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold">
+      {bd.match_played > 0 && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">Played +{bd.match_played}</span>}
+      {bd.goals > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Goals +{bd.goals}</span>}
+      {bd.result !== undefined && bd.result !== 0 && (
+        <span className={`${bd.result > 0 ? 'bg-indigo-100 text-indigo-800' : 'bg-rose-100 text-rose-800'} px-1.5 py-0.5 rounded`}>
+          Result {bd.result > 0 ? `+${bd.result}` : bd.result}
+        </span>
+      )}
+      {bd.clean_sheet > 0 && <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">CS +{bd.clean_sheet}</span>}
+      {bd.motm > 0 && <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">MOTM +{bd.motm}</span>}
+      {bd.potd > 0 && <span className="bg-amber-200 border border-amber-400 text-amber-900 px-1.5 py-0.5 rounded font-black">POTD +{bd.potd}</span>}
+      {bd.potw > 0 && <span className="bg-yellow-200 border border-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-black">POTW +{bd.potw}</span>}
+      {bd.hat_trick > 0 && <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">Hat-Trick +{bd.hat_trick}</span>}
+      {bd.scored_6_plus > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">6+ Goals +{bd.scored_6_plus}</span>}
+      {bd.concedes_4_plus < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Conceded 4+ {bd.concedes_4_plus}</span>}
+      {bd.fines < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Fines {bd.fines}</span>}
+      {bd.substitution < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Sub {bd.substitution}</span>}
+      {fixturesCount !== undefined && fixturesCount > 1 && (
+        <span className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">
+          {fixturesCount} Matches in Round
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function CommitteePerformersPage() {
@@ -125,9 +229,24 @@ export default function CommitteePerformersPage() {
   const [data, setData] = useState<PerformersData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+  const [expandedWeekTeamId, setExpandedWeekTeamId] = useState<string | null>(null);
+  const [expandedPodKey, setExpandedPodKey] = useState<string | null>(null);
+  const [expandedPowKey, setExpandedPowKey] = useState<string | null>(null);
 
   const toggleExpandTeam = (tId: string) => {
     setExpandedTeamId(prev => prev === tId ? null : tId);
+  };
+
+  const toggleExpandWeekTeam = (tId: string) => {
+    setExpandedWeekTeamId(prev => prev === tId ? null : tId);
+  };
+
+  const toggleExpandPod = (key: string) => {
+    setExpandedPodKey(prev => prev === key ? null : key);
+  };
+
+  const toggleExpandPow = (key: string) => {
+    setExpandedPowKey(prev => prev === key ? null : key);
   };
 
   const loadData = async (rd?: number | null, wk?: number) => {
@@ -311,7 +430,7 @@ export default function CommitteePerformersPage() {
             <div className="console-card bg-white border border-slate-200/60 p-4 rounded-3xl shadow-sm space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-amber-500" /> SELECT 6-ROUND WEEK BLOCK:
+                  <Filter className="w-4 h-4 text-amber-500" /> SELECT WEEK BLOCK:
                 </span>
                 <span className="text-[10px] font-bold text-amber-600 uppercase">
                   {data?.target_week?.label}
@@ -521,14 +640,19 @@ export default function CommitteePerformersPage() {
                                       <p className="text-[10px] text-slate-400 italic">No player points recorded for Round {data?.target_round}</p>
                                     ) : (
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {t.players.map((p: any) => {
+                                        {t.players.map((p: any, pIdx: number) => {
                                           const bd = typeof p.points_breakdown === 'string' ? JSON.parse(p.points_breakdown || '{}') : (p.points_breakdown || {});
                                           const isDNP = p.did_not_play || p.result === 'dnp';
                                           return (
-                                            <div key={p.real_player_id} className={`bg-white border p-2.5 rounded-xl space-y-1.5 shadow-sm ${isDNP ? 'border-dashed border-slate-200 opacity-75' : 'border-slate-200'}`}>
+                                            <div key={`${p.real_player_id || 'player'}-${pIdx}`} className={`bg-white border p-2.5 rounded-xl space-y-1.5 shadow-sm ${isDNP ? 'border-dashed border-slate-200 opacity-75' : 'border-slate-200'}`}>
                                               <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 min-w-0">
                                                   <span className={`font-black text-xs truncate ${isDNP ? 'text-slate-600' : 'text-slate-900'}`}>{p.player_name}</span>
+                                                  {p.category && (
+                                                    <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                                      {p.category}
+                                                    </span>
+                                                  )}
                                                   {p.is_captain && <span className="px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded uppercase">Captain (2x)</span>}
                                                   {p.is_vice_captain && <span className="px-1.5 py-0.5 bg-slate-700 text-amber-300 font-black text-[9px] rounded uppercase">VC</span>}
                                                 </div>
@@ -536,6 +660,18 @@ export default function CommitteePerformersPage() {
                                                   {p.total_points} Pts
                                                 </span>
                                               </div>
+
+                                              {!isDNP && p.opponent_name && (
+                                                <div className="text-[9px] text-slate-500 font-semibold flex items-center gap-1">
+                                                  <span className="font-mono text-slate-800 font-bold">{p.goals_scored}-{p.goals_conceded || 0}</span>
+                                                  <span>vs {p.opponent_name}</span>
+                                                  {p.opponent_category && (
+                                                    <span className={`px-1 py-0 text-[7.5px] font-black rounded uppercase ${getCategoryBadgeStyle(p.opponent_category)}`}>
+                                                      {p.opponent_category}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
 
                                               {/* Itemized Chips */}
                                               <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold">
@@ -551,7 +687,11 @@ export default function CommitteePerformersPage() {
                                                 )}
                                                 {bd.clean_sheet > 0 && <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">CS +{bd.clean_sheet}</span>}
                                                 {bd.motm > 0 && <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">MOTM +{bd.motm}</span>}
+                                                {bd.potd > 0 && <span className="bg-amber-200 border border-amber-400 text-amber-900 px-1.5 py-0.5 rounded font-black">POTD +{bd.potd}</span>}
+                                                {bd.potw > 0 && <span className="bg-yellow-200 border border-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-black">POTW +{bd.potw}</span>}
                                                 {bd.hat_trick > 0 && <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">Hat-Trick +{bd.hat_trick}</span>}
+                                                {bd.scored_6_plus > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">6+ Goals +{bd.scored_6_plus}</span>}
+                                                {bd.concedes_4_plus < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Conceded 4+ {bd.concedes_4_plus}</span>}
                                                 {bd.fines < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Fines {bd.fines}</span>}
                                                 {bd.substitution < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Sub {bd.substitution}</span>}
                                               </div>
@@ -629,22 +769,117 @@ export default function CommitteePerformersPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {roundPerf?.player_of_the_day_drafted?.map((p, idx) => (
-                          <tr key={p.real_player_id} className={`hover:bg-slate-50/60 transition ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}>
-                            <td className="px-4 py-3">
-                              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
-                                idx === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-600'
-                              }`}>
-                                {idx + 1}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-slate-900 font-extrabold">{p.player_name}</td>
-                            <td className="px-4 py-3 text-amber-700">{p.fantasy_team_name}</td>
-                            <td className="px-4 py-3 text-right text-amber-600 font-black">
-                              {p.base_points} Pts
-                            </td>
-                          </tr>
-                        ))}
+                        {roundPerf?.player_of_the_day_drafted?.map((p, idx) => {
+                          const rowKey = `pod-drafted-${p.real_player_id || 'p'}-${idx}`;
+                          const isExpanded = expandedPodKey === rowKey;
+                          return (
+                            <React.Fragment key={rowKey}>
+                              <tr 
+                                onClick={() => toggleExpandPod(rowKey)}
+                                className={`hover:bg-slate-50/80 transition cursor-pointer ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}
+                              >
+                                <td className="px-4 py-3">
+                                  <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
+                                    idx === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-slate-900 font-extrabold flex items-center gap-1.5">
+                                    <span>{p.player_name}</span>
+                                    {p.category && (
+                                      <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                        {p.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 font-normal truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                    {p.real_team_name && <span>{p.real_team_name}</span>}
+                                    {p.opponent_name && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="font-mono text-slate-700 font-bold">
+                                          {p.goals_scored} - {p.goals_conceded || 0} vs {p.opponent_name}
+                                        </span>
+                                        {p.opponent_category && (
+                                          <span className={`px-1 py-0 text-[7.5px] font-black rounded uppercase ${getCategoryBadgeStyle(p.opponent_category)}`}>
+                                            {p.opponent_category}
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-amber-700">{p.fantasy_team_name}</td>
+                                <td className="px-4 py-3 text-right text-amber-600 font-black flex items-center justify-end gap-1.5">
+                                  <span>{p.base_points} Pts</span>
+                                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </td>
+                              </tr>
+
+                              {isExpanded && (
+                                <tr className="bg-slate-50/90 border-b border-slate-200/80">
+                                  <td colSpan={4} className="p-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                      <span className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                        <Zap className="w-3 h-3 text-amber-500" />
+                                        Round {data?.target_round} Breakdown for {p.player_name}
+                                        {p.category && (
+                                          <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                            {p.category}
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                        {p.fantasy_team_name}
+                                      </span>
+                                    </div>
+
+                                    {/* Match Result & Opponent Section */}
+                                    {p.matches && p.matches.length > 0 && (
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        {p.matches.map((m: any, mIdx: number) => {
+                                          const isWin = m.result === 'win';
+                                          const isLoss = m.result === 'loss';
+                                          return (
+                                            <div key={mIdx} className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl flex items-center gap-2 text-[10px] shadow-xs">
+                                              <span className="text-[9px] font-black uppercase text-slate-400">
+                                                {p.matches!.length > 1 ? `Match ${mIdx + 1}` : 'Match Result'}:
+                                              </span>
+                                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
+                                                isWin ? 'bg-emerald-100 text-emerald-800' :
+                                                isLoss ? 'bg-rose-100 text-rose-800' :
+                                                'bg-amber-100 text-amber-800'
+                                              }`}>
+                                                {m.result || 'played'}
+                                              </span>
+                                              <span className="font-mono font-black text-xs text-slate-900">
+                                                {m.goals_scored} - {m.goals_conceded}
+                                              </span>
+                                              {m.opponent_name && (
+                                                <span className="text-slate-600 font-semibold flex items-center gap-1">
+                                                  <span>vs {m.opponent_name}</span>
+                                                  {m.opponent_category && (
+                                                    <span className={`px-1.5 py-0.2 rounded text-[8px] font-black uppercase ${getCategoryBadgeStyle(m.opponent_category)}`}>
+                                                      {m.opponent_category}
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+
+                                    {renderPlayerChips(p.points_breakdown, p.fixtures_count)}
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
 
                         {(!roundPerf?.player_of_the_day_drafted || roundPerf.player_of_the_day_drafted.length === 0) && (
                           <tr>
@@ -680,22 +915,113 @@ export default function CommitteePerformersPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {roundPerf?.player_of_the_day_free_agent?.map((p, idx) => (
-                          <tr key={p.real_player_id} className={`hover:bg-slate-50/60 transition ${idx === 0 ? 'bg-blue-50/40 font-extrabold' : ''}`}>
-                            <td className="px-4 py-3">
-                              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
-                                idx === 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-                              }`}>
-                                {idx + 1}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-slate-900 font-extrabold">{p.player_name}</td>
-                            <td className="px-4 py-3 text-slate-600">{p.real_team_name || 'N/A'}</td>
-                            <td className="px-4 py-3 text-right text-blue-600 font-black">
-                              {p.base_points} Pts
-                            </td>
-                          </tr>
-                        ))}
+                        {roundPerf?.player_of_the_day_free_agent?.map((p, idx) => {
+                          const rowKey = `pod-fa-${p.real_player_id || 'p'}-${idx}`;
+                          const isExpanded = expandedPodKey === rowKey;
+                          return (
+                            <React.Fragment key={rowKey}>
+                              <tr 
+                                onClick={() => toggleExpandPod(rowKey)}
+                                className={`hover:bg-slate-50/80 transition cursor-pointer ${idx === 0 ? 'bg-blue-50/40 font-extrabold' : ''}`}
+                              >
+                                <td className="px-4 py-3">
+                                  <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
+                                    idx === 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-slate-900 font-extrabold flex items-center gap-1.5">
+                                    <span>{p.player_name}</span>
+                                    {p.category && (
+                                      <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                        {p.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {p.opponent_name && (
+                                    <div className="text-[9px] text-slate-400 font-normal truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-mono text-slate-700 font-bold">
+                                        {p.goals_scored} - {p.goals_conceded || 0} vs {p.opponent_name}
+                                      </span>
+                                      {p.opponent_category && (
+                                        <span className={`px-1 py-0 text-[7.5px] font-black rounded uppercase ${getCategoryBadgeStyle(p.opponent_category)}`}>
+                                          {p.opponent_category}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-slate-600">{p.real_team_name || 'N/A'}</td>
+                                <td className="px-4 py-3 text-right text-blue-600 font-black flex items-center justify-end gap-1.5">
+                                  <span>{p.base_points} Pts</span>
+                                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </td>
+                              </tr>
+
+                              {isExpanded && (
+                                <tr className="bg-slate-50/90 border-b border-slate-200/80">
+                                  <td colSpan={4} className="p-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                      <span className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                        <Zap className="w-3 h-3 text-blue-500" />
+                                        Round {data?.target_round} Breakdown for {p.player_name}
+                                        {p.category && (
+                                          <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                            {p.category}
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                        Club: {p.real_team_name || 'Free Agent'}
+                                      </span>
+                                    </div>
+
+                                    {/* Match Result & Opponent Section */}
+                                    {p.matches && p.matches.length > 0 && (
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        {p.matches.map((m: any, mIdx: number) => {
+                                          const isWin = m.result === 'win';
+                                          const isLoss = m.result === 'loss';
+                                          return (
+                                            <div key={mIdx} className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl flex items-center gap-2 text-[10px] shadow-xs">
+                                              <span className="text-[9px] font-black uppercase text-slate-400">
+                                                {p.matches!.length > 1 ? `Match ${mIdx + 1}` : 'Match Result'}:
+                                              </span>
+                                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
+                                                isWin ? 'bg-emerald-100 text-emerald-800' :
+                                                isLoss ? 'bg-rose-100 text-rose-800' :
+                                                'bg-amber-100 text-amber-800'
+                                              }`}>
+                                                {m.result || 'played'}
+                                              </span>
+                                              <span className="font-mono font-black text-xs text-slate-900">
+                                                {m.goals_scored} - {m.goals_conceded}
+                                              </span>
+                                              {m.opponent_name && (
+                                                <span className="text-slate-600 font-semibold flex items-center gap-1">
+                                                  <span>vs {m.opponent_name}</span>
+                                                  {m.opponent_category && (
+                                                    <span className={`px-1.5 py-0.2 rounded text-[8px] font-black uppercase ${getCategoryBadgeStyle(m.opponent_category)}`}>
+                                                      {m.opponent_category}
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+
+                                    {renderPlayerChips(p.points_breakdown, p.fixtures_count)}
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
 
                         {(!roundPerf?.player_of_the_day_free_agent || roundPerf.player_of_the_day_free_agent.length === 0) && (
                           <tr>
@@ -825,7 +1151,7 @@ export default function CommitteePerformersPage() {
                     <Trophy className="w-4 h-4 text-amber-500" /> Team of the Week (TOW) Full Standings ({data?.target_week?.label})
                   </h3>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">
-                    Ranked by 6-Round Combined Total Score (Player Pts + Supporting Pts)
+                    Ranked by Combined Total Score (Player Pts + Supporting Pts)
                   </span>
                 </div>
 
@@ -836,37 +1162,150 @@ export default function CommitteePerformersPage() {
                         <th className="px-6 py-3.5">Rank</th>
                         <th className="px-6 py-3.5">Fantasy Team</th>
                         <th className="px-6 py-3.5">Owner</th>
-                        <th className="px-6 py-3.5 text-center">Squad Pts (6 Rds)</th>
-                        <th className="px-6 py-3.5 text-center">Supporting Pts (6 Rds)</th>
+                        <th className="px-6 py-3.5">Supporting Team</th>
+                        <th className="px-6 py-3.5 text-center">Squad Pts</th>
+                        <th className="px-6 py-3.5 text-center">Supporting Pts</th>
                         <th className="px-6 py-3.5 text-right">Combined Week Score</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {weekPerf?.team_of_the_week?.map((t, idx) => (
-                        <tr key={t.team_id} className={`hover:bg-slate-50/60 transition ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}>
-                          <td className="px-6 py-3.5">
-                            <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
-                              idx === 0 ? 'bg-amber-500 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {idx + 1}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3.5 text-slate-900 font-extrabold flex items-center gap-2">
-                            <span>{t.team_name}</span>
-                            {idx === 0 && <Crown className="w-4 h-4 text-amber-500 fill-amber-300 shrink-0" />}
-                          </td>
-                          <td className="px-6 py-3.5 text-slate-600">{t.owner_name}</td>
-                          <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
-                          <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
-                          <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm">
-                            {t.total_week_points} Pts
-                          </td>
-                        </tr>
-                      ))}
+                      {weekPerf?.team_of_the_week?.map((t: any, idx: number) => {
+                        const isExpanded = expandedWeekTeamId === t.team_id;
+                        return (
+                          <React.Fragment key={t.team_id}>
+                            <tr 
+                              onClick={() => toggleExpandWeekTeam(t.team_id)}
+                              className={`hover:bg-slate-50/80 transition cursor-pointer ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}
+                            >
+                              <td className="px-6 py-3.5">
+                                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
+                                  idx === 0 ? 'bg-amber-500 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {idx + 1}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3.5 text-slate-900 font-extrabold flex items-center gap-2">
+                                <span>{t.team_name}</span>
+                                {idx === 0 && <Crown className="w-4 h-4 text-amber-500 fill-amber-300 shrink-0" />}
+                              </td>
+                              <td className="px-6 py-3.5 text-slate-600">{t.owner_name}</td>
+                              <td className="px-6 py-3.5 text-emerald-700 font-bold">
+                                {t.supporting_team_name || 'N/A'}
+                              </td>
+                              <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
+                              <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
+                              <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm flex items-center justify-end gap-2">
+                                <span>{t.total_week_points} Pts</span>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </td>
+                            </tr>
+
+                            {/* Itemized Week Breakdown Drawer */}
+                            {isExpanded && (
+                              <tr className="bg-slate-50/90 border-b border-slate-200/80">
+                                <td colSpan={7} className="p-4 space-y-3">
+                                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                      <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                      {data?.target_week?.label || 'Week'} Breakdown for {t.team_name}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                      Owner: {t.owner_name}
+                                    </span>
+                                  </div>
+
+                                  {/* Squad Player Breakdown */}
+                                  <div className="space-y-2">
+                                    <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                      Squad Players Performance ({data?.target_week?.label || 'Week'})
+                                    </h5>
+                                    {(!t.players || t.players.length === 0) ? (
+                                      <p className="text-[10px] text-slate-400 italic">No player points recorded for {data?.target_week?.label || 'this week'}</p>
+                                    ) : (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {t.players.map((p: any, pIdx: number) => {
+                                          const bd = typeof p.points_breakdown === 'string' ? JSON.parse(p.points_breakdown || '{}') : (p.points_breakdown || {});
+                                          const isDNP = p.did_not_play || p.result === 'dnp';
+                                          return (
+                                            <div key={`${p.real_player_id || 'player'}-${pIdx}`} className={`bg-white border p-2.5 rounded-xl space-y-1.5 shadow-sm ${isDNP ? 'border-dashed border-slate-200 opacity-75' : 'border-slate-200'}`}>
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                  <span className={`font-black text-xs truncate ${isDNP ? 'text-slate-600' : 'text-slate-900'}`}>{p.player_name}</span>
+                                                  {p.category && (
+                                                    <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                                      {p.category}
+                                                    </span>
+                                                  )}
+                                                  {p.is_captain && <span className="px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded uppercase">Captain (2x)</span>}
+                                                  {p.is_vice_captain && <span className="px-1.5 py-0.5 bg-slate-700 text-amber-300 font-black text-[9px] rounded uppercase">VC</span>}
+                                                </div>
+                                                <span className={`font-black text-xs ${isDNP ? 'text-slate-400' : Number(p.total_points) < 0 ? 'text-rose-600' : 'text-indigo-600'}`}>
+                                                  {p.total_points} Pts
+                                                </span>
+                                              </div>
+
+                                              {/* Itemized Chips */}
+                                              <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold">
+                                                {isDNP && (
+                                                  <span className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded italic">Did Not Play (DNP)</span>
+                                                )}
+                                                {bd.match_played > 0 && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">Played +{bd.match_played}</span>}
+                                                {bd.goals > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Goals +{bd.goals}</span>}
+                                                {bd.result !== undefined && bd.result !== 0 && (
+                                                  <span className={`${bd.result > 0 ? 'bg-indigo-100 text-indigo-800' : 'bg-rose-100 text-rose-800'} px-1.5 py-0.5 rounded`}>
+                                                    Result {bd.result > 0 ? `+${bd.result}` : bd.result}
+                                                  </span>
+                                                )}
+                                                {bd.clean_sheet > 0 && <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">CS +{bd.clean_sheet}</span>}
+                                                {bd.motm > 0 && <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">MOTM +{bd.motm}</span>}
+                                                {bd.potd > 0 && <span className="bg-amber-200 border border-amber-400 text-amber-900 px-1.5 py-0.5 rounded font-black">POTD +{bd.potd}</span>}
+                                                {bd.potw > 0 && <span className="bg-yellow-200 border border-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-black">POTW +{bd.potw}</span>}
+                                                {bd.hat_trick > 0 && <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">Hat-Trick +{bd.hat_trick}</span>}
+                                                {bd.scored_6_plus > 0 && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">6+ Goals +{bd.scored_6_plus}</span>}
+                                                {bd.concedes_4_plus < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Conceded 4+ {bd.concedes_4_plus}</span>}
+                                                {bd.fines < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Fines {bd.fines}</span>}
+                                                {bd.substitution < 0 && <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded">Sub {bd.substitution}</span>}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Supporting Team Breakdown */}
+                                  <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                                    <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-500">
+                                      <span>Supporting Team ({t.supporting_team_name || 'N/A'}) — {data?.target_week?.label || 'Week'}</span>
+                                      <span className="text-emerald-700 font-black">+{t.passive_points} Pts</span>
+                                    </div>
+                                    {(() => {
+                                      const pbd = typeof t.passive_breakdown === 'string' ? JSON.parse(t.passive_breakdown || '{}') : (t.passive_breakdown || {});
+                                      const entries = Object.entries(pbd);
+                                      if (entries.length === 0) {
+                                        return <p className="text-[10px] text-slate-400 italic">No supporting team bonus for {data?.target_week?.label || 'this week'}</p>;
+                                      }
+                                      return (
+                                        <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold">
+                                          {entries.map(([k, v]: [string, any]) => (
+                                            <span key={k} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg uppercase">
+                                              {k.replace(/_/g, ' ')}: {Number(v) > 0 ? `+${v}` : v} pts
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
 
                       {(!weekPerf?.team_of_the_week || weekPerf.team_of_the_week.length === 0) && (
                         <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-slate-400 text-xs font-bold uppercase italic">
+                          <td colSpan={7} className="px-6 py-8 text-center text-slate-400 text-xs font-bold uppercase italic">
                             No team points calculated for {data?.target_week?.label}.
                           </td>
                         </tr>
@@ -901,22 +1340,118 @@ export default function CommitteePerformersPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {weekPerf?.player_of_the_week_drafted?.map((p, idx) => (
-                          <tr key={p.real_player_id} className={`hover:bg-slate-50/60 transition ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}>
-                            <td className="px-4 py-3">
-                              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
-                                idx === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-600'
-                              }`}>
-                                {idx + 1}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-slate-900 font-extrabold">{p.player_name}</td>
-                            <td className="px-4 py-3 text-amber-700">{p.fantasy_team_name}</td>
-                            <td className="px-4 py-3 text-right text-amber-600 font-black">
-                              {p.player_base_points} Pts
-                            </td>
-                          </tr>
-                        ))}
+                        {weekPerf?.player_of_the_week_drafted?.map((p, idx) => {
+                          const rowKey = `pow-drafted-${p.real_player_id || 'p'}-${idx}`;
+                          const isExpanded = expandedPowKey === rowKey;
+                          return (
+                            <React.Fragment key={rowKey}>
+                              <tr 
+                                onClick={() => toggleExpandPow(rowKey)}
+                                className={`hover:bg-slate-50/80 transition cursor-pointer ${idx === 0 ? 'bg-amber-50/40 font-extrabold' : ''}`}
+                              >
+                                <td className="px-4 py-3">
+                                  <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
+                                    idx === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-slate-900 font-extrabold flex items-center gap-1.5">
+                                    <span>{p.player_name}</span>
+                                    {p.category && (
+                                      <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                        {p.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 font-normal truncate mt-0.5">
+                                    {p.matches_played ? `${p.matches_played} matches` : ''}{p.total_goals ? ` • ${p.total_goals} goals` : ''}{p.real_team_name ? ` • ${p.real_team_name}` : ''}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-amber-700">{p.fantasy_team_name}</td>
+                                <td className="px-4 py-3 text-right text-amber-600 font-black flex items-center justify-end gap-1.5">
+                                  <span>{p.player_base_points} Pts</span>
+                                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </td>
+                              </tr>
+
+                              {isExpanded && (
+                                <tr className="bg-slate-50/90 border-b border-slate-200/80">
+                                  <td colSpan={4} className="p-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                      <span className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                        <Zap className="w-3 h-3 text-amber-500" />
+                                        {data?.target_week?.label || 'Week'} Breakdown for {p.player_name}
+                                        {p.category && (
+                                          <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                            {p.category}
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                        {p.matches_played || p.rounds?.length || 1} Matches Played
+                                      </span>
+                                    </div>
+
+                                    {/* Cumulative Breakdown Chips */}
+                                    <div className="space-y-1">
+                                      <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                        Cumulative Week Breakdown
+                                      </div>
+                                      {renderPlayerChips(p.points_breakdown)}
+                                    </div>
+
+                                    {/* Round-by-Round Breakdown */}
+                                    {p.rounds && p.rounds.length > 0 && (
+                                      <div className="space-y-1.5 pt-1.5 border-t border-slate-200">
+                                        <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                          Round-by-Round Scores & Matchups
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                          {p.rounds.map((r: any, rIdx: number) => (
+                                            <div key={rIdx} className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl text-[9px] font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1.5 shadow-xs">
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-black text-[9px]">
+                                                  R{r.round_number}
+                                                </span>
+                                                <span className="font-black text-amber-600 text-xs">{r.base_points} pts</span>
+                                                {r.result && (
+                                                  <span className={`px-1 py-0.2 rounded text-[7.5px] font-black uppercase ${
+                                                    r.result === 'win' ? 'bg-emerald-100 text-emerald-800' :
+                                                    r.result === 'loss' ? 'bg-rose-100 text-rose-800' :
+                                                    'bg-amber-100 text-amber-800'
+                                                  }`}>
+                                                    {r.result}
+                                                  </span>
+                                                )}
+                                                {r.opponent_name && (
+                                                  <span className="text-slate-600 font-mono text-[9px] flex items-center gap-1">
+                                                    <span>{r.goals_scored}-{r.goals_conceded || 0} vs {r.opponent_name}</span>
+                                                    {r.opponent_category && (
+                                                      <span className={`px-1 py-0 text-[7.5px] font-black rounded uppercase ${getCategoryBadgeStyle(r.opponent_category)}`}>
+                                                        {r.opponent_category}
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="flex items-center gap-1">
+                                                {r.goals_scored > 0 && <span className="text-emerald-700 font-black">+{r.goals_scored}G</span>}
+                                                {r.is_motm && <span className="text-amber-500 font-black">★MOTM</span>}
+                                                {r.is_clean_sheet && <span className="text-blue-600 font-black">🛡CS</span>}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
 
                         {(!weekPerf?.player_of_the_week_drafted || weekPerf.player_of_the_week_drafted.length === 0) && (
                           <tr>
@@ -952,22 +1487,118 @@ export default function CommitteePerformersPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {weekPerf?.player_of_the_week_free_agent?.map((p, idx) => (
-                          <tr key={p.real_player_id} className={`hover:bg-slate-50/60 transition ${idx === 0 ? 'bg-blue-50/40 font-extrabold' : ''}`}>
-                            <td className="px-4 py-3">
-                              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
-                                idx === 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-                              }`}>
-                                {idx + 1}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-slate-900 font-extrabold">{p.player_name}</td>
-                            <td className="px-4 py-3 text-slate-600">{p.real_team_name || 'N/A'}</td>
-                            <td className="px-4 py-3 text-right text-blue-600 font-black">
-                              {p.player_base_points} Pts
-                            </td>
-                          </tr>
-                        ))}
+                        {weekPerf?.player_of_the_week_free_agent?.map((p, idx) => {
+                          const rowKey = `pow-fa-${p.real_player_id || 'p'}-${idx}`;
+                          const isExpanded = expandedPowKey === rowKey;
+                          return (
+                            <React.Fragment key={rowKey}>
+                              <tr 
+                                onClick={() => toggleExpandPow(rowKey)}
+                                className={`hover:bg-slate-50/80 transition cursor-pointer ${idx === 0 ? 'bg-blue-50/40 font-extrabold' : ''}`}
+                              >
+                                <td className="px-4 py-3">
+                                  <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
+                                    idx === 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="text-slate-900 font-extrabold flex items-center gap-1.5">
+                                    <span>{p.player_name}</span>
+                                    {p.category && (
+                                      <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                        {p.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 font-normal truncate mt-0.5">
+                                    {p.matches_played ? `${p.matches_played} matches` : ''}{p.total_goals ? ` • ${p.total_goals} goals` : ''}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-slate-600">{p.real_team_name || 'N/A'}</td>
+                                <td className="px-4 py-3 text-right text-blue-600 font-black flex items-center justify-end gap-1.5">
+                                  <span>{p.player_base_points} Pts</span>
+                                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </td>
+                              </tr>
+
+                              {isExpanded && (
+                                <tr className="bg-slate-50/90 border-b border-slate-200/80">
+                                  <td colSpan={4} className="p-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                      <span className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                        <Zap className="w-3 h-3 text-blue-500" />
+                                        {data?.target_week?.label || 'Week'} Breakdown for {p.player_name}
+                                        {p.category && (
+                                          <span className={`px-1.5 py-0.2 text-[8px] font-black rounded uppercase ${getCategoryBadgeStyle(p.category)}`}>
+                                            {p.category}
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                        {p.matches_played || p.rounds?.length || 1} Matches Played
+                                      </span>
+                                    </div>
+
+                                    {/* Cumulative Breakdown Chips */}
+                                    <div className="space-y-1">
+                                      <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                        Cumulative Week Breakdown
+                                      </div>
+                                      {renderPlayerChips(p.points_breakdown)}
+                                    </div>
+
+                                    {/* Round-by-Round Breakdown */}
+                                    {p.rounds && p.rounds.length > 0 && (
+                                      <div className="space-y-1.5 pt-1.5 border-t border-slate-200">
+                                        <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                          Round-by-Round Scores & Matchups
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                          {p.rounds.map((r: any, rIdx: number) => (
+                                            <div key={rIdx} className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl text-[9px] font-bold text-slate-700 flex flex-wrap items-center justify-between gap-1.5 shadow-xs">
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-black text-[9px]">
+                                                  R{r.round_number}
+                                                </span>
+                                                <span className="font-black text-blue-600 text-xs">{r.base_points} pts</span>
+                                                {r.result && (
+                                                  <span className={`px-1 py-0.2 rounded text-[7.5px] font-black uppercase ${
+                                                    r.result === 'win' ? 'bg-emerald-100 text-emerald-800' :
+                                                    r.result === 'loss' ? 'bg-rose-100 text-rose-800' :
+                                                    'bg-amber-100 text-amber-800'
+                                                  }`}>
+                                                    {r.result}
+                                                  </span>
+                                                )}
+                                                {r.opponent_name && (
+                                                  <span className="text-slate-600 font-mono text-[9px] flex items-center gap-1">
+                                                    <span>{r.goals_scored}-{r.goals_conceded || 0} vs {r.opponent_name}</span>
+                                                    {r.opponent_category && (
+                                                      <span className={`px-1 py-0 text-[7.5px] font-black rounded uppercase ${getCategoryBadgeStyle(r.opponent_category)}`}>
+                                                        {r.opponent_category}
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="flex items-center gap-1">
+                                                {r.goals_scored > 0 && <span className="text-emerald-700 font-black">+{r.goals_scored}G</span>}
+                                                {r.is_motm && <span className="text-amber-500 font-black">★MOTM</span>}
+                                                {r.is_clean_sheet && <span className="text-blue-600 font-black">🛡CS</span>}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
 
                         {(!weekPerf?.player_of_the_week_free_agent || weekPerf.player_of_the_week_free_agent.length === 0) && (
                           <tr>

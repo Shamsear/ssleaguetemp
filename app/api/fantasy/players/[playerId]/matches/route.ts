@@ -11,6 +11,10 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     const leagueId = searchParams.get('league_id') || 'SSPSLFLS18';
     const teamId = searchParams.get('team_id');
+    const startRoundParam = searchParams.get('start_round');
+    const endRoundParam = searchParams.get('end_round');
+    const startRound = startRoundParam ? parseInt(startRoundParam, 10) : null;
+    const endRound = endRoundParam ? parseInt(endRoundParam, 10) : null;
 
     const fantasyDb = getFantasyDb();
     const tournamentDb = getTournamentDb();
@@ -35,8 +39,33 @@ export async function GET(
           LIMIT 1
         `;
 
-    const isCaptain = squadInfo[0]?.is_captain || false;
-    const isViceCaptain = squadInfo[0]?.is_vice_captain || false;
+    let isCaptain = false;
+    let isViceCaptain = false;
+
+    if (startRound !== null && endRound !== null && teamId) {
+      const capWinRows = await fantasyDb`
+        SELECT window_id FROM fantasy_captain_windows
+        WHERE league_id = ${leagueId} AND ${startRound} >= start_round AND ${startRound} <= end_round
+        LIMIT 1
+      `;
+      if (capWinRows.length > 0 && capWinRows[0].window_id) {
+        const capHist = await fantasyDb`
+          SELECT captain_player_id, vice_captain_player_id
+          FROM fantasy_captain_history
+          WHERE league_id = ${leagueId} AND team_id = ${teamId} AND window_id = ${capWinRows[0].window_id}
+          LIMIT 1
+        `;
+        if (capHist.length > 0) {
+          isCaptain = capHist[0].captain_player_id === playerId;
+          isViceCaptain = capHist[0].vice_captain_player_id === playerId;
+        }
+      }
+    }
+
+    if (!isCaptain && !isViceCaptain) {
+      isCaptain = squadInfo[0]?.is_captain || false;
+      isViceCaptain = squadInfo[0]?.is_vice_captain || false;
+    }
     const playerTeamId = squadInfo[0]?.team_id || teamId;
 
     // Get fantasy league season_id to scope match logs to the correct season
@@ -45,53 +74,100 @@ export async function GET(
     `;
     const seasonId = leagues[0]?.season_id || 'SSPSLS18';
 
-    // Get all completed matchups for this player in the active season
-    const matchups = await tournamentDb`
-      SELECT 
-        m.fixture_id,
-        m.home_player_id,
-        m.home_player_name,
-        m.away_player_id,
-        m.away_player_name,
-        m.home_goals,
-        m.away_goals,
-        m.position,
-        f.motm_player_id,
-        f.round_number,
-        f.home_team_name,
-        f.away_team_name,
-        f.status
-      FROM matchups m
-      JOIN fixtures f ON m.fixture_id = f.id
-      WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
-        AND (f.season_id = ${seasonId} OR f.season_id LIKE 'SSPSLS18%')
-        AND f.status = 'completed'
-        AND m.home_goals IS NOT NULL
-        AND m.away_goals IS NOT NULL
-      ORDER BY f.round_number
-    `;
+    // Get all completed matchups for this player in the active season (filtered by window if specified)
+    const matchups = (startRound !== null && endRound !== null)
+      ? await tournamentDb`
+          SELECT 
+            m.fixture_id,
+            m.home_player_id,
+            m.home_player_name,
+            m.away_player_id,
+            m.away_player_name,
+            m.home_goals,
+            m.away_goals,
+            m.position,
+            f.motm_player_id,
+            f.round_number,
+            f.home_team_name,
+            f.away_team_name,
+            f.status
+          FROM matchups m
+          JOIN fixtures f ON m.fixture_id = f.id
+          WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
+            AND (f.season_id = ${seasonId} OR f.season_id LIKE 'SSPSLS18%')
+            AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND f.round_number BETWEEN ${startRound} AND ${endRound}
+          ORDER BY f.round_number
+        `
+      : await tournamentDb`
+          SELECT 
+            m.fixture_id,
+            m.home_player_id,
+            m.home_player_name,
+            m.away_player_id,
+            m.away_player_name,
+            m.home_goals,
+            m.away_goals,
+            m.position,
+            f.motm_player_id,
+            f.round_number,
+            f.home_team_name,
+            f.away_team_name,
+            f.status
+          FROM matchups m
+          JOIN fixtures f ON m.fixture_id = f.id
+          WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
+            AND (f.season_id = ${seasonId} OR f.season_id LIKE 'SSPSLS18%')
+            AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+          ORDER BY f.round_number
+        `;
 
     // Get fantasy_player_points records for this player
     let playerPointsMap = new Map();
     
     const playerPoints = playerTeamId
-      ? await fantasyDb`
-          SELECT 
-            round_number,
-            base_points,
-            total_points
-          FROM fantasy_player_points
-          WHERE team_id = ${playerTeamId}
-            AND real_player_id = ${playerId}
-        `
-      : await fantasyDb`
-          SELECT 
-            round_number,
-            base_points,
-            total_points
-          FROM fantasy_player_points
-          WHERE real_player_id = ${playerId}
-        `;
+      ? (startRound !== null && endRound !== null
+          ? await fantasyDb`
+              SELECT 
+                round_number,
+                base_points,
+                total_points
+              FROM fantasy_player_points
+              WHERE team_id = ${playerTeamId}
+                AND real_player_id = ${playerId}
+                AND round_number BETWEEN ${startRound} AND ${endRound}
+            `
+          : await fantasyDb`
+              SELECT 
+                round_number,
+                base_points,
+                total_points
+              FROM fantasy_player_points
+              WHERE team_id = ${playerTeamId}
+                AND real_player_id = ${playerId}
+            `)
+      : (startRound !== null && endRound !== null
+          ? await fantasyDb`
+              SELECT 
+                round_number,
+                base_points,
+                total_points
+              FROM fantasy_player_points
+              WHERE real_player_id = ${playerId}
+                AND round_number BETWEEN ${startRound} AND ${endRound}
+            `
+          : await fantasyDb`
+              SELECT 
+                round_number,
+                base_points,
+                total_points
+              FROM fantasy_player_points
+              WHERE real_player_id = ${playerId}
+            `);
       
     playerPoints.forEach((p: any) => {
       playerPointsMap.set(p.round_number, {
@@ -112,8 +188,11 @@ export async function GET(
       const pointsData = playerPointsMap.get(m.round_number);
 
       const mult = isCaptain ? 2.0 : (isViceCaptain ? 1.5 : 1.0);
-      const basePts = pointsData?.base_points || pointsData?.total_points || 0;
-      const calcTotalPts = Math.round(basePts * mult);
+      const basePts = pointsData?.base_points || 0;
+      // In fantasy_player_points, total_points is already calculated with the multiplier
+      const calcTotalPts = pointsData?.total_points !== undefined 
+        ? pointsData.total_points 
+        : Math.round(basePts * mult);
 
       return {
         round_number: m.round_number,
@@ -136,20 +215,14 @@ export async function GET(
     const totalMotm = matches.filter((m: any) => m.motm).length;
     const totalMatches = matches.length;
 
-    const pointsData = await fantasyDb`
-      SELECT total_points, league_id
-      FROM fantasy_players
-      WHERE real_player_id = ${playerId}
-        AND league_id = ${leagueId}
-      LIMIT 1
-    `;
-
-    const totalPoints = pointsData[0]?.total_points || 0;
-    const playerLeagueId = pointsData[0]?.league_id || leagueId;
+    const totalPoints = matches.reduce((sum: number, m: any) => sum + (m.total_points || 0), 0);
+    const playerLeagueId = leagueId;
     const averagePoints = totalMatches > 0 ? (totalPoints / totalMatches).toFixed(1) : '0.0';
     
     // Find best performance
-    const bestPerformance = totalPoints; // Simplified - could calculate per-match if needed
+    const bestPerformance = matches.length > 0 
+      ? Math.max(...matches.map((m: any) => m.total_points || 0))
+      : 0;
 
     // Get admin bonus points for this player
     console.log('🔍 [Player Matches] Querying admin bonuses for:', {

@@ -67,14 +67,19 @@ export async function POST(request: NextRequest) {
       WHERE f.status = 'completed' AND f.season_id = ${SEASON_ID} AND m.home_goals IS NOT NULL AND m.away_goals IS NOT NULL
     `;
 
-    // Load Draft Bids (for Rounds 1-6) and Current Squad (for Rounds 7+)
+    // Load Draft Bids (for Rounds 1-6), Releases, and Current Squad (for Rounds 7+)
     const draftBids = await fantasyDb`
       SELECT team_id, slot_index, target_id 
       FROM fantasy_draft_bids 
       WHERE league_id = ${LEAGUE_ID} AND status = 'won'
     `;
+    const releases = await fantasyDb`
+      SELECT team_id, real_player_id, player_name, is_passive_team
+      FROM fantasy_releases
+      WHERE league_id = ${LEAGUE_ID}
+    `;
     const currentSquad = await fantasyDb`
-      SELECT team_id, real_player_id, player_name, is_captain, is_vice_captain 
+      SELECT team_id, real_player_id, player_name, is_captain, is_vice_captain, acquisition_type 
       FROM fantasy_squad 
       WHERE league_id = ${LEAGUE_ID}
     `;
@@ -95,8 +100,29 @@ export async function POST(request: NextRequest) {
       ORDER BY changed_at DESC
     `;
 
+    // Load Awards for Season 18 (POTD, POTW, TOD, TOW)
+    const awards = await tournamentDb`
+      SELECT award_type, round_number, week_number, player_id, team_id
+      FROM awards
+      WHERE season_id = ${SEASON_ID}
+    `;
+    console.log(`🏆 Loaded ${awards.length} awards for Season 18`);
+
     const draftSquads = new Map<string, Set<string>>();
     const draftSupportedTeams = new Map<string, string>();
+    currentTeams.forEach((t: any) => draftSquads.set(t.team_id, new Set()));
+
+    // 1. Retained players from original draft
+    currentSquad.filter((s: any) => s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
+      draftSquads.get(s.team_id)?.add(s.real_player_id);
+    });
+
+    // 2. Released players (they belonged to that team for rounds 1-6)
+    releases.filter((r: any) => !r.is_passive_team).forEach((r: any) => {
+      draftSquads.get(r.team_id)?.add(r.real_player_id);
+    });
+
+    // 3. Draft bids fallback
     draftBids.forEach((bid: any) => {
       if (bid.slot_index >= 1 && bid.slot_index <= 5) {
         if (!draftSquads.has(bid.team_id)) draftSquads.set(bid.team_id, new Set());
@@ -150,14 +176,43 @@ export async function POST(request: NextRequest) {
         const result = won ? 'win' : draw ? 'draw' : 'loss';
         const resultPoints = getCategoryResultPts(oppCategory, result);
 
-        const basePoints = 
-          (goalsScored || 0) * (SCORING_RULES.goals_scored || 0) +
-          (cleanSheet ? (SCORING_RULES.clean_sheet || 0) : 0) +
-          (isMotm ? (SCORING_RULES.motm || 0) : 0) +
-          resultPoints +
-          (SCORING_RULES.match_played || 0) +
-          (goalsScored >= 3 && SCORING_RULES.hat_trick ? SCORING_RULES.hat_trick : 0) +
-          (goalsConceded >= 4 && SCORING_RULES.concedes_4_plus_goals ? SCORING_RULES.concedes_4_plus_goals : 0);
+        let potdPts = 0;
+        const potdAward = awards.find(
+          (a: any) => a.award_type === 'POTD' && a.player_id === playerId && a.round_number === roundNum
+        );
+        if (potdAward) {
+          potdPts = SCORING_RULES.player_of_the_day || SCORING_RULES.potd || SCORING_RULES.motm || 5;
+        }
+
+        let potwPts = 0;
+        const weekNum = Math.ceil(roundNum / 7);
+        const potwAward = awards.find(
+          (a: any) => a.award_type === 'POTW' && a.player_id === playerId && a.week_number === weekNum
+        );
+        if (potwAward) {
+          potwPts = SCORING_RULES.player_of_the_week || SCORING_RULES.potw || 10;
+        }
+
+        const points_breakdown: any = {
+          opponent_player_id: playerSide === 'home' ? matchup.away_player_id : matchup.home_player_id,
+          goals: (goalsScored || 0) * (SCORING_RULES.goals_scored || 2),
+          conceded: (goalsConceded || 0) * (SCORING_RULES.goals_conceded || 0),
+          result: resultPoints,
+          motm: isMotm ? (SCORING_RULES.motm || 5) : 0,
+          clean_sheet: cleanSheet ? (SCORING_RULES.clean_sheet || 6) : 0,
+          match_played: SCORING_RULES.match_played || 1,
+        };
+        if (goalsScored === 2) points_breakdown.brace = SCORING_RULES.brace || 0;
+        if (goalsScored >= 3) points_breakdown.hat_trick = SCORING_RULES.hat_trick || 5;
+        if (goalsScored >= 6) points_breakdown.scored_6_plus = SCORING_RULES.scored_6_plus_goals || 8;
+        if (goalsConceded >= 4) points_breakdown.concedes_4_plus = SCORING_RULES.concedes_4_plus_goals || -3;
+        if (goalsConceded >= 15) points_breakdown.concedes_15_plus = SCORING_RULES.concedes_15_plus_goals || -5;
+        if (potdPts > 0) points_breakdown.potd = potdPts;
+        if (potwPts > 0) points_breakdown.potw = potwPts;
+
+        const basePoints = Object.keys(points_breakdown)
+          .filter(k => k !== 'opponent_player_id')
+          .reduce((sum, key) => sum + (Number(points_breakdown[key]) || 0), 0);
 
         playerBasePointsMap.set(playerId, (playerBasePointsMap.get(playerId) || 0) + basePoints);
 
@@ -201,12 +256,14 @@ export async function POST(request: NextRequest) {
                 team_id, league_id, real_player_id, player_name,
                 fixture_id, round_number, goals_scored, goals_conceded,
                 is_clean_sheet, is_motm, result, total_points,
-                is_captain, is_vice_captain, points_multiplier, base_points, calculated_at
+                is_captain, is_vice_captain, points_multiplier, base_points,
+                points_breakdown, calculated_at
               ) VALUES (
                 ${teamId}, ${LEAGUE_ID}, ${playerId}, ${playerName},
                 ${matchup.fixture_id}, ${fixture.round_number}, ${goalsScored}, ${goalsConceded},
                 ${cleanSheet}, ${isMotm}, ${result}, ${totalPoints},
-                ${isCap}, ${isVc}, ${multiplierInt}, ${basePoints}, NOW()
+                ${isCap}, ${isVc}, ${multiplierInt}, ${basePoints},
+                ${JSON.stringify(points_breakdown)}, NOW()
               )
             `;
             results.playerPointsInserted++;
@@ -261,6 +318,26 @@ export async function POST(request: NextRequest) {
               total_bonus += points;
             }
           });
+
+          // Check TOD and TOW awards
+          const todAward = awards.find(
+            (a: any) => (a.award_type === 'TOD' || a.award_type === 'Team of the Day') && (a.team_id === real_team_id || activeSupportedTeamId.includes(a.team_id)) && a.round_number === roundNum
+          );
+          if (todAward) {
+            const pts = TEAM_SCORING_RULES.get('team_of_the_day') || 5;
+            bonus_breakdown['team_of_the_day'] = pts;
+            total_bonus += pts;
+          }
+
+          const weekNum = Math.ceil(roundNum / 7);
+          const towAward = awards.find(
+            (a: any) => (a.award_type === 'TOW' || a.award_type === 'Team of the Week') && (a.team_id === real_team_id || activeSupportedTeamId.includes(a.team_id)) && (a.round_number === roundNum || a.week_number === weekNum)
+          );
+          if (towAward) {
+            const pts = TEAM_SCORING_RULES.get('team_of_the_week') || 10;
+            bonus_breakdown['team_of_the_week'] = pts;
+            total_bonus += pts;
+          }
 
           if (total_bonus > 0) {
             await fantasyDb`
