@@ -677,13 +677,13 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                   <div className="space-y-3 font-mono text-xs">
                     {awards.map((award) => (
                       <div key={award.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner flex items-center gap-3">
-                        <span className="text-2xl shrink-0">
-                          {award.award_type === 'POTD' && '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'}
+                        <span className="text-2xl shrink-0 flex items-center justify-center">
+                          {award.award_type === 'POTD' && <Star className="w-6 h-6 text-amber-400 fill-amber-400" />}
                           {award.award_type === 'POTW' && '🌟'}
                           {award.award_type === 'TOD' && '🏅'}
-                          {award.award_type === 'TOW' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}
-                          {award.award_type === 'POTS' && '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />'}
-                          {award.award_type === 'TOTS' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}
+                          {award.award_type === 'TOW' && <Trophy className="w-6 h-6 text-amber-500" />}
+                          {award.award_type === 'POTS' && <Crown className="w-6 h-6 text-amber-500 fill-amber-500" />}
+                          {award.award_type === 'TOTS' && <Trophy className="w-6 h-6 text-amber-500" />}
                         </span>
                         <div className="min-w-0">
                           <p className="font-extrabold text-slate-800 text-sm leading-tight">

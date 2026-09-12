@@ -188,7 +188,7 @@ export default function BulkReleaseFootballPlayerForm() {
       return acc;
     }, {} as Record<string, Player[]>);
 
-    let message = `<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> *Bulk Player Release Notification*\n\n`;
+    let message = `🗑️ *Bulk Player Release Notification*\n\n`;
     message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
     message += `*Release Details:*\n`;
     message += `• Timing: ${timing === 'start' ? 'Season Start' : 'Mid-Season'}\n`;
@@ -218,8 +218,8 @@ export default function BulkReleaseFootballPlayerForm() {
     });
 
     message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-    message += `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> All players are now free agents\n`;
-    message += `<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Total refunds added to respective team budgets`;
+    message += `✅ All players are now free agents\n`;
+    message += `💵 Total refunds added to respective team budgets`;
 
     return message;
   };
@@ -289,21 +289,21 @@ export default function BulkReleaseFootballPlayerForm() {
 
       // Show results
       if (successCount > 0 && failCount === 0) {
-        setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin`);
+        setSuccess(`✅ Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin`);
         
         // Generate and copy WhatsApp message
         const whatsappMessage = generateBulkWhatsAppMessage(selectedPlayers, releaseTiming);
         try {
           await navigator.clipboard.writeText(whatsappMessage);
-          setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
+          setSuccess(`✅ Successfully released ${successCount} player(s)! Total refund: ${totalRefund} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
         } catch (clipboardError) {
           console.error('Failed to copy to clipboard:', clipboardError);
         }
       } else if (successCount > 0 && failCount > 0) {
-        setSuccess(`<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Released ${successCount} player(s). ${failCount} failed.`);
+        setSuccess(`⚠️ Released ${successCount} player(s). ${failCount} failed.`);
         setError(errors.join('\n'));
       } else {
-        setError(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to release all players:\n${errors.join('\n')}`);
+        setError(`❌ Failed to release all players:\n${errors.join('\n')}`);
       }
 
       // Reset form
@@ -571,9 +571,13 @@ export default function BulkReleaseFootballPlayerForm() {
           disabled={selectedPlayerIds.size === 0 || submitting}
           className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
-          {submitting
-            ? 'Processing Releases...'
-            : `<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Release ${selectedPlayerIds.size} Player(s) - Total Refund: ${totalRefund} eCoin`}
+          {submitting ? (
+            'Processing Releases...'
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Release {selectedPlayerIds.size} Player(s) - Total Refund: {totalRefund} eCoin
+            </>
+          )}
         </button>
       </form>
     </div>

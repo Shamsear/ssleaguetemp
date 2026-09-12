@@ -2915,12 +2915,12 @@ export function TournamentDashboardPageContent() {
                         className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
-                        <option value="league"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League</option>
-                        <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
-                        <option value="ucl"><Sparkles className="w-4 h-4 inline-block text-amber-400 mr-1 align-text-bottom" /> Champions League</option>
-                        <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
-                        <option value="super_cup"><Award className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Super Cup</option>
-                        <option value="league_cup"><Trophy className="w-4 h-4 text-blue-500" /> League Cup</option>
+                        <option value="league">⚽ League</option>
+                        <option value="cup">🏆 Cup</option>
+                        <option value="ucl">✨ Champions League</option>
+                        <option value="uel">⭐ Europa League</option>
+                        <option value="super_cup">🏅 Super Cup</option>
+                        <option value="league_cup">🏆 League Cup</option>
                       </select>
                     </div>
 
@@ -3566,12 +3566,12 @@ export function TournamentDashboardPageContent() {
                         className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
-                        <option value="league"><Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> League</option>
-                        <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
-                        <option value="ucl"><Sparkles className="w-4 h-4 inline-block text-amber-400 mr-1 align-text-bottom" /> Champions League</option>
-                        <option value="uel"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League</option>
-                        <option value="super_cup"><Award className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Super Cup</option>
-                        <option value="league_cup"><Trophy className="w-4 h-4 text-blue-500" /> League Cup</option>
+                        <option value="league">⚽ League</option>
+                        <option value="cup">🏆 Cup</option>
+                        <option value="ucl">✨ Champions League</option>
+                        <option value="uel">⭐ Europa League</option>
+                        <option value="super_cup">🏅 Super Cup</option>
+                        <option value="league_cup">🏆 League Cup</option>
                       </select>
                     </div>
 

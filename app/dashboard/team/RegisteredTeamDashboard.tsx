@@ -1706,10 +1706,24 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
                                     ? 'bg-amber-100 border border-amber-200 text-amber-800'
                                     : 'bg-slate-200 border border-slate-300 text-slate-700'
                                     }`}>
-                                    {player.category?.toUpperCase() === 'LEGEND' ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> LEGEND' : player.category?.toUpperCase() || 'CLASSIC'}
+                                    {player.category?.toUpperCase() === 'LEGEND' ? (
+                                      <span className="inline-flex items-center gap-1">
+                                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                        <span>LEGEND</span>
+                                      </span>
+                                    ) : player.category?.toUpperCase() || 'CLASSIC'}
                                   </span>
-                                  <span className="text-[10px] text-amber-500 tracking-wider">
-                                    {'<Star className="w-4 h-4 text-amber-400 fill-amber-400" />'.repeat(player.starRating)}{'<Star className="w-4 h-4 text-slate-300" />'.repeat(10 - player.starRating)}
+                                  <span className="inline-flex items-center gap-0.5">
+                                    {Array.from({ length: 10 }).map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-3 h-3 ${
+                                          i < (player.starRating || 0)
+                                            ? 'text-amber-400 fill-amber-400'
+                                            : 'text-slate-300'
+                                        }`}
+                                      />
+                                    ))}
                                   </span>
                                 </div>
                               </div>

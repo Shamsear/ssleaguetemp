@@ -507,10 +507,16 @@ export default function TransfersManagementPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Current Window Status</h2>
-                    <p className="text-gray-600">
-                      {settings.is_transfer_window_open
-                        ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Transfer window is currently open'
-                        : '<Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer window is currently closed'}
+                    <p className="text-gray-600 flex items-center">
+                      {settings.is_transfer_window_open ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Transfer window is currently open
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer window is currently closed
+                        </>
+                      )}
                     </p>
                   </div>
                   <button

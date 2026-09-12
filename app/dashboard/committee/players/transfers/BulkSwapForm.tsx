@@ -287,7 +287,7 @@ export default function BulkSwapForm() {
 
       // Show detailed success message
       const successDetails = result.data.swap_details.map((swap: any) => 
-        `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Swap ${swap.swap_number}: ${swap.player_a.name} (${swap.player_a.old_value} &rarr; ${swap.player_a.new_value}) &harr; ${swap.player_b.name} (${swap.player_b.old_value} &rarr; ${swap.player_b.new_value})`
+        `✅ Swap ${swap.swap_number}: ${swap.player_a.name} (${swap.player_a.old_value} &rarr; ${swap.player_a.new_value}) &harr; ${swap.player_b.name} (${swap.player_b.old_value} &rarr; ${swap.player_b.new_value})`
       ).join('\n');
 
       setSuccess(`Successfully swapped ${swapPairs.length} player pair(s)!\n\n${successDetails}`);
@@ -470,7 +470,13 @@ export default function BulkSwapForm() {
           disabled={submitting || !swapPairs.every(p => p.player_a_id && p.player_b_id)}
           className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
         >
-          {submitting ? 'Processing Bulk Swap...' : `<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swap ${swapPairs.length} Player Pair(s)`}
+          {submitting ? (
+            'Processing Bulk Swap...'
+          ) : (
+            <>
+              <RefreshCw className="w-4 h-4 inline-block text-slate-400 mr-1 align-text-bottom" /> Swap {swapPairs.length} Player Pair(s)
+            </>
+          )}
         </button>
       </form>
     </div>

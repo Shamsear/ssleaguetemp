@@ -654,10 +654,10 @@ export default function PollsManagementPage() {
                     const optionVoters = voters[option.id] || [];
 
                     // Badges for ranks
-                    let rankEmoji = null;
-                    if (index === 0 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />';
-                    else if (index === 1 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />';
-                    else if (index === 2 && option.votes > 0) rankEmoji = '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />';
+                    let rankEmoji: React.ReactNode = null;
+                    if (index === 0 && option.votes > 0) rankEmoji = <Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />;
+                    else if (index === 1 && option.votes > 0) rankEmoji = <Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />;
+                    else if (index === 2 && option.votes > 0) rankEmoji = <Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />;
 
                     return (
 

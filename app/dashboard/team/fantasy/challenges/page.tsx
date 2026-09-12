@@ -1,6 +1,6 @@
 'use client';
 
-import { Crown, Flame, Info, Star, Trophy } from 'lucide-react';
+import { Crown, Flame, Info, Star, Trophy, Wind } from 'lucide-react';
 /**
  * Fantasy Challenges Page
  * View active challenges, track progress, and see completed challenges
@@ -127,16 +127,16 @@ export default function ChallengesPage() {
   const activeChallenges = challenges.filter(c => c.is_active);
   const completedChallenges = challenges.filter(c => isCompleted(c.challenge_id));
 
-  const getChallengeIcon = (type: string) => {
+  const getChallengeIcon = (type: string, className = "w-8 h-8 inline-block") => {
     switch (type) {
-      case 'captain_masterclass': return '<Crown className="w-4 h-4 text-amber-500 fill-amber-500" />';
+      case 'captain_masterclass': return <Crown className={`${className} text-amber-500 fill-amber-500`} />;
       case 'underdog_hero': return '🦸';
-      case 'perfect_lineup': return '<Star className="w-4 h-4 text-amber-400 fill-amber-400" />';
+      case 'perfect_lineup': return <Star className={`${className} text-amber-400 fill-amber-400`} />;
       case 'differential_pick': return '🎯';
       case 'budget_genius': return '💰';
-      case 'clean_sweep': return '<Wind className="w-4 h-4 text-amber-500" />';
-      case 'comeback_king': return '<Flame className="w-4 h-4 text-orange-500" />';
-      default: return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />';
+      case 'clean_sweep': return <Wind className={`${className} text-amber-500`} />;
+      case 'comeback_king': return <Flame className={`${className} text-orange-500`} />;
+      default: return <Trophy className={`${className} text-amber-500 fill-amber-500`} />;
     }
   };
 
@@ -267,7 +267,7 @@ export default function ChallengesPage() {
                       index === 2 ? 'text-orange-600' :
                       'text-gray-400'
                     }`}>
-                      {index === 0 ? '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />' : index === 1 ? '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" />' : index === 2 ? '<Trophy className="w-4 h-4 text-amber-700 fill-amber-700" />' : `#${index + 1}`}
+                      {index === 0 ? <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline-block" /> : index === 1 ? <Trophy className="w-5 h-5 text-slate-400 fill-slate-400 inline-block" /> : index === 2 ? <Trophy className="w-5 h-5 text-amber-700 fill-amber-700 inline-block" /> : `#${index + 1}`}
                     </div>
                     <div>
                       <div className="font-semibold text-gray-900">

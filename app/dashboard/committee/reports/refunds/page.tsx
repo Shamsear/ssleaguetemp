@@ -92,7 +92,7 @@ export default function RefundsPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Refund sent successfully!\n\nTeam: ${team.teamName}\nAmount: £${amountNum.toFixed(2)}\nType: ${refundType === 'football' ? 'Football' : 'Real Player'}`)
+        alert(`✅ Refund sent successfully!\n\nTeam: ${team.teamName}\nAmount: £${amountNum.toFixed(2)}\nType: ${refundType === 'football' ? 'Football' : 'Real Player'}`)
         
         // Reset form
         setSelectedTeam('')

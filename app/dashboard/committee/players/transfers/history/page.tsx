@@ -407,8 +407,12 @@ export default function TransferHistoryPage() {
                         <div>
                           <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Player Released</p>
                           <p className="text-base font-extrabold text-slate-900 mt-0.5">{tx.player_name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none">
-                            {tx.player_type === 'real' ? '👤 Real Player' : '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player'}
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none flex items-center gap-1">
+                            {tx.player_type === 'real' ? '👤 Real Player' : (
+                              <>
+                                <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player
+                              </>
+                            )}
                           </p>
                         </div>
                         <div className="text-left sm:text-right">
@@ -450,8 +454,12 @@ export default function TransferHistoryPage() {
                         <div>
                           <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Transferred Player</p>
                           <p className="text-base font-extrabold text-slate-900 mt-0.5">{tx.player?.name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none">
-                            {tx.player?.type === 'real' ? '👤 Real Player' : '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player'}
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 leading-none flex items-center gap-1">
+                            {tx.player?.type === 'real' ? '👤 Real Player' : (
+                              <>
+                                <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Football Player
+                              </>
+                            )}
                           </p>
                         </div>
                         <div className="text-left sm:text-right">

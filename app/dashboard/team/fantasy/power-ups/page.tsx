@@ -32,7 +32,7 @@ interface PowerUpUsage {
 interface PowerUpInfo {
   type: PowerUpType;
   name: string;
-  emoji: string;
+  emoji: React.ReactNode;
   description: string;
   effect: string;
   maxUses: number;
@@ -44,7 +44,7 @@ const POWER_UPS: PowerUpInfo[] = [
   {
     type: 'triple_captain',
     name: 'Triple Captain',
-    emoji: '<Crown className="w-4 h-4 text-amber-500 fill-amber-500" />',
+    emoji: <Crown className="w-8 h-8 text-white inline-block" />,
     description: 'Your captain gets 3x points instead of 2x for one round',
     effect: '3x captain multiplier',
     maxUses: 1,
@@ -54,7 +54,7 @@ const POWER_UPS: PowerUpInfo[] = [
   {
     type: 'bench_boost',
     name: 'Bench Boost',
-    emoji: '<Dumbbell className="w-4 h-4 text-amber-500" />',
+    emoji: <Dumbbell className="w-8 h-8 text-white inline-block" />,
     description: 'All bench players earn points for one round',
     effect: 'Bench players score',
     maxUses: 2,
@@ -64,7 +64,7 @@ const POWER_UPS: PowerUpInfo[] = [
   {
     type: 'free_hit',
     name: 'Free Hit',
-    emoji: '🎯',
+    emoji: <span>🎯</span>,
     description: 'Make unlimited temporary changes for one round',
     effect: 'Temporary lineup',
     maxUses: 1,
@@ -74,7 +74,7 @@ const POWER_UPS: PowerUpInfo[] = [
   {
     type: 'wildcard',
     name: 'Wildcard',
-    emoji: '<WildcardIcon className="w-4 h-4" />',
+    emoji: <WildcardIcon className="w-8 h-8 text-white inline-block" />,
     description: 'Make unlimited permanent transfers in one window',
     effect: 'Unlimited transfers',
     maxUses: 2,
@@ -456,8 +456,9 @@ export default function PowerUpsPage() {
 
       {/* Strategy Guide */}
       <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          <BookOpen className="w-4 h-4 text-slate-500" /> Power-Up Strategy Guide
+        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-slate-500 inline-block" />
+          <span>Power-Up Strategy Guide</span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
@@ -483,7 +484,10 @@ export default function PowerUpsPage() {
 
       {/* Info Box */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2"><Info className="w-4 h-4 text-blue-500" /> How Power-Ups Work</h3>
+        <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+          <Info className="w-4 h-4 text-blue-500 inline-block" />
+          <span>How Power-Ups Work</span>
+        </h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Each power-up has limited uses per season</li>
           <li>• Activate before the round deadline</li>

@@ -352,17 +352,17 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
 
       // Build detailed success message
       const calc = result.calculation;
-      let successMessage = `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Player swap completed successfully!\n\n`;
-      successMessage += `${selectedPlayerA.player_name} &rarr; ${teamBName}\n`;
-      successMessage += `${selectedPlayerB.player_name} &rarr; ${teamAName}\n`;
+      let successMessage = `✅ Player swap completed successfully!\n\n`;
+      successMessage += `${selectedPlayerA.player_name} → ${teamBName}\n`;
+      successMessage += `${selectedPlayerB.player_name} → ${teamAName}\n`;
       
       if (calc) {
         // Show category upgrades
         if (calc.playerA.newCategory !== selectedPlayerA.category) {
-          successMessage += `\n• 🏷️ ${selectedPlayerA.player_name}: ${selectedPlayerA.category} &rarr; ${calc.playerA.newCategory}`;
+          successMessage += `\n• 🏷️ ${selectedPlayerA.player_name}: ${selectedPlayerA.category} → ${calc.playerA.newCategory}`;
         }
         if (calc.playerB.newCategory !== selectedPlayerB.category) {
-          successMessage += `\n• 🏷️ ${selectedPlayerB.player_name}: ${selectedPlayerB.category} &rarr; ${calc.playerB.newCategory}`;
+          successMessage += `\n• 🏷️ ${selectedPlayerB.player_name}: ${selectedPlayerB.category} → ${calc.playerB.newCategory}`;
         }
       }
       

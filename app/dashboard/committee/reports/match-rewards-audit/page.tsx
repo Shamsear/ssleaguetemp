@@ -68,7 +68,7 @@ export default function MatchRewardsAuditPage() {
   const SSCOIN_LOSS = 2;
 
   const createAllMissingTransactions = async () => {
-    if (!confirm('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> This will fix ALL issues:\n\n• Create missing transactions\n• Create correcting transactions for wrong amounts\n• DELETE duplicate transactions (keeping oldest)\n\nContinue?')) {
+    if (!confirm('⚠️ This will fix ALL issues:\n\n• Create missing transactions\n• Create correcting transactions for wrong amounts\n• DELETE duplicate transactions (keeping oldest)\n\nContinue?')) {
       return;
     }
 
@@ -277,7 +277,7 @@ export default function MatchRewardsAuditPage() {
         }
       }
 
-      alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Bulk fix complete!\n\nTransactions created: ${successCount}\nDuplicates deleted: ${deletedCount}\nFailed: ${errorCount}\n\n${deletedCount > 0 ? 'Duplicate transactions have been removed.' : ''}`);
+      alert(`✅ Bulk fix complete!\n\nTransactions created: ${successCount}\nDuplicates deleted: ${deletedCount}\nFailed: ${errorCount}\n\n${deletedCount > 0 ? 'Duplicate transactions have been removed.' : ''}`);
       
       // Reload the audit data
       loadAuditData();
@@ -319,12 +319,12 @@ export default function MatchRewardsAuditPage() {
       });
 
       if (response.ok) {
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Transaction created successfully!\n${amount} ${currencyType === 'football' ? 'eCoin' : 'SSCoin'} added to ${teamName}`);
+        alert(`✅ Transaction created successfully!\n${amount} ${currencyType === 'football' ? 'eCoin' : 'SSCoin'} added to ${teamName}`);
         // Reload the audit data
         loadAuditData();
       } else {
         const error = await response.json();
-        alert(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Failed to create transaction: ${error.error || 'Unknown error'}`);
+        alert(`❌ Failed to create transaction: ${error.error || 'Unknown error'}`);
       }
     } catch (error: any) {
       console.error('Error creating transaction:', error);
@@ -699,16 +699,16 @@ export default function MatchRewardsAuditPage() {
       const completeCount = auditResults.filter(r => r.status === 'complete').length;
 
       message += `*SUMMARY*\n`;
-      message += `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Complete: ${completeCount}\n`;
-      message += `<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Partial: ${partialCount}\n`;
-      message += `<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Missing: ${missingCount}\n\n`;
+      message += `✅ Complete: ${completeCount}\n`;
+      message += `⚠️ Partial: ${partialCount}\n`;
+      message += `❌ Missing: ${missingCount}\n\n`;
       message += `──────────────────────────────\n\n`;
 
       if (filteredResults.length > 0) {
         message += `*DETAILS*\n\n`;
 
         filteredResults.forEach((team, index) => {
-          const statusEmoji = team.status === 'complete' ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />' : team.status === 'partial' ? '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />' : '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" />';
+          const statusEmoji = team.status === 'complete' ? '✅' : team.status === 'partial' ? '⚠️' : '❌';
           
           message += `${index + 1}. ${statusEmoji} *${team.teamName}*\n`;
           message += `   Matches: ${team.matchesPlayed} (W${team.wins} D${team.draws} L${team.losses})\n\n`;
@@ -732,7 +732,7 @@ export default function MatchRewardsAuditPage() {
       }
 
       message += `──────────────────────────────\n`;
-      message += `<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ${filteredResults.length} teams\n`;
+      message += `📊 ${filteredResults.length} teams\n`;
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
 
       navigator.clipboard.writeText(message).then(() => {
@@ -1104,7 +1104,7 @@ export default function MatchRewardsAuditPage() {
                                                           deleted++;
                                                         }
                                                         
-                                                        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
+                                                        alert(`✅ Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
                                                         loadAuditData();
                                                       }
                                                     } catch (error: any) {
@@ -1188,7 +1188,7 @@ export default function MatchRewardsAuditPage() {
                                                           deleted++;
                                                         }
                                                         
-                                                        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
+                                                        alert(`✅ Fixed!\n${updated > 0 ? `Updated: ${updated}\n` : ''}Deleted: ${deleted}`);
                                                         loadAuditData();
                                                       }
                                                     } catch (error: any) {

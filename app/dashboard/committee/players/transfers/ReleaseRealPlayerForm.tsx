@@ -392,9 +392,13 @@ export default function ReleaseRealPlayerForm() {
                                     <span className="text-slate-400">Team:</span>
                                     <span className="font-bold text-slate-800 uppercase">{selectedPlayer.team}</span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Star Rating:</span>
-                                    <span className="font-bold text-slate-800">{'<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'.repeat(selectedPlayer.star_rating || 0)}</span>
+                                    <span className="font-bold text-slate-800 flex items-center">
+                                        {Array.from({ length: selectedPlayer.star_rating || 0 }).map((_, i) => (
+                                            <Star key={i} className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-0.5" />
+                                        ))}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -455,7 +459,11 @@ export default function ReleaseRealPlayerForm() {
                     disabled={!selectedPlayerId || !preview || processing}
                     className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
                 >
-                    {processing ? 'Releasing Player...' : '<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Execute Player Release'}
+                    {processing ? 'Releasing Player...' : (
+                        <>
+                            <Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Execute Player Release
+                        </>
+                    )}
                 </button>
             </div>
         </div>

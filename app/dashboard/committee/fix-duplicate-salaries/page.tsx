@@ -57,8 +57,8 @@ export default function FixDuplicateSalariesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Duplicate deleted:', data);
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Duplicate deleted successfully!\n\nNew real_player_budget: ${data.new_balance.realTotal}`);
+        console.log('✅ Duplicate deleted:', data);
+        alert(`✅ Duplicate deleted successfully!\n\nNew real_player_budget: ${data.new_balance.realTotal}`);
         setProcessedIds(prev => new Set(prev).add(duplicateId));
         await loadDuplicates();
       } else {
@@ -92,17 +92,17 @@ export default function FixDuplicateSalariesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Bulk delete complete:', data);
+        console.log('✅ Bulk delete complete:', data);
         
         const summary = data.updated_teams.map((t: any) => 
           `${t.team_season_id}: ${t.new_balance.realTotal} Real Player Budget`
         ).join('\n');
         
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${data.message}\n\nUpdated balances:\n${summary}`);
+        alert(`✅ ${data.message}\n\nUpdated balances:\n${summary}`);
         await loadDuplicates();
       } else {
         const error = await response.json();
-        console.error('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Bulk delete failed:', error);
+        console.error('❌ Bulk delete failed:', error);
         alert(`Failed: ${error.error}`);
       }
     } catch (error: any) {
@@ -176,9 +176,15 @@ export default function FixDuplicateSalariesPage() {
               <button
                 onClick={reverseAll}
                 disabled={isProcessing}
-                className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
+                className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 inline-flex items-center gap-1"
               >
-                {isProcessing ? 'Processing...' : `<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Delete All ${duplicates.length} Duplicates & Fix Budgets`}
+                {isProcessing ? (
+                  'Processing...'
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 inline-block text-white mr-1 align-text-bottom" /> Delete All {duplicates.length} Duplicates & Fix Budgets
+                  </>
+                )}
               </button>
             </div>
 
@@ -193,9 +199,17 @@ export default function FixDuplicateSalariesPage() {
                     <button
                       onClick={() => reverseDuplicate(dup.duplicate.id)}
                       disabled={isProcessing || processedIds.has(dup.duplicate.id)}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
                     >
-                      {processedIds.has(dup.duplicate.id) ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Deleted' : '<Trash2 className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Delete This'}
+                      {processedIds.has(dup.duplicate.id) ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 inline-block text-white mr-1 align-text-bottom" /> Deleted
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 inline-block text-white mr-1 align-text-bottom" /> Delete This
+                        </>
+                      )}
                     </button>
                   </div>
 

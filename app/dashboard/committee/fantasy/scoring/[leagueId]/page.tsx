@@ -339,15 +339,15 @@ export default function CustomScoringRulesPage() {
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none text-xs font-bold uppercase"
                     >
                       <option value="">Select condition...</option>
-                      <option value="new_player"><Sparkles className="w-3 h-3 inline text-amber-400 mr-1" /> New Player Bonus (first X matches)</option>
-                      <option value="streak"><Flame className="w-3 h-3 inline text-orange-500 mr-1" /> Streak Bonus (consecutive events)</option>
-                      <option value="milestone"><Target className="w-3 h-3 inline text-rose-500 mr-1" /> Milestone Bonus (reach X goals/assists)</option>
-                      <option value="match_result"><Trophy className="w-3 h-3 inline text-amber-500 mr-1" /> Match Result Bonus (win/draw/loss)</option>
-                      <option value="comeback"><Zap className="w-3 h-3 inline text-yellow-500 mr-1" /> Comeback Bonus (winning after being behind)</option>
-                      <option value="clean_sheet_streak"><Shield className="w-3 h-3 inline text-blue-500 mr-1" /> Clean Sheet Streak (consecutive clean sheets)</option>
-                      <option value="goal_difference"><Zap className="w-3 h-3 inline text-yellow-500 mr-1" /> Goal Difference Bonus (winning by X+ goals)</option>
-                      <option value="against_top_team"><Crown className="w-3 h-3 inline text-amber-500 mr-1" /> Top Team Bonus (performance vs top teams)</option>
-                      <option value="captain_bonus"><Award className="w-3 h-3 inline text-amber-500 mr-1" /> Captain/Vice Captain Bonus (multiplier)</option>
+                      <option value="new_player">✨ New Player Bonus (first X matches)</option>
+                      <option value="streak">🔥 Streak Bonus (consecutive events)</option>
+                      <option value="milestone">🎯 Milestone Bonus (reach X goals/assists)</option>
+                      <option value="match_result">🏆 Match Result Bonus (win/draw/loss)</option>
+                      <option value="comeback">⚡ Comeback Bonus (winning after being behind)</option>
+                      <option value="clean_sheet_streak">🛡️ Clean Sheet Streak (consecutive clean sheets)</option>
+                      <option value="goal_difference">⚡ Goal Difference Bonus (winning by X+ goals)</option>
+                      <option value="against_top_team">👑 Top Team Bonus (performance vs top teams)</option>
+                      <option value="captain_bonus">🎖️ Captain/Vice Captain Bonus (multiplier)</option>
                     </select>
                   </div>
                   

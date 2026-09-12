@@ -289,7 +289,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
 
       // Build detailed success message
       const calc = result.calculation;
-      let successMessage = `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} successfully transferred to ${buyingTeamTitle}!`;
+      let successMessage = `✅ ${selectedPlayer.player_name} successfully transferred to ${buyingTeamTitle}!`;
       
       if (calc) {
         successMessage += `\n\nTransaction Details:`;
@@ -299,7 +299,7 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
         successMessage += `\n• Committee fee: $${calc.committeeFee.toFixed(2)}`;
         
         if (calc.newStarRating > selectedPlayer.star_rating) {
-          successMessage += `\n• <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Star rating upgraded: ${selectedPlayer.star_rating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${calc.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`;
+          successMessage += `\n• ⭐ Star rating upgraded: ${selectedPlayer.star_rating}⭐ &rarr; ${calc.newStarRating}⭐`;
         }
       }
       
@@ -392,7 +392,11 @@ export default function TransferFormV2({ playerType, onSuccess }: TransferFormV2
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Star Rating</span>
-                <p className="font-extrabold text-slate-800 mt-0.5">{'<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />'.repeat(selectedPlayer.star_rating || 0)}</p>
+                <p className="font-extrabold text-slate-800 mt-0.5 flex items-center">
+                  {Array.from({ length: selectedPlayer.star_rating || 0 }).map((_, i) => (
+                    <Star key={i} className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-0.5" />
+                  ))}
+                </p>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Points</span>

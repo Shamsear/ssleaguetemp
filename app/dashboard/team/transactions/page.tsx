@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, DollarSign, Download, Gavel, Gift, TrendingDown, TrendingUp, Trophy, User } from 'lucide-react';
+import { Calendar, DollarSign, Download, Gavel, Gift, Store, TrendingDown, TrendingUp, Trophy, User } from 'lucide-react';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -151,24 +151,24 @@ export default function TransactionsPage() {
     }
   };
 
-  const getTransactionIcon = (type: string) => {
+  const getTransactionIcon = (type: string): React.ReactNode => {
     switch (type) {
-      case 'salary': return '💰';
-      case 'fine': return '⚠️';
-      case 'auction': return '<Gavel className="w-4 h-4 text-amber-500" />';
-      case 'real_player_fee': return '<User className="w-4 h-4 text-slate-500" />';
-      case 'bonus': return '<Gift className="w-4 h-4 text-rose-500" />';
-      case 'match_reward': return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'; // Match reward for Win/Draw/Loss
-      case 'position_reward': return '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />'; // League position reward
-      case 'completion_bonus': return '🎉'; // Tournament completion bonus
-      case 'adjustment': return '🔧';
-      case 'transfer_payment': return '➡️';
-      case 'transfer_compensation': return '⬅️';
-      case 'swap_fee_paid': return '🔄';
-      case 'swap_fee_received': return '🔁';
-      case 'player_release_refund': return '↩️';
-      case 'initial_balance': return '<Store className="w-4 h-4 text-slate-500" />';
-      default: return '📝';
+      case 'salary': return <span>💰</span>;
+      case 'fine': return <span>⚠️</span>;
+      case 'auction': return <Gavel className="w-4 h-4 text-amber-500 inline-block" />;
+      case 'real_player_fee': return <User className="w-4 h-4 text-slate-500 inline-block" />;
+      case 'bonus': return <Gift className="w-4 h-4 text-rose-500 inline-block" />;
+      case 'match_reward': return <Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline-block" />; // Match reward for Win/Draw/Loss
+      case 'position_reward': return <Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline-block" />; // League position reward
+      case 'completion_bonus': return <span>🎉</span>; // Tournament completion bonus
+      case 'adjustment': return <span>🔧</span>;
+      case 'transfer_payment': return <span>➡️</span>;
+      case 'transfer_compensation': return <span>⬅️</span>;
+      case 'swap_fee_paid': return <span>🔄</span>;
+      case 'swap_fee_received': return <span>🔁</span>;
+      case 'player_release_refund': return <span>↩️</span>;
+      case 'initial_balance': return <Store className="w-4 h-4 text-slate-500 inline-block" />;
+      default: return <span>📝</span>;
     }
   };
 

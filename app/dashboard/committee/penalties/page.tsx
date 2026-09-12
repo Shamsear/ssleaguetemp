@@ -214,7 +214,7 @@ export default function TournamentPenaltiesPage() {
 
             const data = await response.json();
             if (data.success) {
-                setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Penalty applied to ${team.team_name}`);
+                setSuccess(`✅ Penalty applied to ${team.team_name}`);
                 setWhatsappMessage(data.whatsapp_message || '');
                 fetchTeamStats();
                 // Don't auto-close so user can copy the WhatsApp message
@@ -250,7 +250,7 @@ export default function TournamentPenaltiesPage() {
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Penalty removed');
+                setSuccess('✅ Penalty removed');
                 fetchTeamStats();
                 fetchPenaltyHistory(teamId);
             } else {
@@ -473,7 +473,7 @@ export default function TournamentPenaltiesPage() {
                                                                         : 'bg-rose-600 hover:bg-rose-500 text-white'
                                                                 }`}
                                                             >
-                                                                <span>{isExpanded && !showHistory ? '✕' : '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}</span>
+                                                                <span>{isExpanded && !showHistory ? '✕' : <AlertTriangle className="w-4 h-4 inline-block text-white mr-1 align-text-bottom" />}</span>
                                                                 {isExpanded && !showHistory ? 'Cancel' : 'Penalty'}
                                                             </button>
                                                             {team.points_deducted > 0 && (
@@ -691,7 +691,13 @@ export default function TournamentPenaltiesPage() {
                                                                                 disabled={isSubmitting || penaltyReason.length < 10}
                                                                                 className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                                                             >
-                                                                                {isSubmitting ? 'APPLYING PENALTY...' : '<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> APPLY PENALTY'}
+                                                                                {isSubmitting ? (
+                                                                                    'APPLYING PENALTY...'
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <AlertTriangle className="w-4 h-4 inline-block text-white mr-1 align-text-bottom" /> APPLY PENALTY
+                                                                                    </>
+                                                                                )}
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => togglePenaltyForm(team.team_id)}

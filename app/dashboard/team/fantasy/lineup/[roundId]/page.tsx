@@ -309,12 +309,12 @@ export default function WeeklyLineupSelector() {
 
   const getFormIcon = (formStatus?: string) => {
     switch (formStatus) {
-      case 'fire': return '<Flame className="w-4 h-4 text-orange-500" />';
-      case 'hot': return '<TrendingUp className="w-4 h-4 text-emerald-500" />';
+      case 'fire': return <Flame className="w-4 h-4 text-orange-500 inline-block" />;
+      case 'hot': return <TrendingUp className="w-4 h-4 text-emerald-500 inline-block" />;
       case 'steady': return '➡️';
-      case 'cold': return '<TrendingDown className="w-4 h-4 text-rose-550" />';
+      case 'cold': return <TrendingDown className="w-4 h-4 text-rose-500 inline-block" />;
       case 'frozen': return '❄️';
-      default: return '';
+      default: return null;
     }
   };
 

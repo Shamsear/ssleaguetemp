@@ -488,7 +488,7 @@ export default function PlayerSelectionPage() {
       showAlert({
         type: 'success',
         title: 'Export Successful',
-        message: `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${positionPlayers.length} ${position} players to Excel\n\nThe file includes:\n• Yes/No dropdowns in the Eligible column\n• Color coding (Green=Yes, Red=No)\n• All player information\n\nEdit the file and upload it back to apply changes in bulk!`
+        message: `✅ Exported ${positionPlayers.length} ${position} players to Excel\n\nThe file includes:\n• Yes/No dropdowns in the Eligible column\n• Color coding (Green=Yes, Red=No)\n• All player information\n\nEdit the file and upload it back to apply changes in bulk!`
       })
     } catch (err: any) {
       console.error('Error exporting:', err)

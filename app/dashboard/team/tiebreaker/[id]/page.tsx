@@ -655,17 +655,17 @@ export default function TeamTiebreakerPage({ params }: { params: Promise<{ id: s
                 </p>
                 <div className="space-y-3">
                   {userBidsInRound.map((bid) => {
-                    const statusConfig = {
-                      won: { icon: '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />', color: 'text-emerald-600', bg: 'bg-emerald-50/30 border-emerald-200', label: 'You Won' },
-                      allocated_to_other: { icon: '💀', color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: `Won by ${bid.allocated_to_team}` },
-                      lost: { icon: '💀', color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: 'Lost' },
-                      tiebreaker: { icon: '⚖️', color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Current Tiebreaker' },
-                      tiebreaker_other: { icon: '⚖️', color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Other Tiebreaker' },
-                      available: { icon: '✨', color: 'text-blue-600', bg: 'bg-slate-50 border-slate-200', label: 'Still Available' },
-                      pending: { icon: '<Clock className="w-4 h-4 text-slate-500" />', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-200', label: 'Pending' },
+                    const statusConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
+                      won: { icon: <Trophy className="w-5 h-5 text-amber-500 fill-amber-500 inline-block" />, color: 'text-emerald-600', bg: 'bg-emerald-50/30 border-emerald-200', label: 'You Won' },
+                      allocated_to_other: { icon: <span>💀</span>, color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: `Won by ${bid.allocated_to_team}` },
+                      lost: { icon: <span>💀</span>, color: 'text-rose-600', bg: 'bg-rose-50/30 border-rose-200', label: 'Lost' },
+                      tiebreaker: { icon: <span>⚖️</span>, color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Current Tiebreaker' },
+                      tiebreaker_other: { icon: <span>⚖️</span>, color: 'text-amber-600', bg: 'bg-amber-50/30 border-amber-200', label: 'Other Tiebreaker' },
+                      available: { icon: <span>✨</span>, color: 'text-blue-600', bg: 'bg-slate-50 border-slate-200', label: 'Still Available' },
+                      pending: { icon: <Clock className="w-5 h-5 text-slate-500 inline-block" />, color: 'text-slate-500', bg: 'bg-slate-50 border-slate-200', label: 'Pending' },
                     };
                     
-                    const config = statusConfig[bid.allocation_status];
+                    const config = statusConfig[bid.allocation_status] || { icon: <Clock className="w-5 h-5 text-slate-500 inline-block" />, color: 'text-slate-500', bg: 'bg-slate-50 border-slate-200', label: bid.allocation_status };
                     
                     return (
 

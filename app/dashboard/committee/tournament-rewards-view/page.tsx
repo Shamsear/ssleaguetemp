@@ -344,13 +344,13 @@ export default function TournamentRewardsViewPage() {
     return badges[type as keyof typeof badges] || null;
   };
 
-  const getRewardTypeIcon = (type: string) => {
-    const icons = {
-      'position_reward': '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />',
-      'completion_bonus': '🎉',
-      'knockout_reward': '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'
-    };
-    return icons[type as keyof typeof icons] || '<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />';
+  const getRewardTypeIcon = (type: string): React.ReactNode => {
+    switch (type) {
+      case 'position_reward': return <Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />;
+      case 'completion_bonus': return <span>🎉</span>;
+      case 'knockout_reward': return <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />;
+      default: return <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />;
+    }
   };
 
   // Group transactions by tournament
@@ -476,7 +476,7 @@ export default function TournamentRewardsViewPage() {
                 className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm transition-all"
               >
                 <option value="all">All Teams</option>
-                <option value="ALL_SUMMARY" className="font-bold bg-purple-50"><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ALL TEAMS SUMMARY</option>
+                <option value="ALL_SUMMARY" className="font-bold bg-purple-50">📊 ALL TEAMS SUMMARY</option>
                 {teams.map((teamData) => (
                   <option key={teamData.team.id} value={teamData.team.id}>
                     {teamData.team.name}
@@ -497,9 +497,9 @@ export default function TournamentRewardsViewPage() {
                 className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white shadow-sm transition-all"
               >
                 <option value="all">All Reward Types</option>
-                <option value="position_reward"><Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" /> Position Rewards</option>
+                <option value="position_reward">🏆 Position Rewards</option>
                 <option value="completion_bonus">🎉 Completion Bonus</option>
-                <option value="knockout_reward"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Knockout Rewards</option>
+                <option value="knockout_reward">🥊 Knockout Rewards</option>
               </select>
             </div>
           </div>

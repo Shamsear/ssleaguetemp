@@ -347,21 +347,22 @@ export default function PlayerStatsPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-2 shadow-sm">
           <div className="flex gap-2 overflow-x-auto font-mono scrollbar-thin">
             {[
-              { tab: 'all', label: '<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> All Players', activeClass: 'bg-slate-800 text-white border-slate-900' },
-              { tab: 'golden-boot', label: '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot', activeClass: 'bg-yellow-500 text-white border-yellow-600' },
-              { tab: 'golden-glove', label: '<GloveIcon className="w-4 h-4" /> Golden Glove', activeClass: 'bg-emerald-600 text-white border-emerald-700' },
-              { tab: 'rankings', label: '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top Rankings', activeClass: 'bg-blue-600 text-white border-blue-700' },
-              { tab: 'most-improved', label: '<TrendingUp className="w-4 h-4 text-emerald-500" /> Most Improved', activeClass: 'bg-pink-600 text-white border-pink-700' }
-            ].map(({ tab, label, activeClass }) => (
+              { tab: 'all', icon: <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" />, label: 'All Players', activeClass: 'bg-slate-800 text-white border-slate-900' },
+              { tab: 'golden-boot', icon: <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />, label: 'Golden Boot', activeClass: 'bg-yellow-500 text-white border-yellow-600' },
+              { tab: 'golden-glove', icon: <GloveIcon className="w-4 h-4 mr-1 inline-block" />, label: 'Golden Glove', activeClass: 'bg-emerald-600 text-white border-emerald-700' },
+              { tab: 'rankings', icon: <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />, label: 'Top Rankings', activeClass: 'bg-blue-600 text-white border-blue-700' },
+              { tab: 'most-improved', icon: <TrendingUp className="w-4 h-4 text-emerald-500 mr-1 align-text-bottom" />, label: 'Most Improved', activeClass: 'bg-pink-600 text-white border-pink-700' }
+            ].map(({ tab, icon, label, activeClass }) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as TabType)}
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer ${
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer flex items-center ${
                   activeTab === tab
                     ? `${activeClass} shadow-sm`
                     : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
+                {icon}
                 {label}
               </button>
             ))}
@@ -421,11 +422,27 @@ export default function PlayerStatsPage() {
         <div className="console-card bg-white border border-slate-200/60 rounded-3xl overflow-hidden shadow-sm">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
             <div>
-              <h2 className="text-sm font-black uppercase tracking-wider text-slate-950">
-                {activeTab === 'golden-boot' && '<Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot - Top Scorers'}
-                {activeTab === 'golden-glove' && '<GloveIcon className="w-4 h-4" /> Golden Glove - Clean Sheet Leaders'}
-                {activeTab === 'rankings' && '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top 20 Rankings'}
-                {activeTab === 'most-improved' && '<TrendingUp className="w-4 h-4 text-emerald-500" /> Most Improved Players'}
+              <h2 className="text-sm font-black uppercase tracking-wider text-slate-950 flex items-center">
+                {activeTab === 'golden-boot' && (
+                  <>
+                    <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Golden Boot - Top Scorers
+                  </>
+                )}
+                {activeTab === 'golden-glove' && (
+                  <>
+                    <GloveIcon className="w-4 h-4 mr-1 inline-block" /> Golden Glove - Clean Sheet Leaders
+                  </>
+                )}
+                {activeTab === 'rankings' && (
+                  <>
+                    <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Top 20 Rankings
+                  </>
+                )}
+                {activeTab === 'most-improved' && (
+                  <>
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1 align-text-bottom" /> Most Improved Players
+                  </>
+                )}
                 {activeTab === 'all' && 'Player Performance'}
               </h2>
               <p className="text-[10px] text-slate-500 font-mono mt-0.5">

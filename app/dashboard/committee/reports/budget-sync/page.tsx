@@ -97,7 +97,7 @@ export default function BudgetSyncPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Successfully updated ${data.updated} team(s)!`)
+        alert(`✅ Successfully updated ${data.updated} team(s)!`)
         await loadTeams()
       } else {
         alert(`Error: ${data.error}`)

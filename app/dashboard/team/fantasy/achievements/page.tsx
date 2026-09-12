@@ -89,14 +89,14 @@ export default function AchievementsPage() {
     return true;
   });
 
-  const categories: { value: AchievementCategory | 'all'; label: string; emoji: string }[] = [
-    { value: 'all', label: 'All', emoji: '🎯' },
-    { value: 'scoring', label: 'Scoring', emoji: '<SoccerBallIcon className="w-4 h-4" />' },
-    { value: 'lineup', label: 'Lineup', emoji: '<ClipboardList className="w-4 h-4 text-slate-500" />' },
-    { value: 'trading', label: 'Trading', emoji: '<Handshake className="w-4 h-4 text-emerald-500" />' },
-    { value: 'consistency', label: 'Consistency', emoji: '<TrendingUp className="w-4 h-4 text-emerald-500" />' },
-    { value: 'special', label: 'Special', emoji: '✨' },
-    { value: 'season', label: 'Season', emoji: '<Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />' }
+  const categories: { value: AchievementCategory | 'all'; label: string; icon: React.ReactNode }[] = [
+    { value: 'all', label: 'All', icon: <span>🎯</span> },
+    { value: 'scoring', label: 'Scoring', icon: <SoccerBallIcon className="w-4 h-4 inline-block" /> },
+    { value: 'lineup', label: 'Lineup', icon: <ClipboardList className="w-4 h-4 text-slate-500 inline-block" /> },
+    { value: 'trading', label: 'Trading', icon: <Handshake className="w-4 h-4 text-emerald-500 inline-block" /> },
+    { value: 'consistency', label: 'Consistency', icon: <TrendingUp className="w-4 h-4 text-emerald-500 inline-block" /> },
+    { value: 'special', label: 'Special', icon: <span>✨</span> },
+    { value: 'season', label: 'Season', icon: <Trophy className="w-4 h-4 text-amber-500 fill-amber-500 inline-block" /> }
   ];
 
   const rarities = [
@@ -154,7 +154,10 @@ export default function AchievementsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2"><Trophy className="w-4 h-4 text-amber-500 fill-amber-500" /> Achievements</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          <Trophy className="w-8 h-8 text-amber-500 fill-amber-500 inline-block" />
+          <span>Achievements</span>
+        </h1>
         <p className="text-gray-600">
           Unlock achievements to earn bonus points and showcase your fantasy prowess
         </p>
@@ -202,13 +205,14 @@ export default function AchievementsPage() {
                 <button
                   key={cat.value}
                   onClick={() => setSelectedCategory(cat.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                     selectedCategory === cat.value
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {cat.emoji} {cat.label}
+                  {cat.icon}
+                  <span>{cat.label}</span>
                 </button>
               ))}
             </div>

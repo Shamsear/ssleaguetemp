@@ -548,7 +548,13 @@ export default function WeeklyLineupsPage() {
                   disabled={isLocking || !previewData.can_lock}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold rounded-lg hover:from-sky-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLocking ? 'Locking...' : '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Confirm & Lock All Lineups'}
+                  {isLocking ? (
+                    'Locking...'
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Confirm & Lock All Lineups
+                    </>
+                  )}
                 </button>
               </div>
 

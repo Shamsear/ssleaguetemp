@@ -381,11 +381,19 @@ export default function ManagePlayersPage() {
 
         {activeAction && (
           <div className="bg-white rounded-2xl shadow-xl border-2 border-indigo-300 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               {activeAction === 'add' && '➕ Add Player to Team'}
-              {activeAction === 'transfer' && '<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer Player'}
+              {activeAction === 'transfer' && (
+                <>
+                  <RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Transfer Player
+                </>
+              )}
               {activeAction === 'swap' && '🔀 Swap Players Between Teams'}
-              {activeAction === 'remove' && '<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Remove Player from Team'}
+              {activeAction === 'remove' && (
+                <>
+                  <XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Remove Player from Team
+                </>
+              )}
             </h2>
 
             {activeAction === 'add' && (

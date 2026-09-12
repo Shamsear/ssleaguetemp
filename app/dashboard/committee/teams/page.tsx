@@ -1,6 +1,5 @@
 'use client';
-import { ECoinIcon, SSCoinIcon } from '@/components/ui/CustomIcons';
-import { Activity, BarChart2, Calendar, DollarSign, Star } from 'lucide-react';
+import { Activity, Star } from 'lucide-react';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 
@@ -120,8 +119,8 @@ export default function CommitteeTeamsPage() {
 
   const copyBalancesToWhatsApp = () => {
     try {
-      let message = '<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> *TEAM BALANCES*\n\n';
-      message += `<Calendar className="w-4 h-4 text-slate-500" /> Season: ${seasonName || userSeasonId}\n`;
+      let message = '💰 *TEAM BALANCES*\n\n';
+      message += `📅 Season: ${seasonName || userSeasonId}\n`;
       message += `──────────────────────────────\n\n`;
 
       // Sort teams by name for the copy
@@ -132,11 +131,11 @@ export default function CommitteeTeamsPage() {
       sortedTeams.forEach((teamData, index) => {
         message += `${index + 1}. *${teamData.team.name}*\n`;
         if (seasonType === 'multi' || teamData.currencySystem === 'dual') {
-          message += `   <ECoinIcon className="w-4 h-4" /> eCoin Budget Left: ${(teamData.footballBudget || 0).toLocaleString()}\n`;
-          message += `   <SSCoinIcon className="w-4 h-4" /> SSCoin Budget Left: ${(teamData.realPlayerBudget || 0).toLocaleString()}\n`;
-          message += `   <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Master Wallet Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
+          message += `   ⚽ eCoin Budget Left: ${(teamData.footballBudget || 0).toLocaleString()}\n`;
+          message += `   ⭐ SSCoin Budget Left: ${(teamData.realPlayerBudget || 0).toLocaleString()}\n`;
+          message += `   💵 Master Wallet Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
         } else {
-          message += `   <DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
+          message += `   💵 Balance: ${(teamData.team.balance ?? 0).toLocaleString()}\n\n`;
         }
       });
 
@@ -149,15 +148,15 @@ export default function CommitteeTeamsPage() {
         const totalRealLeft = sortedTeams.reduce((sum, t) => sum + (t.realPlayerBudget ?? 0), 0);
         const totalWallet = sortedTeams.reduce((sum, t) => sum + (t.team.balance ?? 0), 0);
         
-        message += `<ECoinIcon className="w-4 h-4" /> Total eCoin Left: ${totalFootballLeft.toLocaleString()}\n`;
-        message += `<SSCoinIcon className="w-4 h-4" /> Total SSCoin Left: ${totalRealLeft.toLocaleString()}\n`;
-        message += `<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Total Wallet: ${totalWallet.toLocaleString()}\n\n`;
+        message += `⚽ Total eCoin Left: ${totalFootballLeft.toLocaleString()}\n`;
+        message += `⭐ Total SSCoin Left: ${totalRealLeft.toLocaleString()}\n`;
+        message += `💵 Total Wallet: ${totalWallet.toLocaleString()}\n\n`;
       } else {
         const totalBalance = sortedTeams.reduce((sum, t) => sum + (t.team.balance ?? 0), 0);
-        message += `<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Total Balance: ${totalBalance.toLocaleString()}\n\n`;
+        message += `💵 Total Balance: ${totalBalance.toLocaleString()}\n\n`;
       }
       
-      message += `<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ${sortedTeams.length} teams\n`;
+      message += `📊 ${sortedTeams.length} teams\n`;
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
 
       navigator.clipboard.writeText(message).then(() => {

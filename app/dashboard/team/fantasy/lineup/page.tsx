@@ -205,25 +205,27 @@ export default function LineupPage() {
                     <button
                       onClick={() => setCaptainId(player.real_player_id)}
                       disabled={isLineupLocked}
-                      className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${
                         captainId === player.real_player_id
                           ? 'bg-yellow-500 text-white'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      {captainId === player.real_player_id ? '<Star className="w-4 h-4 text-amber-400 fill-amber-400" /> C' : 'C'}
+                      {captainId === player.real_player_id && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline-block" />}
+                      <span>C</span>
                     </button>
                     
                     <button
                       onClick={() => setViceCaptainId(player.real_player_id)}
                       disabled={isLineupLocked}
-                      className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${
                         viceCaptainId === player.real_player_id
                           ? 'bg-orange-500 text-white'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      {viceCaptainId === player.real_player_id ? '<Trophy className="w-4 h-4 text-slate-400 fill-slate-400" /> VC' : 'VC'}
+                      {viceCaptainId === player.real_player_id && <Trophy className="w-3.5 h-3.5 text-slate-400 fill-slate-400 inline-block" />}
+                      <span>VC</span>
                     </button>
                     
                     <button

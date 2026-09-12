@@ -322,7 +322,7 @@ export default function PlayerStatsPage() {
         // Track star rating changes
         if (result.starRatingChanged) {
           starChanges.push(
-            `${update.player_name}: ${result.oldStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; ${result.newStarRating}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />`
+            `${update.player_name}: ${result.oldStarRating}★ → ${result.newStarRating}★`
           );
         }
       }
@@ -330,7 +330,7 @@ export default function PlayerStatsPage() {
       // Show notification if any star ratings changed
       if (starChanges.length > 0) {
         alert(
-          `<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Updates saved!\n\n<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Star Rating Changes:\n${starChanges.join('\n')}\n\nSalaries have been automatically recalculated.`
+          `✅ Updates saved!\n\n⭐ Star Rating Changes:\n${starChanges.join('\n')}\n\nSalaries have been automatically recalculated.`
         );
       }
 

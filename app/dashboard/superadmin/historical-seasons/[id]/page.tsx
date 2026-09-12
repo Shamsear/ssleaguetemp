@@ -3275,7 +3275,7 @@ export default function HistoricalSeasonDetailPage() {
                                         team.linked_team_id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'
                                       }`}
                                     >
-                                      <option value=""><XCircle className="w-3 h-3 inline text-red-500 mr-1" /> Not Linked</option>
+                                      <option value="">❌ Not Linked</option>
                                       {existingEntities?.teams && existingEntities.teams.length > 0 && (
                                         <>
                                           {existingEntities.teams

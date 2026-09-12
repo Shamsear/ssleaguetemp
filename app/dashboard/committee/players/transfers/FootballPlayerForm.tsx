@@ -242,7 +242,7 @@ export default function FootballPlayerForm() {
         throw new Error(result.error || 'Failed to swap players');
       }
 
-      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayerA.player_name} and ${selectedPlayerB.player_name} swapped successfully!`);
+      setSuccess(`✅ ${selectedPlayerA.player_name} and ${selectedPlayerB.player_name} swapped successfully!`);
 
       // Reset form
       setSelectedPlayerAId('');

@@ -269,7 +269,7 @@ export default function AllTransactionsPage() {
       link.click();
       document.body.removeChild(link);
       
-      alert(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Exported ${transactions.length} transactions to ${filename}\n\nNote: The file will open correctly in Excel and Google Sheets with proper character encoding.`);
+      alert(`✅ Exported ${transactions.length} transactions to ${filename}\n\nNote: The file will open correctly in Excel and Google Sheets with proper character encoding.`);
     } catch (error: any) {
       console.error('Error exporting to Excel:', error);
       alert('[ERROR]  Error exporting data. Check console for details.');
@@ -385,7 +385,7 @@ export default function AllTransactionsPage() {
       }
       
       message += `━━━━━━━━━━━━━━━━━━━━\n`;
-      message += `<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> ${totalTransactions} total\n`;
+      message += `📊 ${totalTransactions} total\n`;
       message += `🕐 ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}\n`;
       
       // Copy to clipboard
@@ -800,11 +800,11 @@ export default function AllTransactionsPage() {
   const copyTeamSummaryToWhatsApp = () => {
     if (teamSummary.length === 0) return;
 
-    let message = `*<DollarSign className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> COMPLETE TRANSACTION SUMMARY*\n`;
+    let message = `*💵 COMPLETE TRANSACTION SUMMARY*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     teamSummary.forEach((team: any, index: any) => {
-      const rank = index === 0 ? '<Trophy className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />' : index === 1 ? '<Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" />' : index === 2 ? '<Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" />' : `${index + 1}.`;
+      const rank = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
 
       message += `${rank} *${team.teamName}*\n`;
       message += `   💵 Net Balance: ${team.netBalance >= 0 ? '+' : ''}${team.netBalance}\n\n`;

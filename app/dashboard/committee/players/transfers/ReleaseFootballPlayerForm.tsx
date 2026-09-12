@@ -167,7 +167,7 @@ export default function ReleaseFootballPlayerForm() {
     contractStart: string,
     contractEnd: string
   ) => {
-    return `<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> *Player Release Notification*
+    return `🔓 *Player Release Notification*
  
 ━━━━━━━━━━━━━━━━━━━━
  
@@ -228,7 +228,7 @@ export default function ReleaseFootballPlayerForm() {
         throw new Error(result.error || 'Failed to release player');
       }
 
-      setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin`);
+      setSuccess(`✅ ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin`);
 
       // Generate WhatsApp message
       const whatsappMessage = generateWhatsAppMessage(
@@ -246,7 +246,7 @@ export default function ReleaseFootballPlayerForm() {
       // Copy to clipboard
       try {
         await navigator.clipboard.writeText(whatsappMessage);
-        setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
+        setSuccess(`✅ ${selectedPlayer.player_name} released successfully! Refund: ${refundAmount} eCoin\n\n📋 WhatsApp message copied to clipboard!`);
       } catch (clipboardError) {
         console.error('Failed to copy to clipboard:', clipboardError);
       }
@@ -483,7 +483,11 @@ export default function ReleaseFootballPlayerForm() {
             disabled={!selectedPlayerId || submitting}
             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md cursor-pointer text-center"
           >
-            {submitting ? 'Releasing Player...' : '<Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Execute Player Release'}
+            {submitting ? 'Releasing Player...' : (
+              <>
+                <Unlock className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Execute Player Release
+              </>
+            )}
           </button>
         </div>
       </form>

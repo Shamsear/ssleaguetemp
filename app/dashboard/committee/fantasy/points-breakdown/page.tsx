@@ -617,24 +617,24 @@ export default function FantasyPointsBreakdownPage() {
                                                 const awardRound = reasonParts[2] || '';
                                                 
                                                 // Determine award icon and color
-                                                let awardIcon = '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />';
+                                                let awardIcon: React.ReactNode = <Trophy className="w-6 h-6 text-white" />;
                                                 let gradientClass = 'from-purple-500 to-pink-500';
                                                 let bgClass = 'from-purple-50 to-pink-50';
                                                 
                                                 if (awardType.includes('TOD')) {
-                                                    awardIcon = '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />';
+                                                    awardIcon = <Trophy className="w-6 h-6 text-white" />;
                                                     gradientClass = 'from-blue-500 to-cyan-500';
                                                     bgClass = 'from-blue-50 to-cyan-50';
                                                 } else if (awardType.includes('TOW')) {
-                                                    awardIcon = '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />';
+                                                    awardIcon = <Crown className="w-6 h-6 text-white" />;
                                                     gradientClass = 'from-yellow-500 to-orange-500';
                                                     bgClass = 'from-yellow-50 to-orange-50';
                                                 } else if (awardType.includes('POTD')) {
-                                                    awardIcon = '<Activity className="w-3.5 h-3.5 text-red-500 inline-block" />';
+                                                    awardIcon = <Activity className="w-6 h-6 text-white" />;
                                                     gradientClass = 'from-green-500 to-emerald-500';
                                                     bgClass = 'from-green-50 to-emerald-50';
                                                 } else if (awardType.includes('POTW')) {
-                                                    awardIcon = '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />';
+                                                    awardIcon = <Star className="w-6 h-6 text-white" />;
                                                     gradientClass = 'from-indigo-500 to-purple-500';
                                                     bgClass = 'from-indigo-50 to-purple-50';
                                                 }
@@ -674,7 +674,7 @@ export default function FantasyPointsBreakdownPage() {
                                                                 {awardTarget && (
                                                                     <div className="flex items-center gap-2">
                                                                         <span className="text-xs font-medium text-gray-500">
-                                                                            {bonus.type === 'player' ? <Activity className="w-3.5 h-3.5 text-red-500 inline-block" /> : '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />'}
+                                                                            {bonus.type === 'player' ? <Activity className="w-3.5 h-3.5 text-red-500 inline-block" /> : <Trophy className="w-3.5 h-3.5 text-amber-500 inline-block" />}
                                                                         </span>
                                                                         <span className="text-sm font-bold text-gray-900 truncate">
                                                                             {awardTarget}

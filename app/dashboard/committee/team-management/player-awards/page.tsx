@@ -192,11 +192,11 @@ export default function PlayerAwardsPage() {
     switch (awardType) {
       case 'golden-boot': return <Activity className="w-3.5 h-3.5 text-red-500 inline-block" />;
       case 'golden-glove': return <Activity className="w-3.5 h-3.5 text-yellow-500 inline-block" />;
-      case 'golden-ball': return '<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />';
-      case 'legend-category': return '<Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />';
-      case 'classic-category': return '🎖️';
-      case 'overall': return '<Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />';
-      default: return '🏅';
+      case 'golden-ball': return <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />;
+      case 'legend-category': return <Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />;
+      case 'classic-category': return <Medal className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />;
+      case 'overall': return <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />;
+      default: return <Trophy className="w-4 h-4 inline-block text-slate-400 mr-1 align-text-bottom" />;
     }
   };
 

@@ -345,8 +345,12 @@ export default function DuplicateManagementPage() {
                             </div>
                             <div className="flex justify-between py-1 border-b border-slate-100/60">
                               <span className="text-slate-550 font-mono font-extrabold uppercase tracking-wider text-[9px]">Status:</span>
-                              <span className={`font-extrabold uppercase text-[9px] ${player.is_sold ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {player.is_sold ? '<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Sold' : '⚪ Available'}
+                              <span className={`font-extrabold uppercase text-[9px] flex items-center ${player.is_sold ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {player.is_sold ? (
+                                  <>
+                                    <CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Sold
+                                  </>
+                                ) : '⚪ Available'}
                               </span>
                             </div>
                             <div className="flex justify-between py-1 border-b border-slate-100/60">

@@ -46,7 +46,7 @@ export default function RecalculateFantasyPointsPage() {
         setSummary(null);
 
         try {
-            addLog('<RefreshCw className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Starting passive points recalculation...', 'info');
+            addLog('🔄 Starting passive points recalculation...', 'info');
 
             const response = await fetch('/api/fantasy/recalculate-passive-points', {
                 method: 'POST',
@@ -63,15 +63,20 @@ export default function RecalculateFantasyPointsPage() {
 
             // Add logs from the response
             if (data.logs && Array.isArray(data.logs)) {
-                data.logs.forEach((log: string) => {
-                    if (log.includes('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />')) {
-                        addLog(log, 'success');
-                    } else if (log.includes('<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" />') || log.includes('Error')) {
-                        addLog(log, 'error');
-                    } else if (log.includes('<AlertTriangle className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />')) {
-                        addLog(log, 'warning');
+                data.logs.forEach((rawLog: string) => {
+                    const cleanLog = rawLog
+                        .replace(/<CheckCircle[^>]*\/>/g, '✅')
+                        .replace(/<XCircle[^>]*\/>/g, '❌')
+                        .replace(/<AlertTriangle[^>]*\/>/g, '⚠️')
+                        .replace(/<RefreshCw[^>]*\/>/g, '🔄');
+                    if (cleanLog.includes('✅')) {
+                        addLog(cleanLog, 'success');
+                    } else if (cleanLog.includes('❌') || cleanLog.includes('Error')) {
+                        addLog(cleanLog, 'error');
+                    } else if (cleanLog.includes('⚠️')) {
+                        addLog(cleanLog, 'warning');
                     } else {
-                        addLog(log, 'info');
+                        addLog(cleanLog, 'info');
                     }
                 });
             }
@@ -79,11 +84,11 @@ export default function RecalculateFantasyPointsPage() {
             // Set summary
             if (data.summary) {
                 setSummary(data.summary);
-                addLog('<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Recalculation completed successfully!', 'success');
+                addLog('✅ Recalculation completed successfully!', 'success');
             }
 
         } catch (error: any) {
-            addLog(`<XCircle className="w-4 h-4 inline-block text-rose-500 mr-1 align-text-bottom" /> Error: ${error.message}`, 'error');
+            addLog(`❌ Error: ${error.message}`, 'error');
         } finally {
             setIsRecalculating(false);
         }

@@ -3746,7 +3746,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               showAlert({
                                 type: 'error',
                                 title: 'Deadline Passed',
-                                message: `<XCircle className="w-4 h-4 text-rose-500" /> ${errorData.error}. Results can no longer be submitted.`
+                                message: `❌ ${errorData.error}. Results can no longer be submitted.`
                               });
                               setIsSaving(false);
                               setIsResultMode(false);
@@ -3785,7 +3785,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               showAlert({
                                 type: 'error',
                                 title: 'Deadline Passed',
-                                message: `<XCircle className="w-4 h-4 text-rose-500" /> ${errorData.error}. MOTM can no longer be saved.`
+                                message: `❌ ${errorData.error}. MOTM can no longer be saved.`
                               });
                               setIsSaving(false);
                               setIsResultMode(false);

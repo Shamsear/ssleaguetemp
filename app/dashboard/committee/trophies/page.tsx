@@ -177,7 +177,7 @@ export default function TrophyManagementPage() {
       
       const data = await res.json();
       if (data.success) {
-        setSuccess(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> Awarded ${data.trophiesAwarded} trophies!`);
+        setSuccess(`✅ Awarded ${data.trophiesAwarded} trophies!`);
         fetchTrophies();
         fetchPreview();
       } else {
@@ -511,10 +511,10 @@ export default function TrophyManagementPage() {
                     onChange={(e) => setNewTrophy({ ...newTrophy, trophy_type: e.target.value })}
                     className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                   >
-                    <option value="cup"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Cup</option>
-                    <option value="special"><Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Special Award</option>
-                    <option value="league"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> League</option>
-                    <option value="runner_up"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> Runner Up</option>
+                    <option value="cup">🏆 Cup</option>
+                    <option value="special">⭐ Special Award</option>
+                    <option value="league">🏆 League</option>
+                    <option value="runner_up">🥈 Runner Up</option>
                   </select>
                 </div>
                 
@@ -552,10 +552,10 @@ export default function TrophyManagementPage() {
                     required
                   >
                     <option value="">-- Select Position --</option>
-                    <option value="Winner"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Winner</option>
-                    <option value="Runner Up"><Trophy className="w-4 h-4 inline-block text-slate-400 fill-slate-400 mr-1 align-text-bottom" /> Runner Up</option>
-                    <option value="Champions"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Champions</option>
-                    <option value="Third Place"><Trophy className="w-4 h-4 inline-block text-amber-700 fill-amber-700 mr-1 align-text-bottom" /> Third Place</option>
+                    <option value="Winner">🥇 Winner</option>
+                    <option value="Runner Up">🥈 Runner Up</option>
+                    <option value="Champions">🏆 Champions</option>
+                    <option value="Third Place">🥉 Third Place</option>
                   </select>
                 </div>
                 
