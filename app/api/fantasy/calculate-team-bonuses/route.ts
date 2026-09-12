@@ -323,7 +323,22 @@ async function awardTeamBonus(params: {
             AND season_id = ${season_id}
           LIMIT 1
         `;
-        applies = tod.length > 0;
+        if (tod.length > 0) {
+          const existing = await fantasySql`
+            SELECT bonus_breakdown FROM fantasy_team_bonus_points
+            WHERE league_id = ${fantasy_league_id}
+              AND team_id = ${fantasyTeam.team_id}
+              AND round_number = ${round_number}
+              AND fixture_id != ${fixture_id}
+          `;
+          const alreadyGiven = existing.some((b: any) => {
+            const br = typeof b.bonus_breakdown === 'string' ? JSON.parse(b.bonus_breakdown) : (b.bonus_breakdown || {});
+            return !!br.team_of_the_day;
+          });
+          applies = !alreadyGiven;
+        } else {
+          applies = false;
+        }
         break;
       }
       case 'team_of_the_week': {
@@ -335,7 +350,22 @@ async function awardTeamBonus(params: {
             AND season_id = ${season_id}
           LIMIT 1
         `;
-        applies = tow.length > 0;
+        if (tow.length > 0) {
+          const existing = await fantasySql`
+            SELECT bonus_breakdown FROM fantasy_team_bonus_points
+            WHERE league_id = ${fantasy_league_id}
+              AND team_id = ${fantasyTeam.team_id}
+              AND round_number = ${round_number}
+              AND fixture_id != ${fixture_id}
+          `;
+          const alreadyGiven = existing.some((b: any) => {
+            const br = typeof b.bonus_breakdown === 'string' ? JSON.parse(b.bonus_breakdown) : (b.bonus_breakdown || {});
+            return !!br.team_of_the_week;
+          });
+          applies = !alreadyGiven;
+        } else {
+          applies = false;
+        }
         break;
       }
 
