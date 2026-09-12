@@ -189,7 +189,11 @@ export async function GET(request: NextRequest) {
         existing.passive_points += Number(r.total_bonus || 0);
         if (bd && typeof bd === 'object') {
           Object.entries(bd).forEach(([k, v]) => {
-            existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
+            if (k === 'team_of_the_day' || k === 'team_of_the_week') {
+              existing.bonus_breakdown[k] = Math.max(Number(existing.bonus_breakdown[k] || 0), Number(v || 0));
+            } else {
+              existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
+            }
           });
         }
       }
@@ -495,7 +499,11 @@ export async function GET(request: NextRequest) {
           bd = typeof r.bonus_breakdown === 'string' ? JSON.parse(r.bonus_breakdown) : (r.bonus_breakdown || {});
         } catch (e) {}
         Object.entries(bd).forEach(([k, v]) => {
-          existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
+          if (k === 'team_of_the_day' || k === 'team_of_the_week') {
+            existing.bonus_breakdown[k] = Math.max(Number(existing.bonus_breakdown[k] || 0), Number(v || 0));
+          } else {
+            existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
+          }
         });
       }
     });
