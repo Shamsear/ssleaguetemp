@@ -189,10 +189,14 @@ export async function POST(request: NextRequest) {
       const incId = incomingPlayer.player_id || incomingPlayer.id || cleanIncomingId;
       const incName = incomingPlayer.name || incomingPlayer.player_name || 'Replacement Player';
 
+      // Only clear team_id/team if departing player has played 0 matches.
+      // If they already played matches, preserve their team affiliation so historical match breakdowns display properly.
       await tourneySql`
         UPDATE realplayerstats
         SET team_id = NULL, team = NULL, updated_at = NOW()
-        WHERE (id = ${departing_player_id} OR player_id = ${depId} OR id = ${depId}) AND season_id = ${season_id}
+        WHERE (id = ${departing_player_id} OR player_id = ${depId} OR id = ${depId})
+          AND season_id = ${season_id}
+          AND (matches_played IS NULL OR matches_played = 0)
       `;
       await tourneySql`
         UPDATE realplayerstats
@@ -200,20 +204,33 @@ export async function POST(request: NextRequest) {
         WHERE (id = ${incoming_player_id} OR player_id = ${incId} OR id = ${incId}) AND season_id = ${season_id}
       `;
 
-      // Update existing matchups for this season
+      // Update only future/uncompleted matchups for this season (never overwrite completed historical matches)
       await tourneySql`
-        UPDATE matchups
+        UPDATE matchups m
         SET home_player_id = ${incId}, home_player_name = ${incName}, updated_at = NOW()
-        WHERE season_id = ${season_id} AND (home_player_id = ${depId} OR home_player_id = ${departing_player_id})
+        FROM fixtures f
+        WHERE m.fixture_id = f.id
+          AND m.season_id = ${season_id}
+          AND f.status != 'completed'
+          AND (m.home_player_id = ${depId} OR m.home_player_id = ${departing_player_id})
       `;
       await tourneySql`
-        UPDATE matchups
+        UPDATE matchups m
         SET away_player_id = ${incId}, away_player_name = ${incName}, updated_at = NOW()
-        WHERE season_id = ${season_id} AND (away_player_id = ${depId} OR away_player_id = ${departing_player_id})
+        FROM fixtures f
+        WHERE m.fixture_id = f.id
+          AND m.season_id = ${season_id}
+          AND f.status != 'completed'
+          AND (m.away_player_id = ${depId} OR m.away_player_id = ${departing_player_id})
       `;
 
-      // Update starting_xi in lineups for this season
-      const lineups = await tourneySql`SELECT id, starting_xi FROM lineups WHERE season_id = ${season_id}`;
+      // Update starting_xi in lineups ONLY for future/uncompleted fixtures in this season
+      const lineups = await tourneySql`
+        SELECT l.id, l.starting_xi
+        FROM lineups l
+        JOIN fixtures f ON l.fixture_id = f.id
+        WHERE l.season_id = ${season_id} AND f.status != 'completed'
+      `;
       for (const l of lineups) {
         let xi = Array.isArray(l.starting_xi) ? [...l.starting_xi] : JSON.parse(l.starting_xi || '[]');
         if (xi.includes(depId) || xi.includes(departing_player_id)) {
@@ -224,6 +241,27 @@ export async function POST(request: NextRequest) {
             WHERE id = ${l.id}
           `;
         }
+      }
+
+      // Sync player stats for the season so points and matches are immediately accurate
+      try {
+        const { syncPlayerStatsForSeason } = await import('@/lib/neon/sync-player-stats');
+        await syncPlayerStatsForSeason(season_id);
+      } catch (syncErr) {
+        console.warn('[player-replacement] Error syncing player stats:', syncErr);
+      }
+
+      // Update incoming player in fantasy database
+      try {
+        const { getFantasyDb } = await import('@/lib/neon/fantasy-config');
+        const fantasyDb = getFantasyDb();
+        await fantasyDb`
+          UPDATE fantasy_players
+          SET real_team_id = ${team_id}, real_team_name = ${teamName}, updated_at = NOW()
+          WHERE (real_player_id = ${incId} OR real_player_id = ${incoming_player_id})
+        `;
+      } catch (fantasyErr) {
+        console.warn('[player-replacement] Fantasy update failed (non-critical):', fantasyErr);
       }
     } catch (tourneyErr) {
       console.error('[player-replacement] Error updating realplayerstats/matchups/lineups:', tourneyErr);
