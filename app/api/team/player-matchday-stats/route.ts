@@ -64,9 +64,11 @@ export async function GET(request: NextRequest) {
 
         const actualPlayerId = playerInfo[0].player_id;
 
+        const usesCategoryPoints = seasonNum >= 18;
+
         // Get matchday-by-matchday stats for the player using the actual player_id
         // This query handles substitutions by checking both current and original player IDs
-        const matchdayStats = await sql`
+        const rawMatchdayStats = await sql`
       WITH player_matches AS (
         SELECT 
           m.fixture_id,
@@ -124,26 +126,78 @@ export async function GET(request: NextRequest) {
         AND m.round_number <= ${toRound}
       )
       SELECT 
-        round_number as matchday,
-        fixture_id,
-        player_side,
-        home_team_name,
-        away_team_name,
-        home_player_name,
-        away_player_name,
-        goals_scored,
-        goals_conceded,
-        (goals_scored - goals_conceded) as goal_difference,
+        pm.round_number as matchday,
+        pm.fixture_id,
+        pm.player_side,
+        pm.home_team_name,
+        pm.away_team_name,
+        pm.home_player_name,
+        pm.away_player_name,
+        pm.goals_scored,
+        pm.goals_conceded,
+        (pm.goals_scored - pm.goals_conceded) as goal_difference,
         CASE 
-          WHEN (goals_scored - goals_conceded) > 5 THEN 5
-          WHEN (goals_scored - goals_conceded) < -5 THEN -5
-          ELSE (goals_scored - goals_conceded)
+          WHEN (pm.goals_scored - pm.goals_conceded) > 5 THEN 5
+          WHEN (pm.goals_scored - pm.goals_conceded) < -5 THEN -5
+          ELSE (pm.goals_scored - pm.goals_conceded)
         END as points,
-        was_substitute
-      FROM player_matches
-      WHERE player_side IS NOT NULL
-      ORDER BY round_number ASC
+        pm.was_substitute,
+        p_home.category as home_category,
+        p_away.category as away_category
+      FROM player_matches pm
+      LEFT JOIN realplayerstats p_home ON pm.home_player_id = p_home.player_id AND p_home.season_id = ${seasonId}
+      LEFT JOIN realplayerstats p_away ON pm.away_player_id = p_away.player_id AND p_away.season_id = ${seasonId}
+      WHERE pm.player_side IS NOT NULL
+      ORDER BY pm.round_number ASC
     `;
+
+        let matchdayStats = rawMatchdayStats;
+
+        if (usesCategoryPoints) {
+          const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
+            const cat = (oppCategory || '').toLowerCase();
+            if (cat.includes('red') || cat === 'r') {
+              if (outcome === 'win') return 8;
+              if (outcome === 'draw') return 4;
+              return -3;
+            }
+            if (cat.includes('black')) {
+              if (outcome === 'win') return 7;
+              if (outcome === 'draw') return 3;
+              return -4;
+            }
+            if (cat.includes('blue') || cat === 'b') {
+              if (outcome === 'win') return 6;
+              if (outcome === 'draw') return 2;
+              return -5;
+            }
+            if (cat.includes('white') || cat === 'w') {
+              if (outcome === 'win') return 5;
+              if (outcome === 'draw') return 1;
+              return -6;
+            }
+            if (outcome === 'win') return 8;
+            if (outcome === 'draw') return 4;
+            return -3;
+          };
+
+          matchdayStats = rawMatchdayStats.map((match: any) => {
+            const gd = match.goals_scored - match.goals_conceded;
+            const res = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
+
+            const oppCat = (match.player_side === 'home' ? match.away_category : match.home_category) || 'Red';
+            const points = getPointsForOpponentCategory(oppCat, res);
+            const sign = points >= 0 ? `+${points}` : `${points}`;
+            const pointsReason = `${res.toUpperCase()} VS ${oppCat.toUpperCase()} (${sign} Pts)`;
+
+            return {
+              ...match,
+              opponent_category: oppCat.toUpperCase(),
+              points_reason: pointsReason,
+              points
+            };
+          });
+        }
 
         // Calculate total points
         const totalPoints = matchdayStats.reduce((sum: number, match: any) => sum + (match.points || 0), 0);

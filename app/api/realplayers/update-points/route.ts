@@ -4,6 +4,7 @@ import { calculateRealPlayerSalary } from '@/lib/salary-utils';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { logSalaryPayment } from '@/lib/transaction-logger';
+import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
 // Base points by star rating
 const STAR_RATING_BASE_POINTS: { [key: number]: number } = {
@@ -110,6 +111,16 @@ export async function POST(request: NextRequest) {
 
     const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
     const usesCategoryPoints = seasonNum >= 18;
+
+    if (usesCategoryPoints) {
+      console.log(`🛡️ [update-points] S18+ detected: Delegating to idempotent syncPlayerStatsForSeason for ${season_id}`);
+      const syncResult = await syncPlayerStatsForSeason(season_id);
+      return NextResponse.json({
+        success: true,
+        message: 'Points synced via source-of-truth recalculation',
+        syncResult
+      });
+    }
 
     // Track salary deductions per player for detailed logging
     const playerSalaries: Array<{

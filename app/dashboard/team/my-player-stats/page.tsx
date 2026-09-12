@@ -620,14 +620,18 @@ export default function MyPlayerStatsPage() {
                                                                                                      {match.player_side === 'home' ? (
                                                                                                          <>
                                                                                                              <span className="font-extrabold text-slate-800">{match.home_player_name}</span>
+                                                                                                             <span className="text-[9px] text-slate-400 font-bold ml-0.5">(H)</span>
                                                                                                              <span className="text-slate-400 mx-1.5 font-bold">vs</span>
                                                                                                              <span className="text-slate-500">{match.away_player_name}</span>
+                                                                                                             <span className="text-[9px] text-slate-400 font-bold ml-0.5">(A)</span>
                                                                                                          </>
                                                                                                      ) : (
                                                                                                          <>
                                                                                                              <span className="text-slate-500">{match.home_player_name}</span>
+                                                                                                             <span className="text-[9px] text-slate-400 font-bold ml-0.5">(H)</span>
                                                                                                              <span className="text-slate-400 mx-1.5 font-bold">vs</span>
                                                                                                              <span className="font-extrabold text-slate-800">{match.away_player_name}</span>
+                                                                                                             <span className="text-[9px] text-slate-400 font-bold ml-0.5">(A)</span>
                                                                                                          </>
                                                                                                      )}
                                                                                                  </div>
@@ -645,8 +649,10 @@ export default function MyPlayerStatsPage() {
                                                                                                      {oppCatName}
                                                                                                  </span>
                                                                                              </td>
-                                                                                             <td className="px-3 py-2.5 font-bold text-slate-700">
-                                                                                                 {match.goals_scored} - {match.goals_conceded}
+                                                                                             <td className="px-3 py-2.5 font-bold text-slate-700 whitespace-nowrap">
+                                                                                                 {match.player_side === 'home'
+                                                                                                     ? `${match.goals_scored} - ${match.goals_conceded}`
+                                                                                                     : `${match.goals_conceded} - ${match.goals_scored}`}
                                                                                              </td>
                                                                                              <td className="px-3 py-2.5">
                                                                                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${

@@ -3801,43 +3801,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             console.log('MOTM saved successfully:', motmPlayerName);
                           }
 
-                          // Update player points and star ratings
-                          const pointsPayload = matchups.map((m, idx) => ({
-                            position: m.position,
-                            home_player_id: m.home_player_id,
-                            away_player_id: m.away_player_id,
-                            home_goals: matchResults[idx]?.home_goals ?? 0,
-                            away_goals: matchResults[idx]?.away_goals ?? 0,
-                            is_null: m.is_null || false, // Include null status
-                          }));
+                          // Note: Real player stats and points are already synchronized and recalculated
+                          // from source-of-truth matchups in PATCH /api/fixtures/${fixtureId}/matchups via syncPlayerStatsForSeason.
+                          // Calling update-points or update-stats here causes double counting.
 
-                          const pointsResponse = await fetchWithTokenRefresh('/api/realplayers/update-points', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              fixture_id: fixtureId,
-                              season_id: fixture.season_id,
-                              matchups: pointsPayload,
-                            }),
-                          });
-
-                          if (pointsResponse.ok) {
-                            const pointsData = await pointsResponse.json();
-                            console.log('Player points updated:', pointsData.updates);
-                            if (pointsData.categoryUpdate) {
-                              console.log(`✅ Categories recalculated: ${pointsData.categoryUpdate.legendCount} Legend / ${pointsData.categoryUpdate.totalPlayers - pointsData.categoryUpdate.legendCount} Classic`);
-                            }
-                          } else {
-                            const errorData = await pointsResponse.json();
-                            console.error('Failed to update player points:', errorData);
-                            showAlert({
-                              type: 'warning',
-                              title: 'Points Warning',
-                              message: `Warning: Player points not updated - ${errorData.error || 'Unknown error'}`
-                            });
-                          }
-
-                          // Update player stats (goals, wins/draws/losses, MOTM)
                           const statsPayload = matchups.map((m, idx) => ({
                             position: m.position,
                             home_player_id: m.home_player_id,
@@ -3848,22 +3815,6 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             away_goals: matchResults[idx]?.away_goals ?? 0,
                             is_null: m.is_null || false, // Include null status
                           }));
-
-                          const statsResponse = await fetchWithTokenRefresh('/api/realplayers/update-stats', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              season_id: fixture.season_id,
-                              fixture_id: fixtureId,
-                              matchups: statsPayload,
-                              motm_player_id: motmPlayerId, // Pass fixture-level MOTM
-                            }),
-                          });
-
-                          if (statsResponse.ok) {
-                            const statsData = await statsResponse.json();
-                            console.log('Player stats updated:', statsData.updates);
-                          }
 
                           // Update team stats (wins, draws, losses, goals)
                           const teamStatsResponse = await fetchWithTokenRefresh('/api/teamstats/update-stats', {
