@@ -67,7 +67,13 @@ export default function FantasyTeamsPage() {
 
   // Available windows and active window state
   const [availableWindows, setAvailableWindows] = useState<WindowOption[]>([]);
+  const [availableRoundsList, setAvailableRoundsList] = useState<number[]>([]);
   const [selectedWindow, setSelectedWindow] = useState<WindowOption | null>(null);
+  const [filterTab, setFilterTab] = useState<'all' | 'week' | 'round'>('all');
+
+  // Squad search & filter state
+  const [playerSearch, setPlayerSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   // Expandable player state
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
@@ -136,6 +142,9 @@ export default function FantasyTeamsPage() {
       setLeague(data.league);
       setTeams(data.teams || []);
       
+      if (data.available_rounds && data.available_rounds.length > 0) {
+        setAvailableRoundsList(data.available_rounds);
+      }
       if (data.available_windows && data.available_windows.length > 0) {
         setAvailableWindows(data.available_windows);
         if (!selectedWindow && !win) {
@@ -358,37 +367,118 @@ export default function FantasyTeamsPage() {
           </div>
         </div>
 
-        {/* Window Selector Tabs (Pills) */}
-        {availableWindows.length > 0 && (
-          <div className="console-card bg-white border border-slate-200/60 p-4 rounded-3xl shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                <Filter className="w-4 h-4 text-amber-500" /> SELECT WINDOW / ROUND BLOCK:
-              </span>
-              <span className="text-[10px] font-bold text-amber-600 uppercase">
-                Viewing: {selectedWindow?.label || 'All Rounds'}
-              </span>
+        {/* Universal Filter Console */}
+        <div className="console-card bg-white border border-slate-200/60 p-5 rounded-3xl shadow-sm space-y-4 font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  setFilterTab('all');
+                  const allWin = availableWindows.find(w => w.id === 'all') || { id: 'all', label: 'All Rounds', start_round: null, end_round: null };
+                  handleWindowChange(allWin);
+                }}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer ${
+                  filterTab === 'all'
+                    ? 'bg-slate-900 text-amber-400 border border-slate-950 shadow-md'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+                }`}
+              >
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>All Rounds (Full Season)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setFilterTab('week');
+                  const firstWeek = availableWindows.find(w => w.id !== 'all') || availableWindows[0];
+                  if (firstWeek) handleWindowChange(firstWeek);
+                }}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer ${
+                  filterTab === 'week'
+                    ? 'bg-slate-900 text-amber-400 border border-slate-950 shadow-md'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+                }`}
+              >
+                <Filter className="w-4 h-4 text-amber-400" />
+                <span>Weekly / Transfer Blocks</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setFilterTab('round');
+                  const r1 = availableRoundsList[0] || 1;
+                  handleWindowChange({ id: `round_${r1}`, label: `Round ${r1}`, start_round: r1, end_round: r1 });
+                }}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer ${
+                  filterTab === 'round'
+                    ? 'bg-slate-900 text-amber-400 border border-slate-950 shadow-md'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+                }`}
+              >
+                <BarChart2 className="w-4 h-4 text-amber-400" />
+                <span>Round Breakdown</span>
+              </button>
             </div>
+
+            <span className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+              Viewing: {selectedWindow?.label || 'All Rounds'}
+            </span>
+          </div>
+
+          {/* Sub-pills depending on active filter tab */}
+          {filterTab === 'all' && (
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-xs text-slate-500 font-bold uppercase">Viewing cumulative standings across all completed rounds.</span>
+            </div>
+          )}
+
+          {filterTab === 'week' && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              {availableWindows.map((win) => {
-                const isSelected = (selectedWindow?.id === win.id) || (!selectedWindow && win.id === 'all');
+              {availableWindows.filter(w => w.id !== 'all').map((win) => {
+                const isSelected = selectedWindow?.id === win.id || (selectedWindow?.start_round === win.start_round && selectedWindow?.end_round === win.end_round && win.start_round !== win.end_round);
                 return (
                   <button
                     key={win.id}
                     onClick={() => handleWindowChange(win)}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-2 ${
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
                       isSelected
                         ? 'bg-amber-500 text-slate-950 font-extrabold border border-amber-600 shadow-sm'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60'
                     }`}
                   >
-                    <span>{win.label}</span>
+                    {win.label}
                   </button>
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+
+          {filterTab === 'round' && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {availableRoundsList.map((rd) => {
+                const isSelected = selectedWindow?.start_round === rd && selectedWindow?.end_round === rd;
+                return (
+                  <button
+                    key={rd}
+                    onClick={() => handleWindowChange({
+                      id: `round_${rd}`,
+                      label: `Round ${rd}`,
+                      start_round: rd,
+                      end_round: rd
+                    })}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 font-extrabold border border-amber-600 shadow-sm'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60'
+                    }`}
+                  >
+                    Round {rd}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Teams List */}
@@ -641,6 +731,31 @@ export default function FantasyTeamsPage() {
                     )}
                   </div>
 
+                  {/* Squad Filter Bar */}
+                  {teamPlayers.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 font-mono">
+                      <div className="relative flex-1 w-full">
+                        <input
+                          type="text"
+                          placeholder="Search squad by player or real team..."
+                          value={playerSearch}
+                          onChange={(e) => setPlayerSearch(e.target.value)}
+                          className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 font-bold"
+                        />
+                      </div>
+                      <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="w-full sm:w-auto px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 font-bold uppercase cursor-pointer"
+                      >
+                        <option value="all">All Categories ({teamPlayers.length})</option>
+                        {Array.from(new Set(teamPlayers.map((p) => p.category).filter(Boolean))).map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {isLoadingPlayers ? (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500 mx-auto"></div>
@@ -656,7 +771,16 @@ export default function FantasyTeamsPage() {
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                      {teamPlayers.map((player, index) => (
+                      {teamPlayers
+                        .filter((p) => {
+                          const matchesSearch = !playerSearch || 
+                            p.player_name.toLowerCase().includes(playerSearch.toLowerCase()) || 
+                            (p.real_team_name || '').toLowerCase().includes(playerSearch.toLowerCase());
+                          const matchesCat = categoryFilter === 'all' || 
+                            (p.category && p.category.toLowerCase() === categoryFilter.toLowerCase());
+                          return matchesSearch && matchesCat;
+                        })
+                        .map((player, index) => (
                         <div key={player.draft_id} className="border border-slate-200/80 rounded-xl overflow-hidden bg-slate-50/50">
                           <button
                             onClick={() => togglePlayerBreakdown(player.real_player_id)}

@@ -441,6 +441,8 @@ export async function GET(
       },
       players: draftedPlayers,
       available_windows: availableWindows,
+      available_rounds: availableRounds,
+      available_weeks: availableWindows.filter(w => w.id !== 'all'),
       selected_window: {
         start_round: startRound,
         end_round: endRound
