@@ -337,38 +337,16 @@ export default function PlayerStatsByRoundPage() {
       })
       .slice(0, 10);
   } else if (activeTab === 'golden-ball') {
-    // Golden Ball: Best overall players based on multiple criteria
-    // Scoring system: Points (40%), Goals (20%), Win Rate (20%), MOTM (10%), Clean Sheets (10%)
+    // Golden Ball: Player with the most points
     filteredPlayers = filteredPlayers
-      .filter(p => p.matches_played >= 3) // Minimum 3 matches played
-      .map(player => {
-        // Normalize each stat to 0-100 scale
-        const maxPoints = Math.max(...playerStats.map(p => p.points));
-        const maxGoals = Math.max(...playerStats.map(p => p.goals_scored));
-        const maxMotm = Math.max(...playerStats.map(p => p.motm_awards));
-        const maxCleanSheets = Math.max(...playerStats.map(p => p.clean_sheets));
-
-        const pointsScore = maxPoints > 0 ? (player.points / maxPoints) * 100 : 0;
-        const goalsScore = maxGoals > 0 ? (player.goals_scored / maxGoals) * 100 : 0;
-        const winRateScore = player.win_rate; // Already 0-100
-        const motmScore = maxMotm > 0 ? (player.motm_awards / maxMotm) * 100 : 0;
-        const cleanSheetScore = maxCleanSheets > 0 ? (player.clean_sheets / maxCleanSheets) * 100 : 0;
-
-        // Weighted average
-        const overallScore = (
-          pointsScore * 0.40 +
-          goalsScore * 0.20 +
-          winRateScore * 0.20 +
-          motmScore * 0.10 +
-          cleanSheetScore * 0.10
-        );
-
-        return {
-          ...player,
-          overallScore: Math.round(overallScore * 10) / 10
-        };
+      .filter(p => p.matches_played > 0)
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        const gdA = a.goals_scored - a.goals_conceded;
+        const gdB = b.goals_scored - b.goals_conceded;
+        if (gdB !== gdA) return gdB - gdA;
+        return b.goals_scored - a.goals_scored;
       })
-      .sort((a: any, b: any) => b.overallScore - a.overallScore)
       .slice(0, 20);
   } else if (activeTab === 'top-20') {
     filteredPlayers = filteredPlayers
@@ -773,7 +751,7 @@ export default function PlayerStatsByRoundPage() {
                   <th className="px-4 py-3.5 text-left font-bold uppercase tracking-wider">Player</th>
                   <th className="px-4 py-3.5 text-left font-bold uppercase tracking-wider">Team</th>
                   {activeTab === 'golden-ball' && (
-                    <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-center">Score</th>
+                    <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-center">Points</th>
                   )}
                   {activeTab === 'golden-boot' && (
                     <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-center">G/M</th>
@@ -857,7 +835,7 @@ export default function PlayerStatsByRoundPage() {
                       {activeTab === 'golden-ball' && (
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-amber-50 text-amber-700 border border-amber-200/50">
-                            {(player as any).overallScore}
+                            {player.points} Pts
                           </span>
                         </td>
                       )}
@@ -1030,8 +1008,8 @@ export default function PlayerStatsByRoundPage() {
                   {/* Tab-specific Stat Previews on Mobile */}
                   {activeTab === 'golden-ball' && (
                     <div className="mt-2 p-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200 text-[10px] flex justify-between items-center font-mono">
-                      <span className="font-bold text-amber-800 uppercase">Golden Ball Score:</span>
-                      <span className="font-black text-amber-950">{(player as any).overallScore}</span>
+                      <span className="font-bold text-amber-800 uppercase">Golden Ball Points:</span>
+                      <span className="font-black text-amber-950">{player.points} Pts</span>
                     </div>
                   )}
                   {activeTab === 'golden-boot' && (
@@ -1066,7 +1044,7 @@ export default function PlayerStatsByRoundPage() {
             })()}
             {activeTab === 'golden-boot' && ' • Top 10 goal scorers (sorted by goals, then goals/match ratio)'}
             {activeTab === 'golden-glove' && ' • Top 10 clean sheet leaders (sorted by clean sheets, then CS%, then fewest GA)'}
-            {activeTab === 'golden-ball' && ' • Top 20 best overall players (min. 3 matches)'}
+            {activeTab === 'golden-ball' && ' • Top 20 players by points (Golden Ball)'}
             {activeTab === 'top-20' && ' • Top 20 by points'}
             {activeTab !== 'by-week' && selectedRound !== 'all' && ` • Cumulative stats from Round 1 to Round ${selectedRound}`}
             {activeTab !== 'by-week' && selectedRound === 'all' && ` • All rounds (complete season)`}
@@ -1074,7 +1052,7 @@ export default function PlayerStatsByRoundPage() {
           </p>
           {activeTab === 'golden-ball' && (
             <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">
-              Scoring: Points (40%) • Goals (20%) • Win Rate (20%) • MOTM (10%) • Clean Sheets (10%)
+              Awarded to the player with the most points earned
             </p>
           )}
           {activeTab === 'golden-boot' && (

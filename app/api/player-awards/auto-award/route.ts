@@ -215,42 +215,40 @@ async function awardTournamentSpecificAwards(
           }
         }
       } else if (awardType === 'Golden Ball') {
-        // Best player overall (most goals scored)
-        const bestPlayer = await sql`
-          WITH player_goals AS (
-            SELECT 
-              home_player_id as player_id,
-              home_player_name as player_name,
-              SUM(home_goals) as total_goals,
-              SUM(CASE WHEN away_goals = 0 THEN 1 ELSE 0 END) as clean_sheets
-            FROM matchups
-            WHERE tournament_id = ${tournamentId}
-              AND season_id = ${seasonId}
-            GROUP BY home_player_id, home_player_name
-            
-            UNION ALL
-            
-            SELECT 
-              away_player_id as player_id,
-              away_player_name as player_name,
-              SUM(away_goals) as total_goals,
-              SUM(CASE WHEN home_goals = 0 THEN 1 ELSE 0 END) as clean_sheets
-            FROM matchups
-            WHERE tournament_id = ${tournamentId}
-              AND season_id = ${seasonId}
-            GROUP BY away_player_id, away_player_name
-          )
-          SELECT 
-            player_id,
-            player_name,
-            SUM(total_goals) as total_goals,
-            SUM(clean_sheets) as total_clean_sheets,
-            (SUM(total_goals) * 2 + SUM(clean_sheets)) as total_score
-          FROM player_goals
-          GROUP BY player_id, player_name
-          ORDER BY total_score DESC
-          LIMIT 1
-        `;
+        // Golden Ball: Player with most points
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17;
+        const bestPlayer = isModern
+          ? await sql`
+              SELECT 
+                ps.player_id,
+                ps.player_name,
+                ps.category,
+                ps.points,
+                ps.goals_scored,
+                (ps.goals_scored - ps.goals_conceded) as goal_difference,
+                ps.matches_played,
+                ps.clean_sheets
+              FROM player_seasons ps
+              WHERE ps.season_id = ${seasonId}
+              ORDER BY ps.points DESC, (ps.goals_scored - ps.goals_conceded) DESC, ps.goals_scored DESC
+              LIMIT 1
+            `
+          : await sql`
+              SELECT 
+                ps.player_id,
+                ps.player_name,
+                ps.category,
+                ps.points,
+                ps.goals_scored,
+                (ps.goals_scored - ps.goals_conceded) as goal_difference,
+                ps.matches_played,
+                ps.clean_sheets
+              FROM realplayerstats ps
+              WHERE ps.season_id = ${seasonId}
+              ORDER BY ps.points DESC, (ps.goals_scored - ps.goals_conceded) DESC, ps.goals_scored DESC
+              LIMIT 1
+            `;
 
         if (bestPlayer.length > 0) {
           const result = await sql`
@@ -263,10 +261,13 @@ async function awardTournamentSpecificAwards(
             VALUES (
               ${bestPlayer[0].player_id}, ${bestPlayer[0].player_name}, ${seasonId}, ${tournamentId},
               'individual', 'Golden Ball', 'Winner',
-              NULL, 'system', 'Auto-awarded based on overall performance',
+              ${bestPlayer[0].category || null}, 'system', 'Auto-awarded based on most points',
               ${JSON.stringify({ 
-                goals: bestPlayer[0].total_goals,
-                clean_sheets: bestPlayer[0].total_clean_sheets
+                points: bestPlayer[0].points,
+                goals: bestPlayer[0].goals_scored,
+                goal_difference: bestPlayer[0].goal_difference,
+                matches: bestPlayer[0].matches_played,
+                clean_sheets: bestPlayer[0].clean_sheets
               })}
             )
             ON CONFLICT (player_id, season_id, tournament_id, award_category, award_type, award_position) DO NOTHING

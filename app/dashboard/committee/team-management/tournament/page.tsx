@@ -3344,7 +3344,7 @@ export function TournamentDashboardPageContent() {
                           <ul className="text-xs text-gray-600 mt-1 ml-4 list-disc space-y-1">
                             <li>Golden Boot (Top Goal Scorer)</li>
                             <li>Golden Glove (Most Clean Sheets)</li>
-                            <li>Golden Ball (Most POTM Awards)</li>
+                            <li>Golden Ball (Most Points)</li>
                             <li>Category-specific awards (Legend/Classic)</li>
                           </ul>
                         </div>
@@ -3948,7 +3948,7 @@ export function TournamentDashboardPageContent() {
                           <ul className="text-xs text-gray-600 mt-1 ml-4 list-disc space-y-1">
                             <li>Golden Boot (Top Goal Scorer)</li>
                             <li>Golden Glove (Most Clean Sheets)</li>
-                            <li>Golden Ball (Most POTM Awards)</li>
+                            <li>Golden Ball (Most Points)</li>
                             <li>Category-specific awards (Legend/Classic)</li>
                           </ul>
                         </div>

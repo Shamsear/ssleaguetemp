@@ -586,7 +586,10 @@ export async function GET(request: NextRequest) {
                 ps.player_name,
                 ps.category,
                 ps.team_id,
+                ps.points,
                 ps.goals_scored,
+                ps.goals_conceded,
+                ps.clean_sheets,
                 ps.assists,
                 ps.matches_played,
                 ps.motm_awards,
@@ -596,9 +599,9 @@ export async function GET(request: NextRequest) {
               FROM player_seasons ps
               WHERE ps.season_id = ${seasonId}
               ORDER BY 
-                ps.goals_scored DESC,
-                ps.assists DESC,
-                ps.motm_awards DESC
+                ps.points DESC,
+                (ps.goals_scored - ps.goals_conceded) DESC,
+                ps.goals_scored DESC
               LIMIT 50
             `;
           } else {
@@ -608,7 +611,10 @@ export async function GET(request: NextRequest) {
                 ps.player_name,
                 ps.category,
                 ps.team_id,
+                ps.points,
                 ps.goals_scored,
+                ps.goals_conceded,
+                ps.clean_sheets,
                 ps.assists,
                 ps.matches_played,
                 ps.motm_awards,
@@ -618,9 +624,9 @@ export async function GET(request: NextRequest) {
               FROM realplayerstats ps
               WHERE ps.season_id = ${seasonId}
               ORDER BY 
-                ps.goals_scored DESC,
-                ps.assists DESC,
-                ps.motm_awards DESC
+                ps.points DESC,
+                (ps.goals_scored - ps.goals_conceded) DESC,
+                ps.goals_scored DESC
               LIMIT 50
             `;
           }
@@ -631,7 +637,11 @@ export async function GET(request: NextRequest) {
             category: p.category || null,
             team_id: p.team_id,
             performance_stats: {
+              points: p.points || 0,
               goals: p.goals_scored,
+              goals_conceded: p.goals_conceded,
+              clean_sheets: p.clean_sheets,
+              goal_difference: (p.goals_scored || 0) - (p.goals_conceded || 0),
               assists: p.assists,
               matches_played: p.matches_played,
               motm_count: p.motm_awards,

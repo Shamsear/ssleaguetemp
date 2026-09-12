@@ -487,7 +487,7 @@ export default function PlayerAwardsManagementPage() {
                       onChange={(e) => setSelectedAwards({...selectedAwards, 'Golden Ball': e.target.checked})}
                       className="w-4 h-4 accent-amber-500 rounded border-slate-300 text-slate-800 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                     />
-                    <span>Golden Ball (Best Player)</span>
+                    <span>Golden Ball (Most Points)</span>
                   </label>
                   <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 hover:text-slate-955 select-none">
                     <input

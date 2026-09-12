@@ -141,12 +141,13 @@ export default function PlayerAwardsPage() {
         break;
         
       case 'golden-ball':
-        // Most POTM awards
+        // Most points earned this season
         filtered = filtered
-          .filter(p => p.potm > 0)
+          .filter(p => p.matches_played > 0)
           .sort((a, b) => {
-            if (b.potm !== a.potm) return b.potm - a.potm;
-            return b.win_rate - a.win_rate; // Tie-breaker: higher win rate
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.win_rate !== a.win_rate) return b.win_rate - a.win_rate;
+            return b.matches_played - a.matches_played;
           });
         break;
         
@@ -215,7 +216,7 @@ export default function PlayerAwardsPage() {
     switch (awardType) {
       case 'golden-boot': return 'Top goal scorers this season';
       case 'golden-glove': return 'Most clean sheets (defensive excellence)';
-      case 'golden-ball': return 'Most Player of the Match awards';
+      case 'golden-ball': return 'Player with most points this season';
       case 'legend-category': return 'Top performers in Legend category';
       case 'classic-category': return 'Top performers in Classic category';
       case 'overall': return 'Overall player rankings by performance';
@@ -227,7 +228,7 @@ export default function PlayerAwardsPage() {
     switch (awardType) {
       case 'golden-boot': return `${player.goals} Goals`;
       case 'golden-glove': return `${player.clean_sheets} Clean Sheets`;
-      case 'golden-ball': return `${player.potm} POTM`;
+      case 'golden-ball': return `${player.points} Points`;
       case 'legend-category': return `${player.points} Points`;
       case 'classic-category': return `${player.points} Points`;
       case 'overall': return `${player.points} Points`;
@@ -380,7 +381,7 @@ export default function PlayerAwardsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-yellow-700">
               <div><strong>Golden Boot <Activity className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" />:</strong> Most goals scored</div>
               <div><strong>Golden Glove <GloveIcon className="w-4 h-4" />:</strong> Most clean sheets</div>
-              <div><strong>Golden Ball <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />:</strong> Most POTM awards</div>
+              <div><strong>Golden Ball <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" />:</strong> Most points earned</div>
               <div><strong>Legend <Crown className="w-4 h-4 inline-block text-amber-500 fill-amber-500 mr-1 align-text-bottom" />:</strong> Top Legend category players</div>
               <div><strong>Classic <Medal className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />:</strong> Top Classic category players</div>
               <div><strong>Overall <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" />:</strong> Best overall performance</div>
