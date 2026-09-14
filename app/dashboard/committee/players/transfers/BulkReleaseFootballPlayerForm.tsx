@@ -173,6 +173,13 @@ export default function BulkReleaseFootballPlayerForm() {
     }, 0);
   }, [selectedPlayerIds, players, playerRefunds, bulkRefundPercentage]);
 
+  // Calculate release season display (e.g. SSPSLS18 vs SSPSLS18.5)
+  const releaseSeasonDisplay = useMemo(() => {
+    if (!userSeasonId) return '';
+    const seasonNumber = userSeasonId.replace(/\D/g, '');
+    return releaseTiming === 'mid' ? `SSPSLS${seasonNumber}.5` : userSeasonId.toUpperCase();
+  }, [userSeasonId, releaseTiming]);
+
   // Generate WhatsApp message for bulk release
   const generateBulkWhatsAppMessage = (releasedPlayers: Player[], timing: 'start' | 'mid') => {
     const releaseSeasonNumber = userSeasonId?.replace(/\D/g, '') || '';
@@ -482,7 +489,7 @@ export default function BulkReleaseFootballPlayerForm() {
                               <div>Team: <span className="text-slate-700">{player.team_name}</span></div>
                               <div>Pos: <span className="text-slate-700">{player.position}</span></div>
                               <div>Value: <span className="text-amber-600">{player.acquisition_value} eCoin</span></div>
-                              <div>Contract: <span className="text-slate-700">{player.contract_start_season} &rarr; {player.contract_end_season}</span></div>
+                              <div>Contract: <span className="text-slate-700">{player.contract_start_season} &rarr; {releaseSeasonDisplay || player.contract_end_season}</span></div>
                             </div>
                           </div>
                           {isSelected && (
@@ -554,7 +561,7 @@ export default function BulkReleaseFootballPlayerForm() {
                        <div className="min-w-0">
                          <div className="text-slate-700 truncate">• {p.player_name}</div>
                          <div className="text-[9px] text-slate-400 ml-3 lowercase font-medium">
-                           {p.team_name} | contract: {p.contract_start_season} &rarr; {p.contract_end_season}
+                           {p.team_name} | contract: {p.contract_start_season} &rarr; {releaseSeasonDisplay || p.contract_end_season}
                          </div>
                        </div>
                        <span className="text-amber-600 font-extrabold shrink-0">{refundPercentage}% = {refundAmount} eCoin</span>
