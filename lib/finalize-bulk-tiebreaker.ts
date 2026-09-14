@@ -353,11 +353,14 @@ export async function finalizeBulkTiebreaker(
         // Get current players count
         const currentPlayersCount = teamSeasonData?.players_count || 0;
         const newPlayersCount = currentPlayersCount + 1;
+        const currentFbCount = Number(teamSeasonData?.football_players_count ?? currentPlayersCount);
+        const newFbCount = currentFbCount + 1;
         
         // Prepare update object based on currency system
         const updateData: any = {
           position_counts: newPositionCounts,
           players_count: newPlayersCount,
+          football_players_count: newFbCount,
           updated_at: new Date()
         };
 

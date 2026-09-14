@@ -100,10 +100,15 @@ export async function POST(
       [tiebreaker.position]: currentPositionCount + 1
     };
 
+    const currentFbCount = Number(teamSeasonData?.football_players_count ?? teamSeasonData?.players_count ?? 0);
+    const currentPlayersCount = Number(teamSeasonData?.players_count ?? 0);
+
     await teamSeasonRef.update({
       football_budget: newFootballBudget,
       football_spent: newFootballSpent,
       position_counts: newPositionCounts,
+      players_count: currentPlayersCount + 1,
+      football_players_count: currentFbCount + 1,
       updated_at: new Date()
     });
 

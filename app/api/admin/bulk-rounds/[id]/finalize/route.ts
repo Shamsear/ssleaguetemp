@@ -157,9 +157,11 @@ async function assignPlayerToTeam(
         positionCounts[position] = (positionCounts[position] || 0) + 1;
       }
 
+      const currentFbCount = Number(teamSeasonData?.football_players_count ?? teamSeasonData?.players_count ?? 0);
       const updateData: any = {
         total_spent: (teamSeasonData?.total_spent || 0) + price,
         players_count: (teamSeasonData?.players_count || 0) + 1,
+        football_players_count: currentFbCount + 1,
         position_counts: positionCounts,
         updated_at: new Date()
       };

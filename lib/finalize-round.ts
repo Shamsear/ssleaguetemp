@@ -604,9 +604,11 @@ export async function applyFinalizationResults(
           const posCounts = tsd?.position_counts || {};
           if (pos && pos in posCounts) posCounts[pos] = (posCounts[pos] || 0) + 1;
           
+          const currentFbCount = Number(tsd?.football_players_count ?? tsd?.players_count ?? 0);
           const upd: any = {
             total_spent: (tsd?.total_spent || 0) + alloc.amount,
             players_count: (tsd?.players_count || 0) + 1,
+            football_players_count: currentFbCount + 1,
             position_counts: posCounts,
             updated_at: new Date()
           };
