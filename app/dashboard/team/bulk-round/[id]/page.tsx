@@ -48,7 +48,6 @@ interface PlayerCardProps {
 
 const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: PlayerCardProps) => {
   return (
-    <AuthGuard requiredRole="team">
     <button
       onClick={() => onToggle(player.id)}
       className={`bg-white border border-slate-200/60 rounded-2xl p-3 sm:p-4 transition-colors text-left active:scale-98 touch-manipulation font-mono border-l-4 w-full flex items-center gap-3 ${
@@ -123,8 +122,6 @@ const PlayerCard = React.memo(({ player, isBidded, basePrice, onToggle }: Player
         </div>
       </div>
     </button>
-  
-    </AuthGuard>
   );
 }, (prevProps, nextProps) => {
   return (
@@ -183,6 +180,78 @@ export default function TeamBulkRoundPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterPosition, filterStarred]);
+
+  // Fetch round details, players, team balance, squad info, and existing bids
+  useEffect(() => {
+    if (!user || user.role !== 'team' || !roundId) return;
+
+    let isMounted = true;
+    const fetchRoundData = async () => {
+      setIsLoading(true);
+      try {
+        // 1. Fetch round details and players
+        const res = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}`);
+        const data = await res.json();
+        if (!isMounted) return;
+
+        if (!data.success || !data.data) {
+          throw new Error(data.error || 'Failed to load bulk round');
+        }
+
+        const { round, players: roundPlayers, balance, squad } = data.data;
+
+        // If round is completed/pending tiebreakers, redirect
+        if (round.status === 'completed' || round.status === 'pending_tiebreakers') {
+          router.push('/dashboard/team');
+          return;
+        }
+
+        setBulkRound(round);
+        setPlayers(roundPlayers || []);
+        setTeamBalance(balance ?? 1000);
+        if (squad) setSquadInfo(squad);
+
+        if (round.end_time) {
+          const now = new Date().getTime();
+          const end = new Date(round.end_time).getTime();
+          setTimeRemaining(Math.max(0, Math.floor((end - now) / 1000)));
+        }
+
+        // 2. Fetch team's existing bids for this bulk round
+        try {
+          const bidsRes = await fetchWithTokenRetry(`/api/team/bulk-rounds/${roundId}/bids`);
+          const bidsData = await bidsRes.json();
+          if (isMounted && bidsData.success && bidsData.data?.bids) {
+            const bidPlayerIds = new Set(bidsData.data.bids.map((b: any) => b.player_id) as string[]);
+            setDbBids(new Set(bidPlayerIds));
+            setBiddedPlayers(new Set(bidPlayerIds));
+            setBidsCount(bidsData.data.count ?? bidPlayerIds.size);
+          }
+        } catch (bidsErr) {
+          console.warn('Could not fetch existing bids:', bidsErr);
+        }
+      } catch (err: any) {
+        console.error('Error fetching bulk round data:', err);
+        if (isMounted) {
+          showAlert({
+            type: 'error',
+            title: 'Loading Failed',
+            message: err.message || 'Failed to load bulk round data.'
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchRoundData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, roundId, router, showAlert]);
 
   // [INFO] Enable WebSocket for real-time bid updates and round updates
   const { isConnected, lastMessage } = useAuctionWebSocket(roundId, true);

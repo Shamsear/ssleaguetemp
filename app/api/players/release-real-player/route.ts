@@ -348,29 +348,50 @@ export async function POST(request: NextRequest) {
             console.error('Error updating Main DB team_seasons balance:', mainDbError);
         }
 
-        // 5. Log the transaction in Firebase
-        await adminDb.collection('transactions').add({
-            transaction_type: 'release',
-            player_id: playerId,
-            player_name: player.player_name,
-            player_type: 'real',
-            team_id: player.team_id,
-            team_name: team.team_name,
-            season_id: seasonId,
-            release_timing: releaseTiming,
-            release_season: releaseSeasonId,
-            refund_amount: refundAmount,
-            refund_percentage: refundPercentage,
-            auction_value: player.auction_value,
-            original_contract_start: player.contract_start_season || seasonId,
-            original_contract_end: player.contract_end_season || seasonId,
-            total_half_seasons: totalHalfSeasons,
-            elapsed_half_seasons: elapsedHalfSeasons,
-            remaining_half_seasons: remainingHalfSeasons,
-            processed_by: releasedBy,
-            processed_by_name: releasedByName,
-            created_at: new Date()
-        });
+        // 5. Log the transaction in Main DB
+        try {
+            const { getMainDb } = await import('@/lib/neon/main-config');
+            const mainSql = getMainDb();
+            const txId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await mainSql`
+                INSERT INTO transactions (
+                    id, team_id, season_id, type, amount, description, status, raw_data, created_at, updated_at
+                ) VALUES (
+                    ${txId},
+                    ${player.team_id},
+                    ${seasonId},
+                    'release',
+                    ${refundAmount},
+                    ${`Released ${player.player_name} - Refund received`},
+                    'completed',
+                    ${JSON.stringify({
+                        player_id: playerId,
+                        player_name: player.player_name,
+                        player_type: 'real',
+                        team_id: player.team_id,
+                        team_name: team.team_name,
+                        season_id: seasonId,
+                        release_timing: releaseTiming,
+                        release_season: releaseSeasonId,
+                        refund_amount: refundAmount,
+                        refund_percentage: refundPercentage,
+                        auction_value: player.auction_value,
+                        original_contract_start: player.contract_start_season || seasonId,
+                        original_contract_end: player.contract_end_season || seasonId,
+                        total_half_seasons: totalHalfSeasons,
+                        elapsed_half_seasons: elapsedHalfSeasons,
+                        remaining_half_seasons: remainingHalfSeasons,
+                        processed_by: releasedBy,
+                        processed_by_name: releasedByName,
+                    })},
+                    NOW(),
+                    NOW()
+                )
+            `;
+            console.log(`✅ Logged release transaction in Main DB for ${player.player_name}`);
+        } catch (txErr) {
+            console.error('Error logging release transaction in Main DB:', txErr);
+        }
 
         // 6. Send FCM notification to the team
         try {

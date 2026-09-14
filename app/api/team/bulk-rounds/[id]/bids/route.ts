@@ -101,7 +101,12 @@ export async function POST(
         football_players_count,
         football_total_slots,
         football_base_slots,
-        football_purchased_slots
+        football_purchased_slots,
+        (
+          SELECT COUNT(*)::int 
+          FROM footballplayers fp 
+          WHERE fp.team_id = teams.id
+        ) as actual_players_count
       FROM teams
       WHERE id = ${teamId}
       AND season_id = ${round.season_id}
@@ -116,7 +121,9 @@ export async function POST(
       );
     }
 
-    const currentSquadSize = parseInt(teamData[0].football_players_count) || 0;
+    const currentSquadSize = teamData[0].actual_players_count !== undefined && teamData[0].actual_players_count !== null
+      ? parseInt(teamData[0].actual_players_count)
+      : (parseInt(teamData[0].football_players_count) || 0);
     // Use dynamic slots: football_total_slots if available, otherwise fall back to MAX_SQUAD_SIZE
     const teamMaxSlots = parseInt(teamData[0].football_total_slots) || MAX_SQUAD_SIZE;
     

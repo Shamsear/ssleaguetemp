@@ -167,9 +167,12 @@ export default function TeamRoundPage() {
   // Implement the calculateReserveCore logic directly on frontend for maximum stability
   const getReserveInfo = () => {
     let phase: 'phase_1' | 'phase_2' | 'phase_3';
-    if (currentRoundNumber <= settingsConfig.phase_1_end_round) {
+    const hasPhase1 = settingsConfig.phase_1_end_round != null && settingsConfig.phase_1_end_round > 0;
+    const hasPhase2 = settingsConfig.phase_2_end_round != null && settingsConfig.phase_2_end_round > 0;
+
+    if (hasPhase1 && currentRoundNumber <= settingsConfig.phase_1_end_round!) {
       phase = 'phase_1';
-    } else if (currentRoundNumber <= settingsConfig.phase_2_end_round) {
+    } else if (hasPhase2 && currentRoundNumber <= settingsConfig.phase_2_end_round!) {
       phase = 'phase_2';
     } else {
       phase = 'phase_3';
@@ -1039,14 +1042,14 @@ export default function TeamRoundPage() {
                       
                       <span className="border-t border-amber-200/60 pt-1 mt-1 font-extrabold col-span-2">Reserve Pool Targets:</span>
                       
-                      {settingsConfig.phase_1_end_round >= currentRoundNumber && (
+                      {settingsConfig.phase_1_end_round != null && settingsConfig.phase_1_end_round >= currentRoundNumber && (
                         <>
                           <span className="pl-2">- Phase 1 ({reserveInfo.phase1Remaining} round(s) @ £{settingsConfig.phase_1_min_balance}):</span>
                           <span className="font-bold text-right">£{reserveInfo.phase1Reserve?.toLocaleString()}</span>
                         </>
                       )}
 
-                      {settingsConfig.phase_2_end_round > currentRoundNumber && (
+                      {settingsConfig.phase_2_end_round != null && settingsConfig.phase_2_end_round > currentRoundNumber && (
                         <>
                           <span className="pl-2">- Phase 2 ({reserveInfo.phase2Full} round(s) @ £{settingsConfig.phase_2_min_balance}):</span>
                           <span className="font-bold text-right">£{reserveInfo.phase2Reserve?.toLocaleString()}</span>

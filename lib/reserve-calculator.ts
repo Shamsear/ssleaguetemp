@@ -14,10 +14,10 @@ import { getAuctionSettings } from './auction-settings';
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
 export interface ReserveConfig {
-  phase_1_end_round: number;       // Last round of Phase 1 (e.g., 18)
-  phase_1_min_balance: number;     // Min balance per round in Phase 1 (e.g., 30)
-  phase_2_end_round: number;       // Last round of Phase 2 (e.g., 20)
-  phase_2_min_balance: number;     // Min balance per round in Phase 2 (e.g., 30)
+  phase_1_end_round?: number | null;       // Last round of Phase 1 (e.g., 18)
+  phase_1_min_balance?: number | null;     // Min balance per round in Phase 1 (e.g., 30)
+  phase_2_end_round?: number | null;       // Last round of Phase 2 (e.g., 20)
+  phase_2_min_balance?: number | null;     // Min balance per round in Phase 2 (e.g., 30)
   phase_3_min_balance: number;     // Min balance per slot in Phase 3 (e.g., 10)
   max_squad_size: number;          // Total squad size (e.g., 25)
 }
@@ -51,9 +51,12 @@ export function calculateReserveCore(
   
   // Determine current phase
   let phase: 'phase_1' | 'phase_2' | 'phase_3';
-  if (currentRoundNumber <= config.phase_1_end_round) {
+  const hasPhase1 = config.phase_1_end_round != null && config.phase_1_end_round > 0;
+  const hasPhase2 = config.phase_2_end_round != null && config.phase_2_end_round > 0;
+
+  if (hasPhase1 && currentRoundNumber <= config.phase_1_end_round!) {
     phase = 'phase_1';
-  } else if (currentRoundNumber <= config.phase_2_end_round) {
+  } else if (hasPhase2 && currentRoundNumber <= config.phase_2_end_round!) {
     phase = 'phase_2';
   } else {
     phase = 'phase_3';
@@ -63,19 +66,21 @@ export function calculateReserveCore(
 
   // ===== PHASE 1: STRICT RESERVE =====
   if (phase === 'phase_1') {
-    // Reserve for: Phase 1 remaining + Phase 2 full + Phase 3 slots
-    // Calculate based on EXPECTED rounds, not created rounds
-    
-    const phase1Remaining = Math.max(0, config.phase_1_end_round - currentRoundNumber);
-    const phase2Full = Math.max(0, config.phase_2_end_round - config.phase_1_end_round);
+    const p1End = config.phase_1_end_round || 0;
+    const p1Min = config.phase_1_min_balance || 0;
+    const p2End = config.phase_2_end_round || 0;
+    const p2Min = config.phase_2_min_balance || 0;
+
+    const phase1Remaining = Math.max(0, p1End - currentRoundNumber);
+    const phase2Full = Math.max(0, p2End - p1End);
     
     // Calculate slots remaining after all Phase 1 & 2 rounds
     // Must include current round's player (team will get 1 player this round)
     const playersAfterPhase2 = teamSquadSize + 1 + phase1Remaining + phase2Full;
     const slotsAfterPhase2 = Math.max(0, config.max_squad_size - playersAfterPhase2);
     
-    const phase1Reserve = phase1Remaining * config.phase_1_min_balance;
-    const phase2Reserve = phase2Full * config.phase_2_min_balance;
+    const phase1Reserve = phase1Remaining * p1Min;
+    const phase2Reserve = phase2Full * p2Min;
     const phase3Reserve = slotsAfterPhase2 * config.phase_3_min_balance;
     
     const totalReserve = phase1Reserve + phase2Reserve + phase3Reserve;
@@ -88,8 +93,8 @@ export function calculateReserveCore(
       phase: 'phase_1',
       enforceStrict: true,
       allowSkip: false,
-      minimumToParticipate: config.phase_1_min_balance,
-      calculation: `Phase 1: ${phase1Remaining}×£${config.phase_1_min_balance} + Phase 2: ${phase2Full}×£${config.phase_2_min_balance} + Phase 3: ${slotsAfterPhase2}×£${config.phase_3_min_balance} = £${totalReserve}`,
+      minimumToParticipate: p1Min,
+      calculation: `Phase 1: ${phase1Remaining}×£${p1Min} + Phase 2: ${phase2Full}×£${p2Min} + Phase 3: ${slotsAfterPhase2}×£${config.phase_3_min_balance} = £${totalReserve}`,
       breakdown: {
         phase1Reserve,
         phase2Reserve,
@@ -100,12 +105,10 @@ export function calculateReserveCore(
 
   // ===== PHASE 2: SOFT RESERVE WITH FLOOR =====
   if (phase === 'phase_2') {
-    // SKIPPABLE: Team only needs £30 to participate
-    // Floor: Must maintain Phase 3 reserve assuming team MIGHT skip remaining Phase 2 rounds
-    // Recommended: Phase 2 remaining + Phase 3 slots
-    // Calculate based on EXPECTED rounds, not created rounds
-    
-    const phase2Remaining = Math.max(0, config.phase_2_end_round - currentRoundNumber);
+    const p2End = config.phase_2_end_round || 0;
+    const p2Min = config.phase_2_min_balance || 0;
+
+    const phase2Remaining = Math.max(0, p2End - currentRoundNumber);
     
     // Floor calculation: Assume team gets player THIS round only, then skips rest of Phase 2
     const playersAfterThisRound = teamSquadSize + 1;
@@ -115,7 +118,7 @@ export function calculateReserveCore(
     // Recommended: Assume team completes all Phase 2 rounds
     const playersAfterPhase2 = teamSquadSize + phase2Remaining + 1; // +1 for current round
     const slotsAfterPhase2 = Math.max(0, config.max_squad_size - playersAfterPhase2);
-    const phase2Reserve = phase2Remaining * config.phase_2_min_balance;
+    const phase2Reserve = phase2Remaining * p2Min;
     const recommendedPhase3Reserve = slotsAfterPhase2 * config.phase_3_min_balance;
     const recommendedReserve = phase2Reserve + recommendedPhase3Reserve;
     
@@ -127,8 +130,8 @@ export function calculateReserveCore(
       phase: 'phase_2',
       enforceStrict: false, // Only floor enforced, not full reserve
       allowSkip: true,
-      minimumToParticipate: config.phase_2_min_balance,
-      calculation: `Recommended: ${phase2Remaining}×£${config.phase_2_min_balance} + ${slotsAfterPhase2}×£${config.phase_3_min_balance} = £${recommendedReserve} | Floor: £${phase3Floor} (worst case: ${slotsAfterThisRound} slots if skip rest)`,
+      minimumToParticipate: p2Min,
+      calculation: `Recommended: ${phase2Remaining}×£${p2Min} + ${slotsAfterPhase2}×£${config.phase_3_min_balance} = £${recommendedReserve} | Floor: £${phase3Floor} (worst case: ${slotsAfterThisRound} slots if skip rest)`,
       breakdown: {
         phase2Reserve,
         phase3Reserve: recommendedPhase3Reserve,
@@ -274,7 +277,7 @@ export async function calculateReserve(
     console.log(`🔍 [Reserve Calculator] Round ${roundId}: round_number = ${currentRoundNumber}, auction_settings_id = ${round.auction_settings_id}`);
     
     // Check if auction settings exist
-    if (!round.auction_settings_id || !round.phase_1_end_round) {
+    if (!round.auction_settings_id) {
       console.warn(`⚠️ [Reserve Calculator] Round ${roundId} has no auction_settings_id, falling back to season settings`);
       // Fallback to old method for backward compatibility
       const fallbackSettings = await getAuctionSettings(round.season_id || seasonId);

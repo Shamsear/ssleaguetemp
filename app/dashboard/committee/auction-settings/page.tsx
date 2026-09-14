@@ -33,10 +33,10 @@ interface AuctionSettings {
   min_balance_per_round: number;
   max_squad_size: number;
   contract_duration: number;
-  phase_1_end_round: number;
-  phase_1_min_balance: number;
-  phase_2_end_round: number;
-  phase_2_min_balance: number;
+  phase_1_end_round?: number | null;
+  phase_1_min_balance?: number | null;
+  phase_2_end_round?: number | null;
+  phase_2_min_balance?: number | null;
   phase_3_min_balance: number;
   created_at: string;
   updated_at: string;
@@ -63,7 +63,18 @@ export default function AuctionSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    auction_window: string;
+    max_rounds: number;
+    min_balance_per_round: number;
+    max_squad_size: number;
+    contract_duration: number;
+    phase_1_end_round: number | null;
+    phase_1_min_balance: number | null;
+    phase_2_end_round: number | null;
+    phase_2_min_balance: number | null;
+    phase_3_min_balance: number;
+  }>({
     auction_window: 'season_start',
     max_rounds: 25,
     min_balance_per_round: 30,
@@ -77,6 +88,19 @@ export default function AuctionSettingsPage() {
   });
 
   const handleMaxRoundsChange = (newMaxRounds: number) => {
+    if (formData.auction_window === 'mid_season') {
+      setFormData(prev => ({
+        ...prev,
+        max_rounds: newMaxRounds,
+        phase_1_end_round: null,
+        phase_1_min_balance: null,
+        phase_2_end_round: null,
+        phase_2_min_balance: null,
+      }));
+      setHasUnsavedChanges(true);
+      return;
+    }
+
     const phase1Percent = 0.72;
     const phase2Percent = 0.80;
     
@@ -92,19 +116,38 @@ export default function AuctionSettingsPage() {
     setHasUnsavedChanges(true);
   };
 
+  const handleWindowChange = (newWindow: string) => {
+    const isMidSeason = newWindow === 'mid_season';
+    setFormData(prev => ({
+      ...prev,
+      auction_window: newWindow,
+      max_rounds: isMidSeason ? 5 : 25,
+      min_balance_per_round: isMidSeason ? 10 : (prev.min_balance_per_round || 21),
+      phase_1_end_round: isMidSeason ? null : (prev.phase_1_end_round ?? 18),
+      phase_1_min_balance: isMidSeason ? null : (prev.phase_1_min_balance ?? 30),
+      phase_2_end_round: isMidSeason ? null : (prev.phase_2_end_round ?? 20),
+      phase_2_min_balance: isMidSeason ? null : (prev.phase_2_min_balance ?? 30),
+      phase_3_min_balance: prev.phase_3_min_balance || 10,
+    }));
+    setHasUnsavedChanges(false);
+    fetchSettings(currentSeasonId || undefined, newWindow);
+  };
+
   const handleFormChange = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
     setHasUnsavedChanges(true);
   };
 
-  const fetchSettings = async (targetSeasonId?: string) => {
+  const fetchSettings = async (targetSeasonId?: string, targetWindow?: string) => {
     const activeSeasonId = targetSeasonId || currentSeasonId;
     if (!activeSeasonId) return;
+
+    const windowType = targetWindow || formData.auction_window;
 
     try {
       const params = new URLSearchParams({
         season_id: activeSeasonId,
-        auction_window: formData.auction_window
+        auction_window: windowType
       });
       const response = await fetchWithTokenRefresh(`/api/auction-settings?${params}`);
       const { data, success } = await response.json();
@@ -117,19 +160,34 @@ export default function AuctionSettingsPage() {
           setCurrentSeasonId(data.settings.season_id);
         }
         
-        if (!hasUnsavedChanges && data.settings) {
+        if (data.settings) {
+          const isMid = (data.settings.auction_window || windowType) === 'mid_season';
           setFormData({
-            auction_window: data.settings.auction_window || 'season_start',
-            max_rounds: data.settings.max_rounds,
-            min_balance_per_round: data.settings.min_balance_per_round,
+            auction_window: data.settings.auction_window || windowType,
+            max_rounds: data.settings.max_rounds ?? (isMid ? 5 : 25),
+            min_balance_per_round: data.settings.min_balance_per_round ?? (isMid ? 10 : 30),
             max_squad_size: data.settings.max_squad_size || 25,
             contract_duration: data.settings.contract_duration || 1,
-            phase_1_end_round: data.settings.phase_1_end_round || 18,
-            phase_1_min_balance: data.settings.phase_1_min_balance || 30,
-            phase_2_end_round: data.settings.phase_2_end_round || 20,
-            phase_2_min_balance: data.settings.phase_2_min_balance || 30,
-            phase_3_min_balance: data.settings.phase_3_min_balance || 10,
+            phase_1_end_round: isMid ? null : (data.settings.phase_1_end_round ?? 18),
+            phase_1_min_balance: isMid ? null : (data.settings.phase_1_min_balance ?? 30),
+            phase_2_end_round: isMid ? null : (data.settings.phase_2_end_round ?? 20),
+            phase_2_min_balance: isMid ? null : (data.settings.phase_2_min_balance ?? 30),
+            phase_3_min_balance: data.settings.phase_3_min_balance ?? 10,
           });
+        } else {
+          // If no existing settings found for this window, initialize clean defaults
+          const isMid = windowType === 'mid_season';
+          setFormData(prev => ({
+            ...prev,
+            auction_window: windowType,
+            max_rounds: isMid ? 5 : 25,
+            min_balance_per_round: isMid ? 10 : 30,
+            phase_1_end_round: isMid ? null : 18,
+            phase_1_min_balance: isMid ? null : 30,
+            phase_2_end_round: isMid ? null : 20,
+            phase_2_min_balance: isMid ? null : 30,
+            phase_3_min_balance: 10,
+          }));
         }
       }
     } catch (err: any) {
@@ -141,21 +199,21 @@ export default function AuctionSettingsPage() {
 
   const fetchActiveSeason = async () => {
     try {
-      const seasonsJson = await (await fetch('/api/seasons')).json();
-      const seasonsList = seasonsJson.data || [];
-      const activeSeason = seasonsList.find((s: any) => s.is_active === true || s.isActive === true);
+      const response = await fetch('/api/seasons');
+      const seasonsJson = await response.json();
+      const seasonsList = seasonsJson.data || seasonsJson.seasons || [];
+      const activeSeason = seasonsList.find((s: any) => 
+        s.is_active === true || s.isActive === true || s.status === 'active'
+      ) || seasonsList[0];
 
-      if (activeSeason) {
-        const seasonId = activeSeason.id;
-        setCurrentSeasonId(seasonId);
-        fetchSettings(seasonId);
-      } else {
-        console.error('No active season found');
-        setLoading(false);
-      }
+      const seasonId = activeSeason?.id || activeSeason?.season_id || 'SSPSLS18';
+      console.log('✅ [Auction Settings] Active season resolved:', seasonId);
+      setCurrentSeasonId(seasonId);
+      fetchSettings(seasonId);
     } catch (error: any) {
-      console.error('Error fetching active season:', error);
-      setLoading(false);
+      console.warn('⚠️ Error fetching active season, falling back to SSPSLS18:', error);
+      setCurrentSeasonId('SSPSLS18');
+      fetchSettings('SSPSLS18');
     }
   };
 
@@ -168,31 +226,35 @@ export default function AuctionSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.phase_1_end_round >= formData.max_rounds) {
-      showAlert({
-        type: 'error',
-        title: 'Validation Error',
-        message: `Phase 1 End Round (${formData.phase_1_end_round}) must be less than Maximum Rounds (${formData.max_rounds}).`
-      });
-      return;
-    }
-    
-    if (formData.phase_2_end_round > formData.max_rounds) {
-      showAlert({
-        type: 'error',
-        title: 'Validation Error',
-        message: `Phase 2 End Round (${formData.phase_2_end_round}) cannot exceed Maximum Rounds (${formData.max_rounds}).`
-      });
-      return;
-    }
-    
-    if (formData.phase_1_end_round >= formData.phase_2_end_round) {
-      showAlert({
-        type: 'error',
-        title: 'Validation Error',
-        message: `Phase 1 End Round (${formData.phase_1_end_round}) must be less than Phase 2 End Round (${formData.phase_2_end_round}).`
-      });
-      return;
+    const isMidSeason = formData.auction_window === 'mid_season';
+
+    if (!isMidSeason) {
+      if (formData.phase_1_end_round == null || formData.phase_1_end_round >= formData.max_rounds) {
+        showAlert({
+          type: 'error',
+          title: 'Validation Error',
+          message: `Phase 1 End Round (${formData.phase_1_end_round ?? 'empty'}) must be less than Maximum Rounds (${formData.max_rounds}).`
+        });
+        return;
+      }
+      
+      if (formData.phase_2_end_round == null || formData.phase_2_end_round > formData.max_rounds) {
+        showAlert({
+          type: 'error',
+          title: 'Validation Error',
+          message: `Phase 2 End Round (${formData.phase_2_end_round ?? 'empty'}) cannot exceed Maximum Rounds (${formData.max_rounds}).`
+        });
+        return;
+      }
+      
+      if (formData.phase_1_end_round >= formData.phase_2_end_round) {
+        showAlert({
+          type: 'error',
+          title: 'Validation Error',
+          message: `Phase 1 End Round (${formData.phase_1_end_round}) must be less than Phase 2 End Round (${formData.phase_2_end_round}).`
+        });
+        return;
+      }
     }
     
     setSaving(true);
@@ -208,10 +270,20 @@ export default function AuctionSettingsPage() {
         return;
       }
 
+      const payload = {
+        ...formData,
+        season_id: currentSeasonId,
+        phase_1_end_round: isMidSeason ? null : formData.phase_1_end_round,
+        phase_1_min_balance: isMidSeason ? null : formData.phase_1_min_balance,
+        phase_2_end_round: isMidSeason ? null : formData.phase_2_end_round,
+        phase_2_min_balance: isMidSeason ? null : formData.phase_2_min_balance,
+        phase_3_min_balance: formData.phase_3_min_balance ?? 10,
+      };
+
       const response = await fetchWithTokenRefresh('/api/auction-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, season_id: currentSeasonId }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -222,9 +294,9 @@ export default function AuctionSettingsPage() {
         showAlert({
           type: 'success',
           title: 'Settings Saved',
-          message: 'Auction settings have been saved successfully.'
+          message: `${formData.auction_window === 'mid_season' ? 'Mid-Season' : 'Auction'} settings have been saved successfully.`
         });
-        setTimeout(() => fetchSettings(), 100);
+        setTimeout(() => fetchSettings(currentSeasonId, formData.auction_window), 100);
       } else {
         showAlert({
           type: 'error',
@@ -364,7 +436,7 @@ export default function AuctionSettingsPage() {
                   <select
                     id="auction_window"
                     value={formData.auction_window}
-                    onChange={(e) => handleFormChange({ auction_window: e.target.value })}
+                    onChange={(e) => handleWindowChange(e.target.value)}
                     required
                     className="pl-10 w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold appearance-none cursor-pointer"
                   >
@@ -448,100 +520,143 @@ export default function AuctionSettingsPage() {
 
             {/* Phase reserve configuration */}
             <div className="mt-8 pt-6 border-t border-slate-100">
-              <h4 className="text-sm font-mono font-bold text-slate-900 uppercase tracking-wider mb-2">Budget Reserve Phases</h4>
-              <p className="text-xs text-slate-450 font-mono mb-4">Configure the three-phase reserve system to ensure teams maintain enough balance throughout the auction.</p>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-mono font-bold text-slate-900 uppercase tracking-wider">Budget Reserve Phases</h4>
+                {formData.auction_window === 'mid_season' && (
+                  <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded-full bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                    ⚡ Mid-Season: Phase 3 Only
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-mono mb-4">
+                {formData.auction_window === 'mid_season'
+                  ? 'For mid-season auctions, only Phase 3 per-slot reserve is enforced. Phase 1 and Phase 2 reserves are disabled (null).'
+                  : 'Configure the three-phase reserve system to ensure teams maintain enough balance throughout the auction.'}
+              </p>
+
+              {formData.auction_window === 'mid_season' && (
+                <div className="mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs font-mono flex items-start gap-3">
+                  <Info className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="font-bold uppercase tracking-wider block mb-0.5">Mid-Season Reserve Rules Active</span>
+                    <p className="leading-relaxed text-[11px] text-amber-800">
+                      Phase 1 (Strict Reserve) and Phase 2 (Soft Reserve) are set to <strong>null</strong>. Teams only need the Phase 3 reserve (£{formData.phase_3_min_balance} per remaining slot) to participate.
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Phase 1 End Round */}
-                <div>
-                  <label htmlFor="phase_1_end_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Phase 1 End Round (Strict Reserve)
+                <div className={formData.auction_window === 'mid_season' ? 'opacity-40 pointer-events-none' : ''}>
+                  <label htmlFor="phase_1_end_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Phase 1 End Round (Strict Reserve)</span>
+                    {formData.auction_window === 'mid_season' && <span className="text-[10px] text-amber-600 font-bold">null (disabled)</span>}
                   </label>
                   <input
                     type="number"
                     id="phase_1_end_round"
-                    value={formData.phase_1_end_round}
+                    value={formData.auction_window === 'mid_season' ? '' : (formData.phase_1_end_round ?? '')}
                     onChange={(e) => handleFormChange({ phase_1_end_round: parseInt(e.target.value) || 1 })}
                     min="1"
                     max={formData.max_rounds - 1}
-                    required
+                    disabled={formData.auction_window === 'mid_season'}
+                    placeholder={formData.auction_window === 'mid_season' ? 'null' : undefined}
+                    required={formData.auction_window !== 'mid_season'}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold ${
-                      formData.phase_1_end_round >= formData.max_rounds ? 'border-red-300 bg-red-50/50' : 'border-slate-200'
+                      formData.auction_window !== 'mid_season' && formData.phase_1_end_round != null && formData.phase_1_end_round >= formData.max_rounds ? 'border-red-300 bg-red-50/50' : 'border-slate-200'
                     }`}
                   />
-                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Last round of Phase 1 (bids exceeding reserve are rejected)</p>
-                  {formData.phase_1_end_round >= formData.max_rounds && (
+                  <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Last round of Phase 1 (bids exceeding reserve are rejected)</p>
+                  {formData.auction_window !== 'mid_season' && formData.phase_1_end_round != null && formData.phase_1_end_round >= formData.max_rounds && (
                     <p className="mt-1 text-[10px] text-red-650 font-mono flex items-center gap-1 font-bold"><AlertCircle className="w-3 h-3" /> Must be less than max rounds ({formData.max_rounds})</p>
                   )}
                 </div>
 
                 {/* Phase 1 Reserve Amount */}
-                <div>
-                  <label htmlFor="phase_1_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Phase 1 Reserve Amount (£)
+                <div className={formData.auction_window === 'mid_season' ? 'opacity-40 pointer-events-none' : ''}>
+                  <label htmlFor="phase_1_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Phase 1 Reserve Amount (£)</span>
+                    {formData.auction_window === 'mid_season' && <span className="text-[10px] text-amber-600 font-bold">null (disabled)</span>}
                   </label>
                   <input
                     type="number"
                     id="phase_1_min_balance"
-                    value={formData.phase_1_min_balance}
+                    value={formData.auction_window === 'mid_season' ? '' : (formData.phase_1_min_balance ?? '')}
                     onChange={(e) => handleFormChange({ phase_1_min_balance: parseInt(e.target.value) || 0 })}
                     min="0"
-                    required
+                    disabled={formData.auction_window === 'mid_season'}
+                    placeholder={formData.auction_window === 'mid_season' ? 'null' : undefined}
+                    required={formData.auction_window !== 'mid_season'}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
-                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Reserve amount per round in Phase 1 (default: £30)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Reserve amount per round in Phase 1 (default: £30)</p>
                 </div>
 
                 {/* Phase 2 End Round */}
-                <div>
-                  <label htmlFor="phase_2_end_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Phase 2 End Round (Soft Reserve)
+                <div className={formData.auction_window === 'mid_season' ? 'opacity-40 pointer-events-none' : ''}>
+                  <label htmlFor="phase_2_end_round" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Phase 2 End Round (Soft Reserve)</span>
+                    {formData.auction_window === 'mid_season' && <span className="text-[10px] text-amber-600 font-bold">null (disabled)</span>}
                   </label>
                   <input
                     type="number"
                     id="phase_2_end_round"
-                    value={formData.phase_2_end_round}
+                    value={formData.auction_window === 'mid_season' ? '' : (formData.phase_2_end_round ?? '')}
                     onChange={(e) => handleFormChange({ phase_2_end_round: parseInt(e.target.value) || 1 })}
                     min="1"
                     max={formData.max_rounds}
-                    required
+                    disabled={formData.auction_window === 'mid_season'}
+                    placeholder={formData.auction_window === 'mid_season' ? 'null' : undefined}
+                    required={formData.auction_window !== 'mid_season'}
                     className={`w-full px-4 py-2.5 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold ${
-                      formData.phase_2_end_round > formData.max_rounds || formData.phase_2_end_round <= formData.phase_1_end_round
+                      formData.auction_window !== 'mid_season' && (
+                        (formData.phase_2_end_round != null && formData.phase_2_end_round > formData.max_rounds) ||
+                        (formData.phase_1_end_round != null && formData.phase_2_end_round != null && formData.phase_2_end_round <= formData.phase_1_end_round)
+                      )
                         ? 'border-red-300 bg-red-50/50'
                         : 'border-slate-200'
                     }`}
                   />
-                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Last round of Phase 2 (bids allowed with warnings)</p>
-                  {formData.phase_2_end_round > formData.max_rounds && (
+                  <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Last round of Phase 2 (bids allowed with warnings)</p>
+                  {formData.auction_window !== 'mid_season' && formData.phase_2_end_round != null && formData.phase_2_end_round > formData.max_rounds && (
                     <p className="mt-1 text-[10px] text-red-650 font-mono flex items-center gap-1 font-bold"><AlertCircle className="w-3 h-3" /> Cannot exceed max rounds ({formData.max_rounds})</p>
                   )}
-                  {formData.phase_2_end_round <= formData.phase_1_end_round && (
+                  {formData.auction_window !== 'mid_season' && formData.phase_1_end_round != null && formData.phase_2_end_round != null && formData.phase_2_end_round <= formData.phase_1_end_round && (
                     <p className="mt-1 text-[10px] text-red-650 font-mono flex items-center gap-1 font-bold"><AlertCircle className="w-3 h-3" /> Must be greater than Phase 1 ({formData.phase_1_end_round})</p>
                   )}
                 </div>
 
                 {/* Phase 2 Reserve Amount */}
-                <div>
-                  <label htmlFor="phase_2_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Phase 2 Reserve Amount (£)
+                <div className={formData.auction_window === 'mid_season' ? 'opacity-40 pointer-events-none' : ''}>
+                  <label htmlFor="phase_2_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Phase 2 Reserve Amount (£)</span>
+                    {formData.auction_window === 'mid_season' && <span className="text-[10px] text-amber-600 font-bold">null (disabled)</span>}
                   </label>
                   <input
                     type="number"
                     id="phase_2_min_balance"
-                    value={formData.phase_2_min_balance}
+                    value={formData.auction_window === 'mid_season' ? '' : (formData.phase_2_min_balance ?? '')}
                     onChange={(e) => handleFormChange({ phase_2_min_balance: parseInt(e.target.value) || 0 })}
                     min="0"
-                    required
+                    disabled={formData.auction_window === 'mid_season'}
+                    placeholder={formData.auction_window === 'mid_season' ? 'null' : undefined}
+                    required={formData.auction_window !== 'mid_season'}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
-                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Reserve amount per round in Phase 2 (default: £30)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-400 font-mono">Reserve amount per round in Phase 2 (default: £30)</p>
                 </div>
 
                 {/* Phase 3 Reserve Amount */}
-                <div>
-                  <label htmlFor="phase_3_min_balance" className="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Phase 3 Reserve Amount (£)
+                <div className={formData.auction_window === 'mid_season' ? 'md:col-span-2 bg-amber-50/50 p-4 rounded-2xl border border-amber-200 shadow-sm' : ''}>
+                  <label htmlFor="phase_3_min_balance" className="block text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      Phase 3 Reserve Amount (£)
+                      {formData.auction_window === 'mid_season' && (
+                        <span className="px-2 py-0.5 text-[9px] bg-amber-600 text-white font-bold rounded-md uppercase">ACTIVE IN MID-SEASON</span>
+                      )}
+                    </span>
                   </label>
                   <input
                     type="number"
@@ -550,9 +665,9 @@ export default function AuctionSettingsPage() {
                     onChange={(e) => handleFormChange({ phase_3_min_balance: parseInt(e.target.value) || 0 })}
                     min="0"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm font-mono font-bold"
                   />
-                  <p className="mt-1.5 text-[10px] text-slate-405 font-mono">Reserve amount per slot in Phase 3 (default: £10)</p>
+                  <p className="mt-1.5 text-[10px] text-slate-500 font-mono">Reserve amount per slot in Phase 3 (default: £10)</p>
                 </div>
               </div>
             </div>

@@ -238,20 +238,34 @@ export async function POST(request: NextRequest) {
                     const newBalance = currentBalance + refundAmount;
                     const currentSpent = Number(row.football_spent ?? row.raw_data?.football_spent ?? 0);
                     const newSpent = Math.max(0, currentSpent - refundAmount);
+                    const currentPlayersCount = Number(row.players_count || row.raw_data?.players_count || 25);
+                    const newPlayersCount = Math.max(0, currentPlayersCount - 1);
+                    const currentFbPlayersCount = Number(row.football_players_count || row.raw_data?.football_players_count || 25);
+                    const newFbPlayersCount = Math.max(0, currentFbPlayersCount - 1);
 
                     await mainSql`
                         UPDATE team_seasons
                         SET 
                             football_budget = ${newBalance},
                             football_spent = ${newSpent},
+                            players_count = ${newPlayersCount},
+                            football_players_count = ${newFbPlayersCount},
                             raw_data = jsonb_set(
                                 jsonb_set(
-                                    COALESCE(raw_data, '{}'::jsonb),
-                                    '{football_budget}',
-                                    to_jsonb(${newBalance}::numeric)
+                                    jsonb_set(
+                                        jsonb_set(
+                                            COALESCE(raw_data, '{}'::jsonb),
+                                            '{football_budget}',
+                                            to_jsonb(${newBalance}::numeric)
+                                        ),
+                                        '{football_spent}',
+                                        to_jsonb(${newSpent}::numeric)
+                                    ),
+                                    '{players_count}',
+                                    to_jsonb(${newPlayersCount}::int)
                                 ),
-                                '{football_spent}',
-                                to_jsonb(${newSpent}::numeric)
+                                '{football_players_count}',
+                                to_jsonb(${newFbPlayersCount}::int)
                             ),
                             updated_at = NOW()
                         WHERE id = ${row.id}
@@ -266,16 +280,21 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 5. Update team balance in Neon teams table (auction DB)
+        // 5. Update team balance and squad count in Neon teams table (auction DB)
         try {
             await sql`
                 UPDATE teams
                 SET 
                     football_budget = football_budget + ${refundAmount},
+                    football_players_count = (
+                        SELECT COUNT(*)::int 
+                        FROM footballplayers 
+                        WHERE team_id = ${player.team_id}
+                    ),
                     updated_at = NOW()
                 WHERE id = ${player.team_id}
             `;
-            console.log(`✅ Updated Neon teams table football_budget (+${refundAmount})`);
+            console.log(`✅ Updated Neon teams table football_budget (+${refundAmount}) and football_players_count for team ${player.team_id}`);
         } catch (neonError) {
             console.error('Error updating Neon teams table:', neonError);
             // Continue even if Neon update fails

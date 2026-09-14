@@ -60,18 +60,28 @@ export async function finalizeRound(roundId: string): Promise<FinalizationResult
     const requiredBids = round.max_bids_per_team;
     
     // Fetch auction settings to determine current phase
-    const settingsResult = await sql`
-      SELECT phase_1_end_round, phase_1_min_balance, phase_2_end_round, 
-             phase_2_min_balance, phase_3_min_balance
-      FROM auction_settings WHERE season_id = ${round.season_id}
-    `;
+    const settingsResult = round.auction_settings_id
+      ? await sql`
+          SELECT phase_1_end_round, phase_1_min_balance, phase_2_end_round, 
+                 phase_2_min_balance, phase_3_min_balance
+          FROM auction_settings WHERE id = ${round.auction_settings_id}
+        `
+      : await sql`
+          SELECT phase_1_end_round, phase_1_min_balance, phase_2_end_round, 
+                 phase_2_min_balance, phase_3_min_balance
+          FROM auction_settings WHERE season_id = ${round.season_id}
+          ORDER BY id DESC
+        `;
     const settings = settingsResult[0];
     
     // Determine current phase
+    const hasPhase1 = settings?.phase_1_end_round != null && Number(settings.phase_1_end_round) > 0;
+    const hasPhase2 = settings?.phase_2_end_round != null && Number(settings.phase_2_end_round) > 0;
+
     let currentPhase: 'phase_1' | 'phase_2' | 'phase_3';
-    if (round.round_number <= settings.phase_1_end_round) {
+    if (hasPhase1 && round.round_number <= Number(settings.phase_1_end_round)) {
       currentPhase = 'phase_1';
-    } else if (round.round_number <= settings.phase_2_end_round) {
+    } else if (hasPhase2 && round.round_number <= Number(settings.phase_2_end_round)) {
       currentPhase = 'phase_2';
     } else {
       currentPhase = 'phase_3';

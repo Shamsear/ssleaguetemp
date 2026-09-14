@@ -291,31 +291,35 @@ export async function GET(
         COUNT(r.id) FILTER (WHERE r.status = 'completed') as completed_rounds,
         COALESCE(s.max_rounds, 25) as total_rounds,
         COALESCE(s.min_balance_per_round, 10) as min_balance_per_round,
-        COALESCE(s.phase_1_end_round, 18) as phase_1_end_round,
-        COALESCE(s.phase_1_min_balance, 21) as phase_1_min_balance,
-        COALESCE(s.phase_2_end_round, 20) as phase_2_end_round,
-        COALESCE(s.phase_2_min_balance, 22) as phase_2_min_balance,
+        s.phase_1_end_round,
+        s.phase_1_min_balance,
+        s.phase_2_end_round,
+        s.phase_2_min_balance,
         COALESCE(s.phase_3_min_balance, 10) as phase_3_min_balance,
-        COALESCE(s.max_squad_size, 25) as max_squad_size
+        COALESCE(s.max_squad_size, 25) as max_squad_size,
+        s.auction_window
       FROM rounds r
       LEFT JOIN auction_settings s ON r.auction_settings_id = s.id
       WHERE r.season_id = ${round.season_id}
-      GROUP BY s.max_rounds, s.min_balance_per_round, s.phase_1_end_round, s.phase_1_min_balance, s.phase_2_end_round, s.phase_2_min_balance, s.phase_3_min_balance, s.max_squad_size
+      GROUP BY s.max_rounds, s.min_balance_per_round, s.phase_1_end_round, s.phase_1_min_balance, s.phase_2_end_round, s.phase_2_min_balance, s.phase_3_min_balance, s.max_squad_size, s.auction_window
       LIMIT 1
     `;
 
     // Fallback if the group returns empty
     const completedRounds = parseInt(roundsProgressResult[0]?.completed_rounds || '0');
     const totalRounds = parseInt(roundsProgressResult[0]?.total_rounds || '25');
-    const minBalancePerRound = parseInt(roundsProgressResult[0]?.min_balance_per_round || '21');
+    const minBalancePerRound = parseInt(roundsProgressResult[0]?.min_balance_per_round || '10');
     
+    const row = roundsProgressResult[0];
+    const isMidSeason = row?.auction_window === 'mid_season' || (row?.phase_1_end_round == null && row?.phase_2_end_round == null);
+
     const settingsConfig = {
-      phase_1_end_round: parseInt(roundsProgressResult[0]?.phase_1_end_round || '18'),
-      phase_1_min_balance: parseInt(roundsProgressResult[0]?.phase_1_min_balance || '21'),
-      phase_2_end_round: parseInt(roundsProgressResult[0]?.phase_2_end_round || '20'),
-      phase_2_min_balance: parseInt(roundsProgressResult[0]?.phase_2_min_balance || '22'),
-      phase_3_min_balance: parseInt(roundsProgressResult[0]?.phase_3_min_balance || '10'),
-      max_squad_size: parseInt(roundsProgressResult[0]?.max_squad_size || '25')
+      phase_1_end_round: isMidSeason || row?.phase_1_end_round == null ? null : parseInt(row.phase_1_end_round),
+      phase_1_min_balance: isMidSeason || row?.phase_1_min_balance == null ? null : parseInt(row.phase_1_min_balance),
+      phase_2_end_round: isMidSeason || row?.phase_2_end_round == null ? null : parseInt(row.phase_2_end_round),
+      phase_2_min_balance: isMidSeason || row?.phase_2_min_balance == null ? null : parseInt(row.phase_2_min_balance),
+      phase_3_min_balance: parseInt(row?.phase_3_min_balance || '10'),
+      max_squad_size: parseInt(row?.max_squad_size || '25')
     };
 
     // Get current squad size for reserve calculator

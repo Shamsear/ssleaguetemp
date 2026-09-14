@@ -50,6 +50,8 @@ export async function GET(request: NextRequest) {
       const completedRounds = parseInt(roundsResult.rows[0]?.completed_rounds || '0');
       const remainingRounds = settings.max_rounds - totalRounds;
 
+      const isMidSeason = (settings.auction_window || auctionWindow) === 'mid_season';
+
       return NextResponse.json({
         success: true,
         data: {
@@ -61,11 +63,11 @@ export async function GET(request: NextRequest) {
             min_balance_per_round: settings.min_balance_per_round,
             contract_duration: settings.contract_duration || 2,
             max_squad_size: settings.max_squad_size || 25,
-            phase_1_end_round: settings.phase_1_end_round || 18,
-            phase_1_min_balance: settings.phase_1_min_balance || 30,
-            phase_2_end_round: settings.phase_2_end_round || 20,
-            phase_2_min_balance: settings.phase_2_min_balance || 30,
-            phase_3_min_balance: settings.phase_3_min_balance || 10,
+            phase_1_end_round: isMidSeason ? null : (settings.phase_1_end_round ?? 18),
+            phase_1_min_balance: isMidSeason ? null : (settings.phase_1_min_balance ?? 30),
+            phase_2_end_round: isMidSeason ? null : (settings.phase_2_end_round ?? 20),
+            phase_2_min_balance: isMidSeason ? null : (settings.phase_2_min_balance ?? 30),
+            phase_3_min_balance: settings.phase_3_min_balance ?? 10,
             created_at: settings.created_at,
             updated_at: settings.updated_at,
           },
@@ -100,13 +102,13 @@ export async function POST(request: NextRequest) {
       min_balance_per_round, 
       contract_duration = 2, 
       max_squad_size = 25,
-      phase_1_end_round = 18,
-      phase_1_min_balance = 30,
-      phase_2_end_round = 20,
-      phase_2_min_balance = 30,
+      phase_1_end_round,
+      phase_1_min_balance,
+      phase_2_end_round,
+      phase_2_min_balance,
       phase_3_min_balance = 10
     } = body;
-    console.log('🔍 [Auction Settings POST] Extracted max_rounds:', max_rounds);
+    console.log('🔍 [Auction Settings POST] Extracted max_rounds:', max_rounds, 'window:', auction_window);
 
     if (!max_rounds || !min_balance_per_round || !max_squad_size) {
       return NextResponse.json(
@@ -114,6 +116,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const isMidSeason = auction_window === 'mid_season';
+    const finalPhase1End = isMidSeason ? null : (phase_1_end_round !== undefined ? phase_1_end_round : 18);
+    const finalPhase1Min = isMidSeason ? null : (phase_1_min_balance !== undefined ? phase_1_min_balance : 30);
+    const finalPhase2End = isMidSeason ? null : (phase_2_end_round !== undefined ? phase_2_end_round : 20);
+    const finalPhase2Min = isMidSeason ? null : (phase_2_min_balance !== undefined ? phase_2_min_balance : 30);
+    const finalPhase3Min = phase_3_min_balance !== undefined ? phase_3_min_balance : 10;
 
     const client = await pool.connect();
 
@@ -131,11 +140,11 @@ export async function POST(request: NextRequest) {
           `UPDATE auction_settings 
            SET max_rounds = $1, min_balance_per_round = $2, contract_duration = $3, max_squad_size = $4,
                phase_1_end_round = $5, phase_1_min_balance = $6, phase_2_end_round = $7, 
-               phase_2_min_balance = $8, phase_3_min_balance = $9
+               phase_2_min_balance = $8, phase_3_min_balance = $9, updated_at = NOW()
            WHERE season_id = $10 AND auction_window = $11
            RETURNING *`,
           [max_rounds, min_balance_per_round, contract_duration, max_squad_size, 
-           phase_1_end_round, phase_1_min_balance, phase_2_end_round, phase_2_min_balance, phase_3_min_balance, season_id, auction_window]
+           finalPhase1End, finalPhase1Min, finalPhase2End, finalPhase2Min, finalPhase3Min, season_id, auction_window]
         );
       } else {
         // Insert new
@@ -144,11 +153,15 @@ export async function POST(request: NextRequest) {
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
            RETURNING *`,
           [season_id, auction_window, max_rounds, min_balance_per_round, contract_duration, max_squad_size,
-           phase_1_end_round, phase_1_min_balance, phase_2_end_round, phase_2_min_balance, phase_3_min_balance]
+           finalPhase1End, finalPhase1Min, finalPhase2End, finalPhase2Min, finalPhase3Min]
         );
       }
 
-      console.log(`✅ Updated auction settings for season ${season_id}, window ${auction_window}`);
+      console.log(`✅ Updated auction settings for season ${season_id}, window ${auction_window}:`, {
+        phase_1_end_round: finalPhase1End,
+        phase_2_end_round: finalPhase2End,
+        phase_3_min_balance: finalPhase3Min
+      });
 
       return NextResponse.json({
         success: true,

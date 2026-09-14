@@ -45,13 +45,59 @@ export interface TransactionData {
 }
 
 /**
- * Log a financial transaction to Firestore
+ * Log a financial transaction directly to Main DB Neon
  */
 export async function logTransaction(data: TransactionData): Promise<void> {
   try {
+    const { getMainDb, isMainDbAvailable } = await import('@/lib/neon/main-config');
+    if (isMainDbAvailable()) {
+      const sql = getMainDb();
+      const txId = `tx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const cleanMetadata = data.metadata ? 
+        Object.fromEntries(
+          Object.entries(data.metadata).filter(([_, v]) => v !== undefined)
+        ) : {};
+
+      const playerId = data.metadata?.player_id || null;
+      const playerName = data.metadata?.player_name || null;
+      const processedBy = data.metadata?.processed_by || null;
+      const currency = data.currency_type === 'real_player' ? 'USD' : 'EUR';
+
+      const payload = {
+        ...data,
+        type: data.transaction_type,
+        metadata: Object.keys(cleanMetadata).length > 0 ? cleanMetadata : undefined,
+      };
+
+      await sql`
+        INSERT INTO transactions (
+          id, team_id, season_id, type, amount, currency, balance_after,
+          description, player_id, player_name, status, processed_by,
+          raw_data, created_at, updated_at
+        ) VALUES (
+          ${txId},
+          ${data.team_id},
+          ${data.season_id},
+          ${data.transaction_type},
+          ${data.amount},
+          ${currency},
+          ${data.balance_after},
+          ${data.description},
+          ${playerId},
+          ${playerName},
+          'completed',
+          ${processedBy},
+          ${JSON.stringify(payload)},
+          NOW(),
+          NOW()
+        )
+      `;
+      console.log(`✅ Transaction logged to Main DB: ${data.transaction_type} - ${data.amount} for ${data.team_id}`);
+      return;
+    }
+
+    // Fallback if Main DB not available
     const db = adminDb;
-    
-    // Filter out undefined values from metadata
     const cleanMetadata = data.metadata ? 
       Object.fromEntries(
         Object.entries(data.metadata).filter(([_, v]) => v !== undefined)

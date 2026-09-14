@@ -94,7 +94,12 @@ export async function POST(
       SELECT 
         football_players_count,
         football_total_slots,
-        football_budget
+        football_budget,
+        (
+          SELECT COUNT(*)::int 
+          FROM footballplayers fp 
+          WHERE fp.team_id = teams.id
+        ) as actual_players_count
       FROM teams
       WHERE id = ${teamId}
       AND season_id = ${round.season_id}
@@ -107,7 +112,9 @@ export async function POST(
       );
     }
 
-    const currentSquadSize = parseInt(teamData[0].football_players_count) || 0;
+    const currentSquadSize = teamData[0].actual_players_count !== undefined && teamData[0].actual_players_count !== null
+      ? parseInt(teamData[0].actual_players_count)
+      : (parseInt(teamData[0].football_players_count) || 0);
     const teamMaxSlots = parseInt(teamData[0].football_total_slots) || MAX_SQUAD_SIZE;
     const balance = parseInt(teamData[0].football_budget) || 1000;
 

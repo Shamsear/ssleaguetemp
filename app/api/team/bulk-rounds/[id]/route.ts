@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
-import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { getMainDb } from '@/lib/neon/main-config';
 import { getAuctionSettings } from '@/lib/auction-settings';
 
 // Use auction database
@@ -165,14 +165,19 @@ export async function GET(
       // Get team's budget and squad count from Neon teams table
       teamData = await sql`
         SELECT 
-          football_budget,
-          football_players_count,
-          football_total_slots,
-          football_base_slots,
-          football_purchased_slots
-        FROM teams
-        WHERE firebase_uid = ${userId}
-        AND season_id = ${round.season_id}
+          t.football_budget,
+          t.football_players_count,
+          t.football_total_slots,
+          t.football_base_slots,
+          t.football_purchased_slots,
+          (
+            SELECT COUNT(*)::int 
+            FROM footballplayers fp 
+            WHERE fp.team_id = t.id
+          ) as actual_players_count
+        FROM teams t
+        WHERE t.firebase_uid = ${userId}
+        AND t.season_id = ${round.season_id}
         LIMIT 1
       `;
 
@@ -180,24 +185,29 @@ export async function GET(
 
       if (teamData.length > 0) {
         balance = parseInt(teamData[0].football_budget) || 1000;
-        currentSquadSize = parseInt(teamData[0].football_players_count) || 0;
+        currentSquadSize = teamData[0].actual_players_count !== undefined && teamData[0].actual_players_count !== null
+          ? parseInt(teamData[0].actual_players_count)
+          : (parseInt(teamData[0].football_players_count) || 0);
         // Use dynamic slots: football_total_slots if available, otherwise fall back to max_squad_size
         maxSquadSize = parseInt(teamData[0].football_total_slots) || maxSquadSize;
       } else {
-        // Team doesn't exist in Neon yet - create it from Firebase team_seasons
-        console.log(`⚠️ Team not found in Neon for user ${userId}, creating from Firebase...`);
-        
-        // Get team data from Firebase team_seasons (one-time read for migration)
-        const teamSeasonId = `${userId}_${round.season_id}`;
-        const teamSeasonDoc = await adminDb.collection('team_seasons').doc(teamSeasonId).get();
-        
-        if (teamSeasonDoc.exists) {
-          const teamSeasonData = teamSeasonDoc.data();
-          const teamName = teamSeasonData?.team_name || 'Team';
-          const teamId = teamSeasonData?.team_id || userId;
-          balance = teamSeasonData?.football_budget || 1000;
-          
-          try {
+        console.log(`⚠️ Team not found in Neon auction DB for user ${userId}, checking Neon main DB...`);
+        try {
+          const mainSql = getMainDb();
+          const teamSeasonRows = await mainSql`
+            SELECT team_id, team_name, football_budget
+            FROM team_seasons
+            WHERE (user_id = ${userId} OR id = ${`${userId}_${round.season_id}`})
+            AND season_id = ${round.season_id}
+            LIMIT 1
+          `;
+
+          if (teamSeasonRows.length > 0) {
+            const teamSeasonData = teamSeasonRows[0];
+            const teamName = teamSeasonData.team_name || 'Team';
+            const teamId = teamSeasonData.team_id || userId;
+            balance = parseInt(teamSeasonData.football_budget) || 1000;
+
             await sql`
               INSERT INTO teams (
                 id, 
@@ -226,17 +236,15 @@ export async function GET(
                 firebase_uid = EXCLUDED.firebase_uid,
                 season_id = EXCLUDED.season_id,
                 football_budget = EXCLUDED.football_budget,
-                football_spent = EXCLUDED.football_spent,
-                football_players_count = EXCLUDED.football_players_count,
                 updated_at = NOW()
             `;
-            console.log(`✅ Synced/Created team in Neon: ${teamId} (${teamName})`);
-          } catch (insertError: any) {
-            console.error('Error creating/syncing team:', insertError);
+            console.log(`✅ Synced/Created team in Neon auction DB: ${teamId} (${teamName})`);
+          } else {
+            console.warn(`⚠️ No team_seasons record found in Neon main DB for user ${userId}, season ${round.season_id}`);
+            balance = 1000;
           }
-        } else {
-          console.warn(`⚠️ No team_seasons document found for ${teamSeasonId}`);
-          // Use defaults
+        } catch (insertError: any) {
+          console.error('Error creating/syncing team from Neon main DB:', insertError);
           balance = 1000;
         }
       }
@@ -246,16 +254,19 @@ export async function GET(
       console.error('Error fetching team data:', error);
     }
 
-    // Get slot settings from season
+    // Get slot settings from season (Neon main DB)
     let slotSettings = { maxPurchasable: 3, slotPrice: 10 };
     let purchasedSlots = 0;
     try {
-      const seasonDoc = await adminDb.collection('seasons').doc(round.season_id).get();
-      if (seasonDoc.exists) {
-        const seasonData = seasonDoc.data();
+      const mainSql = getMainDb();
+      const seasonRows = await mainSql`
+        SELECT raw_data FROM seasons WHERE id = ${round.season_id} LIMIT 1
+      `;
+      if (seasonRows.length > 0) {
+        const rawData = seasonRows[0].raw_data || {};
         slotSettings = {
-          maxPurchasable: seasonData?.football_max_purchasable_slots || 3,
-          slotPrice: seasonData?.football_slot_price || 10
+          maxPurchasable: rawData.football_max_purchasable_slots || 3,
+          slotPrice: rawData.football_slot_price || 10
         };
       }
 
@@ -264,7 +275,7 @@ export async function GET(
         purchasedSlots = parseInt(teamData[0].football_purchased_slots) || 0;
       }
     } catch (error: any) {
-      console.error('Error fetching slot settings:', error);
+      console.error('Error fetching slot settings from Neon main DB:', error);
     }
 
     return NextResponse.json({

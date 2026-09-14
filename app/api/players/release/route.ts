@@ -129,6 +129,23 @@ export async function POST(request: NextRequest) {
       console.warn('Could not delete from team_players:', teamPlayerError);
     }
 
+    // Update football_players_count in teams table (auction DB)
+    if (player_type === 'football' && releasedFromTeamId) {
+      try {
+        await sql.query(
+          `UPDATE teams 
+           SET football_players_count = (
+             SELECT COUNT(*)::int FROM footballplayers WHERE team_id = $1
+           ), updated_at = NOW()
+           WHERE id = $1`,
+          [releasedFromTeamId]
+        );
+        console.log(`Updated football_players_count in teams table for team ${releasedFromTeamId}`);
+      } catch (countError) {
+        console.warn('Could not update football_players_count in teams table:', countError);
+      }
+    }
+
     // Send FCM notification to the team
     try {
       await sendNotification(
