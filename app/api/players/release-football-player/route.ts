@@ -3,6 +3,7 @@ import { getAuctionDb } from '@/lib/neon/auction-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { closePlayerHistory } from '@/lib/player-history';
 import { sendNotification } from '@/lib/notifications/send-notification';
+import { logReleaseRefund } from '@/lib/transaction-logger';
 
 /**
  * POST /api/players/release-football-player
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
 
         const sql = getAuctionDb();
 
-        // Fetch player details for the specific season
+        // Fetch player details for the specific season (case-insensitive)
         let players = await sql`
       SELECT 
         id,
@@ -76,24 +77,39 @@ export async function POST(request: NextRequest) {
         acquisition_value,
         season_id
       FROM footballplayers
-      WHERE player_id = ${playerId} AND season_id = ${seasonId} AND (retired IS NOT TRUE)
+      WHERE (player_id = ${playerId} OR id::text = ${playerId}) 
+        AND (LOWER(season_id) = LOWER(${seasonId}) OR season_id IS NULL) 
+        AND (retired IS NOT TRUE)
+      ORDER BY updated_at DESC
+      LIMIT 1
     `;
 
-        // If not found with season_id, try without season_id (for current active players)
-        if (players.length === 0) {
-            players = await sql`
+        // If not found with season_id, check player_history for active team assignment
+        if (players.length === 0 || !players[0].team_id) {
+            const historyActive = await sql`
         SELECT 
-          id,
-          player_id,
-          name as player_name,
-          team_id,
-          acquisition_value,
-          season_id
-        FROM footballplayers
-        WHERE player_id = ${playerId} AND team_id IS NOT NULL AND (retired IS NOT TRUE)
-        ORDER BY updated_at DESC
+          ph.player_id,
+          ph.player_name,
+          ph.team_id,
+          ph.acquisition_value,
+          ph.season_id
+        FROM player_history ph
+        WHERE (ph.player_id = ${playerId} OR ph.player_id = (SELECT player_id FROM footballplayers WHERE id::text = ${playerId} LIMIT 1))
+          AND ph.status = 'active'
+        ORDER BY ph.created_at DESC
         LIMIT 1
       `;
+            if (historyActive.length > 0 && historyActive[0].team_id) {
+                const h = historyActive[0];
+                players = [{
+                    id: playerId,
+                    player_id: h.player_id,
+                    player_name: h.player_name,
+                    team_id: h.team_id,
+                    acquisition_value: h.acquisition_value,
+                    season_id: h.season_id
+                }];
+            }
         }
 
         if (players.length === 0) {
@@ -170,15 +186,18 @@ export async function POST(request: NextRequest) {
       WHERE player_id = ${playerId} AND season_id = ${playerSeasonId}
     `;
 
-        // 2. Close player_history record
+        // 2. Close player_history record with proper season notation (e.g. SSPSLS18.5 for mid-season)
+        const seasonNum = seasonId.replace(/\D/g, '');
+        const endSeason = releaseTiming === 'mid' ? `SSPSLS${seasonNum}.5` : seasonId.toUpperCase();
+
         try {
             await closePlayerHistory(
                 playerId,
                 player.team_id,
                 'release',
-                seasonId
+                endSeason
             );
-            console.log(`✅ Closed player_history for ${player.player_name}`);
+            console.log(`✅ Closed player_history for ${player.player_name} (${endSeason})`);
         } catch (historyError) {
             console.error('Error closing player_history:', historyError);
             // Continue even if player_history update fails
@@ -195,28 +214,56 @@ export async function POST(request: NextRequest) {
             console.warn('Could not delete from team_players:', teamPlayerError);
         }
 
-        // 4. Update team balance in Firebase team_seasons
-        try {
-            const teamSeasonDocId = `${player.team_id}_${seasonId}`;
-            const teamSeasonDoc = await adminDb.collection('team_seasons').doc(teamSeasonDocId).get();
+        // 4. Update team balance in Main DB team_seasons
+        let currentBalance = 0;
+        if (player.team_id && typeof player.team_id === 'string' && player.team_id.trim() !== '') {
+            try {
+                const { getMainDb } = await import('@/lib/neon/main-config');
+                const mainSql = getMainDb();
+                const cleanTeamId = player.team_id.trim();
+                const teamSeasonDocId = `${cleanTeamId}_${seasonId}`;
 
-            if (teamSeasonDoc.exists) {
-                const teamSeasonData = teamSeasonDoc.data();
-                const currentBalance = teamSeasonData?.football_budget || 0;
-                const newBalance = currentBalance + refundAmount;
+                const existingRows = await mainSql`
+                    SELECT id, team_id, season_id, football_budget, football_spent, raw_data
+                    FROM team_seasons
+                    WHERE id = ${teamSeasonDocId} OR (team_id = ${cleanTeamId} AND season_id = ${seasonId})
+                    LIMIT 1
+                `;
 
-                await adminDb.collection('team_seasons').doc(teamSeasonDocId).update({
-                    football_budget: newBalance,
-                    updated_at: new Date()
-                });
+                if (existingRows.length > 0) {
+                    const row = existingRows[0];
+                    const rawBudget = Number(row.raw_data?.football_budget);
+                    const colBudget = Number(row.football_budget);
+                    currentBalance = !isNaN(rawBudget) && rawBudget > 0 ? rawBudget : (!isNaN(colBudget) ? colBudget : 0);
+                    const newBalance = currentBalance + refundAmount;
+                    const currentSpent = Number(row.football_spent ?? row.raw_data?.football_spent ?? 0);
+                    const newSpent = Math.max(0, currentSpent - refundAmount);
 
-                console.log(`✅ Updated Firebase team_seasons balance: ${currentBalance} → ${newBalance} (+${refundAmount})`);
-            } else {
-                console.warn(`⚠️  Team season document not found: ${teamSeasonDocId}`);
+                    await mainSql`
+                        UPDATE team_seasons
+                        SET 
+                            football_budget = ${newBalance},
+                            football_spent = ${newSpent},
+                            raw_data = jsonb_set(
+                                jsonb_set(
+                                    COALESCE(raw_data, '{}'::jsonb),
+                                    '{football_budget}',
+                                    to_jsonb(${newBalance}::numeric)
+                                ),
+                                '{football_spent}',
+                                to_jsonb(${newSpent}::numeric)
+                            ),
+                            updated_at = NOW()
+                        WHERE id = ${row.id}
+                    `;
+
+                    console.log(`✅ Updated Main DB team_seasons balance: ${currentBalance} → ${newBalance} (+${refundAmount})`);
+                } else {
+                    console.warn(`⚠️ Team season document not found in Main DB: ${teamSeasonDocId}`);
+                }
+            } catch (mainDbError) {
+                console.error('Error updating Main DB team_seasons balance:', mainDbError);
             }
-        } catch (firebaseError) {
-            console.error('Error updating Firebase team balance:', firebaseError);
-            // Continue even if Firebase update fails
         }
 
         // 5. Update team balance in Neon teams table (auction DB)
@@ -234,23 +281,21 @@ export async function POST(request: NextRequest) {
             // Continue even if Neon update fails
         }
 
-        // 6. Log the transaction in Firebase
-        await adminDb.collection('transactions').add({
-            transaction_type: 'release',
-            player_id: playerId,
-            player_name: player.player_name,
-            player_type: 'football',
-            team_id: player.team_id,
-            team_name: team.team_name,
-            season_id: seasonId,
-            release_timing: releaseTiming,
-            refund_amount: refundAmount,
-            refund_percentage: refundPercentage,
-            acquisition_value: player.acquisition_value,
-            processed_by: releasedBy,
-            processed_by_name: releasedByName,
-            created_at: new Date()
-        });
+        // 6. Log the transaction in Neon DB & Firestore
+        try {
+            await logReleaseRefund(
+                player.team_id,
+                seasonId,
+                player.player_name,
+                playerId,
+                'football',
+                refundAmount,
+                currentBalance
+            );
+            console.log(`✅ Logged release transaction for ${player.player_name}`);
+        } catch (txnError) {
+            console.error('Error logging release transaction:', txnError);
+        }
 
         // 7. Send FCM notification to the team
         try {

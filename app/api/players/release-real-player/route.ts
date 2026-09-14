@@ -299,28 +299,53 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 4. Update team balance in Firebase team_seasons
+        // 4. Update team balance in Main DB team_seasons
         try {
-            const teamSeasonDocId = `${player.team_id}_${seasonId}`;
-            const teamSeasonDoc = await adminDb.collection('team_seasons').doc(teamSeasonDocId).get();
+            const { getMainDb } = await import('@/lib/neon/main-config');
+            const mainSql = getMainDb();
+            const cleanTeamId = player.team_id.trim();
+            const teamSeasonDocId = `${cleanTeamId}_${seasonId}`;
 
-            if (teamSeasonDoc.exists) {
-                const teamSeasonData = teamSeasonDoc.data();
-                const currentBalance = teamSeasonData?.real_player_budget || 0;
+            const existingRows = await mainSql`
+                SELECT id, team_id, season_id, real_player_budget, real_player_spent, raw_data
+                FROM team_seasons
+                WHERE id = ${teamSeasonDocId} OR (team_id = ${cleanTeamId} AND season_id = ${seasonId})
+                LIMIT 1
+            `;
+
+            if (existingRows.length > 0) {
+                const row = existingRows[0];
+                const rawBudget = Number(row.raw_data?.real_player_budget);
+                const colBudget = Number(row.real_player_budget);
+                const currentBalance = !isNaN(rawBudget) && rawBudget > 0 ? rawBudget : (!isNaN(colBudget) ? colBudget : 0);
                 const newBalance = currentBalance + refundAmount;
+                const currentSpent = Number(row.real_player_spent ?? row.raw_data?.real_player_spent ?? 0);
+                const newSpent = Math.max(0, currentSpent - refundAmount);
 
-                await adminDb.collection('team_seasons').doc(teamSeasonDocId).update({
-                    real_player_budget: newBalance,
-                    updated_at: new Date()
-                });
+                await mainSql`
+                    UPDATE team_seasons
+                    SET 
+                        real_player_budget = ${newBalance},
+                        real_player_spent = ${newSpent},
+                        raw_data = jsonb_set(
+                            jsonb_set(
+                                COALESCE(raw_data, '{}'::jsonb),
+                                '{real_player_budget}',
+                                to_jsonb(${newBalance}::numeric)
+                            ),
+                            '{real_player_spent}',
+                            to_jsonb(${newSpent}::numeric)
+                        ),
+                        updated_at = NOW()
+                    WHERE id = ${row.id}
+                `;
 
-                console.log(`✅ Updated team balance: ${currentBalance} → ${newBalance} (+$${refundAmount})`);
+                console.log(`✅ Updated Main DB team_seasons real_player_budget: ${currentBalance} → ${newBalance} (+$${refundAmount})`);
             } else {
-                console.warn(`⚠️  Team season document not found: ${teamSeasonDocId}`);
+                console.warn(`⚠️ Team season document not found in Main DB: ${teamSeasonDocId}`);
             }
-        } catch (firebaseError) {
-            console.error('Error updating Firebase team balance:', firebaseError);
-            // Continue even if Firebase update fails
+        } catch (mainDbError) {
+            console.error('Error updating Main DB team_seasons balance:', mainDbError);
         }
 
         // 5. Log the transaction in Firebase

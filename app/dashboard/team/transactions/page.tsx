@@ -166,7 +166,9 @@ export default function TransactionsPage() {
       case 'transfer_compensation': return <span>⬅️</span>;
       case 'swap_fee_paid': return <span>🔄</span>;
       case 'swap_fee_received': return <span>🔁</span>;
-      case 'player_release_refund': return <span>↩️</span>;
+      case 'player_release_refund': 
+      case 'release_refund':
+      case 'release': return <span>↩️</span>;
       case 'initial_balance': return <Store className="w-4 h-4 text-slate-500 inline-block" />;
       default: return <span>📝</span>;
     }
@@ -189,7 +191,9 @@ export default function TransactionsPage() {
       'transfer_compensation': 'Transfer Compensation',
       'swap_fee_paid': 'Swap Fee Paid',
       'swap_fee_received': 'Swap Fee Received',
-      'player_release_refund': 'Player Release Refund'
+      'player_release_refund': 'Player Release Refund',
+      'release_refund': 'Player Release Refund',
+      'release': 'Player Release Refund'
     };
     
     return typeMap[type] || type.split('_').map(word => 

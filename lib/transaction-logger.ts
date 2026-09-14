@@ -59,6 +59,7 @@ export async function logTransaction(data: TransactionData): Promise<void> {
     
     await db.collection('transactions').add({
       ...data,
+      type: data.transaction_type,
       metadata: Object.keys(cleanMetadata).length > 0 ? cleanMetadata : undefined,
       created_at: new Date(),
       updated_at: new Date()

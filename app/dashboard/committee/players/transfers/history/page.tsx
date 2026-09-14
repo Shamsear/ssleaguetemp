@@ -108,23 +108,23 @@ export default function TransferHistoryPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
+  const activeSeasonId = selectedSeason || userSeasonId || 'SSPSLS18';
+
   useEffect(() => {
-    if (user && user.role === 'committee_admin' && userSeasonId) {
+    if (user && user.role === 'committee_admin') {
       loadInitialData();
     }
-  }, [user, userSeasonId]);
+  }, [user, activeSeasonId]);
 
   useEffect(() => {
-    if (userSeasonId) {
+    if (user) {
       loadTransactions();
     }
-  }, [userSeasonId, selectedTeamId, selectedType, selectedPlayerType, selectedSeason, currentPage]);
+  }, [user, activeSeasonId, selectedTeamId, selectedType, selectedPlayerType, selectedSeason, currentPage]);
 
   const loadInitialData = async () => {
-    if (!userSeasonId) return;
-    
     try {
-      const teamsRes = await fetchWithTokenRefresh(`/api/team/all?season_id=${userSeasonId}`);
+      const teamsRes = await fetchWithTokenRefresh(`/api/team/all?season_id=${activeSeasonId}`);
       if (teamsRes.ok) {
         const teamsData = await teamsRes.json();
         if (teamsData.success && teamsData.data?.teams) {
@@ -136,14 +136,18 @@ export default function TransferHistoryPage() {
     }
   };
 
-  const loadTransactions = async () => {
-    if (!userSeasonId) return;
+  const getTeamName = (teamId?: string) => {
+    if (!teamId) return 'Unknown Team';
+    const found = teams.find(t => t.team?.id === teamId || t.id === teamId);
+    return found?.team?.name || found?.name || teamId;
+  };
 
+  const loadTransactions = async () => {
     try {
       setIsLoading(true);
       
       const params = new URLSearchParams({
-        season_id: selectedSeason || userSeasonId,
+        season_id: activeSeasonId,
         page: currentPage.toString(),
         limit: limit.toString(),
       });
@@ -306,7 +310,7 @@ export default function TransferHistoryPage() {
                 }}
                 className="w-full px-3 py-2 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
               >
-                <option value="">Current Season ({userSeasonId})</option>
+                <option value="">Current Season ({activeSeasonId})</option>
                 {availableSeasons.map((season) => (
                   <option key={season} value={season}>
                     {season}
@@ -417,7 +421,9 @@ export default function TransferHistoryPage() {
                         </div>
                         <div className="text-left sm:text-right">
                           <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider">Team roster</p>
-                          <p className="text-sm font-extrabold text-slate-850 mt-0.5">{tx.team_name}</p>
+                          <p className="text-sm font-extrabold text-slate-850 mt-0.5">
+                            {tx.team_name && tx.team_name !== tx.team_id && tx.team_name !== 'Unknown Team' ? tx.team_name : getTeamName(tx.team_id)}
+                          </p>
                           <p className="text-[9px] text-slate-350 font-bold uppercase tracking-wider">{tx.team_id}</p>
                         </div>
                       </div>
@@ -499,15 +505,15 @@ export default function TransferHistoryPage() {
                           <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[9px] font-bold rounded">PLAYER A</span>
                           <p className="font-extrabold text-slate-900 text-sm mt-2 mb-1">{tx.player_a?.name}</p>
                           <div className="text-[10px] space-y-1 text-slate-500 mt-2">
-                            {tx.player_a?.old_value > 0 && (
-                              <p>Value: £{tx.player_a?.old_value?.toLocaleString()} &rarr; £{tx.player_a?.new_value?.toLocaleString()}</p>
+                            {Number(tx.player_a?.old_value || 0) > 0 && (
+                              <p>Value: £{Number(tx.player_a?.old_value || 0).toLocaleString()} &rarr; £{Number(tx.player_a?.new_value || 0).toLocaleString()}</p>
                             )}
-                            {tx.player_a?.old_star > 0 && (
+                            {Number(tx.player_a?.old_star || 0) > 0 && (
                               <p>Stars: {tx.player_a?.old_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; {tx.player_a?.new_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></p>
                             )}
-                            <p>Team: {tx.teams?.team_a_id}</p>
-                            {tx.teams?.team_a_pays > 0 && (
-                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams?.team_a_pays?.toLocaleString()}</p>
+                            <p>Team: <span className="font-bold text-slate-700">{getTeamName(tx.teams?.team_a_id)}</span> <span className="text-[9px] text-slate-400">({tx.teams?.team_a_id})</span></p>
+                            {Number(tx.teams?.team_a_pays || 0) > 0 && (
+                              <p className="text-red-650 font-bold">Swap Fee: £{Number(tx.teams?.team_a_pays || 0).toLocaleString()}</p>
                             )}
                           </div>
                         </div>
@@ -516,15 +522,15 @@ export default function TransferHistoryPage() {
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[9px] font-bold rounded">PLAYER B</span>
                           <p className="font-extrabold text-slate-900 text-sm mt-2 mb-1">{tx.player_b?.name}</p>
                           <div className="text-[10px] space-y-1 text-slate-500 mt-2">
-                            {tx.player_b?.old_value > 0 && (
-                              <p>Value: £{tx.player_b?.old_value?.toLocaleString()} &rarr; £{tx.player_b?.new_value?.toLocaleString()}</p>
+                            {Number(tx.player_b?.old_value || 0) > 0 && (
+                              <p>Value: £{Number(tx.player_b?.old_value || 0).toLocaleString()} &rarr; £{Number(tx.player_b?.new_value || 0).toLocaleString()}</p>
                             )}
-                            {tx.player_b?.old_star > 0 && (
+                            {Number(tx.player_b?.old_star || 0) > 0 && (
                               <p>Stars: {tx.player_b?.old_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> &rarr; {tx.player_b?.new_star}<Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /></p>
                             )}
-                            <p>Team: {tx.teams?.team_b_id}</p>
-                            {tx.teams?.team_b_pays > 0 && (
-                              <p className="text-red-650 font-bold">Swap Fee: £{tx.teams?.team_b_pays?.toLocaleString()}</p>
+                            <p>Team: <span className="font-bold text-slate-700">{getTeamName(tx.teams?.team_b_id)}</span> <span className="text-[9px] text-slate-400">({tx.teams?.team_b_id})</span></p>
+                            {Number(tx.teams?.team_b_pays || 0) > 0 && (
+                              <p className="text-red-650 font-bold">Swap Fee: £{Number(tx.teams?.team_b_pays || 0).toLocaleString()}</p>
                             )}
                           </div>
                         </div>

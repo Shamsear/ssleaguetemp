@@ -122,13 +122,18 @@ export async function GET(request: NextRequest) {
       const data = transaction;
       const rawData = typeof data.raw_data === 'string' ? JSON.parse(data.raw_data) : (data.raw_data || {});
 
+      const type = data.type || data.transaction_type || rawData.transaction_type || 'unknown';
+      const amount = Number(data.amount ?? rawData.refund_amount ?? rawData.amount ?? 0);
+      const reason = data.description || data.reason || (rawData.player_name ? `Released ${rawData.player_name} - Refund received` : 'Transaction');
+      const balanceAfter = Number(data.balance_after ?? rawData.balance_after ?? 0);
+
       const formattedTransaction = {
         id: data.id,
-        date: data.created_at?.toISOString?.() || data.created_at || new Date().toISOString(),
-        type: data.transaction_type || data.type || 'unknown',
-        amount: Number(data.amount || 0),
-        reason: data.reason || data.description || 'Transaction',
-        balance_after: Number(data.balance_after || 0),
+        date: data.created_at?.toISOString?.() || data.created_at || rawData.created_at || new Date().toISOString(),
+        type: type,
+        amount: amount,
+        reason: reason,
+        balance_after: balanceAfter,
         metadata: rawData
       };
 

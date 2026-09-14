@@ -171,8 +171,11 @@ function mapTeamSeasonRow(row: any): Record<string, any> {
     team_color: row.team_color,
     dollar_balance: row.dollar_balance,
     euro_balance: row.euro_balance,
-    joined_at: row.joined_at,
     ...(typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {}),
+    football_budget: row.football_budget ?? (typeof row.raw_data === 'object' ? row.raw_data?.football_budget : undefined),
+    football_spent: row.football_spent ?? (typeof row.raw_data === 'object' ? row.raw_data?.football_spent : undefined),
+    real_player_budget: row.real_player_budget ?? (typeof row.raw_data === 'object' ? row.raw_data?.real_player_budget : undefined),
+    real_player_spent: row.real_player_spent ?? (typeof row.raw_data === 'object' ? row.raw_data?.real_player_spent : undefined),
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -330,10 +333,19 @@ const ROW_MAPPER: Record<string, (row: any) => Record<string, any>> = {
 // NEON QUERY EXECUTOR
 // =====================================================
 
+function safeFirebaseDoc(collection: string, docId?: string) {
+  if (docId && typeof docId === 'string' && docId.trim() !== '') {
+    return firebaseAdminDb.collection(collection).doc(docId.trim());
+  }
+  return firebaseAdminDb.collection(collection).doc();
+}
+
 async function neonDocGet(collection: string, docId: string): Promise<NeonDocSnapshot> {
+  if (!docId || typeof docId !== 'string' || docId.trim() === '') {
+    return new NeonDocSnapshot(docId || '', undefined, wrapDocRef(safeFirebaseDoc(collection), collection));
+  }
   const sql = getMainDb();
   const table = neonTable(collection);
-  // Use sql.query() for parameterized queries (neon() tagged template can't use $1 placeholders)
   let rows: any[];
   try {
     const result = await sql.query(`SELECT * FROM ${table} WHERE id = $1 LIMIT 1`, [docId]);
@@ -348,9 +360,9 @@ async function neonDocGet(collection: string, docId: string): Promise<NeonDocSna
     console.error(`[Neon] sql.query(docGet) failed for ${collection}:`, e.message);
     throw e;
   }
-  if (!rows.length) return new NeonDocSnapshot(docId, undefined, wrapDocRef(firebaseAdminDb.collection(collection).doc(docId), collection));
+  if (!rows.length) return new NeonDocSnapshot(docId, undefined, wrapDocRef(safeFirebaseDoc(collection, docId), collection));
   const mapper = ROW_MAPPER[collection];
-  return new NeonDocSnapshot(docId, mapper ? mapper(rows[0]) : rows[0], wrapDocRef(firebaseAdminDb.collection(collection).doc(docId), collection));
+  return new NeonDocSnapshot(docId, mapper ? mapper(rows[0]) : rows[0], wrapDocRef(safeFirebaseDoc(collection, docId), collection));
 }
 
 async function neonCollectionGet(collection: string): Promise<NeonQuerySnapshot> {
@@ -381,7 +393,7 @@ async function neonCollectionGet(collection: string): Promise<NeonQuerySnapshot>
     throw e;
   }
   const mapper = ROW_MAPPER[collection];
-  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row, wrapDocRef(firebaseAdminDb.collection(collection).doc(row.id), collection)));
+  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row, wrapDocRef(safeFirebaseDoc(collection, row.id), collection)));
   return new NeonQuerySnapshot(docs);
 }
 
@@ -451,7 +463,7 @@ async function neonWhereGet(
     throw e;
   }
   const mapper = ROW_MAPPER[collection];
-  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row, wrapDocRef(firebaseAdminDb.collection(collection).doc(row.id), collection)));
+  const docs = rows.map((row: any) => new NeonDocSnapshot(row.id, mapper ? mapper(row) : row, wrapDocRef(safeFirebaseDoc(collection, row.id), collection)));
   return new NeonQuerySnapshot(docs);
 }
 
@@ -499,6 +511,8 @@ function mapFieldName(collection: string, field: string): string {
   if (collection === 'transactions') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
+      transaction_type: 'type',
+      currency_type: 'currency',
       reference_id: 'reference_id', reference_type: 'reference_type',
       player_id: 'player_id', player_name: 'player_name',
     };
@@ -506,6 +520,60 @@ function mapFieldName(collection: string, field: string): string {
   }
   return field;
 }
+
+// Known columns for Neon tables to prevent inserting invalid column names
+const TABLE_COLUMNS: Record<string, Set<string>> = {
+  transactions: new Set([
+    'id', 'amount', 'balance_after', 'raw_data', 'created_at', 'updated_at',
+    'category', 'reference_id', 'player_id', 'player_name', 'status',
+    'currency', 'processed_by', 'notes', 'reference_type', 'team_id', 'season_id',
+    'type', 'description'
+  ]),
+  player_transactions: new Set([
+    'id', 'amount', 'raw_data', 'created_at', 'updated_at', 'type',
+    'description', 'processed_by', 'from_team_id', 'to_team_id', 'status',
+    'player_id', 'team_id', 'season_id'
+  ]),
+  teams: new Set([
+    'id', 'updated_at', 'total_spent', 'is_active', 'players_count', 'stats',
+    'real_players', 'football_players', 'football_budget', 'football_spent',
+    'real_player_budget', 'real_player_spent', 'raw_data', 'created_at',
+    'balance', 'initial_balance', 'team_id', 'team_name', 'team_code',
+    'owner_uid', 'owner_name', 'owner_email', 'username', 'logo_url',
+    'team_color', 'currency_system', 'season_id'
+  ]),
+  team_seasons: new Set([
+    'id', 'updated_at', 'real_player_budget', 'real_player_spent', 'players_count',
+    'football_players_count', 'stats', 'real_players', 'football_players',
+    'dollar_balance', 'euro_balance', 'raw_data', 'joined_at', 'created_at',
+    'budget', 'initial_budget', 'football_budget', 'football_spent', 'team_id',
+    'team_name', 'team_code', 'season_id', 'user_id', 'username', 'team_email',
+    'status', 'logo_url', 'currency_system', 'team_color'
+  ]),
+  seasons: new Set([
+    'id', 'updated_at', 'required_real_players', 'max_football_players',
+    'category_fine_amount', 'raw_data', 'created_at', 'season_number',
+    'is_active', 'registration_open', 'start_date', 'end_date', 'total_teams',
+    'total_rounds', 'purse_amount', 'max_players_per_team', 'dollar_budget',
+    'euro_budget', 'name', 'year', 'status', 'type'
+  ]),
+  realplayers: new Set([
+    'id', 'updated_at', 'is_registered', 'is_active', 'is_available',
+    'registered_at', 'joined_date', 'stats', 'raw_data', 'created_at',
+    'category_id', 'role', 'psn_id', 'xbox_id', 'steam_id', 'profile_image',
+    'assigned_by', 'notes', 'player_id', 'name', 'display_name', 'email',
+    'phone', 'team', 'team_id', 'season_id'
+  ]),
+  categories: new Set([
+    'id', 'updated_at', 'max_salary', 'fine_amount', 'is_active', 'sort_order',
+    'raw_data', 'created_at', 'min_players', 'max_players', 'min_salary',
+    'name', 'description', 'color', 'icon', 'season_id'
+  ]),
+  team_cash_balances: new Set([
+    'id', 'updated_at', 'total_income', 'total_expense', 'raw_data',
+    'created_at', 'balance', 'initial_balance', 'team_id', 'season_id', 'currency'
+  ])
+};
 
 // =====================================================
 // NEON WRITE SYNC
@@ -521,7 +589,75 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
       await sql.query(`DELETE FROM ${table} WHERE id = $1`, [docId]);
       return;
     }
+
+    // Auto-promote metadata fields if top-level fields are missing in transactions
+    const enrichedData = { ...data };
+    if (table === 'transactions' && data?.metadata) {
+      if (!enrichedData.player_id && data.metadata.player_id) enrichedData.player_id = data.metadata.player_id;
+      if (!enrichedData.player_name && data.metadata.player_name) enrichedData.player_name = data.metadata.player_name;
+      if (!enrichedData.processed_by && data.metadata.processed_by) enrichedData.processed_by = data.metadata.processed_by;
+    }
     
+    // Auto-populate team_id and season_id for team_seasons if missing
+    if (table === 'team_seasons') {
+      const parts = docId.split('_');
+      if (parts.length >= 2) {
+        if (!enrichedData.team_id) enrichedData.team_id = parts[0];
+        if (!enrichedData.season_id) enrichedData.season_id = parts.slice(1).join('_');
+      }
+    }
+
+    const validCols = TABLE_COLUMNS[table];
+
+    // For update operations, execute a direct UPDATE first
+    if (operation === 'update') {
+      const setClauses: string[] = [];
+      const updateValues: any[] = [];
+      let uIdx = 1;
+
+      for (const [key, value] of Object.entries(enrichedData)) {
+        if (value === undefined) continue;
+        if (typeof value === 'function') continue;
+        const col = mapFieldName(collection, key);
+        if (col === 'updated_at' || col === 'id') continue;
+        if (validCols && !validCols.has(col)) continue;
+        if (setClauses.some(s => s.startsWith(`${col} =`))) continue;
+
+        let valToUpdate = value;
+        if (value && typeof value === 'object') {
+          if ((value as any)._methodName === 'serverTimestamp' || (value as any).constructor?.name === 'FieldValue') {
+            valToUpdate = new Date().toISOString();
+          } else if (value instanceof Date) {
+            valToUpdate = value.toISOString();
+          } else {
+            valToUpdate = JSON.stringify(value);
+          }
+        }
+        setClauses.push(`${col} = $${uIdx}`);
+        updateValues.push(valToUpdate);
+        uIdx++;
+      }
+
+      // Merge updated fields into raw_data JSON if table has raw_data
+      if (!validCols || validCols.has('raw_data')) {
+        setClauses.push(`raw_data = COALESCE(raw_data, '{}'::jsonb) || $${uIdx}::jsonb`);
+        updateValues.push(JSON.stringify(data));
+        uIdx++;
+      }
+
+      setClauses.push(`updated_at = NOW()`);
+      updateValues.push(docId);
+
+      const updateQuery = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE id = $${uIdx}`;
+      const updateResult: any = await sql.query(updateQuery, updateValues);
+
+      const rowsAffected = updateResult?.rowCount ?? (Array.isArray(updateResult) ? updateResult.length : 0);
+      if (rowsAffected > 0) {
+        return;
+      }
+      // If row did not exist yet, fall through to INSERT
+    }
+
     // Generic upsert: store all fields + raw_data, use COALESCE on conflict
     // Collect non-null columns from data + id + raw_data + timestamps
     const columns: string[] = ['id'];
@@ -529,11 +665,14 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
     const values: any[] = [docId];
     let idx = 2;
     
-    for (const [key, value] of Object.entries(data)) {
+    for (const [key, value] of Object.entries(enrichedData)) {
       if (value === undefined) continue;
       // Skip functions and complex objects that aren't JSON-serializable
       if (typeof value === 'function') continue;
       const col = mapFieldName(collection, key);
+      if (col === 'updated_at') continue;
+      // Only include column if it exists in the table schema
+      if (validCols && !validCols.has(col)) continue;
       // Skip if column already added
       if (columns.includes(col)) continue;
       columns.push(col);
@@ -559,8 +698,10 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
       values.push(JSON.stringify(data));
       idx++;
     }
-    columns.push('updated_at');
+    if (!columns.includes('updated_at')) {
+      columns.push('updated_at');
       placeholders.push('NOW()');
+    }
     
     const colList = columns.join(', ');
     const phList = placeholders.join(', ');
@@ -692,7 +833,15 @@ function wrapCollectionRef(ref: any, collection: string): any {
     get(target, prop) {
       if (prop === 'doc') {
         return (id?: string) => {
-          const docRef = target.doc(id);
+          const docRef = (id && typeof id === 'string' && id.trim() !== '') ? target.doc(id) : target.doc();
+          return wrapDocRef(docRef, collection);
+        };
+      }
+      if (prop === 'add') {
+        return async (data: any) => {
+          const docRef = target.doc();
+          const docId = docRef.id;
+          await syncToNeon(collection, docId, data, 'set');
           return wrapDocRef(docRef, collection);
         };
       }
@@ -733,6 +882,21 @@ export const adminDb = new Proxy(firebaseAdminDb, {
           return wrapCollectionRef(ref, name);
         }
         return ref;
+      };
+    }
+    if (prop === 'doc') {
+      return (path?: string) => {
+        if (!path || typeof path !== 'string' || path.trim() === '') {
+          return wrapDocRef((target as any).doc(), 'unknown');
+        }
+        const parts = path.split('/');
+        if (parts.length === 2 && NEON_COLLECTIONS.has(parts[0])) {
+          const collection = parts[0];
+          const docId = parts[1];
+          const docRef = (docId && docId.trim() !== '') ? (target as any).doc(path) : (target as any).doc(`${collection}/temp_placeholder`);
+          return wrapDocRef(docRef, collection);
+        }
+        return (target as any).doc(path);
       };
     }
     // Pass through all other properties (auth, etc.)
