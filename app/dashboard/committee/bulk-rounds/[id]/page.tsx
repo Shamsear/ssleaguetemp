@@ -876,6 +876,27 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                   Finalize Round
                 </button>
               )}
+
+              {/* Show tiebreaker management button whenever there are contested players */}
+              {contested.length > 0 && (
+                <Link
+                  href={`/dashboard/committee/bulk-rounds/${round.id}/tiebreakers`}
+                  className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm flex items-center gap-2 cursor-pointer border border-orange-500/20"
+                >
+                  ⚡ View Tiebreakers ({contested.length})
+                </Link>
+              )}
+
+              {/* Allow re-checking/finalizing if completed or tiebreaker_pending but has pending/contested players */}
+              {(round.status === 'tiebreaker_pending' || round.status === 'completed') && (contested.length > 0 || pending.length > 0) && (
+                <button
+                  onClick={() => handleUpdateStatus('completed')}
+                  disabled={isFinalizing}
+                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm flex items-center gap-2 cursor-pointer border border-purple-500/20"
+                >
+                  {isFinalizing ? 'Finalizing...' : 'Re-check / Finalize Round'}
+                </button>
+              )}
             </div>
 
             {/* Add Time Interface */}

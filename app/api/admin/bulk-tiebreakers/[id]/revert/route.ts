@@ -184,8 +184,14 @@ export async function POST(
             .get();
 
           for (const doc of existingTxns.docs) {
-            const metadata = doc.data().metadata || {};
-            if (metadata.playerId === tiebreaker.player_id) {
+            const d = doc.data();
+            const metadata = d.metadata || {};
+            if (
+              d.player_id === tiebreaker.player_id ||
+              d.playerId === tiebreaker.player_id ||
+              metadata.playerId === tiebreaker.player_id ||
+              metadata.player_id === tiebreaker.player_id
+            ) {
               await doc.ref.delete();
               console.log(`🗑️ Deleted Firebase transaction document ${doc.id} for player ${tiebreaker.player_name}`);
             }

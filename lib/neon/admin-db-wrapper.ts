@@ -247,8 +247,13 @@ function mapCategoryRow(row: any): Record<string, any> {
 
 function mapTransactionRow(row: any): Record<string, any> {
   return {
+    id: row.id,
     team_id: row.team_id,
+    teamId: row.team_id,
+    userId: row.team_id,
+    user_id: row.team_id,
     season_id: row.season_id,
+    seasonId: row.season_id,
     type: row.type,
     transaction_type: row.type, // backward compat: many pages check transaction_type
     amount: row.amount,
@@ -258,7 +263,9 @@ function mapTransactionRow(row: any): Record<string, any> {
     reference_id: row.reference_id,
     reference_type: row.reference_type,
     player_id: row.player_id,
+    playerId: row.player_id,
     player_name: row.player_name,
+    playerName: row.player_name,
     status: row.status || 'completed',
     currency: row.currency || 'single',
     processed_by: row.processed_by,
@@ -466,10 +473,20 @@ async function neonWhereGet(
 // Map Firestore field names to Neon column names
 function mapFieldName(collection: string, field: string): string {
   const COMMON_MAP: Record<string, string> = {
-    isActive: 'is_active', season_id: 'season_id', team_id: 'team_id',
-    created_at: 'created_at', updated_at: 'updated_at',
-    is_active: 'is_active', is_registered: 'is_registered',
-    category_id: 'category_id', player_id: 'player_id',
+    isActive: 'is_active',
+    season_id: 'season_id',
+    seasonId: 'season_id',
+    team_id: 'team_id',
+    teamId: 'team_id',
+    user_id: 'user_id',
+    userId: 'user_id',
+    created_at: 'created_at',
+    updated_at: 'updated_at',
+    is_active: 'is_active',
+    is_registered: 'is_registered',
+    category_id: 'category_id',
+    player_id: 'player_id',
+    playerId: 'player_id',
   };
   
   if (collection === 'seasons') {
@@ -493,7 +510,7 @@ function mapFieldName(collection: string, field: string): string {
   if (collection === 'team_seasons') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
-      user_id: 'user_id', status: 'status', team_code: 'team_code',
+      user_id: 'user_id', userId: 'user_id', status: 'status', team_code: 'team_code',
     };
     return map[field] || field;
   }
@@ -507,10 +524,15 @@ function mapFieldName(collection: string, field: string): string {
   if (collection === 'transactions') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
+      userId: 'team_id', // transactions table uses team_id to store team_id / firebase_uid
+      user_id: 'team_id',
+      teamId: 'team_id',
+      seasonId: 'season_id',
       transaction_type: 'type',
       currency_type: 'currency',
       reference_id: 'reference_id', reference_type: 'reference_type',
-      player_id: 'player_id', player_name: 'player_name',
+      player_id: 'player_id', playerId: 'player_id',
+      player_name: 'player_name', playerName: 'player_name',
     };
     return map[field] || field;
   }

@@ -123,12 +123,32 @@ export async function POST(
 
     const tiebreaker = tiebreakerCheck[0];
 
-    // Check if already finalized (prevent duplicates)
+    // Check if already finalized (prevent duplicates, but allow healing if transaction is missing)
     if (tiebreaker.status === 'resolved' || tiebreaker.status === 'finalized') {
-      return NextResponse.json(
-        { success: false, error: 'Tiebreaker already finalized' },
-        { status: 400 }
-      );
+      let transactionExists = false;
+      try {
+        const { getMainDb, isMainDbAvailable } = await import('@/lib/neon/main-config');
+        if (isMainDbAvailable()) {
+          const mainSql = getMainDb();
+          const txCheck = await mainSql`
+            SELECT id FROM transactions 
+            WHERE player_id = ${tiebreaker.player_id} 
+            AND type = 'auction_win' 
+            LIMIT 1
+          `;
+          transactionExists = txCheck.length > 0;
+        }
+      } catch (checkErr) {
+        console.warn('⚠️ Error checking transactions for already resolved tiebreaker in finalize route:', checkErr);
+      }
+
+      if (transactionExists) {
+        return NextResponse.json(
+          { success: false, error: 'Tiebreaker already finalized' },
+          { status: 400 }
+        );
+      }
+      console.log(`⚠️ Tiebreaker ${tiebreakerId} is marked resolved, but transaction does not exist. Allowing finalize API call to complete the process.`);
     }
 
     // Check if there's a winner

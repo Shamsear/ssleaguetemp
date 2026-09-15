@@ -167,10 +167,11 @@ async function assignPlayerToTeam(
       };
 
       if (isDualCurrency) {
-        updateData.football_budget = currentBudget - price;
-        updateData.football_spent = (teamSeasonData?.football_spent || 0) + price;
+        updateData.football_budget = Number(currentBudget) - Number(price);
+        updateData.football_spent = Number(teamSeasonData?.football_spent || 0) + Number(price);
       } else {
-        updateData.budget = currentBudget - price;
+        updateData.budget = Number(currentBudget) - Number(price);
+        updateData.total_spent = Number(teamSeasonData?.total_spent || 0) + Number(price);
       }
 
       await teamSeasonRef.update(updateData);
