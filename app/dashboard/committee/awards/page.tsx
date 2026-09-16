@@ -37,11 +37,21 @@ interface Award {
   category?: string;
   team_id?: string;
   team_name?: string;
+  opponent_player_id?: string;
+  opponent_player_name?: string;
+  opponent_category?: string;
+  opponent_team_id?: string;
+  opponent_team_name?: string;
   round_number?: number;
   week_number?: number;
   performance_stats: any;
   selected_by_name?: string;
   selected_at?: string;
+  result?: string;
+  home_team?: string;
+  away_team?: string;
+  home_score?: number;
+  away_score?: number;
 }
 
 interface Candidate {
@@ -50,9 +60,16 @@ interface Candidate {
   category?: string;
   team_id?: string;
   team_name?: string;
+  opponent_player_id?: string;
+  opponent_player_name?: string;
+  opponent_category?: string;
+  opponent_team_id?: string;
+  opponent_team_name?: string;
   performance_stats: any;
   fixture_id?: string;
   result?: string;
+  matchup_result?: string;
+  round_number?: number;
 }
 
 function getCategoryBadgeStyle(category?: string) {
@@ -72,6 +89,7 @@ function generateNomineeWhatsAppMessage(
   round: number,
   week: number,
   category?: string,
+  opponentCategory?: string,
   isWinner: boolean = false
 ): string {
   const awardTitles: Record<AwardTab, string> = {
@@ -119,8 +137,20 @@ function generateNomineeWhatsAppMessage(
     if (candidate.team_name) {
       msg += `👥 *Team:* ${candidate.team_name}\n`;
     }
+    if (candidate.opponent_player_name) {
+      msg += `👤 *Opponent:* ${candidate.opponent_player_name}\n`;
+    }
+    if (opponentCategory) {
+      msg += `🏷️ *Opponent Category:* ${opponentCategory.toUpperCase()}\n`;
+    }
+    if (candidate.opponent_team_name && !candidate.opponent_player_name) {
+      msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+    }
   } else {
     msg += `👥 *${isWinner ? 'Winning Team' : 'Team Nominee'}:* ${candidate.team_name || 'N/A'}\n`;
+    if (candidate.opponent_team_name) {
+      msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+    }
   }
 
   if (candidate.result) {
@@ -128,6 +158,92 @@ function generateNomineeWhatsAppMessage(
   }
 
   msg += `------------------------------\n`;
+  msg += `🎮 *SS League Awards Committee*`;
+
+  return msg;
+}
+
+function generateRoundNomineesWhatsAppMessage(
+  candidatesList: Candidate[],
+  tab: AwardTab,
+  tournamentName: string,
+  round: number,
+  week: number,
+  getCat: (c: Candidate) => string,
+  getOppCat: (c: Candidate) => string
+): string {
+  const awardTitles: Record<AwardTab, string> = {
+    POTD: '🌟 PLAYER OF THE DAY (POTD)',
+    POTW: '🔥 PLAYER OF THE WEEK (POTW)',
+    TOD: '🛡️ TEAM OF THE DAY (TOD)',
+    TOW: '👑 TEAM OF THE WEEK (TOW)',
+    POTS: '🏆 PLAYER OF THE SEASON (POTS)',
+    TOTS: '🏆 TEAM OF THE SEASON (TOTS)',
+  };
+
+  const isPlayerAward = ['POTD', 'POTW', 'POTS'].includes(tab);
+  const isRoundAward = ['POTD', 'TOD'].includes(tab);
+  const isWeekAward = ['POTW', 'TOW'].includes(tab);
+
+  let msg = `🏆 *SS LEAGUE - AWARD NOMINEES* 🏆\n`;
+  msg += `------------------------------\n`;
+  msg += `🎖️ *Award:* ${awardTitles[tab]}\n`;
+  if (tournamentName) {
+    msg += `🏟️ *Tournament:* ${tournamentName}\n`;
+  }
+  if (isRoundAward) {
+    msg += `📅 *Round:* Round ${round}\n`;
+  } else if (isWeekAward) {
+    const weekRanges: Record<number, string> = {
+      1: 'Rounds 1-7',
+      2: 'Rounds 8-13',
+      3: 'Rounds 14-20',
+      4: 'Rounds 21-26',
+    };
+    msg += `📅 *Week:* Week ${week} (${weekRanges[week] || `Week ${week}`})\n`;
+  } else {
+    msg += `📅 *Period:* Full Season\n`;
+  }
+  msg += `------------------------------\n`;
+
+  const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+
+  candidatesList.forEach((candidate, idx) => {
+    const numPrefix = numberEmojis[idx] || `[${idx + 1}]`;
+    const cat = getCat(candidate);
+    const oppCat = getOppCat(candidate);
+
+    msg += `\n${numPrefix}\n`;
+    if (isPlayerAward) {
+      msg += `👤 *Nominee:* ${candidate.player_name || 'N/A'}\n`;
+      if (cat) {
+        msg += `🏷️ *Category:* ${cat.toUpperCase()}\n`;
+      }
+      if (candidate.team_name) {
+        msg += `👥 *Team:* ${candidate.team_name}\n`;
+      }
+      if (candidate.opponent_player_name) {
+        msg += `👤 *Opponent:* ${candidate.opponent_player_name}\n`;
+      }
+      if (oppCat) {
+        msg += `🏷️ *Opponent Category:* ${oppCat.toUpperCase()}\n`;
+      }
+      if (candidate.opponent_team_name && !candidate.opponent_player_name) {
+        msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+      }
+    } else {
+      msg += `👥 *Team Nominee:* ${candidate.team_name || 'N/A'}\n`;
+      if (candidate.opponent_team_name) {
+        msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+      }
+    }
+
+    if (candidate.result) {
+      msg += `⚽ *Match Result:* ${candidate.result}\n`;
+    }
+  });
+
+  msg += `\n------------------------------\n`;
   msg += `🎮 *SS League Awards Committee*`;
 
   return msg;
@@ -149,6 +265,7 @@ export default function AwardsManagementPage() {
 
   const [playerCategories, setPlayerCategories] = useState<Record<string, string>>({});
   const [copiedCandidateId, setCopiedCandidateId] = useState<string | null>(null);
+  const [copiedAllNominees, setCopiedAllNominees] = useState(false);
 
   const [loading_data, setLoadingData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -224,6 +341,17 @@ export default function AwardsManagementPage() {
     return '';
   };
 
+  const getCandidateOpponentCategory = (candidate: Candidate) => {
+    if (candidate.opponent_category) return candidate.opponent_category;
+    if (candidate.opponent_player_id && playerCategories[candidate.opponent_player_id]) {
+      return playerCategories[candidate.opponent_player_id];
+    }
+    if (candidate.opponent_player_name && playerCategories[candidate.opponent_player_name.trim().toLowerCase()]) {
+      return playerCategories[candidate.opponent_player_name.trim().toLowerCase()];
+    }
+    return '';
+  };
+
   const getAwardCategory = (award: Award) => {
     if (award.category) return award.category;
     if (award.player_id && playerCategories[award.player_id]) {
@@ -235,9 +363,21 @@ export default function AwardsManagementPage() {
     return '';
   };
 
+  const getAwardOpponentCategory = (award: Award) => {
+    if (award.opponent_category) return award.opponent_category;
+    if (award.opponent_player_id && playerCategories[award.opponent_player_id]) {
+      return playerCategories[award.opponent_player_id];
+    }
+    if (award.opponent_player_name && playerCategories[award.opponent_player_name.trim().toLowerCase()]) {
+      return playerCategories[award.opponent_player_name.trim().toLowerCase()];
+    }
+    return '';
+  };
+
   const handleCopyWhatsApp = (candidate: Candidate, e: React.MouseEvent) => {
     e.stopPropagation();
     const cat = getCandidateCategory(candidate);
+    const oppCat = getCandidateOpponentCategory(candidate);
     const currentTournament = availableTournaments.find(t => t.id === tournamentId);
     const tournamentName = currentTournament ? currentTournament.name : tournamentId;
 
@@ -248,6 +388,7 @@ export default function AwardsManagementPage() {
       currentRound,
       currentWeek,
       cat,
+      oppCat,
       false
     );
 
@@ -259,17 +400,34 @@ export default function AwardsManagementPage() {
     }, 2000);
   };
 
-  const handleCopyWinnerWhatsApp = (award: Award) => {
+  const handleCopyWinnerWhatsApp = (award: any) => {
     const cat = getAwardCategory(award);
+    const oppCat = getAwardOpponentCategory(award);
     const currentTournament = availableTournaments.find(t => t.id === tournamentId);
     const tournamentName = currentTournament ? currentTournament.name : tournamentId;
+
+    let result = award.result;
+    if (!result && award.home_team && award.away_team && award.home_score !== undefined && award.away_score !== undefined) {
+      result = `${award.home_team} ${award.home_score}-${award.away_score} ${award.away_team}`;
+    }
+
+    let opponentTeamName = award.opponent_team_name;
+    if (!opponentTeamName && award.home_team && award.away_team) {
+      opponentTeamName = award.team_name === award.home_team ? award.away_team : award.home_team;
+    }
 
     const fakeCandidate: Candidate = {
       player_id: award.player_id,
       player_name: award.player_name,
       team_id: award.team_id,
       team_name: award.team_name,
+      opponent_player_id: award.opponent_player_id,
+      opponent_player_name: award.opponent_player_name,
+      opponent_category: oppCat,
+      opponent_team_id: award.opponent_team_id,
+      opponent_team_name: opponentTeamName,
       category: cat,
+      result: result,
       performance_stats: award.performance_stats,
     };
 
@@ -280,6 +438,7 @@ export default function AwardsManagementPage() {
       award.round_number || currentRound,
       award.week_number || currentWeek,
       cat,
+      oppCat,
       true
     );
 
@@ -287,6 +446,28 @@ export default function AwardsManagementPage() {
     setCopiedCandidateId(award.id);
     setTimeout(() => {
       setCopiedCandidateId(null);
+    }, 2000);
+  };
+
+  const handleCopyAllRoundNominees = () => {
+    if (!candidates || candidates.length === 0) return;
+    const currentTournament = availableTournaments.find(t => t.id === tournamentId);
+    const tournamentName = currentTournament ? currentTournament.name : tournamentId;
+
+    const message = generateRoundNomineesWhatsAppMessage(
+      candidates,
+      activeTab,
+      tournamentName,
+      currentRound,
+      currentWeek,
+      getCandidateCategory,
+      getCandidateOpponentCategory
+    );
+
+    navigator.clipboard.writeText(message);
+    setCopiedAllNominees(true);
+    setTimeout(() => {
+      setCopiedAllNominees(false);
     }, 2000);
   };
 
@@ -350,11 +531,12 @@ export default function AwardsManagementPage() {
       const awardsData = await awardsRes.json();
       setAwards(awardsData.success ? awardsData.data : []);
 
-      // Load eligible candidates
+      // Load eligible candidates (pass skip_award_check=true so candidates are visible even if an award exists)
       const candidateParams = new URLSearchParams({
         tournament_id: tournamentId,
         season_id: userSeasonId,
         award_type: activeTab,
+        skip_award_check: 'true',
       });
 
       if (['POTD', 'TOD'].includes(activeTab)) {
@@ -701,16 +883,55 @@ export default function AwardsManagementPage() {
 
           {/* Candidates List Section */}
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
-            <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight mb-4">
-              {currentAward ? `Winner: ${currentAward.player_name || currentAward.team_name}` : candidates.length > 0 ? 'Eligible Candidates' : 'No candidates available'}
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight">
+                  {['POTD', 'TOD'].includes(activeTab)
+                    ? `Round ${currentRound} Nominees`
+                    : ['POTW', 'TOW'].includes(activeTab)
+                    ? `Week ${currentWeek} Nominees`
+                    : 'Eligible Nominees'}{' '}
+                  <span className="text-slate-400 font-normal">({candidates.length})</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 font-mono">
+                  {candidates.length > 0
+                    ? `Review round nominees and copy formatted WhatsApp broadcast`
+                    : 'No nominees found for this period'}
+                </p>
+              </div>
+
+              {candidates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleCopyAllRoundNominees}
+                  className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-mono text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border shadow-sm ${
+                    copiedAllNominees
+                      ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-500/30'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 hover:border-emerald-400'
+                  }`}
+                  title={`Copy all ${['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : 'available'} nominees for WhatsApp`}
+                >
+                  {copiedAllNominees ? (
+                    <>
+                      <Check className="w-4 h-4 text-white" />
+                      <span>Copied Full Round!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-emerald-600" />
+                      <span>Copy Full {['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : 'List'} (WhatsApp)</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
 
             {currentAward && (
               <div className="mb-6 flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                 <Info className="w-4 h-4 text-amber-500 flex-shrink-0" />
                 <p className="text-[10px] font-bold text-amber-850 uppercase tracking-wider leading-relaxed">
                   An award has already been given for this {['POTD', 'TOD'].includes(activeTab) ? 'round' : 'week'}.
-                  You must remove the current award before selecting a new one.
+                  You can view and copy nominees, or remove the current award to select a different winner.
                 </p>
               </div>
             )}
@@ -718,35 +939,36 @@ export default function AwardsManagementPage() {
             {loading_data ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
-                <p className="mt-3 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading candidates...</p>
-              </div>
-            ) : currentAward ? (
-              <div className="text-center py-12 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center">
-                <Lock className="w-12 h-12 text-slate-400 mb-3" />
-                <p className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Candidate selection is locked</p>
-                <p className="text-xs text-slate-500 font-mono mt-1">Remove the current award to select a different winner</p>
+                <p className="mt-3 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading nominees...</p>
               </div>
             ) : candidates.length > 0 ? (
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-1">
                 {candidates.map((candidate, idx) => {
                   const candidateId = candidate.player_id || candidate.team_id || `candidate-${idx}`;
                   const isSelected = selectedCandidate === candidateId;
                   const category = getCandidateCategory(candidate);
+                  const opponentCategory = getCandidateOpponentCategory(candidate);
 
                   return (
                     <div
                       key={candidateId}
-                      onClick={() => setSelectedCandidate(candidateId)}
-                      className={`p-4 rounded-2xl cursor-pointer transition-all border ${
+                      onClick={() => {
+                        if (!currentAward) setSelectedCandidate(candidateId);
+                      }}
+                      className={`p-4 rounded-2xl transition-all border ${
                         isSelected
                           ? 'bg-amber-50/50 border-amber-500 ring-2 ring-amber-500/10'
                           : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                      }`}
+                      } ${!currentAward ? 'cursor-pointer' : 'cursor-default'}`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
+                          {/* Nominee row */}
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-extrabold text-sm text-slate-800 truncate">
+                            <span className="text-[10px] font-black uppercase text-amber-700 font-mono tracking-wider">
+                              NOMINEE:
+                            </span>
+                            <p className="font-extrabold text-sm text-slate-900 truncate">
                               {candidate.player_name || candidate.team_name}
                             </p>
                             {category && (
@@ -755,35 +977,65 @@ export default function AwardsManagementPage() {
                               </span>
                             )}
                             {candidate.team_name && candidate.player_name && (
-                              <span className="text-[11px] font-bold text-slate-500 font-mono">
+                              <span className="text-[11px] font-bold text-slate-600 font-mono">
                                 ({candidate.team_name})
                               </span>
                             )}
                           </div>
-                          {candidate.result && (
-                            <p className="text-[10px] text-slate-500 font-mono mt-1 font-bold">{candidate.result}</p>
+
+                          {/* Opponent row */}
+                          {(candidate.opponent_player_name || candidate.opponent_team_name) && (
+                            <div className="flex items-center gap-2 flex-wrap mt-1 text-xs">
+                              <span className="text-[10px] font-black uppercase text-slate-400 font-mono tracking-wider">
+                                VS OPPONENT:
+                              </span>
+                              <span className="font-bold text-slate-700">
+                                {candidate.opponent_player_name || candidate.opponent_team_name}
+                              </span>
+                              {opponentCategory && (
+                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${getCategoryBadgeStyle(opponentCategory)}`}>
+                                  {opponentCategory}
+                                </span>
+                              )}
+                              {candidate.opponent_team_name && candidate.opponent_player_name && (
+                                <span className="text-[11px] font-medium text-slate-500 font-mono">
+                                  ({candidate.opponent_team_name})
+                                </span>
+                              )}
+                            </div>
                           )}
+
+                          {candidate.result && (
+                            <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-slate-600 font-mono font-bold">
+                              <span className="text-[10px] font-black uppercase text-slate-400">Match:</span>
+                              <span>{candidate.result}</span>
+                            </div>
+                          )}
+
                           {candidate.performance_stats && (
                             <div className="flex flex-wrap gap-1.5 mt-2">
-                              {Object.entries(candidate.performance_stats).map(([key, value]) => (
-                                <span key={key} className="px-2 py-0.5 bg-slate-200/60 border border-slate-300/30 rounded-md text-[9px] font-bold text-slate-650 uppercase">
-                                  {key}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value as any)}
-                                </span>
-                              ))}
+                              {Object.entries(candidate.performance_stats)
+                                .filter(([key]) => !['opponent_name', 'opponent_category', 'opponent_team', 'match_score'].includes(key))
+                                .map(([key, value]) => (
+                                  <span key={key} className="px-2 py-0.5 bg-slate-200/60 border border-slate-300/30 rounded-md text-[9px] font-bold text-slate-700 uppercase">
+                                    {key.replace(/_/g, ' ')}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value as any)}
+                                  </span>
+                                ))}
                             </div>
                           )}
                         </div>
 
+                        {/* Actions */}
                         <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
                           <button
                             type="button"
                             onClick={(e) => handleCopyWhatsApp(candidate, e)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-[10px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
+                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-mono text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
                               copiedCandidateId === candidateId
                                 ? 'bg-emerald-100 text-emerald-800 border-emerald-300 ring-2 ring-emerald-500/20'
                                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 hover:border-emerald-300 shadow-sm'
                             }`}
-                            title="Copy WhatsApp Message"
+                            title="Copy Nominee WhatsApp Message"
                           >
                             {copiedCandidateId === candidateId ? (
                               <>
@@ -799,7 +1051,7 @@ export default function AwardsManagementPage() {
                           </button>
 
                           {isSelected && (
-                            <span className="text-amber-700 bg-amber-100 border border-amber-300 px-2 py-1 rounded-lg text-[10px] font-black shrink-0 uppercase tracking-wider">
+                            <span className="text-amber-700 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg text-[10px] font-black shrink-0 uppercase tracking-wider">
                               Selected
                             </span>
                           )}

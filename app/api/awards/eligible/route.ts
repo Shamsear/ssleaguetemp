@@ -7,12 +7,13 @@ async function getPlayerCategoriesMap(sql: any, seasonId: string): Promise<Map<s
 
   try {
     const ps = await sql`
-      SELECT player_id, category
+      SELECT player_id, player_name, category
       FROM player_seasons
       WHERE season_id = ${seasonId}
     `;
     ps.forEach((p: any) => {
       if (p.player_id && p.category) map.set(p.player_id, p.category);
+      if (p.player_name && p.category) map.set(p.player_name.trim().toLowerCase(), p.category);
     });
   } catch (err) {
     console.error('Error fetching player categories from player_seasons:', err);
@@ -20,13 +21,16 @@ async function getPlayerCategoriesMap(sql: any, seasonId: string): Promise<Map<s
 
   try {
     const rps = await sql`
-      SELECT player_id, category
+      SELECT player_id, player_name, category
       FROM realplayerstats
       WHERE season_id = ${seasonId}
     `;
     rps.forEach((p: any) => {
       if (p.player_id && p.category && !map.has(p.player_id)) {
         map.set(p.player_id, p.category);
+      }
+      if (p.player_name && p.category && !map.has(p.player_name.trim().toLowerCase())) {
+        map.set(p.player_name.trim().toLowerCase(), p.category);
       }
     });
   } catch (err) {
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
     const awardType = searchParams.get('award_type');
     const roundNumber = searchParams.get('round_number');
     const weekNumber = searchParams.get('week_number');
-    const skipAwardCheck = searchParams.get('skip_award_check') === 'true'; // For fan polls
+    const skipAwardCheck = searchParams.get('skip_award_check') === 'true'; // For fan polls and awards page candidate viewing
 
     if (!tournamentId || !seasonId || !awardType) {
       return NextResponse.json(
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest) {
 
         console.log(`🔍 Searching for POTD candidates: tournament=${tournamentId}, round=${roundNumber}`);
 
-        // Check if an award has already been given for this round (skip for fan polls)
+        // Check if an award has already been given for this round (skip if skipAwardCheck is true)
         if (!skipAwardCheck) {
           const existingAward = await sql`
             SELECT player_id, player_name
@@ -105,7 +109,8 @@ export async function GET(request: NextRequest) {
             f.away_team_name,
             f.home_score,
             f.away_score,
-            f.status
+            f.status,
+            f.round_number
           FROM fixtures f
           WHERE f.tournament_id = ${tournamentId}
             AND f.round_number = ${parseInt(roundNumber)}
@@ -120,7 +125,7 @@ export async function GET(request: NextRequest) {
         // Create candidates from MOTM winners with their match stats
         for (const fixture of fixtures) {
           if (fixture.motm_player_id && fixture.motm_player_name) {
-            // Get player's matchup details
+            // Get all matchups for this fixture
             const matchups = await sql`
               SELECT 
                 home_player_id,
@@ -128,42 +133,94 @@ export async function GET(request: NextRequest) {
                 home_goals,
                 away_goals,
                 home_player_name,
-                away_player_name
+                away_player_name,
+                position
               FROM matchups
               WHERE fixture_id = ${fixture.fixture_id}
-                AND (home_player_id = ${fixture.motm_player_id} OR away_player_id = ${fixture.motm_player_id})
             `;
 
-            let playerGoals = 0;
-            let playerTeam = '';
+            let nomineePlayerId = fixture.motm_player_id;
+            let nomineePlayerName = fixture.motm_player_name;
+            let nomineeTeamId = fixture.home_team_id;
+            let nomineeTeamName = fixture.home_team_name;
+            let nomineeGoals = 0;
+
+            let opponentPlayerId = '';
+            let opponentPlayerName = '';
+            let opponentTeamId = fixture.away_team_id;
+            let opponentTeamName = fixture.away_team_name;
+            let opponentGoals = 0;
             let matchupDetails = '';
 
-            if (matchups.length > 0) {
-              const matchup = matchups[0];
-              if (matchup.home_player_id === fixture.motm_player_id) {
-                playerGoals = matchup.home_goals || 0;
-                playerTeam = fixture.home_team_name;
-                matchupDetails = `${matchup.home_player_name} ${matchup.home_goals}-${matchup.away_goals} ${matchup.away_player_name}`;
-              } else {
-                playerGoals = matchup.away_goals || 0;
-                playerTeam = fixture.away_team_name;
-                matchupDetails = `${matchup.home_player_name} ${matchup.home_goals}-${matchup.away_goals} ${matchup.away_player_name}`;
-              }
+            const motmLower = fixture.motm_player_name ? fixture.motm_player_name.trim().toLowerCase() : '';
+
+            const homeMatch = matchups.find((m: any) =>
+              (m.home_player_id && m.home_player_id === fixture.motm_player_id) ||
+              (m.home_player_name && motmLower && m.home_player_name.trim().toLowerCase() === motmLower)
+            );
+
+            const awayMatch = matchups.find((m: any) =>
+              (m.away_player_id && m.away_player_id === fixture.motm_player_id) ||
+              (m.away_player_name && motmLower && m.away_player_name.trim().toLowerCase() === motmLower)
+            );
+
+            if (homeMatch) {
+              nomineePlayerId = homeMatch.home_player_id || fixture.motm_player_id;
+              nomineePlayerName = fixture.motm_player_name || homeMatch.home_player_name;
+              nomineeTeamId = fixture.home_team_id;
+              nomineeTeamName = fixture.home_team_name;
+              nomineeGoals = homeMatch.home_goals || 0;
+
+              opponentPlayerId = homeMatch.away_player_id || '';
+              opponentPlayerName = homeMatch.away_player_name || '';
+              opponentTeamId = fixture.away_team_id;
+              opponentTeamName = fixture.away_team_name;
+              opponentGoals = homeMatch.away_goals || 0;
+
+              matchupDetails = `${nomineePlayerName} ${nomineeGoals}-${opponentGoals} ${opponentPlayerName || opponentTeamName}`;
+            } else if (awayMatch) {
+              nomineePlayerId = awayMatch.away_player_id || fixture.motm_player_id;
+              nomineePlayerName = fixture.motm_player_name || awayMatch.away_player_name;
+              nomineeTeamId = fixture.away_team_id;
+              nomineeTeamName = fixture.away_team_name;
+              nomineeGoals = awayMatch.away_goals || 0;
+
+              opponentPlayerId = awayMatch.home_player_id || '';
+              opponentPlayerName = awayMatch.home_player_name || '';
+              opponentTeamId = fixture.home_team_id;
+              opponentTeamName = fixture.home_team_name;
+              opponentGoals = awayMatch.home_goals || 0;
+
+              matchupDetails = `${nomineePlayerName} ${nomineeGoals}-${opponentGoals} ${opponentPlayerName || opponentTeamName}`;
             }
 
+            const nomineeCat = (nomineePlayerId ? categoryMap.get(nomineePlayerId) : null) || (nomineePlayerName ? categoryMap.get(nomineePlayerName.trim().toLowerCase()) : null) || null;
+            const opponentCat = (opponentPlayerId ? categoryMap.get(opponentPlayerId) : null) || (opponentPlayerName ? categoryMap.get(opponentPlayerName.trim().toLowerCase()) : null) || null;
+
             candidates.push({
-              player_id: fixture.motm_player_id,
-              player_name: fixture.motm_player_name,
-              category: categoryMap.get(fixture.motm_player_id) || null,
-              team_id: fixture.home_team_id,
-              team_name: playerTeam,
+              player_id: nomineePlayerId,
+              player_name: nomineePlayerName,
+              category: nomineeCat,
+              team_id: nomineeTeamId,
+              team_name: nomineeTeamName,
+              opponent_player_id: opponentPlayerId || null,
+              opponent_player_name: opponentPlayerName || null,
+              opponent_category: opponentCat,
+              opponent_team_id: opponentTeamId || null,
+              opponent_team_name: opponentTeamName || null,
               fixture_id: fixture.fixture_id,
               result: `${fixture.home_team_name} ${fixture.home_score}-${fixture.away_score} ${fixture.away_team_name}`,
+              matchup_result: matchupDetails,
+              round_number: fixture.round_number || parseInt(roundNumber),
               performance_stats: {
-                goals: playerGoals,
+                goals: nomineeGoals,
+                opponent_goals: opponentGoals,
                 motm: true,
                 match_score: `${fixture.home_score}-${fixture.away_score}`,
                 matchup: matchupDetails,
+                opponent_name: opponentPlayerName || null,
+                opponent_category: opponentCat,
+                opponent_team: opponentTeamName || null,
               },
             });
           }
@@ -318,7 +375,7 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        // Check if an award has already been given for this round (skip for fan polls)
+        // Check if an award has already been given for this round (skip if skipAwardCheck is true)
         if (!skipAwardCheck) {
           const existingAward = await sql`
             SELECT team_id, team_name
@@ -340,82 +397,81 @@ export async function GET(request: NextRequest) {
 
         const fixtures = await sql`
           SELECT 
+            f.id as fixture_id,
             f.home_team_id,
             f.home_team_name,
             f.home_score,
             f.away_team_id,
             f.away_team_name,
-            f.away_score
+            f.away_score,
+            f.round_number
           FROM fixtures f
           WHERE f.tournament_id = ${tournamentId}
             AND f.round_number = ${parseInt(roundNumber)}
             AND f.status = 'completed'
         `;
 
-        const teamPerformance = new Map();
-
         fixtures.forEach((fixture: any) => {
-          // Home team
-          if (!teamPerformance.has(fixture.home_team_id)) {
-            teamPerformance.set(fixture.home_team_id, {
-              team_id: fixture.home_team_id,
-              team_name: fixture.home_team_name,
-              goals_for: 0,
-              goals_against: 0,
-              wins: 0,
-              draws: 0,
-              losses: 0,
-            });
-          }
-          const homeTeam = teamPerformance.get(fixture.home_team_id);
-          homeTeam.goals_for += fixture.home_score;
-          homeTeam.goals_against += fixture.away_score;
-          if (fixture.home_score > fixture.away_score) homeTeam.wins++;
-          else if (fixture.home_score === fixture.away_score) homeTeam.draws++;
-          else homeTeam.losses++;
+          const homeScore = fixture.home_score ?? 0;
+          const awayScore = fixture.away_score ?? 0;
 
-          // Away team
-          if (!teamPerformance.has(fixture.away_team_id)) {
-            teamPerformance.set(fixture.away_team_id, {
-              team_id: fixture.away_team_id,
-              team_name: fixture.away_team_name,
-              goals_for: 0,
-              goals_against: 0,
-              wins: 0,
-              draws: 0,
-              losses: 0,
-            });
-          }
-          const awayTeam = teamPerformance.get(fixture.away_team_id);
-          awayTeam.goals_for += fixture.away_score;
-          awayTeam.goals_against += fixture.home_score;
-          if (fixture.away_score > fixture.home_score) awayTeam.wins++;
-          else if (fixture.away_score === fixture.home_score) awayTeam.draws++;
-          else awayTeam.losses++;
+          // Home team candidate
+          candidates.push({
+            team_id: fixture.home_team_id,
+            team_name: fixture.home_team_name,
+            opponent_team_id: fixture.away_team_id,
+            opponent_team_name: fixture.away_team_name,
+            fixture_id: fixture.fixture_id,
+            round_number: fixture.round_number || parseInt(roundNumber),
+            result: `${fixture.home_team_name} ${homeScore}-${awayScore} ${fixture.away_team_name}`,
+            performance_stats: {
+              goals_for: homeScore,
+              goals_against: awayScore,
+              goal_difference: homeScore - awayScore,
+              wins: homeScore > awayScore ? 1 : 0,
+              draws: homeScore === awayScore ? 1 : 0,
+              losses: homeScore < awayScore ? 1 : 0,
+              clean_sheet: awayScore === 0,
+              opponent_team: fixture.away_team_name,
+              match_score: `${homeScore}-${awayScore}`,
+            },
+          });
+
+          // Away team candidate
+          candidates.push({
+            team_id: fixture.away_team_id,
+            team_name: fixture.away_team_name,
+            opponent_team_id: fixture.home_team_id,
+            opponent_team_name: fixture.home_team_name,
+            fixture_id: fixture.fixture_id,
+            round_number: fixture.round_number || parseInt(roundNumber),
+            result: `${fixture.away_team_name} ${awayScore}-${homeScore} ${fixture.home_team_name}`,
+            performance_stats: {
+              goals_for: awayScore,
+              goals_against: homeScore,
+              goal_difference: awayScore - homeScore,
+              wins: awayScore > homeScore ? 1 : 0,
+              draws: awayScore === homeScore ? 1 : 0,
+              losses: awayScore < homeScore ? 1 : 0,
+              clean_sheet: homeScore === 0,
+              opponent_team: fixture.home_team_name,
+              match_score: `${awayScore}-${homeScore}`,
+            },
+          });
         });
 
-        candidates = Array.from(teamPerformance.values()).map((team: any) => ({
-          team_id: team.team_id,
-          team_name: team.team_name,
-          performance_stats: {
-            goals_for: team.goals_for,
-            goals_against: team.goals_against,
-            goal_difference: team.goals_for - team.goals_against,
-            wins: team.wins,
-            draws: team.draws,
-            losses: team.losses,
-            clean_sheet: team.goals_against === 0,
-          },
-        }));
-
-        // Sort by goal difference, then goals scored
+        // Sort by points (win=3, draw=1, loss=0), then goal difference, then goals scored
         candidates.sort((a: any, b: any) => {
+          const pointsA = (a.performance_stats.wins * 3) + a.performance_stats.draws;
+          const pointsB = (b.performance_stats.wins * 3) + b.performance_stats.draws;
+          if (pointsB !== pointsA) return pointsB - pointsA;
           const diffA = a.performance_stats.goal_difference;
           const diffB = b.performance_stats.goal_difference;
           if (diffB !== diffA) return diffB - diffA;
           return b.performance_stats.goals_for - a.performance_stats.goals_for;
         });
 
+        console.log(`✅ Found ${candidates.length} TOD candidates`);
         break;
       }
 
