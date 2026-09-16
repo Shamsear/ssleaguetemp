@@ -2,10 +2,11 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
+import { evaluateCandidate, CandidateEvaluation } from '@/lib/awards-ai-evaluator';
 import {
   Trophy,
   Settings,
@@ -23,7 +24,11 @@ import {
   CheckCircle,
   AlertCircle,
   Copy,
-  Check
+  Check,
+  Sparkles,
+  Bot,
+  Zap,
+  ArrowUpDown
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -70,6 +75,7 @@ interface Candidate {
   result?: string;
   matchup_result?: string;
   round_number?: number;
+  aiEvaluation?: CandidateEvaluation;
 }
 
 function getCategoryBadgeStyle(category?: string) {
@@ -82,6 +88,43 @@ function getCategoryBadgeStyle(category?: string) {
   return 'bg-purple-100 text-purple-800 border border-purple-300';
 }
 
+function formatCompactMatchup(
+  candidate: Candidate,
+  nomineeCategory?: string,
+  opponentCategory?: string
+): string {
+  const nomName = candidate.player_name || '';
+  const nomCat = nomineeCategory || candidate.category || '';
+  const nomFormatted = nomCat ? `${nomName} (${nomCat.toUpperCase()})` : nomName;
+
+  const oppName = candidate.opponent_player_name || candidate.opponent_team_name || '';
+  const oppCat = opponentCategory || candidate.opponent_category || '';
+  const oppFormatted = oppCat ? `${oppName} (${oppCat.toUpperCase()})` : oppName;
+
+  const stats = candidate.performance_stats;
+  if (stats && stats.goals !== undefined && stats.opponent_goals !== undefined && nomName && oppName) {
+    return `${nomFormatted} ${stats.goals}-${stats.opponent_goals} ${oppFormatted}`;
+  }
+
+  // If matchup_result exists (e.g. "MUNEER 5-1 ALBIN")
+  if (candidate.matchup_result) {
+    let res = candidate.matchup_result;
+    if (nomCat && nomName && !res.toUpperCase().includes(`(${nomCat.toUpperCase()})`)) {
+      res = res.replace(new RegExp(nomName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${nomName} (${nomCat.toUpperCase()})`);
+    }
+    if (oppCat && oppName && !res.toUpperCase().includes(`(${oppCat.toUpperCase()})`)) {
+      res = res.replace(new RegExp(oppName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), `${oppName} (${oppCat.toUpperCase()})`);
+    }
+    return res;
+  }
+
+  if (candidate.result) {
+    return candidate.result;
+  }
+
+  return '';
+}
+
 function generateNomineeWhatsAppMessage(
   candidate: Candidate,
   tab: AwardTab,
@@ -92,29 +135,13 @@ function generateNomineeWhatsAppMessage(
   opponentCategory?: string,
   isWinner: boolean = false
 ): string {
-  const awardTitles: Record<AwardTab, string> = {
-    POTD: '🌟 PLAYER OF THE DAY (POTD)',
-    POTW: '🔥 PLAYER OF THE WEEK (POTW)',
-    TOD: '🛡️ TEAM OF THE DAY (TOD)',
-    TOW: '👑 TEAM OF THE WEEK (TOW)',
-    POTS: '🏆 PLAYER OF THE SEASON (POTS)',
-    TOTS: '🏆 TEAM OF THE SEASON (TOTS)',
-  };
-
   const isPlayerAward = ['POTD', 'POTW', 'POTS'].includes(tab);
   const isRoundAward = ['POTD', 'TOD'].includes(tab);
   const isWeekAward = ['POTW', 'TOW'].includes(tab);
 
-  let msg = isWinner 
-    ? `🏆 *SS LEAGUE - OFFICIAL AWARD WINNER* 🏆\n`
-    : `🏆 *SS LEAGUE - AWARD NOMINEE* 🏆\n`;
-  msg += `------------------------------\n`;
-  msg += `🎖️ *Award:* ${awardTitles[tab]}\n`;
-  if (tournamentName) {
-    msg += `🏟️ *Tournament:* ${tournamentName}\n`;
-  }
+  let periodStr = `Full Season`;
   if (isRoundAward) {
-    msg += `📅 *Round:* Round ${round}\n`;
+    periodStr = `Round ${round}`;
   } else if (isWeekAward) {
     const weekRanges: Record<number, string> = {
       1: 'Rounds 1-7',
@@ -122,39 +149,34 @@ function generateNomineeWhatsAppMessage(
       3: 'Rounds 14-20',
       4: 'Rounds 21-26',
     };
-    msg += `📅 *Week:* Week ${week} (${weekRanges[week] || `Week ${week}`})\n`;
-  } else {
-    msg += `📅 *Period:* Full Season\n`;
+    periodStr = `Week ${week} (${weekRanges[week] || `Week ${week}`})`;
   }
 
+  let msg = isWinner 
+    ? `🏆 *SS LEAGUE - OFFICIAL WINNER* 🏆\n`
+    : `🏆 *SS LEAGUE - AWARD NOMINEE* 🏆\n`;
+  msg += `🎖️ *${tab}* | 📅 *${periodStr}*\n`;
+  if (tournamentName) {
+    msg += `🏟️ ${tournamentName}\n`;
+  }
   msg += `------------------------------\n`;
 
   if (isPlayerAward) {
-    msg += `👤 *${isWinner ? 'Winner' : 'Nominee'}:* ${candidate.player_name || 'N/A'}\n`;
-    if (category) {
-      msg += `🏷️ *Category:* ${category.toUpperCase()}\n`;
-    }
-    if (candidate.team_name) {
-      msg += `👥 *Team:* ${candidate.team_name}\n`;
-    }
-    if (candidate.opponent_player_name) {
-      msg += `👤 *Opponent:* ${candidate.opponent_player_name}\n`;
-    }
-    if (opponentCategory) {
-      msg += `🏷️ *Opponent Category:* ${opponentCategory.toUpperCase()}\n`;
-    }
-    if (candidate.opponent_team_name && !candidate.opponent_player_name) {
-      msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+    const nomCatStr = category ? ` (${category.toUpperCase()})` : '';
+    const nomTitle = candidate.player_name ? `*${candidate.player_name}${nomCatStr}*` : '*N/A*';
+    const teamSuffix = candidate.team_name ? ` - ${candidate.team_name}` : '';
+    msg += `👤 ${nomTitle}${teamSuffix}\n`;
+
+    const matchupStr = formatCompactMatchup(candidate, category, opponentCategory);
+    if (matchupStr) {
+      msg += `⚽ ${matchupStr}\n`;
     }
   } else {
-    msg += `👥 *${isWinner ? 'Winning Team' : 'Team Nominee'}:* ${candidate.team_name || 'N/A'}\n`;
-    if (candidate.opponent_team_name) {
-      msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+    const teamTitle = candidate.team_name ? `*${candidate.team_name}*` : '*N/A*';
+    msg += `👥 ${teamTitle}\n`;
+    if (candidate.result) {
+      msg += `⚽ ${candidate.result}\n`;
     }
-  }
-
-  if (candidate.result) {
-    msg += `⚽ *Match Result:* ${candidate.result}\n`;
   }
 
   msg += `------------------------------\n`;
@@ -172,27 +194,13 @@ function generateRoundNomineesWhatsAppMessage(
   getCat: (c: Candidate) => string,
   getOppCat: (c: Candidate) => string
 ): string {
-  const awardTitles: Record<AwardTab, string> = {
-    POTD: '🌟 PLAYER OF THE DAY (POTD)',
-    POTW: '🔥 PLAYER OF THE WEEK (POTW)',
-    TOD: '🛡️ TEAM OF THE DAY (TOD)',
-    TOW: '👑 TEAM OF THE WEEK (TOW)',
-    POTS: '🏆 PLAYER OF THE SEASON (POTS)',
-    TOTS: '🏆 TEAM OF THE SEASON (TOTS)',
-  };
-
   const isPlayerAward = ['POTD', 'POTW', 'POTS'].includes(tab);
   const isRoundAward = ['POTD', 'TOD'].includes(tab);
   const isWeekAward = ['POTW', 'TOW'].includes(tab);
 
-  let msg = `🏆 *SS LEAGUE - AWARD NOMINEES* 🏆\n`;
-  msg += `------------------------------\n`;
-  msg += `🎖️ *Award:* ${awardTitles[tab]}\n`;
-  if (tournamentName) {
-    msg += `🏟️ *Tournament:* ${tournamentName}\n`;
-  }
+  let periodStr = `Full Season`;
   if (isRoundAward) {
-    msg += `📅 *Round:* Round ${round}\n`;
+    periodStr = `Round ${round}`;
   } else if (isWeekAward) {
     const weekRanges: Record<number, string> = {
       1: 'Rounds 1-7',
@@ -200,9 +208,13 @@ function generateRoundNomineesWhatsAppMessage(
       3: 'Rounds 14-20',
       4: 'Rounds 21-26',
     };
-    msg += `📅 *Week:* Week ${week} (${weekRanges[week] || `Week ${week}`})\n`;
-  } else {
-    msg += `📅 *Period:* Full Season\n`;
+    periodStr = `Week ${week} (${weekRanges[week] || `Week ${week}`})`;
+  }
+
+  let msg = `🏆 *SS LEAGUE - AWARD NOMINEES* 🏆\n`;
+  msg += `🎖️ *${tab}* | 📅 *${periodStr}*\n`;
+  if (tournamentName) {
+    msg += `🏟️ ${tournamentName}\n`;
   }
   msg += `------------------------------\n`;
 
@@ -213,33 +225,23 @@ function generateRoundNomineesWhatsAppMessage(
     const cat = getCat(candidate);
     const oppCat = getOppCat(candidate);
 
-    msg += `\n${numPrefix}\n`;
+    msg += `\n${numPrefix} `;
     if (isPlayerAward) {
-      msg += `👤 *Nominee:* ${candidate.player_name || 'N/A'}\n`;
-      if (cat) {
-        msg += `🏷️ *Category:* ${cat.toUpperCase()}\n`;
-      }
-      if (candidate.team_name) {
-        msg += `👥 *Team:* ${candidate.team_name}\n`;
-      }
-      if (candidate.opponent_player_name) {
-        msg += `👤 *Opponent:* ${candidate.opponent_player_name}\n`;
-      }
-      if (oppCat) {
-        msg += `🏷️ *Opponent Category:* ${oppCat.toUpperCase()}\n`;
-      }
-      if (candidate.opponent_team_name && !candidate.opponent_player_name) {
-        msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+      const nomCatStr = cat ? ` (${cat.toUpperCase()})` : '';
+      const nomTitle = candidate.player_name ? `*${candidate.player_name}${nomCatStr}*` : '*N/A*';
+      const teamSuffix = candidate.team_name ? ` - ${candidate.team_name}` : '';
+      msg += `${nomTitle}${teamSuffix}\n`;
+
+      const matchupStr = formatCompactMatchup(candidate, cat, oppCat);
+      if (matchupStr) {
+        msg += `⚽ ${matchupStr}\n`;
       }
     } else {
-      msg += `👥 *Team Nominee:* ${candidate.team_name || 'N/A'}\n`;
-      if (candidate.opponent_team_name) {
-        msg += `👥 *Opponent Team:* ${candidate.opponent_team_name}\n`;
+      const teamTitle = candidate.team_name ? `*${candidate.team_name}*` : '*N/A*';
+      msg += `${teamTitle}\n`;
+      if (candidate.result) {
+        msg += `⚽ ${candidate.result}\n`;
       }
-    }
-
-    if (candidate.result) {
-      msg += `⚽ *Match Result:* ${candidate.result}\n`;
     }
   });
 
@@ -266,6 +268,7 @@ export default function AwardsManagementPage() {
   const [playerCategories, setPlayerCategories] = useState<Record<string, string>>({});
   const [copiedCandidateId, setCopiedCandidateId] = useState<string | null>(null);
   const [copiedAllNominees, setCopiedAllNominees] = useState(false);
+  const [sortByAI, setSortByAI] = useState(true);
 
   const [loading_data, setLoadingData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -428,6 +431,7 @@ export default function AwardsManagementPage() {
       opponent_team_name: opponentTeamName,
       category: cat,
       result: result,
+      matchup_result: award.performance_stats?.matchup || award.matchup_result || (award.player_name && award.performance_stats?.goals !== undefined ? `${award.player_name} ${award.performance_stats.goals}-${award.performance_stats.opponent_goals || 0} ${award.opponent_player_name || opponentTeamName || ''}` : result),
       performance_stats: award.performance_stats,
     };
 
@@ -449,13 +453,42 @@ export default function AwardsManagementPage() {
     }, 2000);
   };
 
+  // Memoize AI performance evaluations for all candidates
+  const candidatesWithAI = useMemo(() => {
+    return candidates.map(c => {
+      const nomCat = getCandidateCategory(c);
+      const oppCat = getCandidateOpponentCategory(c);
+      const evaluation = evaluateCandidate(c, activeTab, nomCat, oppCat);
+      return {
+        ...c,
+        aiEvaluation: evaluation,
+      };
+    });
+  }, [candidates, activeTab, playerCategories]);
+
+  // Sort candidates by AI rating / score when enabled, or preserve natural order
+  const sortedCandidates = useMemo(() => {
+    if (!sortByAI) return candidatesWithAI;
+    return [...candidatesWithAI].sort((a, b) => {
+      const scoreA = a.aiEvaluation?.score ?? 0;
+      const scoreB = b.aiEvaluation?.score ?? 0;
+      return scoreB - scoreA;
+    });
+  }, [candidatesWithAI, sortByAI]);
+
+  // Top AI recommended candidate
+  const topAIPick = useMemo(() => {
+    if (candidatesWithAI.length === 0) return null;
+    return [...candidatesWithAI].sort((a, b) => (b.aiEvaluation?.score ?? 0) - (a.aiEvaluation?.score ?? 0))[0];
+  }, [candidatesWithAI]);
+
   const handleCopyAllRoundNominees = () => {
-    if (!candidates || candidates.length === 0) return;
+    if (!sortedCandidates || sortedCandidates.length === 0) return;
     const currentTournament = availableTournaments.find(t => t.id === tournamentId);
     const tournamentName = currentTournament ? currentTournament.name : tournamentId;
 
     const message = generateRoundNomineesWhatsAppMessage(
-      candidates,
+      sortedCandidates,
       activeTab,
       tournamentName,
       currentRound,
@@ -885,46 +918,129 @@ export default function AwardsManagementPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight">
-                  {['POTD', 'TOD'].includes(activeTab)
-                    ? `Round ${currentRound} Nominees`
-                    : ['POTW', 'TOW'].includes(activeTab)
-                    ? `Week ${currentWeek} Nominees`
-                    : 'Eligible Nominees'}{' '}
-                  <span className="text-slate-400 font-normal">({candidates.length})</span>
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-tight">
+                    {['POTD', 'TOD'].includes(activeTab)
+                      ? `Round ${currentRound} Nominees`
+                      : ['POTW', 'TOW'].includes(activeTab)
+                      ? `Week ${currentWeek} Nominees`
+                      : 'Eligible Nominees'}{' '}
+                    <span className="text-slate-400 font-normal">({candidates.length})</span>
+                  </h3>
+                  {candidates.length > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      <Sparkles className="w-3 h-3 text-amber-500" /> AI Ranked
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-500 font-mono">
                   {candidates.length > 0
-                    ? `Review round nominees and copy formatted WhatsApp broadcast`
+                    ? `AI evaluates goals, clean defense, and category tier upset difficulty`
                     : 'No nominees found for this period'}
                 </p>
               </div>
 
               {candidates.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleCopyAllRoundNominees}
-                  className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-mono text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border shadow-sm ${
-                    copiedAllNominees
-                      ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-500/30'
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 hover:border-emerald-400'
-                  }`}
-                  title={`Copy all ${['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : 'available'} nominees for WhatsApp`}
-                >
-                  {copiedAllNominees ? (
-                    <>
-                      <Check className="w-4 h-4 text-white" />
-                      <span>Copied Full Round!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 text-emerald-600" />
-                      <span>Copy Full {['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : 'List'} (WhatsApp)</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setSortByAI(!sortByAI)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl font-mono text-xs font-bold transition-all border cursor-pointer ${
+                      sortByAI 
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-400/30' 
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                    title="Toggle AI Score Ranking"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{sortByAI ? 'AI Ranked' : 'Default Sort'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyAllRoundNominees}
+                    className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl font-mono text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border shadow-sm ${
+                      copiedAllNominees
+                        ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-500/30'
+                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 hover:border-emerald-400'
+                    }`}
+                    title={`Copy all ${['POTD', 'TOD'].includes(activeTab) ? `Round ${currentRound}` : 'available'} nominees for WhatsApp`}
+                  >
+                    {copiedAllNominees ? (
+                      <>
+                        <Check className="w-4 h-4 text-white" />
+                        <span>Copied Full Round!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 text-emerald-600" />
+                        <span>Copy Broadcast (WhatsApp)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
+
+            {/* AI Top Pick Banner */}
+            {topAIPick && topAIPick.aiEvaluation && !loading_data && sortedCandidates.length > 0 && (
+              <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-100/40 to-slate-50 border border-amber-300/80 shadow-sm relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-900 text-amber-300 shadow-xs">
+                        <Bot className="w-3 h-3 text-amber-400" /> #1 AI Pick
+                      </span>
+                      {topAIPick.aiEvaluation.categoryLabel && (
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                          topAIPick.aiEvaluation.isUpset
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                            : topAIPick.aiEvaluation.isTopTierClash
+                            ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          {topAIPick.aiEvaluation.categoryLabel}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                      <h4 className="text-base font-extrabold text-slate-900">
+                        {topAIPick.player_name || topAIPick.team_name}
+                      </h4>
+                      {getCandidateCategory(topAIPick) && (
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${getCategoryBadgeStyle(getCandidateCategory(topAIPick))}`}>
+                          {getCandidateCategory(topAIPick)}
+                        </span>
+                      )}
+                      {topAIPick.team_name && topAIPick.player_name && (
+                        <span className="text-xs font-bold text-slate-600 font-mono">
+                          ({topAIPick.team_name})
+                        </span>
+                      )}
+                      {formatCompactMatchup(topAIPick, getCandidateCategory(topAIPick), getCandidateOpponentCategory(topAIPick)) && (
+                        <span className="text-xs font-mono font-bold text-slate-700 bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
+                          ⚽ {formatCompactMatchup(topAIPick, getCandidateCategory(topAIPick), getCandidateOpponentCategory(topAIPick))}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                      💡 {topAIPick.aiEvaluation.reasoning}
+                    </p>
+                  </div>
+
+                  {!currentAward && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCandidate(topAIPick.player_id || topAIPick.team_id || '')}
+                      className="shrink-0 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Select AI Pick</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {currentAward && (
               <div className="mb-6 flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
@@ -941,13 +1057,15 @@ export default function AwardsManagementPage() {
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
                 <p className="mt-3 text-xs text-slate-550 font-mono font-extrabold uppercase tracking-wider">Loading nominees...</p>
               </div>
-            ) : candidates.length > 0 ? (
-              <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-1">
-                {candidates.map((candidate, idx) => {
+            ) : sortedCandidates.length > 0 ? (
+              <div className="space-y-3 max-h-[36rem] overflow-y-auto pr-1">
+                {sortedCandidates.map((candidate, idx) => {
                   const candidateId = candidate.player_id || candidate.team_id || `candidate-${idx}`;
                   const isSelected = selectedCandidate === candidateId;
                   const category = getCandidateCategory(candidate);
                   const opponentCategory = getCandidateOpponentCategory(candidate);
+                  const ai = candidate.aiEvaluation;
+                  const matchupStr = formatCompactMatchup(candidate, category, opponentCategory);
 
                   return (
                     <div
@@ -962,9 +1080,12 @@ export default function AwardsManagementPage() {
                       } ${!currentAward ? 'cursor-pointer' : 'cursor-default'}`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          {/* Nominee row */}
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          {/* Top Row: Rank number & Nominee details */}
                           <div className="flex items-center gap-2 flex-wrap">
+                            <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 font-mono font-black text-[10px] flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
                             <span className="text-[10px] font-black uppercase text-amber-700 font-mono tracking-wider">
                               NOMINEE:
                             </span>
@@ -981,11 +1102,22 @@ export default function AwardsManagementPage() {
                                 ({candidate.team_name})
                               </span>
                             )}
+                            {ai?.categoryLabel && (
+                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                                ai.isUpset
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                  : ai.isTopTierClash
+                                  ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                                  : 'bg-slate-200 text-slate-700'
+                              }`}>
+                                {ai.categoryLabel}
+                              </span>
+                            )}
                           </div>
 
                           {/* Opponent row */}
                           {(candidate.opponent_player_name || candidate.opponent_team_name) && (
-                            <div className="flex items-center gap-2 flex-wrap mt-1 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap text-xs">
                               <span className="text-[10px] font-black uppercase text-slate-400 font-mono tracking-wider">
                                 VS OPPONENT:
                               </span>
@@ -1005,23 +1137,18 @@ export default function AwardsManagementPage() {
                             </div>
                           )}
 
-                          {candidate.result && (
-                            <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-slate-600 font-mono font-bold">
-                              <span className="text-[10px] font-black uppercase text-slate-400">Match:</span>
-                              <span>{candidate.result}</span>
+                          {matchupStr && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-700 font-mono font-bold">
+                              <span className="text-[10px] font-black uppercase text-slate-400">Matchup:</span>
+                              <span>{matchupStr}</span>
                             </div>
                           )}
 
-                          {candidate.performance_stats && (
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {Object.entries(candidate.performance_stats)
-                                .filter(([key]) => !['opponent_name', 'opponent_category', 'opponent_team', 'match_score'].includes(key))
-                                .map(([key, value]) => (
-                                  <span key={key} className="px-2 py-0.5 bg-slate-200/60 border border-slate-300/30 rounded-md text-[9px] font-bold text-slate-700 uppercase">
-                                    {key.replace(/_/g, ' ')}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value as any)}
-                                  </span>
-                                ))}
-                            </div>
+                          {/* AI Reasoning Summary */}
+                          {ai?.reasoning && (
+                            <p className="text-[11px] text-slate-600 font-medium">
+                              🤖 {ai.reasoning}
+                            </p>
                           )}
                         </div>
 
