@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
               WHEN m.home_player_id = ${actualPlayerId} AND m.home_substituted = true THEN true
               WHEN m.away_player_id = ${actualPlayerId} AND m.away_substituted = true THEN true
               ELSE false
-            END as was_substitute
+            END as was_substitute,
+            COALESCE(m.is_null, false) as is_null
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
           WHERE m.season_id = ${season_id}
@@ -105,6 +106,7 @@ export async function GET(request: NextRequest) {
           pm.goals_conceded,
           (pm.goals_scored - pm.goals_conceded) as goal_difference,
           pm.was_substitute,
+          pm.is_null,
           p_home.category as home_category,
           p_away.category as away_category
         FROM player_matches pm
@@ -144,7 +146,8 @@ export async function GET(request: NextRequest) {
               WHEN m.home_player_id = ${actualPlayerId} AND m.home_substituted = true THEN true
               WHEN m.away_player_id = ${actualPlayerId} AND m.away_substituted = true THEN true
               ELSE false
-            END as was_substitute
+            END as was_substitute,
+            COALESCE(m.is_null, false) as is_null
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
           WHERE m.season_id = ${season_id}
@@ -168,11 +171,13 @@ export async function GET(request: NextRequest) {
           pm.goals_conceded,
           (pm.goals_scored - pm.goals_conceded) as goal_difference,
           CASE 
+            WHEN pm.is_null = true THEN 0
             WHEN (pm.goals_scored - pm.goals_conceded) > 5 THEN 5
             WHEN (pm.goals_scored - pm.goals_conceded) < -5 THEN -5
             ELSE (pm.goals_scored - pm.goals_conceded)
           END as points,
-          pm.was_substitute
+          pm.was_substitute,
+          pm.is_null
         FROM player_matches pm
         WHERE pm.player_side IS NOT NULL
         ORDER BY pm.round_number ASC
@@ -231,10 +236,19 @@ export async function GET(request: NextRequest) {
       };
 
       matchdayStats = rawMatchdayStats.map((match: any) => {
+        const oppCat = (match.player_side === 'home' ? match.away_category : match.home_category) || 'Red';
+        if (match.is_null) {
+          return {
+            ...match,
+            opponent_category: oppCat.toUpperCase(),
+            points_reason: 'NULL MATCHUP (EXCLUDED - 0 Pts)',
+            points: 0
+          };
+        }
+
         const gd = match.goals_scored - match.goals_conceded;
         const res = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
 
-        const oppCat = (match.player_side === 'home' ? match.away_category : match.home_category) || 'Red';
         const points = getPointsForOpponentCategory(oppCat, res);
         const sign = points >= 0 ? `+${points}` : `${points}`;
         const pointsReason = `${res.toUpperCase()} VS ${oppCat.toUpperCase()} (${sign} Pts)`;
@@ -248,13 +262,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Calculate total points based on calculated/mapped matchday points
-    const totalPoints = matchdayStats.reduce((sum: number, match: any) => sum + (match.points || 0), 0);
+    // Calculate total points based on calculated/mapped matchday points (excluding null matches)
+    const totalPoints = matchdayStats.reduce((sum: number, match: any) => sum + (match.is_null ? 0 : (match.points || 0)), 0);
+    const validMatchesPlayed = matchdayStats.filter((m: any) => !m.is_null).length;
 
     return NextResponse.json({ 
       matchdayStats,
       totalPoints,
-      matchesPlayed: matchdayStats.length
+      matchesPlayed: validMatchesPlayed
     });
   } catch (error: any) {
     console.error('Error fetching player matchday stats:', error);

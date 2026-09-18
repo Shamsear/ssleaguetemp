@@ -994,94 +994,110 @@ export default function PlayerStatsPage() {
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-100/50 bg-white/40">
-                                        {matchdayStats.get(player.id)!.map((match, idx) => {
-                                          const oppCatName = ((match as any).opponent_category || ((match as any).player_side === 'home' ? (match as any).away_category : (match as any).home_category) || 'RED').toUpperCase();
-                                          const ptsReason = (match as any).points_reason || `${(match.goal_difference > 0 ? 'WIN' : match.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${match.points >= 0 ? '+' : ''}${match.points} Pts)`;
+                                          {matchdayStats.get(player.id)!.map((match, idx) => {
+                                            const isNullMatch = !!(match as any).is_null;
+                                            const oppCatName = ((match as any).opponent_category || ((match as any).player_side === 'home' ? (match as any).away_category : (match as any).home_category) || 'RED').toUpperCase();
+                                            const ptsReason = isNullMatch
+                                              ? 'NULL / VOID (EXCLUDED - 0 Pts)'
+                                              : (match as any).points_reason || `${(match.goal_difference > 0 ? 'WIN' : match.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${match.points >= 0 ? '+' : ''}${match.points} Pts)`;
 
-                                          return (
-                                            <tr key={idx} className="hover:bg-slate-50/20 text-xs">
-                                              <td className="px-3 py-2.5 text-left whitespace-nowrap">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
-                                                  R{match.matchday}
-                                                </span>
-                                                {match.was_substitute && (
-                                                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50 uppercase">
-                                                    SUB
+                                            return (
+                                              <tr key={idx} className={`hover:bg-slate-50/20 text-xs ${isNullMatch ? 'bg-amber-50/20 opacity-75' : ''}`}>
+                                                <td className="px-3 py-2.5 text-left whitespace-nowrap">
+                                                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
+                                                    R{match.matchday}
                                                   </span>
-                                                )}
-                                              </td>
-                                              <td className="px-3 py-2.5 text-left">
-                                                <div className="text-slate-800 font-medium">
-                                                  {match.player_side === 'home' ? (
-                                                    <>
-                                                      <span className="font-extrabold text-slate-800">{match.home_player_name}</span>
-                                                      <span className="text-[9px] text-slate-400 font-bold ml-0.5">(H)</span>
-                                                      <span className="text-slate-400 mx-1.5 font-bold">vs</span>
-                                                      <span className="text-slate-500">{match.away_player_name}</span>
-                                                      <span className="text-[9px] text-slate-400 font-bold ml-0.5">(A)</span>
-                                                    </>
-                                                  ) : (
-                                                    <>
-                                                      <span className="text-slate-500">{match.home_player_name}</span>
-                                                      <span className="text-[9px] text-slate-400 font-bold ml-0.5">(H)</span>
-                                                      <span className="text-slate-400 mx-1.5 font-bold">vs</span>
-                                                      <span className="font-extrabold text-slate-800">{match.away_player_name}</span>
-                                                      <span className="text-[9px] text-slate-400 font-bold ml-0.5">(A)</span>
-                                                    </>
+                                                  {isNullMatch && (
+                                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300 uppercase">
+                                                      NULL / VOID
+                                                    </span>
                                                   )}
-                                                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
-                                                    {match.home_team_name} vs {match.away_team_name}
+                                                  {match.was_substitute && (
+                                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50 uppercase">
+                                                      SUB
+                                                    </span>
+                                                  )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-left">
+                                                  <div className="text-slate-800 font-medium">
+                                                    {match.player_side === 'home' ? (
+                                                      <>
+                                                        <span className="font-extrabold text-slate-800">{match.home_player_name}</span>
+                                                        <span className="text-[9px] text-slate-400 font-bold ml-0.5">(H)</span>
+                                                        <span className="text-slate-400 mx-1.5 font-bold">vs</span>
+                                                        <span className="text-slate-500">{match.away_player_name}</span>
+                                                        <span className="text-[9px] text-slate-400 font-bold ml-0.5">(A)</span>
+                                                      </>
+                                                    ) : (
+                                                      <>
+                                                        <span className="text-slate-500">{match.home_player_name}</span>
+                                                        <span className="text-[9px] text-slate-400 font-bold ml-0.5">(H)</span>
+                                                        <span className="text-slate-400 mx-1.5 font-bold">vs</span>
+                                                        <span className="font-extrabold text-slate-800">{match.away_player_name}</span>
+                                                        <span className="text-[9px] text-slate-400 font-bold ml-0.5">(A)</span>
+                                                      </>
+                                                    )}
+                                                    <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                                                      {match.home_team_name} vs {match.away_team_name}
+                                                    </div>
                                                   </div>
-                                                </div>
-                                              </td>
-                                              <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-wider ${
-                                                  oppCatName.includes('RED')
-                                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                                    : oppCatName.includes('BLACK')
-                                                    ? 'bg-slate-900 text-white border-slate-800'
-                                                    : oppCatName.includes('BLUE')
-                                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                                    : 'bg-slate-100 text-slate-700 border-slate-300'
-                                                }`}>
-                                                  {oppCatName}
-                                                </span>
-                                              </td>
-                                              <td className="px-3 py-2.5 font-bold text-slate-700 whitespace-nowrap">
-                                                {match.player_side === 'home'
-                                                  ? `${match.goals_scored} - ${match.goals_conceded}`
-                                                  : `${match.goals_conceded} - ${match.goals_scored}`}
-                                              </td>
-                                              <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                                  match.goal_difference > 0 
-                                                    ? 'text-emerald-600 font-black' 
-                                                    : match.goal_difference < 0 
-                                                    ? 'text-rose-600 font-black' 
-                                                    : 'text-slate-500'
-                                                }`}>
-                                                  {match.goal_difference > 0 ? '+' : ''}{match.goal_difference}
-                                                </span>
-                                              </td>
-                                              <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
-                                                  {ptsReason}
-                                                </span>
-                                              </td>
-                                              <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border ${
-                                                  match.points > 0 
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
-                                                    : match.points < 0 
-                                                    ? 'bg-rose-50 text-rose-700 border-rose-200/50' 
-                                                    : 'bg-slate-50 text-slate-600 border-slate-200/50'
-                                                }`}>
-                                                  {match.points > 0 ? '+' : ''}{match.points}
-                                                </span>
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
+                                                </td>
+                                                <td className="px-3 py-2.5 whitespace-nowrap">
+                                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-wider ${
+                                                    oppCatName.includes('RED')
+                                                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                      : oppCatName.includes('BLACK')
+                                                      ? 'bg-slate-900 text-white border-slate-800'
+                                                      : oppCatName.includes('BLUE')
+                                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                      : 'bg-slate-100 text-slate-700 border-slate-300'
+                                                  }`}>
+                                                    {oppCatName}
+                                                  </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 font-bold text-slate-700 whitespace-nowrap">
+                                                  {match.player_side === 'home'
+                                                    ? `${match.goals_scored} - ${match.goals_conceded}`
+                                                    : `${match.goals_conceded} - ${match.goals_scored}`}
+                                                </td>
+                                                <td className="px-3 py-2.5 whitespace-nowrap">
+                                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                    isNullMatch
+                                                      ? 'text-slate-400'
+                                                      : match.goal_difference > 0 
+                                                      ? 'text-emerald-600 font-black' 
+                                                      : match.goal_difference < 0 
+                                                      ? 'text-rose-600 font-black' 
+                                                      : 'text-slate-500'
+                                                  }`}>
+                                                    {isNullMatch ? '-' : `${match.goal_difference > 0 ? '+' : ''}${match.goal_difference}`}
+                                                  </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 whitespace-nowrap">
+                                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold border ${
+                                                    isNullMatch
+                                                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                      : 'bg-slate-100 text-slate-700 border-slate-200'
+                                                  }`}>
+                                                    {ptsReason}
+                                                  </span>
+                                                </td>
+                                                <td className="px-3 py-2.5 whitespace-nowrap">
+                                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border ${
+                                                    isNullMatch
+                                                      ? 'bg-slate-50 text-slate-400 border-slate-200/50'
+                                                      : match.points > 0 
+                                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                                                      : match.points < 0 
+                                                      ? 'bg-rose-50 text-rose-700 border-rose-200/50' 
+                                                      : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                                                  }`}>
+                                                    {isNullMatch ? '0' : `${match.points > 0 ? '+' : ''}${match.points}`}
+                                                  </span>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
                                       </tbody>
                                       <tfoot className="border-t border-slate-200 bg-slate-50/50 font-black text-xs text-slate-800">
                                         <tr>

@@ -633,15 +633,23 @@ export default function TeamPlayerStatsPage() {
                                       <tbody className="divide-y divide-slate-100/50 bg-white/40">
                                         {matchdayStats.get(player.id)!.map((match, idx) => {
                                           const m = match as any;
+                                          const isNullMatch = !!m.is_null;
                                           const oppCatName = (m.opponent_category || (m.player_side === 'home' ? m.away_category : m.home_category) || 'RED').toUpperCase();
-                                          const ptsReason = m.points_reason || `${(m.goal_difference > 0 ? 'WIN' : m.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${m.points >= 0 ? '+' : ''}${m.points} Pts)`;
+                                          const ptsReason = isNullMatch
+                                            ? 'NULL / VOID (EXCLUDED - 0 Pts)'
+                                            : m.points_reason || `${(m.goal_difference > 0 ? 'WIN' : m.goal_difference === 0 ? 'DRAW' : 'LOSS')} VS ${oppCatName} (${m.points >= 0 ? '+' : ''}${m.points} Pts)`;
 
                                           return (
-                                            <tr key={idx} className="hover:bg-slate-50/20 text-xs">
+                                            <tr key={idx} className={`hover:bg-slate-50/20 text-xs ${isNullMatch ? 'bg-amber-50/20 opacity-75' : ''}`}>
                                               <td className="px-3 py-2.5 text-left whitespace-nowrap">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase tracking-wider bg-slate-800 text-amber-400 border-slate-900">
                                                   R{match.matchday}
                                                 </span>
+                                                {isNullMatch && (
+                                                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300 uppercase">
+                                                    NULL / VOID
+                                                  </span>
+                                                )}
                                                 {match.was_substitute && (
                                                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50 uppercase">
                                                     SUB
@@ -692,29 +700,37 @@ export default function TeamPlayerStatsPage() {
                                               </td>
                                               <td className="px-3 py-2.5 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                                  match.goal_difference > 0 
+                                                  isNullMatch
+                                                    ? 'text-slate-400'
+                                                    : match.goal_difference > 0 
                                                     ? 'text-emerald-650 font-black' 
                                                     : match.goal_difference < 0 
                                                     ? 'text-rose-650 font-black' 
                                                     : 'text-slate-550'
                                                 }`}>
-                                                  {match.goal_difference > 0 ? '+' : ''}{match.goal_difference}
+                                                  {isNullMatch ? '-' : `${match.goal_difference > 0 ? '+' : ''}${match.goal_difference}`}
                                                 </span>
                                               </td>
                                               <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold border ${
+                                                  isNullMatch
+                                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                                }`}>
                                                   {ptsReason}
                                                 </span>
                                               </td>
                                               <td className="px-3 py-2.5 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black border ${
-                                                  match.points > 0 
+                                                  isNullMatch
+                                                    ? 'bg-slate-50 text-slate-400 border-slate-200/50'
+                                                    : match.points > 0 
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
                                                     : match.points < 0 
                                                     ? 'bg-rose-50 text-rose-700 border-rose-200/50' 
                                                     : 'bg-slate-50 text-slate-600 border-slate-200/50'
                                                 }`}>
-                                                  {match.points > 0 ? '+' : ''}{match.points}
+                                                  {isNullMatch ? '0' : `${match.points > 0 ? '+' : ''}${match.points}`}
                                                 </span>
                                               </td>
                                             </tr>
