@@ -252,11 +252,20 @@ export default function TeamMatchesPage() {
           let schedDateStr: string | null = null;
           if (rawSchedDate) {
             if (typeof rawSchedDate === 'string') {
-              schedDateStr = rawSchedDate.split('T')[0];
+              if (rawSchedDate.includes('T')) {
+                const d = new Date(rawSchedDate);
+                const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
+                schedDateStr = ist.toISOString().split('T')[0];
+              } else {
+                schedDateStr = rawSchedDate.split('T')[0];
+              }
             } else if (rawSchedDate instanceof Date) {
-              schedDateStr = rawSchedDate.toISOString().split('T')[0];
+              const ist = new Date(rawSchedDate.getTime() + (5.5 * 60 * 60 * 1000));
+              schedDateStr = ist.toISOString().split('T')[0];
             } else if (typeof rawSchedDate?.toDate === 'function') {
-              schedDateStr = rawSchedDate.toDate().toISOString().split('T')[0];
+              const d = rawSchedDate.toDate();
+              const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
+              schedDateStr = ist.toISOString().split('T')[0];
             }
           }
 

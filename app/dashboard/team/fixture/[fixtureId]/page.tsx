@@ -306,8 +306,10 @@ export default function FixturePage() {
           currentPhase = 'home_fixture';     // Home team creates matchups
         } else if (now < awayDeadline) {
           currentPhase = 'fixture_entry';    // Away team reviews, both can finalize
-        } else {
+        } else if (now < resultDeadline) {
           currentPhase = 'result_entry';     // Enter results
+        } else {
+          currentPhase = 'closed';
         }
       }
 

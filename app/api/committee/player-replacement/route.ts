@@ -189,14 +189,12 @@ export async function POST(request: NextRequest) {
       const incId = incomingPlayer.player_id || incomingPlayer.id || cleanIncomingId;
       const incName = incomingPlayer.name || incomingPlayer.player_name || 'Replacement Player';
 
-      // Only clear team_id/team if departing player has played 0 matches.
-      // If they already played matches, preserve their team affiliation so historical match breakdowns display properly.
+      // Clear team_id/team for departing player in realplayerstats so they are no longer in the active squad
       await tourneySql`
         UPDATE realplayerstats
         SET team_id = NULL, team = NULL, updated_at = NOW()
         WHERE (id = ${departing_player_id} OR player_id = ${depId} OR id = ${depId})
           AND season_id = ${season_id}
-          AND (matches_played IS NULL OR matches_played = 0)
       `;
       await tourneySql`
         UPDATE realplayerstats

@@ -236,7 +236,13 @@ export async function PATCH(
 
       let schedDateStr = '';
       if (typeof deadline.scheduled_date === 'string') {
-        schedDateStr = deadline.scheduled_date.split('T')[0];
+        if (deadline.scheduled_date.includes('T')) {
+          const d = new Date(deadline.scheduled_date);
+          const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
+          schedDateStr = ist.toISOString().split('T')[0];
+        } else {
+          schedDateStr = deadline.scheduled_date.split('T')[0];
+        }
       } else if (deadline.scheduled_date instanceof Date) {
         const ist = new Date(deadline.scheduled_date.getTime() + (5.5 * 60 * 60 * 1000));
         schedDateStr = ist.toISOString().split('T')[0];
