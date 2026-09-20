@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Plus, Clock, Users, CheckCircle, XCircle, Lock, Play, Pause, Trash2, Pencil, Crown, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Clock, Users, CheckCircle, XCircle, Lock, Play, Pause, Trash2, Pencil, Crown, Star, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import AlertModal from '@/components/modals/AlertModal';
 import { useModal } from '@/hooks/useModal';
@@ -98,6 +98,8 @@ export default function CaptainWindowsPage() {
   const [expandedWindowId, setExpandedWindowId] = useState<string | null>(null);
   const [windowSelections, setWindowSelections] = useState<Record<string, any[]>>({});
   const [loadingSelections, setLoadingSelections] = useState<Record<string, boolean>>({});
+  const [reassigningWindowId, setReassigningWindowId] = useState<string | null>(null);
+  const [reassigningTeamId, setReassigningTeamId] = useState<string | null>(null);
 
   const toggleExpandWindow = async (windowId: string) => {
     if (expandedWindowId === windowId) {
@@ -356,6 +358,73 @@ export default function CaptainWindowsPage() {
     }
   };
 
+  const handleReassignPrevious = async (windowId: string, teamId?: string) => {
+    const confirmMessage = teamId
+      ? 'Are you sure you want to reassign the previous captain for this team?'
+      : 'Are you sure you want to reassign previous captains for all unset teams in this window?';
+
+    if (!confirm(confirmMessage)) return;
+
+    if (teamId) {
+      setReassigningTeamId(teamId);
+    } else {
+      setReassigningWindowId(windowId);
+    }
+
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fantasy/captain-windows/${windowId}/reassign-previous`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.uid,
+          team_id: teamId || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reassign previous captains');
+      }
+
+      let detailsMessage = data.message || 'Captains reassigned successfully.';
+      if (data.results && data.results.length > 0) {
+        const failures = data.results.filter((r: any) => r.status === 'failed');
+        if (failures.length > 0) {
+          detailsMessage += '\n\nFailed teams:\n' + failures.map((f: any) => `• ${f.team_name}: ${f.reason}`).join('\n');
+        }
+      }
+
+      showAlert({
+        type: data.failed_count > 0 && data.reassigned_count === 0 ? 'warning' : 'success',
+        title: 'Captain Reassignment',
+        message: detailsMessage
+      });
+
+      // Reload windows list
+      loadWindows();
+
+      // If selections for this window are expanded, reload them
+      const res = await fetchWithTokenRefresh(`/api/fantasy/captain-windows/${windowId}?_t=${Date.now()}`);
+      if (res.ok) {
+        const winData = await res.json();
+        setWindowSelections(prev => ({ ...prev, [windowId]: winData.selections || [] }));
+      }
+    } catch (error: any) {
+      showAlert({
+        type: 'error',
+        title: 'Reassignment Failed',
+        message: error.message || 'Failed to reassign captains'
+      });
+    } finally {
+      if (teamId) {
+        setReassigningTeamId(null);
+      } else {
+        setReassigningWindowId(null);
+      }
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-slate-50 border-slate-200 text-slate-700';
@@ -586,15 +655,58 @@ export default function CaptainWindowsPage() {
                         Delete
                       </button>
                     )}
+
+                    {window.teams_with_captain_set < window.total_teams && (
+                      <button
+                        onClick={() => handleReassignPrevious(window.window_id)}
+                        disabled={reassigningWindowId === window.window_id}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                        title="Reassign previous captains for all unset teams"
+                      >
+                        {reassigningWindowId === window.window_id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-amber-600 border-t-transparent" />
+                            Reassigning...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Reassign Previous
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Team Selections Expanded View */}
                 {expandedWindowId === window.window_id && (
                   <div className="mt-6 border-t border-slate-100 pt-4 space-y-4">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                      Team Selections ({window.teams_with_captain_set} / {window.total_teams} Set)
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                        Team Selections ({window.teams_with_captain_set} / {window.total_teams} Set)
+                      </h4>
+                      {window.teams_with_captain_set < window.total_teams && (
+                        <button
+                          onClick={() => handleReassignPrevious(window.window_id)}
+                          disabled={reassigningWindowId === window.window_id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-lg font-black text-[9px] uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                          title="Reassign previous captains for all unset teams"
+                        >
+                          {reassigningWindowId === window.window_id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-amber-600 border-t-transparent" />
+                              Reassign All...
+                            </>
+                          ) : (
+                            <>
+                              <RotateCcw className="w-3 h-3" />
+                              Reassign Unset Teams
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                     {loadingSelections[window.window_id] ? (
                       <div className="py-6 text-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500 mx-auto" />
@@ -625,6 +737,26 @@ export default function CaptainWindowsPage() {
                                 <Star className="w-3.5 h-3.5 text-blue-500" />
                                 <span className={sel.has_set ? 'text-slate-700 font-black' : 'text-slate-400'}>{sel.vice_captain_name}</span>
                               </div>
+                              {!sel.has_set && (
+                                <button
+                                  onClick={() => handleReassignPrevious(window.window_id, sel.team_id)}
+                                  disabled={reassigningTeamId === sel.team_id}
+                                  className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                                  title="Reassign previous captain for this team"
+                                >
+                                  {reassigningTeamId === sel.team_id ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-2.5 w-2.5 border-2 border-amber-700 border-t-transparent" />
+                                      Reassigning...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <RotateCcw className="w-2.5 h-2.5" />
+                                      Reassign Previous
+                                    </>
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
