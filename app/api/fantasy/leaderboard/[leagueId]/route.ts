@@ -56,8 +56,26 @@ export async function GET(
           0
         ) as player_points,
         ft.rank,
-        ft.supported_team_id,
-        ft.supported_team_name,
+        COALESCE(
+          (
+            SELECT ftbp.real_team_id
+            FROM fantasy_team_bonus_points ftbp
+            WHERE ftbp.league_id = ft.league_id AND ftbp.team_id = ft.team_id
+            ORDER BY ftbp.round_number DESC, ftbp.id DESC
+            LIMIT 1
+          ),
+          ft.supported_team_id
+        ) as supported_team_id,
+        COALESCE(
+          (
+            SELECT ftbp.real_team_name
+            FROM fantasy_team_bonus_points ftbp
+            WHERE ftbp.league_id = ft.league_id AND ftbp.team_id = ft.team_id
+            ORDER BY ftbp.round_number DESC, ftbp.id DESC
+            LIMIT 1
+          ),
+          ft.supported_team_name
+        ) as supported_team_name,
         COUNT(DISTINCT fs.real_player_id) as player_count,
         COALESCE(
           (

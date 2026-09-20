@@ -204,12 +204,12 @@ export default function CommitteeFixtureDetailPage() {
     }
   };
 
-  const handleDeclareNull = async () => {
+  const handleDeclareNullWithFantasy = async () => {
     const confirmed = await showConfirm({
       type: 'warning',
-      title: 'Declare Match NULL',
-      message: 'Declare match NULL due to both teams being absent?',
-      confirmText: 'Declare NULL',
+      title: 'Declare Match NULL (Keep Fantasy)',
+      message: 'Declare this match NULL while keeping matchups intact and updating fantasy player points? Team standings and tournament player stats will exclude this match.',
+      confirmText: 'Declare NULL (Keep Fantasy)',
       cancelText: 'Cancel'
     });
 
@@ -223,6 +223,58 @@ export default function CommitteeFixtureDetailPage() {
         body: JSON.stringify({
           declared_by: user?.uid,
           declared_by_name: (user as any)?.displayName || user?.email,
+          keep_fantasy_points: true,
+          notes: 'Match declared NULL (Fantasy Points Preserved)',
+        })
+      });
+
+      if (response.ok) {
+        showAlert({
+          type: 'success',
+          title: 'Match Nullified (Fantasy Kept)',
+          message: 'Match declared NULL successfully! Matchups and fantasy player points preserved.'
+        });
+        fetchFixtureData();
+      } else {
+        const error = await response.json();
+        showAlert({
+          type: 'error',
+          title: 'Failed',
+          message: error.error || 'Unknown error'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error declaring NULL (Keep Fantasy):', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to declare match NULL'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeclareNull = async () => {
+    const confirmed = await showConfirm({
+      type: 'warning',
+      title: 'Declare Match NULL (Wipe All)',
+      message: 'Declare match NULL (both teams absent)? This will wipe all stats and revert fantasy points for this fixture.',
+      confirmText: 'Declare NULL (Wipe All)',
+      cancelText: 'Cancel'
+    });
+
+    if (!confirmed) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/declare-null`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          declared_by: user?.uid,
+          declared_by_name: (user as any)?.displayName || user?.email,
+          keep_fantasy_points: false,
         })
       });
 
@@ -613,7 +665,7 @@ export default function CommitteeFixtureDetailPage() {
                   )}
                   {fixture.match_status_reason === 'null_both_absent' && (
                     <>
-                      <XCircle className="w-4 h-4 text-rose-600" /> Match NULL - Both teams absent
+                      <XCircle className="w-4 h-4 text-rose-600" /> {fixture.notes?.includes('Fantasy') ? 'Match NULL (Fantasy Points Preserved)' : 'Match NULL - Both teams absent'}
                     </>
                   )}
                 </p>
@@ -964,32 +1016,41 @@ export default function CommitteeFixtureDetailPage() {
                 </>
               )}
 
-              {fixture.status !== 'completed' && (
-                <div className="pt-4 border-t border-slate-100 space-y-2.5">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrative Declarations</p>
-                  <button
-                    onClick={() => handleDeclareWO('home')}
-                    disabled={isSaving}
-                    className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-orange-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-orange-600" /> WO - Home Team Absent
-                  </button>
-                  <button
-                    onClick={() => handleDeclareWO('away')}
-                    disabled={isSaving}
-                    className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-orange-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-orange-600" /> WO - Away Team Absent
-                  </button>
-                  <button
-                    onClick={handleDeclareNull}
-                    disabled={isSaving}
-                    className="w-full px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-rose-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                  >
-                    <XCircle className="w-4 h-4 text-rose-600" /> NULL - Both Teams Absent
-                  </button>
-                </div>
-              )}
+              <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrative Declarations</p>
+                <button
+                  onClick={handleDeclareNullWithFantasy}
+                  disabled={isSaving}
+                  className="w-full px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-750 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-purple-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-2xs"
+                >
+                  <Crown className="w-4 h-4 text-purple-600" /> NULL (Keep Fantasy Points)
+                </button>
+                {fixture.status !== 'completed' && (
+                  <>
+                    <button
+                      onClick={() => handleDeclareWO('home')}
+                      disabled={isSaving}
+                      className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-orange-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-orange-600" /> WO - Home Team Absent
+                    </button>
+                    <button
+                      onClick={() => handleDeclareWO('away')}
+                      disabled={isSaving}
+                      className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-orange-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-orange-600" /> WO - Away Team Absent
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleDeclareNull}
+                  disabled={isSaving}
+                  className="w-full px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border border-rose-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <XCircle className="w-4 h-4 text-rose-600" /> NULL (Wipe All Points)
+                </button>
+              </div>
             </div>
           </div>
 
