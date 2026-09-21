@@ -60,7 +60,7 @@ export async function GET(
           (
             SELECT ftbp.real_team_id
             FROM fantasy_team_bonus_points ftbp
-            WHERE ftbp.league_id = ft.league_id AND ftbp.team_id = ft.team_id
+            WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id
             ORDER BY ftbp.round_number DESC, ftbp.id DESC
             LIMIT 1
           ),
@@ -70,7 +70,7 @@ export async function GET(
           (
             SELECT ftbp.real_team_name
             FROM fantasy_team_bonus_points ftbp
-            WHERE ftbp.league_id = ft.league_id AND ftbp.team_id = ft.team_id
+            WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id
             ORDER BY ftbp.round_number DESC, ftbp.id DESC
             LIMIT 1
           ),
@@ -82,11 +82,11 @@ export async function GET(
             SELECT SUM(fpp.total_points)
             FROM fantasy_player_points fpp
             JOIN fantasy_squad fs ON fpp.real_player_id = fs.real_player_id AND fs.team_id = ft.team_id
-            WHERE fpp.league_id = ft.league_id
+            WHERE fpp.league_id = ${leagueId}
               AND fpp.round_number = (
                 SELECT MAX(round_number)
                 FROM fantasy_player_points
-                WHERE league_id = ft.league_id
+                WHERE league_id = ${leagueId}
               )
           ),
           0
