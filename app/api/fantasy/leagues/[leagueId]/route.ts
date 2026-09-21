@@ -214,7 +214,7 @@ export async function GET(
           (
             SELECT ftbp.real_team_id
             FROM fantasy_team_bonus_points ftbp
-            WHERE ftbp.league_id = ft.league_id AND ftbp.team_id = ft.team_id
+            WHERE ftbp.league_id = ${league.league_id} AND ftbp.team_id = ft.team_id
             ORDER BY ftbp.round_number DESC, ftbp.id DESC
             LIMIT 1
           ),
@@ -224,7 +224,7 @@ export async function GET(
           (
             SELECT ftbp.real_team_name
             FROM fantasy_team_bonus_points ftbp
-            WHERE ftbp.league_id = ft.league_id AND ftbp.team_id = ft.team_id
+            WHERE ftbp.league_id = ${league.league_id} AND ftbp.team_id = ft.team_id
             ORDER BY ftbp.round_number DESC, ftbp.id DESC
             LIMIT 1
           ),
@@ -236,7 +236,7 @@ export async function GET(
       FROM fantasy_teams ft
       LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
       WHERE ft.league_id = ${league.league_id}
-      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.draft_submitted, ft.supported_team_id, ft.supported_team_name, ft.passive_points, ft.budget_remaining
+      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.rank, ft.draft_submitted, ft.supported_team_id, ft.supported_team_name, ft.passive_points, ft.budget_remaining, ft.league_id
       ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
     `;
 
