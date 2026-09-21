@@ -352,6 +352,10 @@ export default function FixturePage() {
     const homeSubPenalties = matchups.reduce((sum, m) => sum + (m.home_sub_penalty ?? 0), 0);
     const awaySubPenalties = matchups.reduce((sum, m) => sum + (m.away_sub_penalty ?? 0), 0);
 
+    // Effective fine/violation penalty goals
+    const effectiveHomePenaltyGoals = Number(fixture.home_penalty_goals ?? homePenaltyGoals ?? 0);
+    const effectiveAwayPenaltyGoals = Number(fixture.away_penalty_goals ?? awayPenaltyGoals ?? 0);
+
     // Calculate scores based on tournament system
     let homeTotalScore, awayTotalScore, homePlayerScore, awayPlayerScore;
     
@@ -387,14 +391,14 @@ export default function FixturePage() {
       awayPlayerScore = awayPoints;
       
       // Add fine/violation penalties to total (these affect final result)
-      homeTotalScore = homePoints + homePenaltyGoals;
-      awayTotalScore = awayPoints + awayPenaltyGoals;
+      homeTotalScore = homePoints + effectiveHomePenaltyGoals;
+      awayTotalScore = awayPoints + effectiveAwayPenaltyGoals;
     } else {
       // Goal-based scoring: sum of all goals
       homePlayerScore = homePlayerGoals;
       awayPlayerScore = awayPlayerGoals;
-      homeTotalScore = homePlayerGoals + awaySubPenalties + homePenaltyGoals;
-      awayTotalScore = awayPlayerGoals + homeSubPenalties + awayPenaltyGoals;
+      homeTotalScore = homePlayerGoals + awaySubPenalties + effectiveHomePenaltyGoals;
+      awayTotalScore = awayPlayerGoals + homeSubPenalties + effectiveAwayPenaltyGoals;
     }
 
     const hasResults = matchups.some(m => m.home_goals !== null);
@@ -410,16 +414,16 @@ export default function FixturePage() {
     let homeDetails = '';
     if (hasResults) {
       if (activeScoring === 'wins') {
-        if (homePenaltyGoals > 0) {
-          homeDetails = `\n   - Fine/Violation Goals: +${homePenaltyGoals}`;
+        if (effectiveHomePenaltyGoals > 0) {
+          homeDetails = `\n   - Fine/Violation Goals: +${effectiveHomePenaltyGoals}`;
         }
       } else {
         const details = [];
         if (awaySubPenalties > 0) {
           details.push(`   - Opponent Sub Penalties: +${awaySubPenalties}`);
         }
-        if (homePenaltyGoals > 0) {
-          details.push(`   - Fine/Violation Goals: +${homePenaltyGoals}`);
+        if (effectiveHomePenaltyGoals > 0) {
+          details.push(`   - Fine/Violation Goals: +${effectiveHomePenaltyGoals}`);
         }
         if (details.length > 0) {
           homeDetails = '\n' + details.join('\n');
@@ -430,16 +434,16 @@ export default function FixturePage() {
     let awayDetails = '';
     if (hasResults) {
       if (activeScoring === 'wins') {
-        if (awayPenaltyGoals > 0) {
-          awayDetails = `\n   - Fine/Violation Goals: +${awayPenaltyGoals}`;
+        if (effectiveAwayPenaltyGoals > 0) {
+          awayDetails = `\n   - Fine/Violation Goals: +${effectiveAwayPenaltyGoals}`;
         }
       } else {
         const details = [];
         if (homeSubPenalties > 0) {
           details.push(`   - Opponent Sub Penalties: +${homeSubPenalties}`);
         }
-        if (awayPenaltyGoals > 0) {
-          details.push(`   - Fine/Violation Goals: +${awayPenaltyGoals}`);
+        if (effectiveAwayPenaltyGoals > 0) {
+          details.push(`   - Fine/Violation Goals: +${effectiveAwayPenaltyGoals}`);
         }
         if (details.length > 0) {
           awayDetails = '\n' + details.join('\n');
@@ -559,6 +563,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         }
 
         setFixture(f);
+        setHomePenaltyGoals(Number(f.home_penalty_goals) || 0);
+        setAwayPenaltyGoals(Number(f.away_penalty_goals) || 0);
 
         // Fallback logo resolution if fixture API returned null logos
         if (!f.home_team_logo || !f.away_team_logo) {
@@ -2396,23 +2402,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }
                       });
                       
-                      homeTotalScore = homePoints;
-                      awayTotalScore = awayPoints;
+                      const homeFineGoals = Number(fixture?.home_penalty_goals ?? homePenaltyGoals ?? 0);
+                      const awayFineGoals = Number(fixture?.away_penalty_goals ?? awayPenaltyGoals ?? 0);
+
+                      homeTotalScore = homePoints + homeFineGoals;
+                      awayTotalScore = awayPoints + awayFineGoals;
                     } else {
                       // Goal-based scoring (default): Sum of goals + opponent's sub penalties + fines
-                      const homeFinePenalties = ((fixture as any)?.home_fine_goals || 0);
-                      const awayFinePenalties = ((fixture as any)?.away_fine_goals || 0);
+                      const homeFineGoals = Number(fixture?.home_penalty_goals ?? homePenaltyGoals ?? 0);
+                      const awayFineGoals = Number(fixture?.away_penalty_goals ?? awayPenaltyGoals ?? 0);
 
-                      homeTotalScore = homePlayerGoals + awaySubPenalties + homeFinePenalties;
-                      awayTotalScore = awayPlayerGoals + homeSubPenalties + awayFinePenalties;
+                      homeTotalScore = homePlayerGoals + awaySubPenalties + homeFineGoals;
+                      awayTotalScore = awayPlayerGoals + homeSubPenalties + awayFineGoals;
                     }
 
                     const homeWonFixture = homeTotalScore > awayTotalScore;
                     const awayWonFixture = awayTotalScore > homeTotalScore;
                     const isDrawFixture = homeTotalScore === awayTotalScore;
 
-                    const homeFineGoals = ((fixture as any)?.home_fine_goals || 0);
-                    const awayPenaltyGoals = ((fixture as any)?.away_fine_goals || 0);
+                    const homeFineGoals = Number(fixture?.home_penalty_goals ?? homePenaltyGoals ?? 0);
+                    const awayFineGoals = Number(fixture?.away_penalty_goals ?? awayPenaltyGoals ?? 0);
 
                     return (
                       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm font-mono relative overflow-hidden">
@@ -2456,11 +2465,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               {awayTotalScore}
                             </div>
                             {tournamentSystem === 'goals' && (
-                              (homeSubPenalties > 0 || awayPenaltyGoals > 0) && (
+                              (homeSubPenalties > 0 || awayFineGoals > 0) && (
                                 <div className="text-xs mt-2 opacity-90">
                                   ({awayPlayerGoals}
                                   {homeSubPenalties > 0 && ` +${homeSubPenalties}s`}
-                                  {awayPenaltyGoals > 0 && ` +${awayPenaltyGoals}f`})
+                                  {awayFineGoals > 0 && ` +${awayFineGoals}f`})
                                 </div>
                               )
                             )}
