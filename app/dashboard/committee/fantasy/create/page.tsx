@@ -31,32 +31,27 @@ export default function CreateFantasyLeaguePage() {
 
   const { alertState, showAlert, closeAlert } = useModal();
 
+  const checkExistingLeague = async (seasonIdToCheck: string) => {
+    try {
+      const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${seasonIdToCheck}`);
+      const data = await response.json();
+      
+      if (response.ok && (data.success || data.league)) {
+        const foundLeague = data.league || data;
+        if (foundLeague && (foundLeague.league_id || foundLeague.id)) {
+          setExistingLeague(foundLeague);
+          return true;
+        }
+      }
+    } catch (error: any) {
+      console.log('Error checking for existing league:', error);
+    }
+    return false;
+  };
+
   useEffect(() => {
     const loadCurrentSeason = async () => {
       try {
-        if (userSeasonId) {
-          try {
-            const response = await fetchWithTokenRefresh(`/api/fantasy/leagues/${userSeasonId}`);
-            const data = await response.json();
-            
-            if (response.ok && data.success) {
-              setExistingLeague(data.league);
-              setIsLoading(false);
-              return;
-            } else if (response.status === 404 && data.message && data.message.includes('tournament')) {
-              showAlert({
-                type: 'error',
-                title: 'Tournament Not Created',
-                message: data.message || 'Please create the tournament/season first before creating a fantasy league.',
-              });
-              setIsLoading(false);
-              return;
-            }
-          } catch (error: any) {
-            console.log('Error checking for existing league:', error);
-          }
-        }
-        
         // Fetch seasons from API
         const seasonsRes = await fetch('/api/seasons');
         const seasonsJson = await seasonsRes.json();
@@ -90,11 +85,21 @@ export default function CreateFantasyLeaguePage() {
           });
         } else {
           setSeasons(activeSeasonsData);
-          if (userSeasonId) {
-            const currentSeason = activeSeasonsData.find((s: any) => s.season_id === userSeasonId);
-            if (currentSeason) {
-              setSelectedSeasonId(currentSeason.season_id);
-              setLeagueName(`${currentSeason.name} Fantasy League`);
+
+          // Determine the target season ID to check (userSeasonId or latest active season)
+          const targetSeason = userSeasonId 
+            ? activeSeasonsData.find((s: any) => s.season_id === userSeasonId) || activeSeasonsData[activeSeasonsData.length - 1]
+            : activeSeasonsData[activeSeasonsData.length - 1];
+
+          if (targetSeason) {
+            setSelectedSeasonId(targetSeason.season_id);
+            setLeagueName(`${targetSeason.name} Fantasy League`);
+
+            // Check if fantasy league already exists for this season
+            const hasExisting = await checkExistingLeague(targetSeason.season_id);
+            if (hasExisting) {
+              setIsLoading(false);
+              return;
             }
           }
         }
@@ -329,11 +334,15 @@ export default function CreateFantasyLeaguePage() {
                 <>
                   <select
                     value={selectedSeasonId}
-                    onChange={(e) => {
-                      setSelectedSeasonId(e.target.value);
-                      const selectedSeason = seasons.find(s => s.season_id === e.target.value);
+                    onChange={async (e) => {
+                      const val = e.target.value;
+                      setSelectedSeasonId(val);
+                      const selectedSeason = seasons.find(s => s.season_id === val);
                       if (selectedSeason) {
                         setLeagueName(`${selectedSeason.name} Fantasy League`);
+                      }
+                      if (val) {
+                        await checkExistingLeague(val);
                       }
                     }}
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 bg-white shadow-sm text-xs font-bold uppercase animate-none"
