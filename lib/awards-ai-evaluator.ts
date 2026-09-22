@@ -60,7 +60,7 @@ export function evaluateCandidate(
   const draws = Number(stats.draws ?? 0);
   const losses = Number(stats.losses ?? 0);
   const points = Number(stats.points ?? (wins * 3 + draws));
-  const matchesPlayed = Number(stats.matches_played ?? (wins + draws + losses) ?? 1);
+  const matchesPlayed = Number(stats.matches_played ?? (wins + draws + losses > 0 ? wins + draws + losses : 1));
   const cleanSheets = Number(stats.clean_sheets ?? (isCleanSheet ? 1 : 0));
 
   const nomCat = nomineeCategory || candidate.category || '';

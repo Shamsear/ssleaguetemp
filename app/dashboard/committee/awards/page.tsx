@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import { evaluateCandidate, CandidateEvaluation } from '@/lib/awards-ai-evaluator';
+import { getWeekRanges, getWeekForRound, WeekRange } from '@/lib/week-ranges';
 import {
   Trophy,
   Settings,
@@ -181,13 +182,10 @@ function generateNomineeWhatsAppMessage(
   if (isRoundAward) {
     periodStr = `Round ${round}`;
   } else if (isWeekAward) {
-    const weekRanges: Record<number, string> = {
-      1: 'Rounds 1-7',
-      2: 'Rounds 8-13',
-      3: 'Rounds 14-20',
-      4: 'Rounds 21-26',
-    };
-    periodStr = `Week ${week} (${weekRanges[week] || `Week ${week}`})`;
+    const ranges = getWeekRanges(round > 0 ? round : 26);
+    const found = ranges.find(r => r.week === week);
+    const label = found ? found.label : `Week ${week}`;
+    periodStr = `Week ${week} (${label})`;
   }
 
   let msg = isWinner 
@@ -237,13 +235,10 @@ function generateRoundNomineesWhatsAppMessage(
   if (isRoundAward) {
     periodStr = `Round ${round}`;
   } else if (isWeekAward) {
-    const weekRanges: Record<number, string> = {
-      1: 'Rounds 1-7',
-      2: 'Rounds 8-13',
-      3: 'Rounds 14-20',
-      4: 'Rounds 21-26',
-    };
-    periodStr = `Week ${week} (${weekRanges[week] || `Week ${week}`})`;
+    const ranges = getWeekRanges(round > 0 ? round : 26);
+    const found = ranges.find(r => r.week === week);
+    const label = found ? found.label : `Week ${week}`;
+    periodStr = `Week ${week} (${label})`;
   }
 
   let msg = `🏆 *SS LEAGUE - AWARD NOMINEES* 🏆\n`;
@@ -560,10 +555,18 @@ export default function AwardsManagementPage() {
     fetchMaxRounds();
   }, [tournamentId]);
 
+  const selectedTournament = useMemo(() => {
+    return availableTournaments.find(t => t.id === tournamentId);
+  }, [availableTournaments, tournamentId]);
+
+  const availableWeekRanges = useMemo(() => {
+    return getWeekRanges(maxRounds, (selectedTournament as any)?.week_ranges);
+  }, [maxRounds, selectedTournament]);
+
   // Calculate current week from round
   useEffect(() => {
-    setCurrentWeek(Math.ceil(currentRound / 7));
-  }, [currentRound]);
+    setCurrentWeek(getWeekForRound(currentRound, availableWeekRanges));
+  }, [currentRound, availableWeekRanges]);
 
   // Load awards and candidates when tab/round/week changes
   useEffect(() => {
@@ -861,12 +864,7 @@ export default function AwardsManagementPage() {
                 Select Week
               </label>
               <div className="flex gap-3 flex-wrap">
-                {[
-                  { week: 1, rounds: '1-7' },
-                  { week: 2, rounds: '8-13' },
-                  { week: 3, rounds: '14-20' },
-                  { week: 4, rounds: '21-26' },
-                ].map(({ week, rounds }) => (
+                {availableWeekRanges.map(({ week, label }) => (
                   <button
                     key={week}
                     onClick={() => setCurrentWeek(week)}
@@ -879,7 +877,7 @@ export default function AwardsManagementPage() {
                     <span>Week {week}</span>
                     <span className={`text-[9px] uppercase font-black mt-0.5 block ${
                       currentWeek === week ? 'text-amber-400' : 'text-slate-400'
-                    }`}>Rounds {rounds}</span>
+                    }`}>{label}</span>
                   </button>
                 ))}
               </div>

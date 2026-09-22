@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getWeekRangeByWeek } from '@/lib/week-ranges';
 
 async function getPlayerCategoriesMap(sql: any, seasonId: string): Promise<Map<string, string>> {
   const map = new Map<string, string>();
@@ -62,6 +63,19 @@ export async function GET(request: NextRequest) {
     }
 
     const sql = getTournamentDb();
+
+    // Fetch tournament details and max rounds for dynamic week range calculations
+    let maxRounds = 26;
+    let customWeekRanges: any = null;
+    try {
+      const tourRes = await sql`SELECT week_ranges FROM tournaments WHERE id = ${tournamentId}`;
+      if (tourRes.length > 0) customWeekRanges = tourRes[0].week_ranges;
+
+      const maxRes = await sql`SELECT MAX(round_number) as max_round FROM fixtures WHERE tournament_id = ${tournamentId}`;
+      if (maxRes.length > 0 && maxRes[0].max_round) maxRounds = Number(maxRes[0].max_round);
+    } catch (e) {
+      console.warn('Could not fetch tournament max rounds or custom week_ranges:', e);
+    }
 
     let candidates: any[] = [];
 
@@ -239,24 +253,8 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        // Custom week ranges
-        const weekRanges: Record<number, { start: number; end: number }> = {
-          1: { start: 1, end: 7 },
-          2: { start: 8, end: 13 },
-          3: { start: 14, end: 20 },
-          4: { start: 21, end: 26 },
-        };
-
         const week = parseInt(weekNumber);
-        const weekRange = weekRanges[week];
-
-        if (!weekRange) {
-          return NextResponse.json(
-            { success: false, error: `Invalid week number: ${week}. Valid weeks are 1-4.` },
-            { status: 400 }
-          );
-        }
-
+        const weekRange = getWeekRangeByWeek(week, maxRounds, customWeekRanges);
         const startRound = weekRange.start;
         const endRound = weekRange.end;
 
@@ -529,24 +527,8 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        // Custom week ranges
-        const weekRanges: Record<number, { start: number; end: number }> = {
-          1: { start: 1, end: 7 },
-          2: { start: 8, end: 13 },
-          3: { start: 14, end: 20 },
-          4: { start: 21, end: 26 },
-        };
-
         const week = parseInt(weekNumber);
-        const weekRange = weekRanges[week];
-
-        if (!weekRange) {
-          return NextResponse.json(
-            { success: false, error: `Invalid week number: ${week}. Valid weeks are 1-4.` },
-            { status: 400 }
-          );
-        }
-
+        const weekRange = getWeekRangeByWeek(week, maxRounds, customWeekRanges);
         const startRound = weekRange.start;
         const endRound = weekRange.end;
 
