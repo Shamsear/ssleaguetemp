@@ -27,17 +27,7 @@ export function getWeekRanges(
 
   const total = maxRounds > 0 ? maxRounds : 26;
 
-  // Standard 26-round preset
-  if (total === 26) {
-    return [
-      { week: 1, start: 1, end: 7, label: 'Rounds 1-7' },
-      { week: 2, start: 8, end: 13, label: 'Rounds 8-13' },
-      { week: 3, start: 14, end: 20, label: 'Rounds 14-20' },
-      { week: 4, start: 21, end: 26, label: 'Rounds 21-26' },
-    ];
-  }
-
-  // Dynamic computation for any number of rounds
+  // Dynamic computation for any number of rounds (7 rounds per week)
   const roundsPerWeek = 7;
   const numWeeks = Math.ceil(total / roundsPerWeek);
   const ranges: WeekRange[] = [];
