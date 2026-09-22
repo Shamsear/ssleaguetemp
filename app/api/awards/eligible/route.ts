@@ -306,6 +306,9 @@ export async function GET(request: NextRequest) {
         const playerMap = new Map();
 
         matchups.forEach((matchup: any) => {
+          const homeGoals = Number(matchup.home_goals || 0);
+          const awayGoals = Number(matchup.away_goals || 0);
+
           // Process home player
           if (matchup.home_player_id) {
             if (!playerMap.has(matchup.home_player_id)) {
@@ -315,13 +318,23 @@ export async function GET(request: NextRequest) {
                 team_name: matchup.home_team_name,
                 matches_played: 0,
                 total_goals: 0,
+                goals_conceded: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0,
+                clean_sheets: 0,
                 rounds_played: new Set(),
               });
             }
             const player = playerMap.get(matchup.home_player_id);
             player.matches_played++;
-            player.total_goals += matchup.home_goals || 0;
+            player.total_goals += homeGoals;
+            player.goals_conceded += awayGoals;
             player.rounds_played.add(matchup.round_number);
+            if (homeGoals > awayGoals) player.wins++;
+            else if (homeGoals === awayGoals) player.draws++;
+            else player.losses++;
+            if (awayGoals === 0) player.clean_sheets++;
           }
 
           // Process away player
@@ -333,33 +346,65 @@ export async function GET(request: NextRequest) {
                 team_name: matchup.away_team_name,
                 matches_played: 0,
                 total_goals: 0,
+                goals_conceded: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0,
+                clean_sheets: 0,
                 rounds_played: new Set(),
               });
             }
             const player = playerMap.get(matchup.away_player_id);
             player.matches_played++;
-            player.total_goals += matchup.away_goals || 0;
+            player.total_goals += awayGoals;
+            player.goals_conceded += homeGoals;
             player.rounds_played.add(matchup.round_number);
+            if (awayGoals > homeGoals) player.wins++;
+            else if (awayGoals === homeGoals) player.draws++;
+            else player.losses++;
+            if (homeGoals === 0) player.clean_sheets++;
           }
         });
 
         const potwCategoryMap = await getPlayerCategoriesMap(sql, seasonId);
 
-        // Convert to candidates array and sort by goals
+        // Convert to candidates array and sort by points, goal difference, total goals
         candidates = Array.from(playerMap.values())
-          .map((player: any) => ({
-            player_id: player.player_id,
-            player_name: player.player_name,
-            team_name: player.team_name,
-            category: potwCategoryMap.get(player.player_id) || null,
-            performance_stats: {
-              matches_played: player.matches_played,
-              total_goals: player.total_goals,
-              rounds_played: Array.from(player.rounds_played).sort(),
-              avg_goals: (player.total_goals / player.matches_played).toFixed(2),
-            },
-          }))
-          .sort((a: any, b: any) => b.performance_stats.total_goals - a.performance_stats.total_goals)
+          .map((player: any) => {
+            const points = (player.wins * 3) + player.draws;
+            const goalDiff = player.total_goals - player.goals_conceded;
+            return {
+              player_id: player.player_id,
+              player_name: player.player_name,
+              team_name: player.team_name,
+              category: potwCategoryMap.get(player.player_id) || null,
+              performance_stats: {
+                matches_played: player.matches_played,
+                goals: player.total_goals,
+                goals_for: player.total_goals,
+                total_goals: player.total_goals,
+                goals_conceded: player.goals_conceded,
+                opponent_goals: player.goals_conceded,
+                clean_sheets: player.clean_sheets,
+                wins: player.wins,
+                draws: player.draws,
+                losses: player.losses,
+                points: points,
+                goal_difference: goalDiff,
+                rounds_played: Array.from(player.rounds_played).sort(),
+                avg_goals: (player.total_goals / player.matches_played).toFixed(2),
+              },
+            };
+          })
+          .sort((a: any, b: any) => {
+            if (b.performance_stats.points !== a.performance_stats.points) {
+              return b.performance_stats.points - a.performance_stats.points;
+            }
+            if (b.performance_stats.goal_difference !== a.performance_stats.goal_difference) {
+              return b.performance_stats.goal_difference - a.performance_stats.goal_difference;
+            }
+            return b.performance_stats.total_goals - a.performance_stats.total_goals;
+          })
           .slice(0, 20); // Top 20 performers
 
         console.log(`✅ Found ${candidates.length} POTW candidates`);

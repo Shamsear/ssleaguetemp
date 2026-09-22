@@ -125,6 +125,44 @@ function formatCompactMatchup(
   return '';
 }
 
+function formatCandidateStatsSummary(candidate: Candidate, tab: AwardTab): string {
+  const stats = candidate.performance_stats;
+  if (!stats) return '';
+
+  const isWeeklyOrSeason = ['POTW', 'TOW', 'POTS', 'TOTS'].includes(tab);
+  const isPlayer = ['POTD', 'POTW', 'POTS'].includes(tab);
+
+  if (isWeeklyOrSeason) {
+    const pts = stats.points ?? ((stats.wins ?? 0) * 3 + (stats.draws ?? 0));
+    const w = stats.wins ?? 0;
+    const d = stats.draws ?? 0;
+    const l = stats.losses ?? 0;
+    const mp = stats.matches_played ?? 0;
+    const gf = stats.goals ?? stats.goals_for ?? stats.total_goals ?? 0;
+    const ga = stats.goals_conceded ?? stats.goals_against ?? stats.opponent_goals ?? 0;
+    const cs = stats.clean_sheets ?? (stats.clean_sheet ? 1 : 0);
+    const gd = stats.goal_difference ?? (gf - ga);
+
+    if (isPlayer) {
+      const csStr = cs > 0 ? ` | 🧤 ${cs} CS` : '';
+      return `${pts} pts | ${w}W ${d}D ${l}L | ⚽ ${gf} G | 🛡️ ${ga} GA${csStr} (${mp} matches)`;
+    } else {
+      const gdStr = gd >= 0 ? `+${gd}` : `${gd}`;
+      return `${pts} pts | ${w}W ${d}D ${l}L | ⚽ ${gf} GF | 🛡️ ${ga} GA | GD ${gdStr} (${mp} matches)`;
+    }
+  }
+
+  // Single match (POTD / TOD)
+  const matchupStr = formatCompactMatchup(candidate);
+  if (matchupStr) return matchupStr;
+
+  if (stats.goals !== undefined && stats.opponent_goals !== undefined) {
+    return `${stats.goals}-${stats.opponent_goals}`;
+  }
+
+  return '';
+}
+
 function generateNomineeWhatsAppMessage(
   candidate: Candidate,
   tab: AwardTab,
@@ -166,17 +204,14 @@ function generateNomineeWhatsAppMessage(
     const nomTitle = candidate.player_name ? `*${candidate.player_name}${nomCatStr}*` : '*N/A*';
     const teamSuffix = candidate.team_name ? ` - ${candidate.team_name}` : '';
     msg += `👤 ${nomTitle}${teamSuffix}\n`;
-
-    const matchupStr = formatCompactMatchup(candidate, category, opponentCategory);
-    if (matchupStr) {
-      msg += `⚽ ${matchupStr}\n`;
-    }
   } else {
     const teamTitle = candidate.team_name ? `*${candidate.team_name}*` : '*N/A*';
     msg += `👥 ${teamTitle}\n`;
-    if (candidate.result) {
-      msg += `⚽ ${candidate.result}\n`;
-    }
+  }
+
+  const statsSummary = formatCandidateStatsSummary(candidate, tab);
+  if (statsSummary) {
+    msg += `📊 ${statsSummary}\n`;
   }
 
   msg += `------------------------------\n`;
@@ -223,7 +258,6 @@ function generateRoundNomineesWhatsAppMessage(
   candidatesList.forEach((candidate, idx) => {
     const numPrefix = numberEmojis[idx] || `[${idx + 1}]`;
     const cat = getCat(candidate);
-    const oppCat = getOppCat(candidate);
 
     msg += `\n${numPrefix} `;
     if (isPlayerAward) {
@@ -231,17 +265,14 @@ function generateRoundNomineesWhatsAppMessage(
       const nomTitle = candidate.player_name ? `*${candidate.player_name}${nomCatStr}*` : '*N/A*';
       const teamSuffix = candidate.team_name ? ` - ${candidate.team_name}` : '';
       msg += `${nomTitle}${teamSuffix}\n`;
-
-      const matchupStr = formatCompactMatchup(candidate, cat, oppCat);
-      if (matchupStr) {
-        msg += `⚽ ${matchupStr}\n`;
-      }
     } else {
       const teamTitle = candidate.team_name ? `*${candidate.team_name}*` : '*N/A*';
       msg += `${teamTitle}\n`;
-      if (candidate.result) {
-        msg += `⚽ ${candidate.result}\n`;
-      }
+    }
+
+    const statsSummary = formatCandidateStatsSummary(candidate, tab);
+    if (statsSummary) {
+      msg += `📊 ${statsSummary}\n`;
     }
   });
 
@@ -1017,9 +1048,9 @@ export default function AwardsManagementPage() {
                           ({topAIPick.team_name})
                         </span>
                       )}
-                      {formatCompactMatchup(topAIPick, getCandidateCategory(topAIPick), getCandidateOpponentCategory(topAIPick)) && (
-                        <span className="text-xs font-mono font-bold text-slate-700 bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
-                          ⚽ {formatCompactMatchup(topAIPick, getCandidateCategory(topAIPick), getCandidateOpponentCategory(topAIPick))}
+                      {formatCandidateStatsSummary(topAIPick, activeTab) && (
+                        <span className="text-xs font-mono font-bold text-slate-700 bg-white/80 px-2.5 py-0.5 rounded-md border border-slate-200">
+                          📊 {formatCandidateStatsSummary(topAIPick, activeTab)}
                         </span>
                       )}
                     </div>
@@ -1065,7 +1096,7 @@ export default function AwardsManagementPage() {
                   const category = getCandidateCategory(candidate);
                   const opponentCategory = getCandidateOpponentCategory(candidate);
                   const ai = candidate.aiEvaluation;
-                  const matchupStr = formatCompactMatchup(candidate, category, opponentCategory);
+                  const statsSummary = formatCandidateStatsSummary(candidate, activeTab);
 
                   return (
                     <div
@@ -1137,10 +1168,10 @@ export default function AwardsManagementPage() {
                             </div>
                           )}
 
-                          {matchupStr && (
-                            <div className="flex items-center gap-1.5 text-[11px] text-slate-700 font-mono font-bold">
-                              <span className="text-[10px] font-black uppercase text-slate-400">Matchup:</span>
-                              <span>{matchupStr}</span>
+                          {statsSummary && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-700 font-mono font-bold bg-white/70 px-2.5 py-1 rounded-lg border border-slate-200/80 w-fit">
+                              <span className="text-[10px] font-black uppercase text-amber-700 font-mono">Stats:</span>
+                              <span>{statsSummary}</span>
                             </div>
                           )}
 
