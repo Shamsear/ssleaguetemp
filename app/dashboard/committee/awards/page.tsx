@@ -492,40 +492,45 @@ export default function AwardsManagementPage() {
     });
   }, [candidates, activeTab, playerCategories]);
 
-  // Sort candidates primarily by Points (highest to lowest), then by AI rating / Goal Diff / Goals / Clean Sheets
+  // Sort candidates by composite AI score (incorporates Points + Goals + GD + CS + Category)
+  // For POTW/TOW: AI score is primary (it already weights points heavily)
+  // For POTD/TOD: fallback to raw points since AI score covers single-match stats
   const sortedCandidates = useMemo(() => {
+    const isWeeklyAward = ['POTW', 'TOW', 'POTS', 'TOTS'].includes(activeTab);
     return [...candidatesWithAI].sort((a, b) => {
-      const ptsA = Number(a.performance_stats?.points ?? 0);
-      const ptsB = Number(b.performance_stats?.points ?? 0);
-      if (ptsB !== ptsA) {
-        return ptsB - ptsA;
-      }
-
-      if (sortByAI) {
+      if (isWeeklyAward) {
+        // Weekly awards: sort by composite AI score (points + goals + GD + CS + category all included)
         const scoreA = a.aiEvaluation?.score ?? 0;
         const scoreB = b.aiEvaluation?.score ?? 0;
-        if (scoreB !== scoreA) {
-          return scoreB - scoreA;
-        }
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        // Tie-break by raw points
+        const ptsA = Number(a.performance_stats?.points ?? 0);
+        const ptsB = Number(b.performance_stats?.points ?? 0);
+        if (ptsB !== ptsA) return ptsB - ptsA;
+      } else {
+        // Daily awards: sort by raw points first, then AI score
+        const ptsA = Number(a.performance_stats?.points ?? 0);
+        const ptsB = Number(b.performance_stats?.points ?? 0);
+        if (ptsB !== ptsA) return ptsB - ptsA;
+        const scoreA = a.aiEvaluation?.score ?? 0;
+        const scoreB = b.aiEvaluation?.score ?? 0;
+        if (scoreB !== scoreA) return scoreB - scoreA;
       }
 
+      // Final tie-breakers
       const diffA = Number(a.performance_stats?.goal_difference ?? 0);
       const diffB = Number(b.performance_stats?.goal_difference ?? 0);
-      if (diffB !== diffA) {
-        return diffB - diffA;
-      }
+      if (diffB !== diffA) return diffB - diffA;
 
       const goalsA = Number(a.performance_stats?.total_goals ?? a.performance_stats?.goals ?? a.performance_stats?.goals_for ?? 0);
       const goalsB = Number(b.performance_stats?.total_goals ?? b.performance_stats?.goals ?? b.performance_stats?.goals_for ?? 0);
-      if (goalsB !== goalsA) {
-        return goalsB - goalsA;
-      }
+      if (goalsB !== goalsA) return goalsB - goalsA;
 
       const csA = Number(a.performance_stats?.clean_sheets ?? (a.performance_stats?.clean_sheet ? 1 : 0));
       const csB = Number(b.performance_stats?.clean_sheets ?? (b.performance_stats?.clean_sheet ? 1 : 0));
       return csB - csA;
     });
-  }, [candidatesWithAI, sortByAI]);
+  }, [candidatesWithAI, activeTab, sortByAI]);
 
   // Top AI recommended candidate
   const topAIPick = useMemo(() => {

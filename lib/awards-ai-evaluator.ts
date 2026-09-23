@@ -81,18 +81,18 @@ export function evaluateCandidate(
   let tierDiff = 0;
 
   if (isMultiMatch) {
-    // 1. Category Points Score (0 - 45 pts)
-    const maxCategoryPtsPerMatch = awardType === 'TOW' ? 3 : 8;
-    const maxPossiblePoints = Math.max(1, matchesPlayed * maxCategoryPtsPerMatch);
-    const winPointsScore = Math.min(45, Math.max(0, Math.round((points / maxPossiblePoints) * 45)));
+    // 1. Points Score (0 - 50 pts) - Takes in cumulative points directly
+    const pointsMultiplier = awardType === 'TOW' ? 2.8 : 1.35;
+    const winPointsScore = Math.min(50, Math.max(0, Math.round(points * pointsMultiplier)));
 
-    // 2. Goal Score (0 - 35 pts)
-    goalScore = Math.min(35, Math.round(goalsScored * 5));
+    // 2. Goal Score (0 - 20 pts)
+    const goalMultiplier = awardType === 'TOW' ? 0.25 : 0.8;
+    goalScore = Math.min(20, Math.round(goalsScored * goalMultiplier));
 
-    // 3. Defense Score (0 - 25 pts)
-    defenseScore = Math.min(25, Math.round((cleanSheets * 6) + Math.max(0, goalDiff)));
+    // 3. Defense & Goal Difference Score (0 - 15 pts)
+    defenseScore = Math.min(15, Math.round((cleanSheets * 3) + Math.max(0, goalDiff * 0.4)));
 
-    // 4. Category Score
+    // 4. Category Score (0 - 15 pts)
     if (nomCat) {
       if (nomPriority === 1) {
         categoryScore = 15;
@@ -106,7 +106,7 @@ export function evaluateCandidate(
       }
     }
 
-    totalScore = Math.min(100, Math.round(winPointsScore + (goalScore * 0.8) + (defenseScore * 0.8) + categoryScore));
+    totalScore = Math.min(100, Math.round(winPointsScore + goalScore + defenseScore + categoryScore));
   } else {
     // Single Matchup Component (POTD / TOD)
     goalScore = Math.min(45, Math.max(0, goalsScored * 9));
