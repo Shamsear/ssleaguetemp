@@ -137,6 +137,7 @@ export async function syncPlayerStatsForSeason(
       AND f.season_id = ${seasonId}
       AND m.home_goals IS NOT NULL
       AND m.away_goals IS NOT NULL
+      AND (m.is_null IS NOT TRUE)
   `;
 
   console.log(`📊 [syncPlayerStatsForSeason] Processing ${completedFixtures.length} completed fixtures and ${matchups.length} matchups for ${seasonId}`);
@@ -169,6 +170,8 @@ export async function syncPlayerStatsForSeason(
 
   // 5. Accumulate match statistics
   for (const m of matchups) {
+    if (m.is_null) continue;
+
     const homePId = m.home_player_id ? String(m.home_player_id) : null;
     const awayPId = m.away_player_id ? String(m.away_player_id) : null;
     const homeGoals = Number(m.home_goals) || 0;

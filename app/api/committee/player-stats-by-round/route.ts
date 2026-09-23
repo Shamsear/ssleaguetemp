@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -140,6 +142,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -171,6 +174,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -208,6 +212,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -238,6 +243,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -273,6 +279,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -302,6 +309,7 @@ export async function GET(request: NextRequest) {
             AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
