@@ -6,6 +6,9 @@ import { adminDb } from '@/lib/neon/admin-db-wrapper';
  * GET /api/committee/player-stats-by-round
  * Get player statistics calculated from matchups table for a specific round or all rounds
  */
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
