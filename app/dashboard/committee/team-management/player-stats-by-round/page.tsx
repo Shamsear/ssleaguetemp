@@ -9,7 +9,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import TournamentSelector from '@/components/TournamentSelector';
 import PosterStudio from '@/components/PosterStudio';
-import { ArrowLeft, Award, BarChart2, Calendar, ChevronLeft, ChevronRight, ClipboardList, Download, FileSpreadsheet, Filter, Layers, Search, Trophy, User, Users } from 'lucide-react';
+import { ArrowLeft, Award, BarChart2, Calendar, ChevronLeft, ChevronRight, ClipboardList, Download, FileSpreadsheet, Filter, Search, Trophy, User, Users } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -107,31 +107,6 @@ export default function PlayerStatsByRoundPage() {
   const [maxRounds, setMaxRounds] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'golden-boot' | 'golden-glove' | 'golden-ball' | 'top-20' | 'by-week'>('all');
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
-  const [allSeasons, setAllSeasons] = useState<{ id: string; season_id: string; name: string }[]>([]);
-  const [selectedWeekSeasons, setSelectedWeekSeasons] = useState<string[]>([]);
-
-  useEffect(() => {
-    const fetchSeasons = async () => {
-      try {
-        const response = await fetchWithTokenRefresh('/api/seasons');
-        const data = await response.json();
-        if (data.success && (data.seasons || data.data)) {
-          const list = data.seasons || data.data || [];
-          setAllSeasons(list);
-        }
-      } catch (err) {
-        console.error('Error fetching seasons:', err);
-      }
-    };
-
-    fetchSeasons();
-  }, []);
-
-  useEffect(() => {
-    if (userSeasonId && selectedWeekSeasons.length === 0) {
-      setSelectedWeekSeasons([userSeasonId]);
-    }
-  }, [userSeasonId]);
 
   const roundItemRefs = React.useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
@@ -279,15 +254,10 @@ export default function PlayerStatsByRoundPage() {
       setIsLoading(true);
       try {
         let url;
-        const activeSeasons = (activeTab === 'by-week' && selectedWeekSeasons.length > 0)
-          ? selectedWeekSeasons
-          : [userSeasonId];
-        const seasonParam = activeSeasons.join(',');
-        const isMulti = activeSeasons.length > 1;
         
-        if (viewMode === 'full-season' || isMulti) {
-          // Full season view or Multi-season view - aggregate all tournaments/seasons
-          url = `/api/committee/player-stats-by-round?season_id=${seasonParam}&view=full-season`;
+        if (viewMode === 'full-season') {
+          // Full season view - aggregate all tournaments
+          url = `/api/committee/player-stats-by-round?season_id=${userSeasonId}&view=full-season`;
           
           if (activeTab === 'by-week') {
             const weekRange = weekRanges.find(w => w.week === selectedWeek);
@@ -300,7 +270,7 @@ export default function PlayerStatsByRoundPage() {
         } else {
           // Tournament-specific view
           if (!selectedTournamentId) return;
-          url = `/api/committee/player-stats-by-round?tournament_id=${selectedTournamentId}&season_id=${seasonParam}`;
+          url = `/api/committee/player-stats-by-round?tournament_id=${selectedTournamentId}&season_id=${userSeasonId}`;
 
           if (activeTab === 'by-week') {
             const weekRange = weekRanges.find(w => w.week === selectedWeek);
@@ -336,7 +306,7 @@ export default function PlayerStatsByRoundPage() {
     };
 
     loadStats();
-  }, [selectedTournamentId, userSeasonId, selectedRound, activeTab, selectedWeek, selectedWeekSeasons]);
+  }, [selectedTournamentId, userSeasonId, selectedRound, activeTab, selectedWeek]);
 
   // Filter players based on active tab
   let filteredPlayers = playerStats.filter((player) => {
@@ -676,119 +646,49 @@ export default function PlayerStatsByRoundPage() {
 
         {/* Week Selector (only for By Week tab) */}
         {activeTab === 'by-week' && (
-          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-4 h-4 text-amber-500" />
-                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Week</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedWeek((prev) => Math.max(1, prev - 1))}
-                  disabled={selectedWeek <= 1}
-                  className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Previous Week"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1.5 -mx-1 px-1 flex-1">
-                  {weekRanges.map((weekRange) => (
-                    <button
-                      key={weekRange.week}
-                      onClick={() => setSelectedWeek(weekRange.week)}
-                      className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer shrink-0 ${
-                        selectedWeek === weekRange.week
-                          ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
-                          : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
-                      }`}
-                    >
-                      Week {weekRange.week}
-                      <span className="block text-[10px] opacity-80 mt-0.5">R{weekRange.start}-{weekRange.end}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedWeek((prev) => Math.min(weekRanges.length, prev + 1))}
-                  disabled={selectedWeek >= weekRanges.length}
-                  className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Next Week"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Week</h3>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedWeek((prev) => Math.max(1, prev - 1))}
+                disabled={selectedWeek <= 1}
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Previous Week"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-            {/* Combine Seasons Selector */}
-            {allSeasons.length > 0 && (
-              <div className="pt-3 border-t border-slate-100">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-amber-500" />
-                    <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Combine Seasons</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedWeekSeasons(allSeasons.map(s => s.season_id));
-                      }}
-                      className="text-[10px] text-amber-600 hover:text-amber-700 font-extrabold uppercase tracking-wider cursor-pointer"
-                    >
-                      Select All
-                    </button>
-                    {userSeasonId && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedWeekSeasons([userSeasonId])}
-                        className="text-[10px] text-slate-500 hover:text-slate-700 font-extrabold uppercase tracking-wider cursor-pointer"
-                      >
-                        Current Only
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase mb-3">
-                  Select one or multiple seasons to combine weekly statistics across seasons
-                </p>
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1 -mx-1 px-1 items-center">
-                  {allSeasons.map((season) => {
-                    const isSelected = selectedWeekSeasons.includes(season.season_id);
-                    return (
-                      <button
-                        key={season.season_id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedWeekSeasons((prev) => {
-                            if (prev.includes(season.season_id)) {
-                              if (prev.length === 1) return prev;
-                              return prev.filter((id) => id !== season.season_id);
-                            } else {
-                              return [...prev, season.season_id];
-                            }
-                          });
-                        }}
-                        className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl border cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                          isSelected
-                            ? 'bg-slate-800 text-amber-400 border-slate-900 shadow-md'
-                            : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border-slate-200/40'
-                        }`}
-                      >
-                        <span className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[9px] border ${
-                          isSelected ? 'bg-amber-400 text-slate-900 border-amber-500' : 'border-slate-300 bg-white'
-                        }`}>
-                          {isSelected && '✓'}
-                        </span>
-                        <span>{season.name || season.season_id.replace('SSPSLS', 'Season ')}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1.5 -mx-1 px-1 flex-1">
+                {weekRanges.map((weekRange) => (
+                  <button
+                    key={weekRange.week}
+                    onClick={() => setSelectedWeek(weekRange.week)}
+                    className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer shrink-0 ${
+                      selectedWeek === weekRange.week
+                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+                    }`}
+                  >
+                    Week {weekRange.week}
+                    <span className="block text-[10px] opacity-80 mt-0.5">R{weekRange.start}-{weekRange.end}</span>
+                  </button>
+                ))}
               </div>
-            )}
+
+              <button
+                type="button"
+                onClick={() => setSelectedWeek((prev) => Math.min(weekRanges.length, prev + 1))}
+                disabled={selectedWeek >= weekRanges.length}
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Next Week"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -1220,10 +1120,7 @@ export default function PlayerStatsByRoundPage() {
             <span className="text-slate-800 font-extrabold">{filteredPlayers.length}</span> players shown
             {activeTab === 'by-week' && (() => {
               const weekRange = weekRanges.find(w => w.week === selectedWeek);
-              const seasonNames = (selectedWeekSeasons.length > 0 ? selectedWeekSeasons : [userSeasonId])
-                .map(s => s.replace('SSPSLS', 'Season '))
-                .join(', ');
-              return weekRange ? ` • Week ${selectedWeek} (Rounds ${weekRange.start}-${weekRange.end}) • Combined Seasons: ${seasonNames}` : '';
+              return weekRange ? ` • Week ${selectedWeek} (Rounds ${weekRange.start}-${weekRange.end})` : '';
             })()}
             {activeTab === 'golden-boot' && ' • Top 10 goal scorers (sorted by goals, then goals/match ratio)'}
             {activeTab === 'golden-glove' && ' • Top 10 clean sheet leaders (sorted by clean sheets, then CS%, then fewest GA)'}
