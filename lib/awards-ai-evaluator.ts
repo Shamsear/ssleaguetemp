@@ -81,32 +81,60 @@ export function evaluateCandidate(
   let tierDiff = 0;
 
   if (isMultiMatch) {
-    // 1. Points Score (0 - 50 pts) - Takes in cumulative points directly
-    const pointsMultiplier = awardType === 'TOW' ? 2.8 : 1.35;
-    const winPointsScore = Math.min(50, Math.max(0, Math.round(points * pointsMultiplier)));
+    if (awardType === 'TOW' || awardType === 'TOTS') {
+      // ────────── TEAM OF THE WEEK ──────────
+      // Scoring: Points (40%) + GD (35%) + GF (15%) + GA penalty (10%)
+      // Scale: 0-100 total
 
-    // 2. Goal Score (0 - 20 pts)
-    const goalMultiplier = awardType === 'TOW' ? 0.25 : 0.8;
-    goalScore = Math.min(20, Math.round(goalsScored * goalMultiplier));
+      // 1. Points Component (0 - 40): Win-record (3pts/win, 1pt/draw)
+      const pointsScore = Math.min(40, Math.max(0, Math.round(points * 2.0)));
 
-    // 3. Defense & Goal Difference Score (0 - 15 pts)
-    defenseScore = Math.min(15, Math.round((cleanSheets * 3) + Math.max(0, goalDiff * 0.4)));
+      // 2. Goal Difference Component (0 - 35): GD is the clearest indicator of dominance
+      const gdScore = Math.min(35, Math.max(0, Math.round(goalDiff * 0.9)));
 
-    // 4. Category Score (0 - 15 pts)
-    if (nomCat) {
-      if (nomPriority === 1) {
-        categoryScore = 15;
-        categoryLabel = `Top Category (${nomCat.toUpperCase()})`;
-      } else if (nomPriority === 2) {
-        categoryScore = 10;
-        categoryLabel = `Category ${nomCat.toUpperCase()}`;
+      // 3. Goals For Component (0 - 15): Offensive output
+      goalScore = Math.min(15, Math.max(0, Math.round(goalsScored * 0.18)));
+
+      // 4. Goals Against penalty (0 - 10): Lower GA is better; max deduction if conceding a lot
+      const gaDeduction = Math.min(10, Math.max(0, Math.round(goalsConceded * 0.08)));
+      defenseScore = 10 - gaDeduction;
+
+      categoryScore = 0; // Teams don't have player categories
+      categoryLabel = 'Team';
+
+      totalScore = Math.min(100, Math.max(0, Math.round(pointsScore + gdScore + goalScore + defenseScore)));
+    } else {
+      // ────────── PLAYER OF THE WEEK / SEASON ──────────
+      // Scoring: Points (45%) + Goals (25%) + Defense/CS/GD (20%) + Category (10%)
+
+      // 1. Points Component (0 - 45)
+      const winPointsScore = Math.min(45, Math.max(0, Math.round(points * 1.35)));
+
+      // 2. Goals Component (0 - 25): Raw goals scored across all matches
+      goalScore = Math.min(25, Math.max(0, Math.round(goalsScored * 0.95)));
+
+      // 3. Defense Component (0 - 20): Clean sheets + positive GD
+      defenseScore = Math.min(20, Math.round((cleanSheets * 4) + Math.max(0, goalDiff * 0.5)));
+
+      // 4. Category Component (0 - 10): Player tier
+      if (nomCat) {
+        if (nomPriority === 1) {
+          categoryScore = 10;
+          categoryLabel = `Top Category (${nomCat.toUpperCase()})`;
+        } else if (nomPriority === 2) {
+          categoryScore = 7;
+          categoryLabel = `Category ${nomCat.toUpperCase()}`;
+        } else {
+          categoryScore = 4;
+          categoryLabel = `Category ${nomCat.toUpperCase()}`;
+        }
       } else {
         categoryScore = 5;
-        categoryLabel = `Category ${nomCat.toUpperCase()}`;
+        categoryLabel = 'Unrated';
       }
-    }
 
-    totalScore = Math.min(100, Math.round(winPointsScore + goalScore + defenseScore + categoryScore));
+      totalScore = Math.min(100, Math.round(winPointsScore + goalScore + defenseScore + categoryScore));
+    }
   } else {
     // Single Matchup Component (POTD / TOD)
     goalScore = Math.min(45, Math.max(0, goalsScored * 9));
