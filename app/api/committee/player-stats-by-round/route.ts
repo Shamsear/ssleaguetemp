@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const roundNumber = searchParams.get('round_number'); // Optional: specific round or 'all'
     const startRound = searchParams.get('start_round'); // Optional: for range filtering
     const endRound = searchParams.get('end_round'); // Optional: for range filtering
+    const roundsParam = searchParams.get('rounds'); // Optional: comma-separated round numbers for combining weeks
     const viewMode = searchParams.get('view'); // Optional: 'full-season' for all tournaments
 
     if (!seasonId) {
@@ -33,12 +34,80 @@ export async function GET(request: NextRequest) {
 
     const sql = getTournamentDb();
 
-    console.log(`[Player Stats By Round] Fetching stats for ${viewMode === 'full-season' ? 'FULL SEASON' : `tournament=${tournamentId}`}, season=${seasonId}, round=${roundNumber}, range=${startRound}-${endRound}`);
+    console.log(`[Player Stats By Round] Fetching stats for ${viewMode === 'full-season' ? 'FULL SEASON' : `tournament=${tournamentId}`}, season=${seasonId}, round=${roundNumber}, rounds=${roundsParam}, range=${startRound}-${endRound}`);
 
     // Get all matchups with fixture information
     let matchups;
 
-    if (startRound && endRound) {
+    if (roundsParam) {
+      const roundList = roundsParam.split(',').map(r => parseInt(r.trim())).filter(n => !isNaN(n));
+      console.log(`[Player Stats By Round] Filtering by explicit round list (${roundList.length} rounds)`);
+      
+      if (viewMode === 'full-season') {
+        matchups = await sql`
+          SELECT 
+            m.home_player_id,
+            m.home_player_name,
+            m.away_player_id,
+            m.away_player_name,
+            m.home_goals,
+            m.away_goals,
+            f.round_number,
+            f.home_team_id,
+            f.home_team_name,
+            f.away_team_id,
+            f.away_team_name,
+            f.motm_player_id,
+            f.status,
+            f.tournament_id,
+            rps_home.category as home_category,
+            rps_away.category as away_category
+          FROM matchups m
+          JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
+          WHERE f.season_id = ${seasonId}
+            AND f.round_number = ANY(${roundList})
+            AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
+          ORDER BY f.round_number, m.home_player_name
+        `;
+      } else {
+        matchups = await sql`
+          SELECT 
+            m.home_player_id,
+            m.home_player_name,
+            m.away_player_id,
+            m.away_player_name,
+            m.home_goals,
+            m.away_goals,
+            f.round_number,
+            f.home_team_id,
+            f.home_team_name,
+            f.away_team_id,
+            f.away_team_name,
+            f.motm_player_id,
+            f.status,
+            rps_home.category as home_category,
+            rps_away.category as away_category
+          FROM matchups m
+          JOIN fixtures f ON m.fixture_id = f.id
+          LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
+          LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
+          WHERE f.tournament_id = ${tournamentId}
+            AND f.season_id = ${seasonId}
+            AND f.round_number = ANY(${roundList})
+            AND f.status = 'completed'
+            AND m.home_goals IS NOT NULL
+            AND m.away_goals IS NOT NULL
+            AND (m.is_null IS NOT TRUE)
+          ORDER BY f.round_number, m.home_player_name
+        `;
+      }
+      console.log(`[Player Stats By Round] Found ${matchups.length} matchups for rounds list`);
+    } else if (startRound && endRound) {
       // Filter by round range (e.g., rounds 8-13 for Week 2)
       const startNum = parseInt(startRound);
       const endNum = parseInt(endRound);

@@ -106,7 +106,56 @@ export default function PlayerStatsByRoundPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [maxRounds, setMaxRounds] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'golden-boot' | 'golden-glove' | 'golden-ball' | 'top-20' | 'by-week'>('all');
-  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [selectedWeeks, setSelectedWeeks] = useState<number[]>([1]);
+
+  const weekRanges = [
+    { week: 1, start: 1, end: 7 },
+    { week: 2, start: 8, end: 13 },
+    { week: 3, start: 14, end: 20 },
+    { week: 4, start: 21, end: 26 },
+  ];
+
+  const roundsForSelectedWeeks = React.useMemo(() => {
+    const roundSet = new Set<number>();
+    selectedWeeks.forEach(wNum => {
+      const range = weekRanges.find(w => w.week === wNum);
+      if (range) {
+        for (let r = range.start; r <= range.end; r++) {
+          roundSet.add(r);
+        }
+      }
+    });
+    return Array.from(roundSet).sort((a, b) => a - b);
+  }, [selectedWeeks]);
+
+  const toggleWeek = (weekNum: number) => {
+    setSelectedWeeks((prev) => {
+      if (prev.includes(weekNum)) {
+        if (prev.length <= 1) return prev;
+        return prev.filter((w) => w !== weekNum);
+      } else {
+        return [...prev, weekNum].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const selectAllWeeks = () => {
+    setSelectedWeeks(weekRanges.map((w) => w.week));
+  };
+
+  const handlePrevWeek = () => {
+    const minW = Math.min(...selectedWeeks);
+    if (minW > 1) {
+      setSelectedWeeks([minW - 1]);
+    }
+  };
+
+  const handleNextWeek = () => {
+    const maxW = Math.max(...selectedWeeks);
+    if (maxW < weekRanges.length) {
+      setSelectedWeeks([maxW + 1]);
+    }
+  };
 
   const roundItemRefs = React.useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
@@ -168,13 +217,7 @@ export default function PlayerStatsByRoundPage() {
     return counts;
   }, [playerStats]);
 
-  // Define week ranges
-  const weekRanges = [
-    { week: 1, start: 1, end: 7 },
-    { week: 2, start: 8, end: 13 },
-    { week: 3, start: 14, end: 20 },
-    { week: 4, start: 21, end: 26 },
-  ];
+
 
   useEffect(() => {
     const fetchMaxRounds = async () => {
@@ -260,9 +303,8 @@ export default function PlayerStatsByRoundPage() {
           url = `/api/committee/player-stats-by-round?season_id=${userSeasonId}&view=full-season`;
           
           if (activeTab === 'by-week') {
-            const weekRange = weekRanges.find(w => w.week === selectedWeek);
-            if (weekRange) {
-              url += `&start_round=${weekRange.start}&end_round=${weekRange.end}`;
+            if (roundsForSelectedWeeks.length > 0) {
+              url += `&rounds=${roundsForSelectedWeeks.join(',')}`;
             }
           } else {
             url += `&round_number=${selectedRound}`;
@@ -273,9 +315,8 @@ export default function PlayerStatsByRoundPage() {
           url = `/api/committee/player-stats-by-round?tournament_id=${selectedTournamentId}&season_id=${userSeasonId}`;
 
           if (activeTab === 'by-week') {
-            const weekRange = weekRanges.find(w => w.week === selectedWeek);
-            if (weekRange) {
-              url += `&start_round=${weekRange.start}&end_round=${weekRange.end}`;
+            if (roundsForSelectedWeeks.length > 0) {
+              url += `&rounds=${roundsForSelectedWeeks.join(',')}`;
             }
           } else {
             url += `&round_number=${selectedRound}`;
@@ -306,7 +347,7 @@ export default function PlayerStatsByRoundPage() {
     };
 
     loadStats();
-  }, [selectedTournamentId, userSeasonId, selectedRound, activeTab, selectedWeek]);
+  }, [selectedTournamentId, userSeasonId, selectedRound, activeTab, selectedWeeks, roundsForSelectedWeeks]);
 
   // Filter players based on active tab
   let filteredPlayers = playerStats.filter((player) => {
@@ -647,15 +688,33 @@ export default function PlayerStatsByRoundPage() {
         {/* Week Selector (only for By Week tab) */}
         {activeTab === 'by-week' && (
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm font-mono">
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-amber-500" />
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Week</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-amber-500" />
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Weeks (Combine Multiple)</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedWeeks.length === weekRanges.length) {
+                    setSelectedWeeks([1]);
+                  } else {
+                    selectAllWeeks();
+                  }
+                }}
+                className="text-[10px] text-amber-600 hover:text-amber-700 font-extrabold uppercase tracking-wider cursor-pointer"
+              >
+                {selectedWeeks.length === weekRanges.length ? 'Reset to W1' : 'Select All Weeks'}
+              </button>
             </div>
+            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 mb-3">
+              Click weeks to combine statistics across multiple selected weeks
+            </p>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setSelectedWeek((prev) => Math.max(1, prev - 1))}
-                disabled={selectedWeek <= 1}
+                onClick={handlePrevWeek}
+                disabled={Math.min(...selectedWeeks) <= 1}
                 className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Previous Week"
               >
@@ -663,26 +722,52 @@ export default function PlayerStatsByRoundPage() {
               </button>
 
               <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1.5 -mx-1 px-1 flex-1">
-                {weekRanges.map((weekRange) => (
-                  <button
-                    key={weekRange.week}
-                    onClick={() => setSelectedWeek(weekRange.week)}
-                    className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer shrink-0 ${
-                      selectedWeek === weekRange.week
-                        ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
-                        : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
-                    }`}
-                  >
-                    Week {weekRange.week}
-                    <span className="block text-[10px] opacity-80 mt-0.5">R{weekRange.start}-{weekRange.end}</span>
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedWeeks.length === weekRanges.length) {
+                      setSelectedWeeks([1]);
+                    } else {
+                      selectAllWeeks();
+                    }
+                  }}
+                  className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer shrink-0 ${
+                    selectedWeeks.length === weekRanges.length
+                      ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                      : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+                  }`}
+                >
+                  All Weeks
+                  <span className="block text-[10px] opacity-80 mt-0.5">R1-26</span>
+                </button>
+
+                {weekRanges.map((weekRange) => {
+                  const isSelected = selectedWeeks.includes(weekRange.week);
+                  return (
+                    <button
+                      key={weekRange.week}
+                      type="button"
+                      onClick={() => toggleWeek(weekRange.week)}
+                      className={`px-3 py-1.5 transition-all text-xs font-mono uppercase tracking-wider font-extrabold rounded-xl shadow-sm cursor-pointer shrink-0 ${
+                        isSelected
+                          ? 'bg-slate-800 text-amber-400 border border-slate-900 shadow-md'
+                          : 'bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 justify-center">
+                        <span>Week {weekRange.week}</span>
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />}
+                      </div>
+                      <span className="block text-[10px] opacity-80 mt-0.5">R{weekRange.start}-{weekRange.end}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <button
                 type="button"
-                onClick={() => setSelectedWeek((prev) => Math.min(weekRanges.length, prev + 1))}
-                disabled={selectedWeek >= weekRanges.length}
+                onClick={handleNextWeek}
+                disabled={Math.max(...selectedWeeks) >= weekRanges.length}
                 className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-xl transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Next Week"
               >
@@ -1119,8 +1204,14 @@ export default function PlayerStatsByRoundPage() {
           <p className="text-xs text-slate-600 font-semibold leading-relaxed">
             <span className="text-slate-800 font-extrabold">{filteredPlayers.length}</span> players shown
             {activeTab === 'by-week' && (() => {
-              const weekRange = weekRanges.find(w => w.week === selectedWeek);
-              return weekRange ? ` • Week ${selectedWeek} (Rounds ${weekRange.start}-${weekRange.end})` : '';
+              if (selectedWeeks.length === weekRanges.length) {
+                return ' • All Weeks (Rounds 1-26)';
+              }
+              const sortedWeeks = [...selectedWeeks].sort((a, b) => a - b);
+              const weekStr = sortedWeeks.map(w => `Week ${w}`).join(', ');
+              const minR = roundsForSelectedWeeks.length > 0 ? Math.min(...roundsForSelectedWeeks) : 1;
+              const maxR = roundsForSelectedWeeks.length > 0 ? Math.max(...roundsForSelectedWeeks) : 26;
+              return ` • Combined ${weekStr} (Rounds ${minR}-${maxR})`;
             })()}
             {activeTab === 'golden-boot' && ' • Top 10 goal scorers (sorted by goals, then goals/match ratio)'}
             {activeTab === 'golden-glove' && ' • Top 10 clean sheet leaders (sorted by clean sheets, then CS%, then fewest GA)'}
