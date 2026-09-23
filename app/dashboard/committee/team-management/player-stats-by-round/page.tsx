@@ -409,16 +409,10 @@ export default function PlayerStatsByRoundPage() {
       })
       .slice(0, 10);
   } else if (activeTab === 'golden-ball') {
-    // Golden Ball: Player with the most points
+    // Golden Ball: Ranked strictly by player points only
     filteredPlayers = filteredPlayers
       .filter(p => p.matches_played > 0)
-      .sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        const gdA = a.goals_scored - a.goals_conceded;
-        const gdB = b.goals_scored - b.goals_conceded;
-        if (gdB !== gdA) return gdB - gdA;
-        return b.goals_scored - a.goals_scored;
-      })
+      .sort((a, b) => b.points - a.points)
       .slice(0, 20);
   } else if (activeTab === 'top-20') {
     filteredPlayers = filteredPlayers

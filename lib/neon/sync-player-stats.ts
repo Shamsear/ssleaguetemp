@@ -134,9 +134,11 @@ export async function syncPlayerStatsForSeason(
     LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
     LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
     WHERE f.status = 'completed'
+      AND (f.result IS NULL OR f.result != 'null')
       AND f.season_id = ${seasonId}
       AND m.home_goals IS NOT NULL
       AND m.away_goals IS NOT NULL
+      AND (m.is_null IS NOT TRUE)
   `;
 
   console.log(`📊 [syncPlayerStatsForSeason] Processing ${completedFixtures.length} completed fixtures and ${matchups.length} matchups for ${seasonId}`);

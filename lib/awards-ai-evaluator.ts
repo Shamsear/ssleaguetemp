@@ -140,61 +140,69 @@ export function evaluateCandidate(
       totalScore = Math.min(100, Math.round(winPointsScore + goalScore + defenseScore + categoryScore));
     }
   } else {
-    // Single Matchup Component (POTD / TOD)
-    goalScore = Math.min(45, Math.max(0, goalsScored * 9));
+    // ────────── PLAYER / TEAM OF THE DAY ──────────
+    // Scoring: Goals (60%) + Defense (20%) + Category/Upset (20%)
+    // This ensures goal output is always the primary deciding factor.
 
+    // 1. Goals Component (0 - 60): Primary metric — most goals = highest score
+    goalScore = Math.min(60, Math.max(0, Math.round(goalsScored * 7)));
+
+    // 2. Defense Component (0 - 20): Clean sheet + goals conceded + goal diff
     if (isCleanSheet) {
-      defenseScore = 20;
-    } else if (goalsConceded === 1) {
       defenseScore = 15;
-    } else if (goalsConceded === 2) {
+    } else if (goalsConceded === 1) {
       defenseScore = 10;
+    } else if (goalsConceded === 2) {
+      defenseScore = 6;
     } else if (goalsConceded === 3) {
-      defenseScore = 5;
+      defenseScore = 3;
     } else {
       defenseScore = 0;
     }
-
+    // Goal difference bonus (up to +5)
     if (goalDiff > 0) {
       defenseScore += Math.min(5, goalDiff);
     }
+    defenseScore = Math.min(20, defenseScore);
 
+    // 3. Category Component (0 - 20): Upset difficulty — capped so goals always dominate
     if (nomCat && oppCat) {
       if (nomPriority > oppPriority) {
         tierDiff = nomPriority - oppPriority;
         isUpset = true;
         if (tierDiff === 1) {
-          categoryScore = 24;
+          categoryScore = 10;
           categoryLabel = `⚡ +1 Tier Upset (${nomCat.toUpperCase()} beat ${oppCat.toUpperCase()})`;
         } else if (tierDiff === 2) {
-          categoryScore = 28;
+          categoryScore = 15;
           categoryLabel = `🔥 +2 Tier Upset (${nomCat.toUpperCase()} beat ${oppCat.toUpperCase()})`;
         } else {
-          categoryScore = 30;
+          categoryScore = 20;
           categoryLabel = `🌟 +3 Tier Massive Upset (${nomCat.toUpperCase()} beat ${oppCat.toUpperCase()})`;
         }
       } else if (nomPriority === oppPriority) {
         if (nomPriority === 1) {
           isTopTierClash = true;
-          categoryScore = 20;
+          categoryScore = 12;
           categoryLabel = `👑 Top Tier Clash (${nomCat.toUpperCase()} vs ${oppCat.toUpperCase()})`;
         } else if (nomPriority === 2) {
-          categoryScore = 14;
+          categoryScore = 9;
           categoryLabel = `⚔️ Tier 2 Clash (${nomCat.toUpperCase()} vs ${oppCat.toUpperCase()})`;
         } else if (nomPriority === 3) {
-          categoryScore = 10;
+          categoryScore = 6;
           categoryLabel = `⚔️ Tier 3 Clash (${nomCat.toUpperCase()} vs ${oppCat.toUpperCase()})`;
         } else {
-          categoryScore = 6;
+          categoryScore = 4;
           categoryLabel = `⚔️ Same Tier (${nomCat.toUpperCase()} vs ${oppCat.toUpperCase()})`;
         }
       } else {
+        // Favourite beating a lower tier
         tierDiff = oppPriority - nomPriority;
         if (tierDiff === 1) {
-          categoryScore = 6;
+          categoryScore = 4;
           categoryLabel = `Favored vs ${oppCat.toUpperCase()}`;
         } else if (tierDiff === 2) {
-          categoryScore = 3;
+          categoryScore = 2;
           categoryLabel = `Favored vs -2 Tier (${oppCat.toUpperCase()})`;
         } else {
           categoryScore = 1;
@@ -203,13 +211,13 @@ export function evaluateCandidate(
       }
     } else if (nomCat) {
       if (nomPriority === 1) {
-        categoryScore = 18;
+        categoryScore = 10;
         categoryLabel = `Top Category (${nomCat.toUpperCase()})`;
       } else if (nomPriority === 2) {
-        categoryScore = 12;
+        categoryScore = 7;
         categoryLabel = `Category ${nomCat.toUpperCase()}`;
       } else {
-        categoryScore = 6;
+        categoryScore = 4;
         categoryLabel = `Category ${nomCat.toUpperCase()}`;
       }
     }
