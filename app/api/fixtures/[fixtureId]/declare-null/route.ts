@@ -67,13 +67,7 @@ async function handleDeclareNull(
       WHERE id = ${fixtureId}
     `;
 
-    await sql`
-      UPDATE matchups
-      SET 
-        is_null = true,
-        updated_at = NOW()
-      WHERE fixture_id = ${fixtureId}
-    `;
+    // Matchups retain their player stats for player-level leaderboards
 
     // 2. Revert team stats from standings (teamstats table)
     if (fixture.season_id && fixture.tournament_id) {

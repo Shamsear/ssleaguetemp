@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
             m.home_player_id = ${actualPlayerId} 
             OR m.away_player_id = ${actualPlayerId}
           )
-          AND f.status = 'completed'
+          AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
           AND m.home_goals IS NOT NULL
           AND m.away_goals IS NOT NULL
         )
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
             m.home_player_id = ${actualPlayerId} 
             OR m.away_player_id = ${actualPlayerId}
           )
-          AND f.status = 'completed'
+          AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
           AND m.home_goals IS NOT NULL
           AND m.away_goals IS NOT NULL
         )
