@@ -81,9 +81,10 @@ export function evaluateCandidate(
   let tierDiff = 0;
 
   if (isMultiMatch) {
-    // 1. Win/Points Score (0 - 40 pts)
-    const maxPossiblePoints = Math.max(1, matchesPlayed * 3);
-    const winPointsScore = Math.min(40, Math.round((points / maxPossiblePoints) * 40));
+    // 1. Category Points Score (0 - 45 pts)
+    const maxCategoryPtsPerMatch = awardType === 'TOW' ? 3 : 8;
+    const maxPossiblePoints = Math.max(1, matchesPlayed * maxCategoryPtsPerMatch);
+    const winPointsScore = Math.min(45, Math.max(0, Math.round((points / maxPossiblePoints) * 45)));
 
     // 2. Goal Score (0 - 35 pts)
     goalScore = Math.min(35, Math.round(goalsScored * 5));

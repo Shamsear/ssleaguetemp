@@ -300,6 +300,37 @@ export async function GET(request: NextRequest) {
             AND f.status = 'completed'
         `;
 
+        const potwCategoryMap = await getPlayerCategoriesMap(sql, seasonId);
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const usesCategoryPoints = seasonNum >= 18 || seasonNum === 0;
+
+        const getPointsForOpponentCategory = (oppCategory: string, outcome: 'win' | 'draw' | 'loss'): number => {
+          const cat = (oppCategory || '').toLowerCase();
+          if (cat.includes('red') || cat === 'r') {
+            if (outcome === 'win') return 8;
+            if (outcome === 'draw') return 4;
+            return -3;
+          }
+          if (cat.includes('black')) {
+            if (outcome === 'win') return 7;
+            if (outcome === 'draw') return 3;
+            return -4;
+          }
+          if (cat.includes('blue') || cat === 'b') {
+            if (outcome === 'win') return 6;
+            if (outcome === 'draw') return 2;
+            return -5;
+          }
+          if (cat.includes('white') || cat === 'w') {
+            if (outcome === 'win') return 5;
+            if (outcome === 'draw') return 1;
+            return -6;
+          }
+          if (outcome === 'win') return 8;
+          if (outcome === 'draw') return 4;
+          return -3;
+        };
+
         // Aggregate stats for each player
         const playerMap = new Map();
 
@@ -308,9 +339,10 @@ export async function GET(request: NextRequest) {
           const awayGoals = Number(matchup.away_goals || 0);
 
           // Process home player
-          if (matchup.home_player_id) {
-            if (!playerMap.has(matchup.home_player_id)) {
-              playerMap.set(matchup.home_player_id, {
+          if (matchup.home_player_id || matchup.home_player_name) {
+            const playerId = matchup.home_player_id || matchup.home_player_name.trim().toLowerCase();
+            if (!playerMap.has(playerId)) {
+              playerMap.set(playerId, {
                 player_id: matchup.home_player_id,
                 player_name: matchup.home_player_name,
                 team_name: matchup.home_team_name,
@@ -321,24 +353,38 @@ export async function GET(request: NextRequest) {
                 draws: 0,
                 losses: 0,
                 clean_sheets: 0,
+                points: 0,
                 rounds_played: new Set(),
               });
             }
-            const player = playerMap.get(matchup.home_player_id);
+            const player = playerMap.get(playerId);
             player.matches_played++;
             player.total_goals += homeGoals;
             player.goals_conceded += awayGoals;
             player.rounds_played.add(matchup.round_number);
-            if (homeGoals > awayGoals) player.wins++;
-            else if (homeGoals === awayGoals) player.draws++;
+
+            const matchGD = homeGoals - awayGoals;
+            const outcome = matchGD > 0 ? 'win' : matchGD === 0 ? 'draw' : 'loss';
+            const oppPlayerId = matchup.away_player_id;
+            const oppPlayerName = matchup.away_player_name ? matchup.away_player_name.trim().toLowerCase() : '';
+            const oppCat = (oppPlayerId ? potwCategoryMap.get(oppPlayerId) : null) || (oppPlayerName ? potwCategoryMap.get(oppPlayerName) : null) || 'RED';
+            const matchPoints = usesCategoryPoints 
+              ? getPointsForOpponentCategory(oppCat, outcome) 
+              : Math.max(-5, Math.min(5, matchGD));
+
+            player.points += matchPoints;
+
+            if (outcome === 'win') player.wins++;
+            else if (outcome === 'draw') player.draws++;
             else player.losses++;
             if (awayGoals === 0) player.clean_sheets++;
           }
 
           // Process away player
-          if (matchup.away_player_id) {
-            if (!playerMap.has(matchup.away_player_id)) {
-              playerMap.set(matchup.away_player_id, {
+          if (matchup.away_player_id || matchup.away_player_name) {
+            const playerId = matchup.away_player_id || matchup.away_player_name.trim().toLowerCase();
+            if (!playerMap.has(playerId)) {
+              playerMap.set(playerId, {
                 player_id: matchup.away_player_id,
                 player_name: matchup.away_player_name,
                 team_name: matchup.away_team_name,
@@ -349,33 +395,43 @@ export async function GET(request: NextRequest) {
                 draws: 0,
                 losses: 0,
                 clean_sheets: 0,
+                points: 0,
                 rounds_played: new Set(),
               });
             }
-            const player = playerMap.get(matchup.away_player_id);
+            const player = playerMap.get(playerId);
             player.matches_played++;
             player.total_goals += awayGoals;
             player.goals_conceded += homeGoals;
             player.rounds_played.add(matchup.round_number);
-            if (awayGoals > homeGoals) player.wins++;
-            else if (awayGoals === homeGoals) player.draws++;
+
+            const matchGD = awayGoals - homeGoals;
+            const outcome = matchGD > 0 ? 'win' : matchGD === 0 ? 'draw' : 'loss';
+            const oppPlayerId = matchup.home_player_id;
+            const oppPlayerName = matchup.home_player_name ? matchup.home_player_name.trim().toLowerCase() : '';
+            const oppCat = (oppPlayerId ? potwCategoryMap.get(oppPlayerId) : null) || (oppPlayerName ? potwCategoryMap.get(oppPlayerName) : null) || 'RED';
+            const matchPoints = usesCategoryPoints 
+              ? getPointsForOpponentCategory(oppCat, outcome) 
+              : Math.max(-5, Math.min(5, matchGD));
+
+            player.points += matchPoints;
+
+            if (outcome === 'win') player.wins++;
+            else if (outcome === 'draw') player.draws++;
             else player.losses++;
             if (homeGoals === 0) player.clean_sheets++;
           }
         });
 
-        const potwCategoryMap = await getPlayerCategoriesMap(sql, seasonId);
-
         // Convert to candidates array and sort by points, goal difference, total goals
         candidates = Array.from(playerMap.values())
           .map((player: any) => {
-            const points = (player.wins * 3) + player.draws;
             const goalDiff = player.total_goals - player.goals_conceded;
             return {
               player_id: player.player_id,
               player_name: player.player_name,
               team_name: player.team_name,
-              category: potwCategoryMap.get(player.player_id) || null,
+              category: (player.player_id ? potwCategoryMap.get(player.player_id) : null) || (player.player_name ? potwCategoryMap.get(player.player_name.trim().toLowerCase()) : null) || null,
               performance_stats: {
                 matches_played: player.matches_played,
                 goals: player.total_goals,
@@ -387,7 +443,7 @@ export async function GET(request: NextRequest) {
                 wins: player.wins,
                 draws: player.draws,
                 losses: player.losses,
-                points: points,
+                points: player.points,
                 goal_difference: goalDiff,
                 rounds_played: Array.from(player.rounds_played).sort(),
                 avg_goals: (player.total_goals / player.matches_played).toFixed(2),

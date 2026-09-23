@@ -10,30 +10,36 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const tournamentId = searchParams.get('tournament_id');
-    const seasonId = searchParams.get('season_id');
+    const rawSeasonId = searchParams.get('season_id') || searchParams.get('season_ids') || '';
+    const seasonIdArray = rawSeasonId
+      ? rawSeasonId.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
     const roundNumber = searchParams.get('round_number'); // Optional: specific round or 'all'
     const startRound = searchParams.get('start_round'); // Optional: for range filtering
     const endRound = searchParams.get('end_round'); // Optional: for range filtering
     const viewMode = searchParams.get('view'); // Optional: 'full-season' for all tournaments
 
-    if (!seasonId) {
+    if (seasonIdArray.length === 0) {
       return NextResponse.json(
         { error: 'Missing required parameter: season_id' },
         { status: 400 }
       );
     }
     
-    // For full season view, tournament_id is optional
-    if (viewMode !== 'full-season' && !tournamentId) {
+    const isMultiSeason = seasonIdArray.length > 1;
+    const isFullSeason = viewMode === 'full-season' || isMultiSeason;
+
+    // For single-season tournament-specific view, tournament_id is required
+    if (!isFullSeason && !tournamentId) {
       return NextResponse.json(
-        { error: 'Missing required parameter: tournament_id (unless view=full-season)' },
+        { error: 'Missing required parameter: tournament_id (unless view=full-season or multiple seasons selected)' },
         { status: 400 }
       );
     }
 
     const sql = getTournamentDb();
 
-    console.log(`[Player Stats By Round] Fetching stats for ${viewMode === 'full-season' ? 'FULL SEASON' : `tournament=${tournamentId}`}, season=${seasonId}, round=${roundNumber}, range=${startRound}-${endRound}`);
+    console.log(`[Player Stats By Round] Fetching stats for ${isFullSeason ? 'FULL/MULTI SEASON' : `tournament=${tournamentId}`}, seasons=${seasonIdArray.join(',')}, round=${roundNumber}, range=${startRound}-${endRound}`);
 
     // Get all matchups with fixture information
     let matchups;
@@ -44,7 +50,7 @@ export async function GET(request: NextRequest) {
       const endNum = parseInt(endRound);
       console.log(`[Player Stats By Round] Filtering by rounds ${startNum} to ${endNum} (range)`);
       
-      if (viewMode === 'full-season') {
+      if (isFullSeason) {
         matchups = await sql`
           SELECT 
             m.home_player_id,
@@ -67,7 +73,7 @@ export async function GET(request: NextRequest) {
           JOIN fixtures f ON m.fixture_id = f.id
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
-          WHERE f.season_id = ${seasonId}
+          WHERE f.season_id = ANY(${seasonIdArray})
             AND f.round_number >= ${startNum}
             AND f.round_number <= ${endNum}
             AND f.status = 'completed'
@@ -99,7 +105,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
-            AND f.season_id = ${seasonId}
+            AND f.season_id = ${seasonIdArray[0]}
             AND f.round_number >= ${startNum}
             AND f.round_number <= ${endNum}
             AND f.status = 'completed'
@@ -115,7 +121,7 @@ export async function GET(request: NextRequest) {
       const roundNum = parseInt(roundNumber);
       console.log(`[Player Stats By Round] Filtering by rounds 1 to ${roundNum} (cumulative)`);
       
-      if (viewMode === 'full-season') {
+      if (isFullSeason) {
         matchups = await sql`
           SELECT 
             m.home_player_id,
@@ -138,7 +144,7 @@ export async function GET(request: NextRequest) {
           JOIN fixtures f ON m.fixture_id = f.id
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
-          WHERE f.season_id = ${seasonId}
+          WHERE f.season_id = ANY(${seasonIdArray})
             AND f.round_number <= ${roundNum}
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
@@ -169,7 +175,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
-            AND f.season_id = ${seasonId}
+            AND f.season_id = ${seasonIdArray[0]}
             AND f.round_number <= ${roundNum}
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
@@ -183,7 +189,7 @@ export async function GET(request: NextRequest) {
       // Get all rounds
       console.log(`[Player Stats By Round] Fetching all rounds`);
       
-      if (viewMode === 'full-season') {
+      if (isFullSeason) {
         matchups = await sql`
           SELECT 
             m.home_player_id,
@@ -206,7 +212,7 @@ export async function GET(request: NextRequest) {
           JOIN fixtures f ON m.fixture_id = f.id
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
-          WHERE f.season_id = ${seasonId}
+          WHERE f.season_id = ANY(${seasonIdArray})
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
@@ -236,7 +242,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
-            AND f.season_id = ${seasonId}
+            AND f.season_id = ${seasonIdArray[0]}
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
@@ -247,7 +253,7 @@ export async function GET(request: NextRequest) {
       console.log(`[Player Stats By Round] Found ${matchups.length} total matchups`);
     }
 
-    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+    const seasonNum = parseInt((seasonIdArray[0] || '').replace(/\D/g, '')) || 0;
     const usesCategoryPoints = seasonNum >= 18;
 
     // Fetch Firestore realplayers collection to get photos and fallback categories
@@ -430,9 +436,11 @@ export async function GET(request: NextRequest) {
 
       // Fetch team logos
       console.log('[Player Stats By Round] Fetching team logos from team_seasons...');
-      const teamSeasonsQuery = seasonId 
-        ? adminDb.collection('team_seasons').where('season_id', '==', seasonId)
-        : adminDb.collection('team_seasons');
+      const teamSeasonsQuery = isMultiSeason
+        ? adminDb.collection('team_seasons').where('season_id', 'in', seasonIdArray.slice(0, 10))
+        : (seasonIdArray.length === 1
+            ? adminDb.collection('team_seasons').where('season_id', '==', seasonIdArray[0])
+            : adminDb.collection('team_seasons'));
       const teamSeasonsSnapshot = await teamSeasonsQuery.get();
       console.log(`[Player Stats By Round] Retrieved ${teamSeasonsSnapshot.size} team seasons`);
       
