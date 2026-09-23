@@ -68,10 +68,9 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.season_id = ${seasonId}
             AND f.round_number = ANY(${roundList})
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -99,10 +98,9 @@ export async function GET(request: NextRequest) {
           WHERE f.tournament_id = ${tournamentId}
             AND f.season_id = ${seasonId}
             AND f.round_number = ANY(${roundList})
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -139,10 +137,9 @@ export async function GET(request: NextRequest) {
           WHERE f.season_id = ${seasonId}
             AND f.round_number >= ${startNum}
             AND f.round_number <= ${endNum}
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -171,10 +168,9 @@ export async function GET(request: NextRequest) {
             AND f.season_id = ${seasonId}
             AND f.round_number >= ${startNum}
             AND f.round_number <= ${endNum}
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -209,10 +205,9 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.season_id = ${seasonId}
             AND f.round_number <= ${roundNum}
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -240,10 +235,9 @@ export async function GET(request: NextRequest) {
           WHERE f.tournament_id = ${tournamentId}
             AND f.season_id = ${seasonId}
             AND f.round_number <= ${roundNum}
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }
@@ -276,10 +270,9 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.season_id = ${seasonId}
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       } else {
@@ -306,10 +299,9 @@ export async function GET(request: NextRequest) {
           LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
           WHERE f.tournament_id = ${tournamentId}
             AND f.season_id = ${seasonId}
-            AND f.status = 'completed'
+            AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-            AND (m.is_null IS NOT TRUE)
           ORDER BY f.round_number, m.home_player_name
         `;
       }

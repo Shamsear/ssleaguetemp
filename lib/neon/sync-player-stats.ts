@@ -106,11 +106,11 @@ export async function syncPlayerStatsForSeason(
     categoriesMap.set('white', { priority: 4 });
   }
 
-  // 2. Fetch completed fixtures for this season
+  // 2. Fetch completed or null/cancelled fixtures for this season
   const completedFixtures = await tournamentDb`
     SELECT id, season_id, round_number, motm_player_id
     FROM fixtures
-    WHERE status = 'completed' AND season_id = ${seasonId}
+    WHERE (status = 'completed' OR status = 'cancelled' OR result = 'null') AND season_id = ${seasonId}
     ORDER BY round_number ASC
   `;
 
@@ -121,7 +121,7 @@ export async function syncPlayerStatsForSeason(
     }
   });
 
-  // 3. Fetch completed matchups for this season
+  // 3. Fetch matchups for completed or null/cancelled fixtures for this season
   const matchups = await tournamentDb`
     SELECT 
       m.*,
@@ -133,12 +133,10 @@ export async function syncPlayerStatsForSeason(
     JOIN fixtures f ON m.fixture_id = f.id
     LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
     LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
-    WHERE f.status = 'completed'
-      AND (f.result IS NULL OR f.result != 'null')
+    WHERE (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
       AND f.season_id = ${seasonId}
       AND m.home_goals IS NOT NULL
       AND m.away_goals IS NOT NULL
-      AND (m.is_null IS NOT TRUE)
   `;
 
   console.log(`📊 [syncPlayerStatsForSeason] Processing ${completedFixtures.length} completed fixtures and ${matchups.length} matchups for ${seasonId}`);
@@ -171,9 +169,6 @@ export async function syncPlayerStatsForSeason(
 
   // 5. Accumulate match statistics
   for (const m of matchups) {
-    // Skip matchups marked as NULL
-    if (m.is_null) continue;
-
     const homePId = m.home_player_id ? String(m.home_player_id) : null;
     const awayPId = m.away_player_id ? String(m.away_player_id) : null;
     const homeGoals = Number(m.home_goals) || 0;
