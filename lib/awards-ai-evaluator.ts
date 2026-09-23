@@ -21,18 +21,22 @@ export interface CandidateEvaluation {
 }
 
 export const CATEGORY_PRIORITY_MAP: Record<string, number> = {
+  // Tier 1 — Strongest
   red: 1,
   legend: 1,
   iconic: 1,
-  blue: 2,
+  // Tier 2
+  black: 2,
   gold: 2,
-  classic: 2,
-  black: 3,
+  star: 2,
+  // Tier 3
+  blue: 3,
   silver: 3,
+  classic: 3,
+  // Tier 4 — Weakest
   white: 4,
   bronze: 4,
   rising: 4,
-  star: 3,
 };
 
 export function getCategoryPriority(cat?: string): number {
