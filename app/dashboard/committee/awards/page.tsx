@@ -294,7 +294,7 @@ export default function AwardsManagementPage() {
   const [playerCategories, setPlayerCategories] = useState<Record<string, string>>({});
   const [copiedCandidateId, setCopiedCandidateId] = useState<string | null>(null);
   const [copiedAllNominees, setCopiedAllNominees] = useState(false);
-  const [sortByAI, setSortByAI] = useState(true);
+  const [sortByAI, setSortByAI] = useState(false);
 
   const [loading_data, setLoadingData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -492,13 +492,38 @@ export default function AwardsManagementPage() {
     });
   }, [candidates, activeTab, playerCategories]);
 
-  // Sort candidates by AI rating / score when enabled, or preserve natural order
+  // Sort candidates primarily by Points (highest to lowest), then by AI rating / Goal Diff / Goals / Clean Sheets
   const sortedCandidates = useMemo(() => {
-    if (!sortByAI) return candidatesWithAI;
     return [...candidatesWithAI].sort((a, b) => {
-      const scoreA = a.aiEvaluation?.score ?? 0;
-      const scoreB = b.aiEvaluation?.score ?? 0;
-      return scoreB - scoreA;
+      const ptsA = Number(a.performance_stats?.points ?? 0);
+      const ptsB = Number(b.performance_stats?.points ?? 0);
+      if (ptsB !== ptsA) {
+        return ptsB - ptsA;
+      }
+
+      if (sortByAI) {
+        const scoreA = a.aiEvaluation?.score ?? 0;
+        const scoreB = b.aiEvaluation?.score ?? 0;
+        if (scoreB !== scoreA) {
+          return scoreB - scoreA;
+        }
+      }
+
+      const diffA = Number(a.performance_stats?.goal_difference ?? 0);
+      const diffB = Number(b.performance_stats?.goal_difference ?? 0);
+      if (diffB !== diffA) {
+        return diffB - diffA;
+      }
+
+      const goalsA = Number(a.performance_stats?.total_goals ?? a.performance_stats?.goals ?? a.performance_stats?.goals_for ?? 0);
+      const goalsB = Number(b.performance_stats?.total_goals ?? b.performance_stats?.goals ?? b.performance_stats?.goals_for ?? 0);
+      if (goalsB !== goalsA) {
+        return goalsB - goalsA;
+      }
+
+      const csA = Number(a.performance_stats?.clean_sheets ?? (a.performance_stats?.clean_sheet ? 1 : 0));
+      const csB = Number(b.performance_stats?.clean_sheets ?? (b.performance_stats?.clean_sheet ? 1 : 0));
+      return csB - csA;
     });
   }, [candidatesWithAI, sortByAI]);
 
