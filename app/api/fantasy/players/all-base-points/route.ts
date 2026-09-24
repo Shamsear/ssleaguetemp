@@ -26,15 +26,25 @@ export async function GET(request: NextRequest) {
     // Get total counts for stats (full dataset, not paginated)
     const countResult = await fantasySql`
       SELECT
-        COUNT(*)::int                                      AS total,
-        COUNT(*) FILTER (WHERE is_available = true)::int  AS available,
-        (SELECT COUNT(*)::int FROM fantasy_squad WHERE league_id = ${leagueId})::int AS drafted
-      FROM fantasy_players
-      WHERE league_id = ${leagueId}
+        COUNT(*)::int                                                                               AS total,
+        COUNT(*) FILTER (WHERE fs.team_id IS NULL)::int                                            AS available,
+        COUNT(*) FILTER (WHERE fs.team_id IS NOT NULL)::int                                         AS drafted,
+        COUNT(*) FILTER (WHERE fs.team_id IS NULL AND rel.released_from_team_id IS NOT NULL)::int   AS released
+      FROM fantasy_players fp
+      LEFT JOIN fantasy_squad fs ON fs.real_player_id = fp.real_player_id 
+        AND fs.league_id = fp.league_id
+      LEFT JOIN (
+        SELECT DISTINCT ON (real_player_id) real_player_id, team_id AS released_from_team_id
+        FROM fantasy_releases
+        WHERE league_id = ${leagueId} AND (is_passive_team IS FALSE OR is_passive_team IS NULL)
+        ORDER BY real_player_id, released_at DESC
+      ) rel ON rel.real_player_id = fp.real_player_id
+      WHERE fp.league_id = ${leagueId}
     `;
     const totalPlayers    = countResult[0]?.total     ?? 0;
     const totalAvailable  = countResult[0]?.available ?? 0;
     const totalDrafted    = countResult[0]?.drafted   ?? 0;
+    const totalReleased   = countResult[0]?.released  ?? 0;
 
     // Get players — use sql unsafe for LIMIT/OFFSET with dynamic ints
     // (Neon HTTP driver supports parameterized LIMIT but casting ensures correctness)
@@ -44,16 +54,24 @@ export async function GET(request: NextRequest) {
         fp.player_name,
         fp.real_team_name,
         fp.category,
-        fp.is_available,
         fp.total_points as cumulative_points,
         fp.draft_price,
         fs.team_id as acquired_by_team_id,
         ft.team_name as acquired_by_team_name,
-        ft.owner_name as acquired_by_owner
+        ft.owner_name as acquired_by_owner,
+        rel.released_from_team_id,
+        rel_ft.team_name as released_from_team_name
       FROM fantasy_players fp
       LEFT JOIN fantasy_squad fs ON fs.real_player_id = fp.real_player_id 
         AND fs.league_id = fp.league_id
       LEFT JOIN fantasy_teams ft ON ft.team_id = fs.team_id
+      LEFT JOIN (
+        SELECT DISTINCT ON (real_player_id) real_player_id, team_id AS released_from_team_id
+        FROM fantasy_releases
+        WHERE league_id = ${leagueId} AND (is_passive_team IS FALSE OR is_passive_team IS NULL)
+        ORDER BY real_player_id, released_at DESC
+      ) rel ON rel.real_player_id = fp.real_player_id
+      LEFT JOIN fantasy_teams rel_ft ON rel_ft.team_id = rel.released_from_team_id
       WHERE fp.league_id = ${leagueId}
       ORDER BY fp.total_points DESC, fp.player_name ASC
       LIMIT ${pageSize}::int OFFSET ${offset}::int
@@ -103,7 +121,10 @@ export async function GET(request: NextRequest) {
         draft_price: Number(player.draft_price || 0),
         photo_url: photosMap[player.real_player_id] || null,
 
-        is_available: player.is_available,
+        is_available: player.acquired_by_team_id === null,
+        is_released: player.acquired_by_team_id === null && Boolean(player.released_from_team_id),
+        released_from_team_id: player.released_from_team_id || null,
+        released_from_team_name: player.released_from_team_name || null,
         acquired_by_team_id: player.acquired_by_team_id || null,
         acquired_by_team_name: player.acquired_by_team_name || null,
         acquired_by_owner: player.acquired_by_owner || null,
@@ -156,6 +177,7 @@ export async function GET(request: NextRequest) {
       total_players: totalPlayers,
       available_players: totalAvailable,
       drafted_players: totalDrafted,
+      released_players: totalReleased,
     });
   } catch (error: any) {
     console.error('Error fetching all players base points:', error);

@@ -34,6 +34,9 @@ interface PlayerWithPoints {
   category: string | null;
   draft_price: number;
   is_available: boolean;
+  is_released?: boolean;
+  released_from_team_id?: string | null;
+  released_from_team_name?: string | null;
   acquired_by_team_id: string | null;
   acquired_by_team_name: string | null;
   acquired_by_owner: string | null;
@@ -97,12 +100,13 @@ export default function CommitteeAllPlayersPointsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'cumulative' | 'round' | 'name' | 'acquired'>('cumulative');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'drafted'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'drafted' | 'released'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const [totalAvailable, setTotalAvailable] = useState(0);
   const [totalDrafted, setTotalDrafted] = useState(0);
+  const [totalReleased, setTotalReleased] = useState(0);
   const [totalAll, setTotalAll] = useState(0);
   const [isRecalculating, setIsRecalculating] = useState(false);
 
@@ -258,6 +262,7 @@ export default function CommitteeAllPlayersPointsPage() {
       setTotalAll(data.total_players || 0);
       setTotalAvailable(data.available_players || 0);
       setTotalDrafted(data.drafted_players || 0);
+      setTotalReleased(data.released_players || 0);
     } catch (error: any) {
       console.error('Error loading players:', error);
     } finally {
@@ -280,6 +285,7 @@ export default function CommitteeAllPlayersPointsPage() {
 
     if (filterStatus === 'available') result = result.filter(p => p.is_available);
     else if (filterStatus === 'drafted') result = result.filter(p => !p.is_available);
+    else if (filterStatus === 'released') result = result.filter(p => p.is_released);
 
     if (filterCategory !== 'all') {
       const target = filterCategory.toUpperCase().replace(/[\s\-_]+/g, '');
@@ -384,18 +390,22 @@ export default function CommitteeAllPlayersPointsPage() {
 
         {/* Stats */}
         {totalAll > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Players</div>
               <div className="text-2xl font-extrabold text-slate-900">{totalAll}</div>
             </div>
             <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Drafted</div>
-              <div className="text-2xl font-extrabold text-slate-900">{totalDrafted}</div>
+              <div className="text-2xl font-extrabold text-indigo-600">{totalDrafted}</div>
             </div>
             <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Available</div>
               <div className="text-2xl font-extrabold text-emerald-600">{totalAvailable}</div>
+            </div>
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm">
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Released</div>
+              <div className="text-2xl font-extrabold text-amber-600">{totalReleased}</div>
             </div>
             <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm">
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Top Score</div>
@@ -466,6 +476,14 @@ export default function CommitteeAllPlayersPointsPage() {
                 }`}
               >
                 Drafted ({totalDrafted})
+              </button>
+              <button
+                onClick={() => setFilterStatus('released')}
+                className={`px-4 py-2.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all ${
+                  filterStatus === 'released' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+              >
+                Released ({totalReleased})
               </button>
             </div>
           </div>
@@ -574,13 +592,17 @@ export default function CommitteeAllPlayersPointsPage() {
                     <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mb-3 flex items-center justify-between gap-2">
                       <div>
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">Status</span>
-                        {player.is_available ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-100/80 text-emerald-800 border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" /> Free Agent
-                          </span>
-                        ) : (
+                        {!player.is_available ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-100/80 text-indigo-800 border border-indigo-200 truncate max-w-[140px]">
                             <Users className="w-3 h-3 shrink-0" /> {player.acquired_by_team_name || 'Drafted'}
+                          </span>
+                        ) : player.is_released ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-100/80 text-amber-800 border border-amber-200 truncate max-w-[150px]" title={`Released from ${player.released_from_team_name || 'Team'}`}>
+                            <RotateCw className="w-3 h-3 shrink-0" /> Released ({player.released_from_team_name || 'Free'})
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-100/80 text-emerald-800 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" /> Free Agent
                           </span>
                         )}
                       </div>
@@ -774,23 +796,32 @@ export default function CommitteeAllPlayersPointsPage() {
 
                               {/* Status */}
                               <td className="px-5 py-3.5 text-center">
-                                {player.is_available ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <CheckCircle2 className="w-3 h-3" /> Free
-                                  </span>
-                                ) : (
+                                {!player.is_available ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
                                     <Users className="w-3 h-3" /> Drafted
+                                  </span>
+                                ) : player.is_released ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200" title={`Released from ${player.released_from_team_name || 'Team'}`}>
+                                    <RotateCw className="w-3 h-3" /> Released
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <CheckCircle2 className="w-3 h-3" /> Free
                                   </span>
                                 )}
                               </td>
 
-                              {/* Acquired By */}
+                              {/* Acquired / Released By */}
                               <td className="px-5 py-3.5">
                                 {player.acquired_by_team_name ? (
                                   <div>
                                     <div className="font-bold text-xs text-slate-900">{player.acquired_by_team_name}</div>
                                     <div className="text-[10px] text-slate-400">{player.acquired_by_owner}</div>
+                                  </div>
+                                ) : player.released_from_team_name ? (
+                                  <div>
+                                    <div className="text-[10px] font-bold text-amber-700">Released by:</div>
+                                    <div className="font-bold text-xs text-slate-700">{player.released_from_team_name}</div>
                                   </div>
                                 ) : (
                                   <span className="text-slate-300 text-xs">—</span>
