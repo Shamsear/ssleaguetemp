@@ -6,15 +6,15 @@ async function main() {
   const updates = [
     { team_id: 'SSPSLT0021', name: 'Los Galacticos', budget: 232.00, clearPassive: true },
     { team_id: 'SSPSLT0015', name: 'Legends FC', budget: 206.00, clearPassive: true },
-    { team_id: 'SSPSLT0003', name: 'RED PANTHER\'S', budget: 93.00, clearPassive: true },
-    { team_id: 'SSPSLT0004', name: 'Red Hawks FC', budget: 353.00, clearPassive: false },
-    { team_id: 'SSPSLT0027', name: 'PES GUARDIANS', budget: 270.00, clearPassive: false },
+    { team_id: 'SSPSLT0003', name: 'RED PANTHER\'S', budget: 78.00, clearPassive: true },
+    { team_id: 'SSPSLT0004', name: 'Red Hawks FC', budget: 267.00, clearPassive: false },
+    { team_id: 'SSPSLT0027', name: 'PES GUARDIANS', budget: 250.00, clearPassive: false },
     { team_id: 'SSPSLT0005', name: 'TM ASGARDIANS', budget: 180.00, clearPassive: false },
-    { team_id: 'SSPSLT0041', name: 'ANDIMUKK FC', budget: 120.00, clearPassive: true },
+    { team_id: 'SSPSLT0041', name: 'ANDIMUKK FC', budget: 60.00, clearPassive: true },
     { team_id: 'SSPSLT0001', name: 'CLASSIC TENS', budget: 143.00, clearPassive: false },
   ];
 
-  console.log('=== APPLYING DATABASE BUDGET & SUPPORTED TEAM FIXES ===\n');
+  console.log('=== APPLYING ACCURATE DATABASE BUDGET FIXES ===\n');
 
   for (const u of updates) {
     if (u.clearPassive) {
@@ -48,7 +48,7 @@ async function main() {
   `;
 
   console.table(teams);
-  console.log('\n✅ Database successfully updated and verified!');
+  console.log('\n✅ Database successfully updated to exact audited balances!');
 }
 
 main().catch(console.error);

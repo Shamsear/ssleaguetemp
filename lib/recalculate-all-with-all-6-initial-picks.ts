@@ -10,8 +10,8 @@ async function main() {
     ORDER BY team_name ASC
   `;
 
-  // Get ALL won bids in initial draft (round_id = 12 or initial draft bids submitted on Aug 25-26)
-  const allBids = await fantasySql`
+  // 1. Initial Draft Bids (August 25-26)
+  const allInitialBids = await fantasySql`
     SELECT b.*, ft.team_name, fp.player_name as catalog_player_name
     FROM fantasy_draft_bids b
     JOIN fantasy_teams ft ON ft.team_id = b.team_id
@@ -20,14 +20,7 @@ async function main() {
     ORDER BY b.submitted_at ASC
   `;
 
-  const squad = await fantasySql`
-    SELECT s.*, ft.team_name
-    FROM fantasy_squad s
-    JOIN fantasy_teams ft ON ft.team_id = s.team_id
-    WHERE s.league_id = ${leagueId}
-    ORDER BY s.acquired_at ASC
-  `;
-
+  // 2. All Releases Logged
   const releases = await fantasySql`
     SELECT r.*, ft.team_name as releasing_team_name
     FROM fantasy_releases r
@@ -36,8 +29,17 @@ async function main() {
     ORDER BY r.released_at ASC
   `;
 
+  // 3. All Post-Release Draft Won Bids (Both Players and Passive Teams)
+  const postReleaseBids = await fantasySql`
+    SELECT b.*, ft.team_name
+    FROM fantasy_post_release_bids b
+    JOIN fantasy_teams ft ON ft.team_id = b.team_id
+    WHERE b.league_id = ${leagueId} AND b.status = 'won'
+    ORDER BY b.submitted_at ASC
+  `;
+
   console.log('========================================================================');
-  console.log('=== ACCURATE FROM-SCRATCH AUDIT FOR ALL 8 TEAMS (INITIAL 6 SLOTS INCL) ===');
+  console.log('=== COMPLETE 100% AUDIT FOR ALL 8 TEAMS (INCL PASSIVE TEAM AUCTIONS) ===');
   console.log('========================================================================\n');
 
   for (const t of teams) {
@@ -49,7 +51,7 @@ async function main() {
     let runningBalance = 500.00;
 
     // STEP 1: ALL 6 INITIAL DRAFT PICKS (Submitted Aug 25-26)
-    const initialBids = allBids.filter((b: any) => 
+    const initialBids = allInitialBids.filter((b: any) => 
       b.team_id === t.team_id && 
       new Date(b.submitted_at).getTime() < new Date('2026-09-01').getTime()
     );
@@ -68,50 +70,62 @@ async function main() {
     console.log(`  > Total Initial Draft Spend (6 Slots): -${initialSpend}.00 pts`);
     console.log(`  > Balance after Initial Draft: ${runningBalance}.00 pts\n`);
 
-    // STEP 2: RELEASES & REFUNDS (CHRONOLOGICAL ORDER)
-    console.log(`--- STEP 2: RELEASES & REFUNDS LOGGED ---`);
-    const teamReleases = releases.filter((r: any) => r.team_id === t.team_id);
-    let totalRefundsReceived = 0;
+    // STEP 2: RELEASES, REFUNDS & POST-RELEASE ACQUISITIONS (CHRONOLOGICAL)
+    console.log(`--- STEP 2: CHRONOLOGICAL RELEASES, REFUNDS & POST-RELEASE ACQUISITIONS ---`);
+    
+    // Combine releases & post-release bids by timestamp
+    const teamReleases = releases.filter((r: any) => r.team_id === t.team_id).map((r: any) => ({
+      type: 'RELEASE',
+      timestamp: new Date(r.released_at).getTime(),
+      dateStr: r.released_at,
+      name: r.player_name,
+      id: r.real_player_id,
+      amount: Number(r.refund_amount || 0),
+      isPassive: r.is_passive_team
+    }));
 
-    if (teamReleases.length === 0) {
-      console.log(`  (No releases recorded)`);
+    const teamPostBids = postReleaseBids.filter((b: any) => b.team_id === t.team_id).map((b: any) => ({
+      type: 'ACQUISITION',
+      timestamp: new Date(b.submitted_at).getTime(),
+      dateStr: b.submitted_at,
+      name: b.target_name,
+      id: b.target_id,
+      amount: Number(b.bid_amount || 0),
+      isPassive: b.is_passive_team
+    }));
+
+    const timeline = [...teamReleases, ...teamPostBids].sort((a, b) => a.timestamp - b.timestamp);
+
+    let totalRefunds = 0;
+    let totalSpend = 0;
+
+    if (timeline.length === 0) {
+      console.log(`  (No releases or post-release acquisitions recorded)`);
     } else {
-      teamReleases.forEach((r: any) => {
-        const refund = Number(r.refund_amount || 0);
-        totalRefundsReceived += refund;
-        runningBalance += refund;
-        const tag = r.is_passive_team ? '[PASSIVE REAL TEAM]' : '[PLAYER]';
-        console.log(`  - Released ${tag} ${r.player_name} (${r.real_player_id}): +${refund} pts refund [At: ${new Date(r.released_at).toISOString()}] -> Running Balance: ${runningBalance}.00 pts`);
+      timeline.forEach((item) => {
+        if (item.type === 'RELEASE') {
+          totalRefunds += item.amount;
+          runningBalance += item.amount;
+          const tag = item.isPassive ? '[PASSIVE REAL TEAM]' : '[PLAYER]';
+          console.log(`  - RELEASED ${tag} ${item.name} (${item.id}): +${item.amount} pts refund [At: ${new Date(item.dateStr).toISOString()}] -> Running Balance: ${runningBalance}.00 pts`);
+        } else {
+          totalSpend += item.amount;
+          runningBalance -= item.amount;
+          const tag = item.isPassive ? '[PASSIVE REAL TEAM]' : '[PLAYER]';
+          console.log(`  - ACQUIRED ${tag} ${item.name} (${item.id}) via Auction: -${item.amount} pts spend [At: ${new Date(item.dateStr).toISOString()}] -> Running Balance: ${runningBalance}.00 pts`);
+        }
       });
     }
 
-    console.log(`  > Total Refunds Received: +${totalRefundsReceived}.00 pts`);
-    console.log(`  > Balance after Releases: ${runningBalance}.00 pts\n`);
-
-    // STEP 3: POST-RELEASE DRAFT ACQUISITIONS (AUCTION WINNERS)
-    console.log(`--- STEP 3: POST-RELEASE DRAFT ACQUISITIONS (AUCTION WINNERS) ---`);
-    const postReleaseSquad = squad.filter((s: any) => s.team_id === t.team_id && s.acquisition_type === 'post_release_draft');
-    let totalPostReleaseSpend = 0;
-
-    if (postReleaseSquad.length === 0) {
-      console.log(`  (No post-release acquisitions recorded)`);
-    } else {
-      postReleaseSquad.forEach((s: any) => {
-        const price = Number(s.purchase_price || 0);
-        totalPostReleaseSpend += price;
-        runningBalance -= price;
-        console.log(`  - Acquired via Post-Release Auction: ${s.player_name} (${s.real_player_id}) @ -${price} pts [At: ${new Date(s.acquired_at).toISOString()}] -> Running Balance: ${runningBalance}.00 pts`);
-      });
-    }
-
-    console.log(`  > Total Post-Release Draft Spend: -${totalPostReleaseSpend}.00 pts`);
+    console.log(`\n  > Total Refunds Received: +${totalRefunds}.00 pts`);
+    console.log(`  > Total Post-Release Spend: -${totalSpend}.00 pts`);
     console.log(`  > Final Calculated Balance: ${runningBalance}.00 pts\n`);
 
-    // STEP 4: COMPARISON WITH CURRENT DB BALANCE
+    // STEP 3: AUDIT COMPARISON
     const currentDbBudget = Number(t.budget_remaining || 0);
     const diff = currentDbBudget - runningBalance;
 
-    console.log(`--- STEP 4: AUDIT COMPARISON ---`);
+    console.log(`--- STEP 3: AUDIT COMPARISON ---`);
     console.log(`  Calculated Correct Balance:  ${runningBalance}.00 pts`);
     console.log(`  Current Database Balance:    ${currentDbBudget}.00 pts`);
     if (Math.abs(diff) < 0.01) {
