@@ -108,35 +108,80 @@ export async function POST(request: NextRequest) {
     `;
     console.log(`🏆 Loaded ${awards.length} awards for Season 18`);
 
-    const draftSquads = new Map<string, Set<string>>();
-    const draftSupportedTeams = new Map<string, string>();
-    currentTeams.forEach((t: any) => draftSquads.set(t.team_id, new Set()));
+    const draftBidsAll = await fantasyDb`
+      SELECT team_id, slot_index, target_id
+      FROM fantasy_draft_bids
+      WHERE league_id = ${LEAGUE_ID} AND status = 'won' AND slot_index >= 1 AND slot_index <= 5
+    `;
 
-    // 1. Retained players from original draft
-    currentSquad.filter((s: any) => s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
-      draftSquads.get(s.team_id)?.add(s.real_player_id);
-    });
+    const releasesAll = await fantasyDb`
+      SELECT fr.team_id, fr.real_player_id, fr.player_name, fr.is_passive_team, fr.window_id,
+             COALESCE(ftw.start_round, 999) as release_start_round
+      FROM fantasy_releases fr
+      LEFT JOIN fantasy_transfer_windows ftw ON fr.window_id = ftw.window_id
+      WHERE fr.league_id = ${LEAGUE_ID} AND fr.is_passive_team = false
+    `;
 
-    // 2. Released players (they belonged to that team for rounds 1-6)
-    releases.filter((r: any) => !r.is_passive_team).forEach((r: any) => {
-      draftSquads.get(r.team_id)?.add(r.real_player_id);
-    });
+    const postBidsAll = await fantasyDb`
+      SELECT fprb.team_id, fprb.target_id, fprb.target_name,
+             COALESCE(ftw.start_round, 999) as acq_start_round
+      FROM fantasy_post_release_bids fprb
+      LEFT JOIN fantasy_transfer_windows ftw ON fprb.draft_round_id = ftw.window_id
+      WHERE fprb.league_id = ${LEAGUE_ID} AND fprb.status = 'won' AND fprb.is_passive_team = false
+    `;
 
-    // 3. Draft bids fallback
-    draftBids.forEach((bid: any) => {
-      if (bid.slot_index >= 1 && bid.slot_index <= 5) {
-        if (!draftSquads.has(bid.team_id)) draftSquads.set(bid.team_id, new Set());
-        draftSquads.get(bid.team_id)!.add(bid.target_id);
-      } else if (bid.slot_index === 6) {
-        draftSupportedTeams.set(bid.team_id, bid.target_id);
-      }
-    });
+    const swapsAll = await fantasyDb`
+      SELECT fs.team_id, fs.player_out_id, fs.player_in_id,
+             COALESCE(ftw.start_round, 999) as swap_start_round
+      FROM fantasy_swaps fs
+      LEFT JOIN fantasy_transfer_windows ftw ON fs.window_id = ftw.window_id
+      WHERE fs.league_id = ${LEAGUE_ID}
+    `;
 
-    const postWindowSquads = new Map<string, Set<string>>();
-    currentSquad.forEach((row: any) => {
-      if (!postWindowSquads.has(row.team_id)) postWindowSquads.set(row.team_id, new Set());
-      postWindowSquads.get(row.team_id)!.add(row.real_player_id);
-    });
+    const roundSquadCache = new Map<string, Set<string>>();
+    const getSquadSetForRound = (teamId: string, roundNum: number): Set<string> => {
+      const cacheKey = `${teamId}_${roundNum}`;
+      if (roundSquadCache.has(cacheKey)) return roundSquadCache.get(cacheKey)!;
+
+      const players = new Set<string>();
+
+      // 1. Initial draft retained squad members
+      currentSquad.filter((s: any) => s.team_id === teamId && s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
+        players.add(s.real_player_id);
+      });
+
+      // 2. Draft bids won (initial draft)
+      draftBidsAll.filter((b: any) => b.team_id === teamId).forEach((b: any) => {
+        players.add(b.target_id);
+      });
+
+      // 3. Releases: if release_start_round > roundNum, player was STILL in squad during roundNum
+      releasesAll.filter((r: any) => r.team_id === teamId).forEach((r: any) => {
+        if (Number(r.release_start_round) > roundNum) {
+          players.add(r.real_player_id);
+        } else {
+          players.delete(r.real_player_id);
+        }
+      });
+
+      // 4. Post-release acquisitions: only active if acq_start_round <= roundNum
+      postBidsAll.filter((p: any) => p.team_id === teamId).forEach((p: any) => {
+        if (Number(p.acq_start_round) <= roundNum) {
+          players.add(p.target_id);
+        }
+      });
+
+      // 5. Swaps: only active if swap_start_round <= roundNum
+      swapsAll.filter((s: any) => s.team_id === teamId).forEach((s: any) => {
+        if (Number(s.swap_start_round) <= roundNum) {
+          players.delete(s.player_out_id);
+          players.add(s.player_in_id);
+        }
+      });
+
+      roundSquadCache.set(cacheKey, players);
+      return players;
+    };
 
     const getCategoryResultPts = (oppCat: string, outcome: string): number => {
       const cat = (oppCat || '').toLowerCase();
