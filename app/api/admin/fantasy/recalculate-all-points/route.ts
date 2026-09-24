@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
     const matchups = await tournamentDb`
       SELECT 
         m.fixture_id,
+        f.round_number,
         m.home_player_id, m.home_player_name,
         m.away_player_id, m.away_player_name,
         m.home_goals, m.away_goals,
@@ -64,7 +65,10 @@ export async function POST(request: NextRequest) {
       JOIN fixtures f ON m.fixture_id = f.id
       LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
       LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
-      WHERE f.status = 'completed' AND f.season_id = ${SEASON_ID} AND m.home_goals IS NOT NULL AND m.away_goals IS NOT NULL
+      WHERE f.season_id = ${SEASON_ID}
+        AND (m.is_null IS NOT TRUE)
+        AND m.home_goals IS NOT NULL 
+        AND m.away_goals IS NOT NULL
     `;
 
     // Load Draft Bids (for Rounds 1-6), Releases, and Current Squad (for Rounds 7+)
