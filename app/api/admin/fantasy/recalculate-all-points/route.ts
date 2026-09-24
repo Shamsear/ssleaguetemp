@@ -263,9 +263,7 @@ export async function POST(request: NextRequest) {
 
         for (const t of currentTeams as any[]) {
           const teamId = t.team_id;
-          const squadSet = (roundNum <= 6) 
-            ? (draftSquads.get(teamId) || new Set())
-            : (postWindowSquads.get(teamId) || new Set());
+          const squadSet = getSquadSetForRound(teamId, roundNum);
 
           if (squadSet.has(playerId)) {
             let isCap = false;
