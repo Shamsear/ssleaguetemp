@@ -246,22 +246,112 @@ export async function GET(request: NextRequest) {
       WHERE fs.league_id = ${leagueId}
     `;
 
-    const releases = await fantasySql`
-      SELECT team_id, real_player_id, player_name, category, window_id
-      FROM fantasy_releases
-      WHERE league_id = ${leagueId} AND is_passive_team = false
+    const draftBidsAll = await fantasySql`
+      SELECT team_id, slot_index, target_id
+      FROM fantasy_draft_bids
+      WHERE league_id = ${leagueId} AND status = 'won' AND slot_index >= 1 AND slot_index <= 5
+    `;
+
+    const releasesAll = await fantasySql`
+      SELECT fr.team_id, fr.real_player_id, fr.player_name, fr.category, fr.window_id,
+             COALESCE(ftw.start_round, 999) as release_start_round
+      FROM fantasy_releases fr
+      LEFT JOIN fantasy_transfer_windows ftw ON fr.window_id = ftw.window_id
+      WHERE fr.league_id = ${leagueId} AND fr.is_passive_team = false
+    `;
+
+    const postBidsAll = await fantasySql`
+      SELECT fprb.team_id, fprb.target_id, fprb.target_name, fprb.category,
+             COALESCE(ftw.start_round, 999) as acq_start_round
+      FROM fantasy_post_release_bids fprb
+      LEFT JOIN fantasy_transfer_windows ftw ON fprb.draft_round_id = ftw.window_id
+      WHERE fprb.league_id = ${leagueId} AND fprb.status = 'won' AND fprb.is_passive_team = false
+    `;
+
+    const swapsAll = await fantasySql`
+      SELECT fs.team_id, fs.player_out_id, fs.player_in_id,
+             COALESCE(ftw.start_round, 999) as swap_start_round
+      FROM fantasy_swaps fs
+      LEFT JOIN fantasy_transfer_windows ftw ON fs.window_id = ftw.window_id
+      WHERE fs.league_id = ${leagueId}
     `;
 
     const teamSquadMap = new Map<string, any[]>();
     allTeams.forEach((ft: any) => {
-      let squadList: any[] = [];
-      if (targetRound < firstWindowStartRound) {
-        const retained = currentSquad.filter((s: any) => s.team_id === ft.team_id && s.acquisition_type !== 'post_release_draft');
-        const rel = releases.filter((r: any) => r.team_id === ft.team_id);
-        squadList = [...retained, ...rel];
-      } else {
-        squadList = currentSquad.filter((s: any) => s.team_id === ft.team_id);
-      }
+      const playerMap = new Map<string, any>();
+
+      // 1. Initial draft retained squad members
+      currentSquad.filter((s: any) => s.team_id === ft.team_id && s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
+        playerMap.set(s.real_player_id, s);
+      });
+
+      // 2. Draft bids won (initial draft)
+      draftBidsAll.filter((b: any) => b.team_id === ft.team_id).forEach((b: any) => {
+        if (!playerMap.has(b.target_id)) {
+          const meta = currentSquad.find((s: any) => s.real_player_id === b.target_id);
+          const relMeta = releasesAll.find((r: any) => r.real_player_id === b.target_id);
+          playerMap.set(b.target_id, {
+            team_id: ft.team_id,
+            real_player_id: b.target_id,
+            player_name: meta?.player_name || relMeta?.player_name || b.target_id,
+            category: meta?.category || relMeta?.category || 'Unknown',
+            position: meta?.position || 'Unknown',
+            real_team_name: meta?.real_team_name || ''
+          });
+        }
+      });
+
+      // 3. Releases: if release_start_round > targetRound, player was STILL in squad during targetRound
+      releasesAll.filter((r: any) => r.team_id === ft.team_id).forEach((r: any) => {
+        if (Number(r.release_start_round) > targetRound) {
+          if (!playerMap.has(r.real_player_id)) {
+            playerMap.set(r.real_player_id, {
+              team_id: ft.team_id,
+              real_player_id: r.real_player_id,
+              player_name: r.player_name,
+              category: r.category || 'Unknown',
+              position: 'Unknown',
+              real_team_name: ''
+            });
+          }
+        } else {
+          // Released on or before targetRound
+          playerMap.delete(r.real_player_id);
+        }
+      });
+
+      // 4. Post-release acquisitions: only active if acq_start_round <= targetRound
+      postBidsAll.filter((p: any) => p.team_id === ft.team_id).forEach((p: any) => {
+        if (Number(p.acq_start_round) <= targetRound) {
+          const meta = currentSquad.find((s: any) => s.real_player_id === p.target_id);
+          playerMap.set(p.target_id, {
+            team_id: ft.team_id,
+            real_player_id: p.target_id,
+            player_name: meta?.player_name || p.target_name || p.target_id,
+            category: meta?.category || p.category || 'Unknown',
+            position: meta?.position || 'Unknown',
+            real_team_name: meta?.real_team_name || ''
+          });
+        }
+      });
+
+      // 5. Swaps: only active if swap_start_round <= targetRound
+      swapsAll.filter((s: any) => s.team_id === ft.team_id).forEach((s: any) => {
+        if (Number(s.swap_start_round) <= targetRound) {
+          playerMap.delete(s.player_out_id);
+          const meta = currentSquad.find((m: any) => m.real_player_id === s.player_in_id);
+          playerMap.set(s.player_in_id, {
+            team_id: ft.team_id,
+            real_player_id: s.player_in_id,
+            player_name: meta?.player_name || s.player_in_id,
+            category: meta?.category || 'Unknown',
+            position: meta?.position || 'Unknown',
+            real_team_name: meta?.real_team_name || ''
+          });
+        }
+      });
+
+      let squadList = Array.from(playerMap.values());
 
       const cap = capHistMap.get(ft.team_id);
       squadList = squadList.map((p: any) => {
@@ -428,14 +518,10 @@ export async function GET(request: NextRequest) {
 
       let supporting_team_name = bData?.real_team_name;
       if (!supporting_team_name) {
-        if (targetRound >= firstWindowStartRound) {
-          const wonNew = postReleasePassiveWon.find((b: any) => b.team_id === ft.team_id);
-          const wasRel = passiveReleases.find((r: any) => r.team_id === ft.team_id);
-          if (wonNew) supporting_team_name = wonNew.target_name || wonNew.target_id;
-          else if (wasRel) supporting_team_name = 'None (Released)';
-          else supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
-        } else {
+        if (targetRound < 7) {
           supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
+        } else {
+          supporting_team_name = ft.supported_team_name || initialSupportedTeamMap[ft.team_id] || 'N/A';
         }
       }
 
@@ -454,7 +540,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    todRows.sort((a, b) => {
+    todRows.sort((a: any, b: any) => {
       const diff = b.total_round_points - a.total_round_points;
       if (diff !== 0) return diff;
       return b.player_points - a.player_points;
@@ -848,14 +934,10 @@ export async function GET(request: NextRequest) {
 
       let supporting_team_name = bData?.real_team_name;
       if (!supporting_team_name) {
-        if (startR >= firstWindowStartRound) {
-          const wonNew = postReleasePassiveWon.find((b: any) => b.team_id === ft.team_id);
-          const wasRel = passiveReleases.find((r: any) => r.team_id === ft.team_id);
-          if (wonNew) supporting_team_name = wonNew.target_name || wonNew.target_id;
-          else if (wasRel) supporting_team_name = 'None (Released)';
-          else supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
-        } else {
+        if (startR < 7) {
           supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
+        } else {
+          supporting_team_name = ft.supported_team_name || initialSupportedTeamMap[ft.team_id] || 'N/A';
         }
       }
 
@@ -878,7 +960,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    towRows.sort((a, b) => {
+    towRows.sort((a: any, b: any) => {
       const diff = b.total_week_points - a.total_week_points;
       if (diff !== 0) return diff;
       return b.player_points - a.player_points;
