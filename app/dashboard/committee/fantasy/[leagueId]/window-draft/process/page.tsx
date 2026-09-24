@@ -369,8 +369,8 @@ function PostWindowDraftProcessContent() {
         setTies(bidsData.ties || []);
       }
 
-      const activeOpensAt = matchingRound?.opens_at || foundWin?.opens_at;
-      const activeClosesAt = matchingRound?.closes_at || foundWin?.closes_at;
+      const activeOpensAt = foundWin?.opens_at || matchingRound?.opens_at;
+      const activeClosesAt = foundWin?.closes_at || matchingRound?.closes_at;
 
       if (activeOpensAt) setOpensAtInput(formatISTForInput(activeOpensAt));
       if (activeClosesAt) setClosesAtInput(formatISTForInput(activeClosesAt));
@@ -379,18 +379,16 @@ function PostWindowDraftProcessContent() {
       const closesTime = activeClosesAt ? new Date(activeClosesAt).getTime() : 0;
       const nowTime = Date.now();
 
-      if (matchingRound?.status === 'active') {
+      if (foundWin?.status === 'active' || (opensTime > 0 && nowTime >= opensTime && (closesTime === 0 || nowTime < closesTime) && foundWin?.is_active)) {
         setRoundStatus('active');
-      } else if (matchingRound?.status === 'closed') {
+      } else if (foundWin?.status === 'closed' || (closesTime > 0 && nowTime >= closesTime)) {
         setRoundStatus('closed');
-      } else if (matchingRound?.status === 'completed') {
+      } else if (foundWin?.status === 'completed' || matchingRound?.status === 'completed') {
         setRoundStatus('finalized');
       } else if (fetchedBids.some((b: any) => b.status === 'won')) {
         setRoundStatus('finalized');
       } else if (opensTime > nowTime) {
         setRoundStatus('pending');
-      } else if (closesTime > 0 && nowTime >= closesTime) {
-        setRoundStatus('closed');
       } else if (foundWin?.is_active) {
         setRoundStatus('active');
       } else {
