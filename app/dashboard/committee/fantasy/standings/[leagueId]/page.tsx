@@ -30,13 +30,39 @@ export default function FantasyStandingsPage() {
   const params = useParams();
   const leagueId = params?.leagueId as string;
 
-  const [league, setLeague] = useState<any>(null);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [h2hStandings, setH2hStandings] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'overall' | 'h2h'>('overall');
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedMaxRound, setSelectedMaxRound] = useState<number | 'all'>('all');
+  const [availableRounds, setAvailableRounds] = useState<number[]>([]);
+  const [isFetchingFiltered, setIsFetchingFiltered] = useState(false);
 
-  const { alertState, showAlert, closeAlert } = useModal();
+  const fetchLeaderboardForRound = async (maxRoundVal: number | 'all') => {
+    if (!leagueId) return;
+
+    try {
+      setIsFetchingFiltered(true);
+      const endpoint = maxRoundVal === 'all'
+        ? `/api/fantasy/leaderboard/${leagueId}`
+        : `/api/fantasy/leaderboard/${leagueId}?max_round=${maxRoundVal}`;
+
+      const response = await fetchWithTokenRefresh(endpoint);
+      if (!response.ok) throw new Error('Failed to load leaderboard');
+
+      const data = await response.json();
+      setLeague(data.league);
+      setLeaderboard(data.leaderboard || []);
+      if (data.available_rounds && Array.isArray(data.available_rounds)) {
+        setAvailableRounds(data.available_rounds);
+      }
+    } catch (error: any) {
+      console.error('Error loading round leaderboard:', error);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to filter fantasy standings by round',
+      });
+    } finally {
+      setIsFetchingFiltered(false);
+    }
+  };
 
   useEffect(() => {
     const loadLeaderboard = async () => {
@@ -49,6 +75,9 @@ export default function FantasyStandingsPage() {
         const data = await response.json();
         setLeague(data.league);
         setLeaderboard(data.leaderboard || []);
+        if (data.available_rounds && Array.isArray(data.available_rounds)) {
+          setAvailableRounds(data.available_rounds);
+        }
         
         // Load H2H standings
         try {
@@ -145,12 +174,75 @@ export default function FantasyStandingsPage() {
 
           {/* Full Leaderboard Table Card */}
           <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pb-3 border-b border-slate-100">
               <div>
-                <h2 className="text-xs sm:text-sm font-black text-slate-850 uppercase tracking-wider">Complete Standings</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs sm:text-sm font-black text-slate-850 uppercase tracking-wider">
+                    {selectedMaxRound === 'all' ? 'Complete Standings (Full Season)' : `Standings (Up to Round ${selectedMaxRound})`}
+                  </h2>
+                  {isFetchingFiltered && (
+                    <span className="inline-block animate-spin h-3.5 w-3.5 border-2 border-amber-500 border-t-transparent rounded-full" />
+                  )}
+                </div>
                 <p className="text-[9px] sm:text-[10px] text-slate-450 font-bold uppercase mt-0.5">
-                  {leaderboard.length} fantasy managers participating
+                  {leaderboard.length} fantasy managers participating {selectedMaxRound !== 'all' ? `• Filtered up to Round ${selectedMaxRound}` : ''}
                 </p>
+              </div>
+
+              {/* Round Filter Controls */}
+              <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Filter Round:</span>
+                
+                {/* Select Dropdown */}
+                <select
+                  value={selectedMaxRound}
+                  onChange={(e) => {
+                    const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setSelectedMaxRound(val);
+                    fetchLeaderboardForRound(val);
+                  }}
+                  className="bg-slate-800 text-amber-400 border border-slate-700 text-xs font-bold font-mono rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer shadow-sm"
+                >
+                  <option value="all">Full Season (All Rounds)</option>
+                  {availableRounds.map((r) => (
+                    <option key={r} value={r}>
+                      Up to Round {r}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Quick Action Pills for Popular Checkpoints */}
+                <div className="inline-flex items-center rounded-xl bg-slate-100 p-0.5 text-xs font-bold">
+                  <button
+                    onClick={() => {
+                      setSelectedMaxRound('all');
+                      fetchLeaderboardForRound('all');
+                    }}
+                    className={`px-2.5 py-1 rounded-lg transition-all text-[10px] uppercase font-bold ${
+                      selectedMaxRound === 'all'
+                        ? 'bg-amber-500 text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Full
+                  </button>
+                  {availableRounds.slice(-3).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setSelectedMaxRound(r);
+                        fetchLeaderboardForRound(r);
+                      }}
+                      className={`px-2 py-1 rounded-lg transition-all text-[10px] uppercase font-bold ${
+                        selectedMaxRound === r
+                          ? 'bg-amber-500 text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      R{r}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

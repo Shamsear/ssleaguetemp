@@ -38,65 +38,150 @@ export async function GET(
 
     const league = leagues[0];
 
-    // Get leaderboard with team stats
-    const leaderboard = await fantasySql`
-      SELECT 
-        ft.team_id as fantasy_team_id,
-        ft.team_name,
-        ft.owner_name,
-        ft.total_points,
-        COALESCE(ft.passive_points, 0) as passive_points,
-        COALESCE(
-          ft.player_points,
-          (
-            SELECT COALESCE(SUM(fs.total_points), 0)
-            FROM fantasy_squad fs
-            WHERE fs.team_id = ft.team_id
-          ),
-          0
-        ) as player_points,
-        ft.rank,
-        COALESCE(
-          (
-            SELECT ftbp.real_team_id
-            FROM fantasy_team_bonus_points ftbp
-            WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id
-            ORDER BY ftbp.round_number DESC, ftbp.id DESC
-            LIMIT 1
-          ),
-          ft.supported_team_id
-        ) as supported_team_id,
-        COALESCE(
-          (
-            SELECT ftbp.real_team_name
-            FROM fantasy_team_bonus_points ftbp
-            WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id
-            ORDER BY ftbp.round_number DESC, ftbp.id DESC
-            LIMIT 1
-          ),
-          ft.supported_team_name
-        ) as supported_team_name,
-        COUNT(DISTINCT fs.real_player_id) as player_count,
-        COALESCE(
-          (
-            SELECT SUM(fpp.total_points)
-            FROM fantasy_player_points fpp
-            JOIN fantasy_squad fs ON fpp.real_player_id = fs.real_player_id AND fs.team_id = ft.team_id
-            WHERE fpp.league_id = ${leagueId}
-              AND fpp.round_number = (
-                SELECT MAX(round_number)
-                FROM fantasy_player_points
-                WHERE league_id = ${leagueId}
-              )
-          ),
-          0
-        ) as last_round_points
-      FROM fantasy_teams ft
-      LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
-      WHERE ft.league_id = ${leagueId}
-      GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.passive_points, ft.player_points, ft.rank, ft.supported_team_id, ft.supported_team_name, ft.league_id
-      ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
+    const url = new URL(request.url);
+    const maxRoundParam = url.searchParams.get('max_round') || url.searchParams.get('round');
+    const maxRound = maxRoundParam && !isNaN(Number(maxRoundParam)) ? Number(maxRoundParam) : null;
+
+    // Fetch available completed rounds
+    const availableRoundsData = await fantasySql`
+      SELECT DISTINCT round_number
+      FROM (
+        SELECT round_number FROM fantasy_player_points WHERE league_id = ${leagueId}
+        UNION
+        SELECT round_number FROM fantasy_team_bonus_points WHERE league_id = ${leagueId}
+      ) combined
+      ORDER BY round_number ASC
     `;
+    const availableRounds = availableRoundsData.map((r: any) => Number(r.round_number));
+
+    let leaderboard: any[] = [];
+
+    if (maxRound !== null) {
+      // Get leaderboard aggregated up to maxRound
+      leaderboard = await fantasySql`
+        WITH player_pts AS (
+          SELECT team_id, COALESCE(SUM(total_points), 0) as calc_player_points
+          FROM fantasy_player_points
+          WHERE league_id = ${leagueId} AND round_number <= ${maxRound}
+          GROUP BY team_id
+        ),
+        passive_pts AS (
+          SELECT team_id, COALESCE(SUM(total_bonus), 0) as calc_passive_points
+          FROM fantasy_team_bonus_points
+          WHERE league_id = ${leagueId} AND round_number <= ${maxRound}
+          GROUP BY team_id
+        ),
+        last_rd_pts AS (
+          SELECT fpp.team_id, COALESCE(SUM(fpp.total_points), 0) as calc_last_round_points
+          FROM fantasy_player_points fpp
+          WHERE fpp.league_id = ${leagueId} AND fpp.round_number = ${maxRound}
+          GROUP BY fpp.team_id
+        ),
+        combined_scores AS (
+          SELECT 
+            ft.team_id as fantasy_team_id,
+            ft.team_name,
+            ft.owner_name,
+            COALESCE(pt.calc_player_points, 0) as player_points,
+            COALESCE(pas.calc_passive_points, 0) as passive_points,
+            (COALESCE(pt.calc_player_points, 0) + COALESCE(pas.calc_passive_points, 0)) as total_points,
+            COALESCE(lrd.calc_last_round_points, 0) as last_round_points,
+            COALESCE(
+              (
+                SELECT ftbp.real_team_id
+                FROM fantasy_team_bonus_points ftbp
+                WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id AND ftbp.round_number <= ${maxRound}
+                ORDER BY ftbp.round_number DESC, ftbp.id DESC
+                LIMIT 1
+              ),
+              ft.supported_team_id
+            ) as supported_team_id,
+            COALESCE(
+              (
+                SELECT ftbp.real_team_name
+                FROM fantasy_team_bonus_points ftbp
+                WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id AND ftbp.round_number <= ${maxRound}
+                ORDER BY ftbp.round_number DESC, ftbp.id DESC
+                LIMIT 1
+              ),
+              ft.supported_team_name
+            ) as supported_team_name,
+            COUNT(DISTINCT fs.real_player_id) as player_count
+          FROM fantasy_teams ft
+          LEFT JOIN player_pts pt ON ft.team_id = pt.team_id
+          LEFT JOIN passive_pts pas ON ft.team_id = pas.team_id
+          LEFT JOIN last_rd_pts lrd ON ft.team_id = lrd.team_id
+          LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
+          WHERE ft.league_id = ${leagueId}
+          GROUP BY ft.team_id, ft.team_name, ft.owner_name, pt.calc_player_points, pas.calc_passive_points, lrd.calc_last_round_points, ft.supported_team_id, ft.supported_team_name
+        )
+        SELECT 
+          cs.*,
+          ROW_NUMBER() OVER (ORDER BY cs.total_points DESC, cs.team_name ASC) as rank
+        FROM combined_scores cs
+        ORDER BY cs.total_points DESC, cs.team_name ASC
+      `;
+    } else {
+      // Get standard all-time leaderboard with team stats
+      leaderboard = await fantasySql`
+        SELECT 
+          ft.team_id as fantasy_team_id,
+          ft.team_name,
+          ft.owner_name,
+          ft.total_points,
+          COALESCE(ft.passive_points, 0) as passive_points,
+          COALESCE(
+            ft.player_points,
+            (
+              SELECT COALESCE(SUM(fs.total_points), 0)
+              FROM fantasy_squad fs
+              WHERE fs.team_id = ft.team_id
+            ),
+            0
+          ) as player_points,
+          ft.rank,
+          COALESCE(
+            (
+              SELECT ftbp.real_team_id
+              FROM fantasy_team_bonus_points ftbp
+              WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id
+              ORDER BY ftbp.round_number DESC, ftbp.id DESC
+              LIMIT 1
+            ),
+            ft.supported_team_id
+          ) as supported_team_id,
+          COALESCE(
+            (
+              SELECT ftbp.real_team_name
+              FROM fantasy_team_bonus_points ftbp
+              WHERE ftbp.league_id = ${leagueId} AND ftbp.team_id = ft.team_id
+              ORDER BY ftbp.round_number DESC, ftbp.id DESC
+              LIMIT 1
+            ),
+            ft.supported_team_name
+          ) as supported_team_name,
+          COUNT(DISTINCT fs.real_player_id) as player_count,
+          COALESCE(
+            (
+              SELECT SUM(fpp.total_points)
+              FROM fantasy_player_points fpp
+              JOIN fantasy_squad fs ON fpp.real_player_id = fs.real_player_id AND fs.team_id = ft.team_id
+              WHERE fpp.league_id = ${leagueId}
+                AND fpp.round_number = (
+                  SELECT MAX(round_number)
+                  FROM fantasy_player_points
+                  WHERE league_id = ${leagueId}
+                )
+            ),
+            0
+          ) as last_round_points
+        FROM fantasy_teams ft
+        LEFT JOIN fantasy_squad fs ON ft.team_id = fs.team_id
+        WHERE ft.league_id = ${leagueId}
+        GROUP BY ft.team_id, ft.team_name, ft.owner_name, ft.total_points, ft.passive_points, ft.player_points, ft.rank, ft.supported_team_id, ft.supported_team_name, ft.league_id
+        ORDER BY ft.total_points DESC, ft.rank ASC NULLS LAST, ft.team_name ASC
+      `;
+    }
 
     // Get fantasy team logos from Firebase using fantasy team_id
     const fantasyTeamIds = leaderboard
@@ -118,7 +203,6 @@ export async function GET(
         const fantasyTeamId = fantasyTeamIds[index];
         if (doc.exists) {
           const teamData = doc.data();
-          // Check multiple possible logo field names
           const logoUrl = teamData?.logo_url || teamData?.logoUrl || teamData?.logo || teamData?.team_logo || teamData?.url || null;
           
           if (logoUrl) {
@@ -131,23 +215,10 @@ export async function GET(
               logo_position_y_square: teamData?.logo_position_y_square,
               logo_scale_square: teamData?.logo_scale_square,
             };
-            console.log(`[Leaderboard API] Found logo for fantasy team ${fantasyTeamId}:`, logoUrl);
-          } else {
-            console.log(`[Leaderboard API] No logo found for fantasy team ${fantasyTeamId}`);
           }
-        } else {
-          console.log(`[Leaderboard API] Fantasy team document not found: ${fantasyTeamId}`);
         }
       });
     }
-    
-    console.log('[Leaderboard API] Fantasy team logos map:', teamLogos);
-
-    // Debug: Log team mappings
-    console.log('[Leaderboard API] Team mappings:');
-    leaderboard.forEach((entry: any) => {
-      console.log(`  ${entry.team_name}: fantasy_team_id=${entry.fantasy_team_id}, logo=${teamLogos[entry.fantasy_team_id] || 'NOT FOUND'}`);
-    });
 
     return NextResponse.json({
       success: true,
@@ -158,9 +229,11 @@ export async function GET(
         season_id: league.season_id,
         status: league.is_active ? 'active' : 'inactive',
       },
+      available_rounds: availableRounds,
+      selected_max_round: maxRound,
       leaderboard: leaderboard.map((entry: any) => ({
         id: entry.fantasy_team_id,
-        rank: entry.rank || 999,
+        rank: Number(entry.rank) || 999,
         fantasy_team_id: entry.fantasy_team_id,
         team_name: entry.team_name,
         owner_name: entry.owner_name,
