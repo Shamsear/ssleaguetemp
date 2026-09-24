@@ -82,6 +82,20 @@ export async function GET(request: NextRequest) {
       totalCount += count;
     }
 
+    // Also check if team currently has supported_team_id IS NULL (meaning they released passive team and have no active supported team)
+    const [teamRow] = await fantasySql`
+      SELECT supported_team_id FROM fantasy_teams WHERE team_id = ${teamId}
+    `;
+    if (teamRow && (!teamRow.supported_team_id || teamRow.supported_team_id.trim() === '')) {
+      if (!eligibleCategories['Passive Team']) {
+        eligibleCategories['Passive Team'] = 1;
+        totalCount += 1;
+      }
+      if (!eligibleCategories['Supported Team']) {
+        eligibleCategories['Supported Team'] = 1;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       window_id: targetWindowId,

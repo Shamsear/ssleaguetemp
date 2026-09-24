@@ -40,6 +40,7 @@ interface ParticipatingTeam {
   team_name: string;
   owner_name: string;
   budget_remaining: number;
+  supported_team_id?: string | null;
   releases: ReleaseItem[];
   reserved_funds: number;
   max_allowed_bid: number;
@@ -190,7 +191,7 @@ function PostWindowDraftProcessContent() {
       const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
       const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
       const rawReleases: ReleaseItem[] = releasesData.releases || [];
-      const windowFiltered = rawReleases.filter((r) => r.window_id === windowId || !r.window_id);
+      const windowFiltered = rawReleases.filter((r) => r.window_id === windowId || !r.window_id || r.is_passive_team);
       const fetchedReleases = windowFiltered.length > 0 ? windowFiltered : rawReleases;
       setAllReleases(fetchedReleases);
 
@@ -318,6 +319,7 @@ function PostWindowDraftProcessContent() {
           team_name: t.team_name,
           owner_name: t.owner_name || t.owner_uid,
           budget_remaining: Number(t.budget_remaining || 0),
+          supported_team_id: t.supported_team_id,
           releases: teamReleases,
           reserved_funds: 0,
           max_allowed_bid: Number(t.budget_remaining || 0),
@@ -532,19 +534,29 @@ function PostWindowDraftProcessContent() {
   };
 
   // Teams participating in active category/slot
-  const activeCategoryTeams = participatingTeams.filter((t) =>
-    t.releases.some((r) => {
-      if (activeCategory.toLowerCase().includes('passive')) return r.is_passive_team;
-      const rCat = (r.category || '').toUpperCase();
-      return rCat === activeCategory.toUpperCase();
-    })
-  );
+  const activeCategoryTeams = participatingTeams.filter((t) => {
+    if (activeCategory.toLowerCase().includes('passive') || activeCategory.toLowerCase().includes('supported')) {
+      return !t.supported_team_id || t.releases.some((r) => r.is_passive_team);
+    }
+    return t.releases.some((r) => {
+      const rCat = (r.category || '').toUpperCase().trim();
+      const activeCat = activeCategory.toUpperCase().trim();
+      if (activeCat === 'RED 1' || activeCat === 'RED SLOT 1') return rCat === 'RED 1' || rCat === 'RED';
+      if (activeCat === 'RED 2' || activeCat === 'RED SLOT 2') return rCat === 'RED 2' || rCat === 'RED';
+      return rCat === activeCat;
+    });
+  });
 
   // Targets released in this window for active category
   const activeCategoryReleases = allReleases.filter((r) => {
-    if (activeCategory.toLowerCase().includes('passive')) return r.is_passive_team;
-    const rCat = (r.category || '').toUpperCase();
-    return rCat === activeCategory.toUpperCase();
+    if (activeCategory.toLowerCase().includes('passive') || activeCategory.toLowerCase().includes('supported')) {
+      return r.is_passive_team;
+    }
+    const rCat = (r.category || '').toUpperCase().trim();
+    const activeCat = activeCategory.toUpperCase().trim();
+    if (activeCat === 'RED 1' || activeCat === 'RED SLOT 1') return rCat === 'RED 1' || rCat === 'RED';
+    if (activeCat === 'RED 2' || activeCat === 'RED SLOT 2') return rCat === 'RED 2' || rCat === 'RED';
+    return rCat === activeCat;
   });
 
   const maxBidsPerTeam = Math.max(1, activeCategoryTeams.length);
@@ -768,13 +780,18 @@ function PostWindowDraftProcessContent() {
             </span>
             {categoryTabs.map((tab) => {
               const isSelected = activeCategory.toUpperCase() === tab.id.toUpperCase();
-              const count = participatingTeams.filter((t) =>
-                t.releases.some((r) =>
-                  tab.id === 'Passive Team'
-                    ? r.is_passive_team
-                    : (r.category || '').toUpperCase() === tab.id.toUpperCase()
-                )
-              ).length;
+              const count = participatingTeams.filter((t) => {
+                if (tab.id === 'Passive Team' || tab.id === 'Supported Teams') {
+                  return !t.supported_team_id || t.releases.some((r) => r.is_passive_team);
+                }
+                const tabCat = tab.id.toUpperCase().trim();
+                return t.releases.some((r) => {
+                  const rCat = (r.category || '').toUpperCase().trim();
+                  if (tabCat === 'RED 1' || tabCat === 'RED SLOT 1') return rCat === 'RED 1' || rCat === 'RED';
+                  if (tabCat === 'RED 2' || tabCat === 'RED SLOT 2') return rCat === 'RED 2' || rCat === 'RED';
+                  return rCat === tabCat;
+                });
+              }).length;
 
               const normCat = tab.id.toUpperCase().trim();
               const matchingRound = draftRounds.find((r: any) => {
