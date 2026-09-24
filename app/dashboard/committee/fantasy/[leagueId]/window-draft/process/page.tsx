@@ -534,7 +534,7 @@ function PostWindowDraftProcessContent() {
   // Teams participating in active category/slot
   const activeCategoryTeams = participatingTeams.filter((t) => {
     if (activeCategory.toLowerCase().includes('passive') || activeCategory.toLowerCase().includes('supported')) {
-      return !t.supported_team_id || t.releases.some((r) => r.is_passive_team);
+      return !t.supported_team_id || t.supported_team_id.trim() === '';
     }
     return t.releases.some((r) => {
       const rCat = (r.category || '').toUpperCase().trim();
@@ -780,7 +780,7 @@ function PostWindowDraftProcessContent() {
               const isSelected = activeCategory.toUpperCase() === tab.id.toUpperCase();
               const count = participatingTeams.filter((t) => {
                 if (tab.id === 'Passive Team' || tab.id === 'Supported Teams') {
-                  return !t.supported_team_id || t.releases.some((r) => r.is_passive_team);
+                  return !t.supported_team_id || t.supported_team_id.trim() === '';
                 }
                 const tabCat = tab.id.toUpperCase().trim();
                 return t.releases.some((r) => {

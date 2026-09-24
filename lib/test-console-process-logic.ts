@@ -19,9 +19,7 @@ async function testConsoleProcess() {
   const passiveReleases = allReleases.filter((r: any) => r.is_passive_team);
 
   const participatingTeams = allTeams.filter((t: any) => {
-    const hasPassiveRelease = passiveReleases.some((r: any) => r.team_id === t.team_id);
-    const hasNoSupportedTeam = !t.supported_team_id || t.supported_team_id.trim() === '';
-    return hasPassiveRelease || hasNoSupportedTeam;
+    return !t.supported_team_id || t.supported_team_id.trim() === '';
   });
 
   console.log('=== SIMULATED CONSOLE PROCESS FOR PASSIVE TEAM (SUPPORTED TEAMS) ===');
