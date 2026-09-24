@@ -149,38 +149,25 @@ export async function POST(request: NextRequest) {
 
       const players = new Set<string>();
 
-      // 1. Initial draft retained squad members
-      currentSquad.filter((s: any) => s.team_id === teamId && s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
+      // 1. Start with current active squad in fantasy_squad table
+      currentSquad.filter((s: any) => s.team_id === teamId).forEach((s: any) => {
         players.add(s.real_player_id);
       });
 
-      // 2. Draft bids won (initial draft)
-      draftBidsAll.filter((b: any) => b.team_id === teamId).forEach((b: any) => {
-        players.add(b.target_id);
+      // 2. If player was released AFTER roundNum, add them back (they were in squad during roundNum)
+      releasesAll.filter((r: any) => r.team_id === teamId && Number(r.release_start_round) > roundNum).forEach((r: any) => {
+        players.add(r.real_player_id);
       });
 
-      // 3. Releases: if release_start_round > roundNum, player was STILL in squad during roundNum
-      releasesAll.filter((r: any) => r.team_id === teamId).forEach((r: any) => {
-        if (Number(r.release_start_round) > roundNum) {
-          players.add(r.real_player_id);
-        } else {
-          players.delete(r.real_player_id);
-        }
+      // 3. If player was acquired AFTER roundNum (via post release bid), remove them (they were NOT in squad during roundNum)
+      postBidsAll.filter((p: any) => p.team_id === teamId && Number(p.acq_start_round) > roundNum).forEach((p: any) => {
+        players.delete(p.target_id);
       });
 
-      // 4. Post-release acquisitions: only active if acq_start_round <= roundNum
-      postBidsAll.filter((p: any) => p.team_id === teamId).forEach((p: any) => {
-        if (Number(p.acq_start_round) <= roundNum) {
-          players.add(p.target_id);
-        }
-      });
-
-      // 5. Swaps: only active if swap_start_round <= roundNum
-      swapsAll.filter((s: any) => s.team_id === teamId).forEach((s: any) => {
-        if (Number(s.swap_start_round) <= roundNum) {
-          players.delete(s.player_out_id);
-          players.add(s.player_in_id);
-        }
+      // 4. If swap occurred AFTER roundNum, undo swap (put player_out back, remove player_in)
+      swapsAll.filter((s: any) => s.team_id === teamId && Number(s.swap_start_round) > roundNum).forEach((s: any) => {
+        if (s.player_in_id) players.delete(s.player_in_id);
+        if (s.player_out_id) players.add(s.player_out_id);
       });
 
       roundSquadCache.set(cacheKey, players);

@@ -280,70 +280,39 @@ export async function GET(request: NextRequest) {
     allTeams.forEach((ft: any) => {
       const playerMap = new Map<string, any>();
 
-      // 1. Initial draft retained squad members
-      currentSquad.filter((s: any) => s.team_id === ft.team_id && s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
+      // 1. Start with current active squad in fantasy_squad table
+      currentSquad.filter((s: any) => s.team_id === ft.team_id).forEach((s: any) => {
         playerMap.set(s.real_player_id, s);
       });
 
-      // 2. Draft bids won (initial draft)
-      draftBidsAll.filter((b: any) => b.team_id === ft.team_id).forEach((b: any) => {
-        if (!playerMap.has(b.target_id)) {
-          const meta = currentSquad.find((s: any) => s.real_player_id === b.target_id);
-          const relMeta = releasesAll.find((r: any) => r.real_player_id === b.target_id);
-          playerMap.set(b.target_id, {
+      // 2. If player was released AFTER targetRound, add them back (they were in squad during targetRound)
+      releasesAll.filter((r: any) => r.team_id === ft.team_id && Number(r.release_start_round) > targetRound).forEach((r: any) => {
+        if (!playerMap.has(r.real_player_id)) {
+          playerMap.set(r.real_player_id, {
             team_id: ft.team_id,
-            real_player_id: b.target_id,
-            player_name: meta?.player_name || relMeta?.player_name || b.target_id,
-            category: meta?.category || relMeta?.category || 'Unknown',
-            position: meta?.position || 'Unknown',
-            real_team_name: meta?.real_team_name || ''
+            real_player_id: r.real_player_id,
+            player_name: r.player_name,
+            category: r.category || 'Unknown',
+            position: 'Unknown',
+            real_team_name: ''
           });
         }
       });
 
-      // 3. Releases: if release_start_round > targetRound, player was STILL in squad during targetRound
-      releasesAll.filter((r: any) => r.team_id === ft.team_id).forEach((r: any) => {
-        if (Number(r.release_start_round) > targetRound) {
-          if (!playerMap.has(r.real_player_id)) {
-            playerMap.set(r.real_player_id, {
-              team_id: ft.team_id,
-              real_player_id: r.real_player_id,
-              player_name: r.player_name,
-              category: r.category || 'Unknown',
-              position: 'Unknown',
-              real_team_name: ''
-            });
-          }
-        } else {
-          // Released on or before targetRound
-          playerMap.delete(r.real_player_id);
-        }
+      // 3. If player was acquired AFTER targetRound (via post release bid), remove them (they were NOT in squad during targetRound)
+      postBidsAll.filter((p: any) => p.team_id === ft.team_id && Number(p.acq_start_round) > targetRound).forEach((p: any) => {
+        playerMap.delete(p.target_id);
       });
 
-      // 4. Post-release acquisitions: only active if acq_start_round <= targetRound
-      postBidsAll.filter((p: any) => p.team_id === ft.team_id).forEach((p: any) => {
-        if (Number(p.acq_start_round) <= targetRound) {
-          const meta = currentSquad.find((s: any) => s.real_player_id === p.target_id);
-          playerMap.set(p.target_id, {
+      // 4. If swap occurred AFTER targetRound, undo swap (put player_out back, remove player_in)
+      swapsAll.filter((s: any) => s.team_id === ft.team_id && Number(s.swap_start_round) > targetRound).forEach((s: any) => {
+        if (s.player_in_id) playerMap.delete(s.player_in_id);
+        if (s.player_out_id) {
+          const meta = currentSquad.find((m: any) => m.real_player_id === s.player_out_id);
+          playerMap.set(s.player_out_id, {
             team_id: ft.team_id,
-            real_player_id: p.target_id,
-            player_name: meta?.player_name || p.target_name || p.target_id,
-            category: meta?.category || p.category || 'Unknown',
-            position: meta?.position || 'Unknown',
-            real_team_name: meta?.real_team_name || ''
-          });
-        }
-      });
-
-      // 5. Swaps: only active if swap_start_round <= targetRound
-      swapsAll.filter((s: any) => s.team_id === ft.team_id).forEach((s: any) => {
-        if (Number(s.swap_start_round) <= targetRound) {
-          playerMap.delete(s.player_out_id);
-          const meta = currentSquad.find((m: any) => m.real_player_id === s.player_in_id);
-          playerMap.set(s.player_in_id, {
-            team_id: ft.team_id,
-            real_player_id: s.player_in_id,
-            player_name: meta?.player_name || s.player_in_id,
+            real_player_id: s.player_out_id,
+            player_name: meta?.player_name || s.player_out_id,
             category: meta?.category || 'Unknown',
             position: meta?.position || 'Unknown',
             real_team_name: meta?.real_team_name || ''
@@ -860,13 +829,74 @@ export async function GET(request: NextRequest) {
       const bData = teamBonusAggMap.get(ft.team_id);
 
       let squadList: any[] = [];
-      if (startR < firstWindowStartRound) {
-        const retained = currentSquad.filter((s: any) => s.team_id === ft.team_id && s.acquisition_type !== 'post_release_draft');
-        const rel = releases.filter((r: any) => r.team_id === ft.team_id);
-        squadList = [...retained, ...rel];
-      } else {
-        squadList = currentSquad.filter((s: any) => s.team_id === ft.team_id);
-      }
+      const playerMap = new Map<string, any>();
+
+      currentSquad.filter((s: any) => s.team_id === ft.team_id && s.acquisition_type !== 'post_release_draft').forEach((s: any) => {
+        playerMap.set(s.real_player_id, s);
+      });
+
+      draftBidsAll.filter((b: any) => b.team_id === ft.team_id).forEach((b: any) => {
+        if (!playerMap.has(b.target_id)) {
+          const meta = currentSquad.find((s: any) => s.real_player_id === b.target_id);
+          const relMeta = releasesAll.find((r: any) => r.real_player_id === b.target_id);
+          playerMap.set(b.target_id, {
+            team_id: ft.team_id,
+            real_player_id: b.target_id,
+            player_name: meta?.player_name || relMeta?.player_name || b.target_id,
+            category: meta?.category || relMeta?.category || 'Unknown',
+            position: meta?.position || 'Unknown',
+            real_team_name: meta?.real_team_name || ''
+          });
+        }
+      });
+
+      releasesAll.filter((r: any) => r.team_id === ft.team_id).forEach((r: any) => {
+        if (Number(r.release_start_round) > endR) {
+          if (!playerMap.has(r.real_player_id)) {
+            playerMap.set(r.real_player_id, {
+              team_id: ft.team_id,
+              real_player_id: r.real_player_id,
+              player_name: r.player_name,
+              category: r.category || 'Unknown',
+              position: 'Unknown',
+              real_team_name: ''
+            });
+          }
+        } else {
+          playerMap.delete(r.real_player_id);
+        }
+      });
+
+      postBidsAll.filter((p: any) => p.team_id === ft.team_id).forEach((p: any) => {
+        if (Number(p.acq_start_round) <= endR) {
+          const meta = currentSquad.find((s: any) => s.real_player_id === p.target_id);
+          playerMap.set(p.target_id, {
+            team_id: ft.team_id,
+            real_player_id: p.target_id,
+            player_name: meta?.player_name || p.target_name || p.target_id,
+            category: meta?.category || p.category || 'Unknown',
+            position: meta?.position || 'Unknown',
+            real_team_name: meta?.real_team_name || ''
+          });
+        }
+      });
+
+      swapsAll.filter((s: any) => s.team_id === ft.team_id).forEach((s: any) => {
+        if (Number(s.swap_start_round) <= endR) {
+          playerMap.delete(s.player_out_id);
+          const meta = currentSquad.find((m: any) => m.real_player_id === s.player_in_id);
+          playerMap.set(s.player_in_id, {
+            team_id: ft.team_id,
+            real_player_id: s.player_in_id,
+            player_name: meta?.player_name || s.player_in_id,
+            category: meta?.category || 'Unknown',
+            position: meta?.position || 'Unknown',
+            real_team_name: meta?.real_team_name || ''
+          });
+        }
+      });
+
+      squadList = Array.from(playerMap.values());
 
       const cap = weekCapHistMap.get(ft.team_id);
       squadList = squadList.map((p: any) => {
