@@ -700,13 +700,6 @@ export default function MyFantasyTeamPage() {
                 >
                   <Activity className="w-3 h-3" /> Breakdown Log
                 </Link>
-
-                <Link
-                  href={`/dashboard/team/fantasy/change-supported-team`}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-750 text-white font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm"
-                >
-                  <RefreshCw className="w-3 h-3" /> Change Team
-                </Link>
               </div>
             </div>
           </div>
