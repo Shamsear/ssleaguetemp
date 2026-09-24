@@ -30,9 +30,17 @@ export default function FantasyStandingsPage() {
   const params = useParams();
   const leagueId = params?.leagueId as string;
 
+  const [league, setLeague] = useState<any>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [h2hStandings, setH2hStandings] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'overall' | 'h2h'>('overall');
+  const [isLoading, setIsLoading] = useState(true);
+
   const [selectedMaxRound, setSelectedMaxRound] = useState<number | 'all'>('all');
   const [availableRounds, setAvailableRounds] = useState<number[]>([]);
   const [isFetchingFiltered, setIsFetchingFiltered] = useState(false);
+
+  const { alertState, showAlert, closeAlert } = useModal();
 
   const fetchLeaderboardForRound = async (maxRoundVal: number | 'all') => {
     if (!leagueId) return;
