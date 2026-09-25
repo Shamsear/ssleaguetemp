@@ -67,6 +67,7 @@ export default function TeamDraftPage() {
   const [draftSettings, setDraftSettings] = useState<DraftSettings | null>(null);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [realTeams, setRealTeams] = useState<RealTeam[]>([]);
+  const [occupiedSupportedTeamIds, setOccupiedSupportedTeamIds] = useState<Set<string>>(new Set());
   
   // Local state for bids wishlist
   const [localBids, setLocalBids] = useState<LocalBid[]>([]);
@@ -252,6 +253,21 @@ export default function TeamDraftPage() {
         });
       }
       setOwnedPlayerIds(ownedIds);
+
+      // Fetch fantasy teams in the league to identify occupied supported_team_ids
+      const fTeamsRes = await fetchWithTokenRefresh(`/api/fantasy/teams?league_id=${leagueId}`);
+      const occupiedSet = new Set<string>();
+      if (fTeamsRes.ok) {
+        const fTeamsData = await fTeamsRes.json();
+        (fTeamsData.teams || []).forEach((ft: any) => {
+          if (ft.supported_team_id && String(ft.supported_team_id).trim() !== '') {
+            const cleanId = String(ft.supported_team_id).replace(/_.*$/, '').toUpperCase();
+            occupiedSet.add(cleanId);
+            occupiedSet.add(String(ft.supported_team_id).toUpperCase());
+          }
+        });
+      }
+      setOccupiedSupportedTeamIds(occupiedSet);
 
       // Add window released players to player pool
       windowReleases.forEach((r: any) => {
@@ -728,13 +744,33 @@ export default function TeamDraftPage() {
     const myTeamId = myTeam?.team_id || myTeam?.id;
 
     if (slot.name.toLowerCase().includes('team') || slot.list_id?.includes('team')) {
-      // Real Teams pool — filter by list if it has entries, otherwise show all
-      const base = listIds.length > 0
-        ? realTeams.filter(t => listIds.includes(t.team_uid) || t.released_by_team_id)
-        : realTeams;
-      return base
-        // Do not show team released by self
-        .filter(t => !myTeamId || String(t.released_by_team_id) !== String(myTeamId))
+      // Real Teams pool — show only available teams (not occupied by any fantasy team, not self-released)
+      return realTeams
+        .filter(t => {
+          const cleanId = String(t.team_uid).replace(/_.*$/, '').toUpperCase();
+          const cleanName = (t.team_name || '').toLowerCase().trim();
+
+          // 1. Do not show team released by self
+          if (myTeamId && String(t.released_by_team_id) === String(myTeamId)) return false;
+
+          // 2. Do not show teams that are currently occupied / taken as active supported_team_id
+          if (occupiedSupportedTeamIds.has(cleanId) || occupiedSupportedTeamIds.has(String(t.team_uid).toUpperCase())) {
+            return false;
+          }
+
+          // 3. If window releases exist, ensure team is in the released passive team pool
+          if (windowReleasesList.length > 0) {
+            const isReleasedPassiveTeam = windowReleasesList.some((r: any) => {
+              if (!r.is_passive_team) return false;
+              const rCleanId = String(r.real_player_id).replace(/_.*$/, '').toUpperCase();
+              const rCleanName = (r.player_name || '').toLowerCase().trim();
+              return rCleanId === cleanId || rCleanName === cleanName;
+            });
+            if (!isReleasedPassiveTeam && !t.released_by_team_id) return false;
+          }
+
+          return true;
+        })
         .filter(t => t.team_name.toLowerCase().includes(searchTerm.toLowerCase()));
     } else {
       // Players pool
