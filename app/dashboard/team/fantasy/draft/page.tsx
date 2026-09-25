@@ -278,10 +278,18 @@ export default function TeamDraftPage() {
         }
       });
 
-      // Add window released supported teams to team pool
+      // Add window released supported teams to team pool and deduplicate entries
       windowReleases.forEach((r: any) => {
         if (r.is_passive_team && r.real_player_id) {
-          const existing = teamsList.find((t) => t.team_uid === r.real_player_id);
+          const cleanRelId = String(r.real_player_id).replace(/_.*$/, '').toUpperCase();
+          const cleanRelName = (r.player_name || '').toLowerCase().trim();
+
+          const existing = teamsList.find((t) => {
+            const cleanTeamId = String(t.team_uid).replace(/_.*$/, '').toUpperCase();
+            const cleanTeamName = (t.team_name || '').toLowerCase().trim();
+            return cleanTeamId === cleanRelId || cleanTeamName === cleanRelName;
+          });
+
           if (!existing) {
             teamsList.push({
               team_uid: r.real_player_id,
@@ -291,12 +299,27 @@ export default function TeamDraftPage() {
             });
           } else {
             existing.released_by_team_id = r.team_id;
+            if (r.player_name) existing.team_name = r.player_name;
+          }
+        }
+      });
+
+      // Deduplicate teamsList by clean name to prevent duplicate cards
+      const uniqueTeamsMap = new Map<string, RealTeam>();
+      teamsList.forEach((t) => {
+        const key = (t.team_name || t.team_uid).toLowerCase().trim();
+        if (!uniqueTeamsMap.has(key)) {
+          uniqueTeamsMap.set(key, t);
+        } else {
+          const prev = uniqueTeamsMap.get(key)!;
+          if (t.released_by_team_id && !prev.released_by_team_id) {
+            uniqueTeamsMap.set(key, t);
           }
         }
       });
 
       setAvailablePlayers(playersList);
-      setRealTeams(teamsList);
+      setRealTeams(Array.from(uniqueTeamsMap.values()));
 
       // Ensure draftRounds includes slot 6 (Supported Team) if active window or window releases exist
       if (activeWin || windowReleases.length > 0) {
@@ -766,8 +789,15 @@ export default function TeamDraftPage() {
         : slotName.includes('RED 1') || listId === 'red_list_1' ? 'RED 1'
         : slotName;
 
+      if (isRealTeamSlot) {
+        // Count active releasing teams that currently do NOT have a supported team (max 4)
+        const passiveReleases = windowReleasesList.filter((r: any) => r.is_passive_team);
+        const releasingTeamIds = new Set(passiveReleases.map((r: any) => r.team_id));
+        const count = releasingTeamIds.size || 4;
+        return Math.min(4, Math.max(1, count));
+      }
+
       const slotReleases = windowReleasesList.filter((r: any) => {
-        if (isRealTeamSlot) return r.is_passive_team;
         if (r.real_player_id && listIds.includes(r.real_player_id)) return true;
         const rCat = getResolvedPlayerCategory({ real_player_id: r.real_player_id, category: r.category });
         return rCat === targetSlotCat;
