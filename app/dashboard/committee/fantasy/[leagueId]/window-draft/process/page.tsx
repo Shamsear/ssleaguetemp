@@ -391,19 +391,8 @@ function PostWindowDraftProcessContent() {
         return bCat === aCat;
       });
 
-        const validReleaseIds = new Set(fetchedReleases.map((r) => r.real_player_id?.replace(/_.*$/, '')));
-        const validReleaseNames = new Set(fetchedReleases.map((r) => (r.player_name || '').toUpperCase().trim()));
-
-        const filteredBids = fetchedBids.filter((b: Bid) => {
-          if (b.is_passive_team || (b.category || '').toUpperCase().includes('PASSIVE')) {
-            return true;
-          }
-          const cleanTargetId = (b.target_id || '').replace(/_.*$/, '');
-          const normTargetName = (b.target_name || '').toUpperCase().trim();
-          return validReleaseIds.has(cleanTargetId) || validReleaseNames.has(normTargetName);
-        });
-
-      setAllBids(filteredBids);
+      // Keep all submitted category bids so they display in Submission Monitor, Live Preview & Bids Matrix
+      setAllBids(fetchedBids);
       setTies(allBidsData.ties || []);
 
       const activeOpensAt = foundWin?.opens_at || matchingRound?.opens_at;
