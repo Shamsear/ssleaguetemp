@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       )
       LEFT JOIN fantasy_draft_rounds fdr ON fdb.round_id = fdr.id
       WHERE fr.team_id = ${teamId}
-        AND (fr.window_id = ${targetWindowId} OR fr.league_id = ${leagueId})
+        AND fr.window_id = ${targetWindowId}
       GROUP BY 1
     `;
 

@@ -23,7 +23,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Verify team details and budget
+    // 1. Resolve targetWindowId
+    let targetWindowId = draft_round_id;
+    if (!targetWindowId || targetWindowId.trim() === '') {
+      const [latestWin] = await fantasySql`
+        SELECT window_id FROM fantasy_transfer_windows
+        WHERE league_id = ${league_id}
+        ORDER BY opens_at DESC LIMIT 1
+      `;
+      targetWindowId = latestWin?.window_id || draft_round_id;
+    }
+
+    // 1b. Verify team details and budget
     const [team] = await fantasySql`
       SELECT team_id, owner_uid, budget_remaining
       FROM fantasy_teams
@@ -39,7 +50,7 @@ export async function POST(request: NextRequest) {
       SELECT release_id 
       FROM fantasy_releases
       WHERE team_id = ${team_id}
-        AND (window_id = ${draft_round_id} OR league_id = ${league_id})
+        AND window_id = ${targetWindowId}
         AND (
           real_player_id = ${target_id} 
           OR player_name = ${target_name || ''} 
@@ -75,7 +86,7 @@ export async function POST(request: NextRequest) {
         AND fdb.status = 'won'
       )
       LEFT JOIN fantasy_draft_rounds fdr ON fdb.round_id = fdr.id
-      WHERE (fr.window_id = ${draft_round_id} OR fr.league_id = ${league_id})
+      WHERE fr.window_id = ${targetWindowId}
     `;
 
     const participatingTeamIds = new Set(
@@ -89,7 +100,7 @@ export async function POST(request: NextRequest) {
       SELECT bid_id 
       FROM fantasy_post_release_bids
       WHERE team_id = ${team_id}
-        AND (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+        AND draft_round_id = ${targetWindowId}
         AND (category ILIKE ${category} OR (${category === 'Passive Team'} AND is_passive_team = true))
         AND target_id != ${target_id}
         AND status IN ('pending', 'submitted')
@@ -195,7 +206,7 @@ export async function POST(request: NextRequest) {
       SELECT category, is_passive_team
       FROM fantasy_post_release_bids
       WHERE team_id = ${team_id}
-        AND (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+        AND draft_round_id = ${targetWindowId}
         AND status = 'won'
     `;
 
@@ -235,13 +246,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Save/upsert bid
-    const bidId = `bid_${draft_round_id}_${team_id}_${target_id}_${Date.now()}`;
+    const bidId = `bid_${targetWindowId}_${team_id}_${target_id}_${Date.now()}`;
 
     // Delete existing bid for same target and team in this window before inserting
     await fantasySql`
       DELETE FROM fantasy_post_release_bids
       WHERE team_id = ${team_id}
-        AND (draft_round_id = ${draft_round_id} OR league_id = ${league_id})
+        AND draft_round_id = ${targetWindowId}
         AND target_id = ${target_id}
     `;
 
@@ -251,7 +262,7 @@ export async function POST(request: NextRequest) {
         category, is_passive_team, target_id, target_name,
         bid_amount, status, submitted_at
       ) VALUES (
-        ${bidId}, ${draft_round_id}, ${league_id}, ${team_id},
+        ${bidId}, ${targetWindowId}, ${league_id}, ${team_id},
         ${category}, ${is_passive_team || false}, ${target_id}, ${target_name || target_id},
         ${amount}, 'submitted', NOW()
       )

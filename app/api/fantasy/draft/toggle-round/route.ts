@@ -81,17 +81,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 1. Update transfer window table
+    // 1. Update draft metadata on transfer window table without mutating is_active, status, or release dates
     await fantasySql`
       UPDATE fantasy_transfer_windows
       SET 
-        is_active = ${computedIsActive},
-        status = ${windowStatus},
-        opens_at = ${opensUTC},
-        closes_at = ${closesUTC},
-        start_time = ${opensUTC},
-        end_time = ${closesUTC},
-        config = jsonb_build_object('active_category', ${category}::text),
+        config = jsonb_set(COALESCE(config, '{}'::jsonb), '{active_category}', ${JSON.stringify(category)}::jsonb),
         updated_at = NOW()
       WHERE window_id = ${window_id}
     `;
@@ -121,8 +115,6 @@ export async function POST(request: NextRequest) {
       message: `Round ${category} is now ${roundStatus.toUpperCase()} (Opens: ${opensUTC}, Closes: ${closesUTC})`,
       active_category: category,
       round_status: roundStatus,
-      window_status: windowStatus,
-      is_active: computedIsActive,
       opens_at: opensUTC,
       closes_at: closesUTC
     });

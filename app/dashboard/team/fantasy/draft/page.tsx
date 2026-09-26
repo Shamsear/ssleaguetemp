@@ -117,11 +117,12 @@ export default function TeamDraftPage() {
       let activeWin: any = null;
       if (winRes.ok) {
         const winData = await winRes.json();
-        activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active');
+        activeWin = (winData.windows || []).find((w: any) => w.is_active || w.status === 'active') || (winData.windows || [])[0];
         setActiveTransferWindow(activeWin);
       }
 
-      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
+      const winParam = activeWin?.window_id ? `&window_id=${activeWin.window_id}` : '';
+      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}${winParam}`);
       const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
       const windowReleases = releasesData.releases || [];
       setWindowReleasesList(windowReleases);

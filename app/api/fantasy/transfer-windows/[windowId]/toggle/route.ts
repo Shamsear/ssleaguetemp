@@ -50,7 +50,8 @@ export async function POST(
       // Close all other windows in the league
       await fantasySql`
         UPDATE fantasy_transfer_windows
-        SET is_active = false
+        SET is_active = false,
+            status = 'closed'
         WHERE league_id = ${window.league_id}
           AND window_id != ${windowId}
       `;
@@ -61,7 +62,8 @@ export async function POST(
     // Toggle the window
     await fantasySql`
       UPDATE fantasy_transfer_windows
-      SET is_active = ${newStatus}
+      SET is_active = ${newStatus},
+          status = ${newStatus ? 'active' : 'closed'}
       WHERE window_id = ${windowId}
     `;
 

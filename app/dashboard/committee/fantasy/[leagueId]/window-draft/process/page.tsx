@@ -187,12 +187,10 @@ function PostWindowDraftProcessContent() {
       const teamsData = teamsRes.ok ? await teamsRes.json() : { teams: [] };
       const allTeams = teamsData.teams || [];
 
-      // 3. Fetch All Window Releases with resolved categories
-      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
+      // 3. Fetch All Window Releases with resolved categories strictly for this window
+      const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}&window_id=${windowId}`);
       const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
-      const rawReleases: ReleaseItem[] = releasesData.releases || [];
-      const windowFiltered = rawReleases.filter((r) => r.window_id === windowId);
-      const fetchedReleases = windowFiltered.length > 0 ? windowFiltered : rawReleases;
+      const fetchedReleases: ReleaseItem[] = releasesData.releases || [];
       setAllReleases(fetchedReleases);
 
       const dynamicTabs: CategoryTab[] = [];
