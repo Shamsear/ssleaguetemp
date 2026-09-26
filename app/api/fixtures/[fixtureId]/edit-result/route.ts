@@ -306,7 +306,9 @@ export async function PATCH(
       edited_by_name, 
       edit_reason,
       home_penalty_goals,
-      away_penalty_goals
+      away_penalty_goals,
+      motm_player_id,
+      motm_player_name
     } = body;
 
     if (!matchups || !Array.isArray(matchups)) {
@@ -412,27 +414,26 @@ export async function PATCH(
       }
     }
 
-    // Step 4.5: Validate MOTM - clear if player was removed from match
-    if (fixture.motm_player_id) {
-      const motmStillInMatch = matchups.some(
-        (m: any) => m.home_player_id === fixture.motm_player_id || m.away_player_id === fixture.motm_player_id
-      );
+    // Step 4.5: Resolve final MOTM values
+    // Use incoming motm_player_id if provided; fall back to existing DB value.
+    // Clear MOTM if the chosen player is no longer in the match.
+    let finalMotmPlayerId: string | null = motm_player_id !== undefined ? (motm_player_id || null) : (fixture.motm_player_id || null);
+    let finalMotmPlayerName: string | null = motm_player_name !== undefined ? (motm_player_name || null) : (fixture.motm_player_name || null);
 
+    if (finalMotmPlayerId) {
+      const motmStillInMatch = matchups.some(
+        (m: any) => m.home_player_id === finalMotmPlayerId || m.away_player_id === finalMotmPlayerId
+      );
       if (!motmStillInMatch) {
-        console.log(`⚠️  MOTM player ${fixture.motm_player_name} was removed from match - clearing MOTM`);
-        // Clear MOTM since the player is no longer in the match
-        await sql`
-          UPDATE fixtures
-          SET 
-            motm_player_id = NULL,
-            motm_player_name = NULL,
-            updated_at = NOW()
-          WHERE id = ${fixtureId}
-        `;
+        console.log(`⚠️  MOTM player ${finalMotmPlayerName} is not in match - clearing MOTM`);
+        finalMotmPlayerId = null;
+        finalMotmPlayerName = null;
       }
     }
 
-    // Step 5: Update fixture
+    console.log(`🏅 Saving MOTM: id=${finalMotmPlayerId}, name=${finalMotmPlayerName}`);
+
+    // Step 5: Update fixture (including MOTM)
     await sql`
       UPDATE fixtures
       SET 
@@ -442,6 +443,8 @@ export async function PATCH(
         status = 'completed',
         home_penalty_goals = ${homePenaltyGoalsVal},
         away_penalty_goals = ${awayPenaltyGoalsVal},
+        motm_player_id = ${finalMotmPlayerId},
+        motm_player_name = ${finalMotmPlayerName},
         updated_at = NOW()
       WHERE id = ${fixtureId}
     `;
