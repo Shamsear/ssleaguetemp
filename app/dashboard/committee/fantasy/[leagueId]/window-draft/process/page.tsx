@@ -403,9 +403,8 @@ function PostWindowDraftProcessContent() {
           return validReleaseIds.has(cleanTargetId) || validReleaseNames.has(normTargetName);
         });
 
-        setAllBids(filteredBids);
-        setTies(bidsData.ties || []);
-      }
+      setAllBids(filteredBids);
+      setTies(allBidsData.ties || []);
 
       const activeOpensAt = foundWin?.opens_at || matchingRound?.opens_at;
       const activeClosesAt = foundWin?.closes_at || matchingRound?.closes_at;
