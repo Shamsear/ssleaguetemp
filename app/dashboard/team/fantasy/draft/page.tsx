@@ -129,7 +129,6 @@ export default function TeamDraftPage() {
 
       // Fetch eligible post-release categories
       let catDataMap: Record<string, number> = {};
-      const winParam = activeWin?.window_id ? `&window_id=${activeWin.window_id}` : '';
       const catRes = await fetchWithTokenRefresh(`/api/fantasy/draft/eligible-categories?team_id=${teamId}&league_id=${leagueId}${winParam}`);
       if (catRes.ok) {
         const catData = await catRes.json();
