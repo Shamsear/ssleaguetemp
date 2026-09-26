@@ -758,17 +758,6 @@ export default function TeamDraftPage() {
             return false;
           }
 
-          // 3. If window releases exist, ensure team is in the released passive team pool
-          if (windowReleasesList.length > 0) {
-            const isReleasedPassiveTeam = windowReleasesList.some((r: any) => {
-              if (!r.is_passive_team) return false;
-              const rCleanId = String(r.real_player_id).replace(/_.*$/, '').toUpperCase();
-              const rCleanName = (r.player_name || '').toLowerCase().trim();
-              return rCleanId === cleanId || rCleanName === cleanName;
-            });
-            if (!isReleasedPassiveTeam && !t.released_by_team_id) return false;
-          }
-
           return true;
         })
         .filter(t => t.team_name.toLowerCase().includes(searchTerm.toLowerCase()));
