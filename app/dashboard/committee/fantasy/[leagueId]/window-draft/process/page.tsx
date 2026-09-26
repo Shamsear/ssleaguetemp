@@ -191,7 +191,7 @@ function PostWindowDraftProcessContent() {
       const releasesRes = await fetchWithTokenRefresh(`/api/fantasy/releases?league_id=${leagueId}`);
       const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
       const rawReleases: ReleaseItem[] = releasesData.releases || [];
-      const windowFiltered = rawReleases.filter((r) => r.window_id === windowId || !r.window_id || r.is_passive_team);
+      const windowFiltered = rawReleases.filter((r) => r.window_id === windowId);
       const fetchedReleases = windowFiltered.length > 0 ? windowFiltered : rawReleases;
       setAllReleases(fetchedReleases);
 
