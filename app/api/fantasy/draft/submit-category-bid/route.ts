@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // 1b. Verify team details and budget
     const [team] = await fantasySql`
-      SELECT team_id, owner_uid, budget_remaining
+      SELECT team_id, owner_uid, budget_remaining, supported_team_id
       FROM fantasy_teams
       WHERE team_id = ${team_id}
     `;
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. FUTURE ROUNDS BUDGET RESERVATION
+    // 4. FUTURE ROUNDS BUDGET RESERVATION (Only reserve if team has unfilled slots remaining)
     // Fetch league category settings and draft rounds
     const [leagueRow] = await fantasySql`
       SELECT category_settings
@@ -193,7 +193,6 @@ export async function POST(request: NextRequest) {
       };
     };
 
-    const activeInfo = getCategoryInfo(category);
     const teamReleases = windowReleases.filter((r) => r.team_id === team_id);
 
     const releaseCountsByCategory: Record<string, number> = {};
@@ -210,25 +209,37 @@ export async function POST(request: NextRequest) {
         AND status = 'won'
     `;
 
-    const teamWonCats = new Set(
-      wonPostReleaseBids.map((b: any) => b.is_passive_team ? 'PASSIVE TEAM' : (b.category || '').toUpperCase().trim())
-    );
+    const wonCountsByCategory: Record<string, number> = {};
+    wonPostReleaseBids.forEach((b: any) => {
+      let cat = b.is_passive_team ? 'PASSIVE TEAM' : (b.category || '').toUpperCase().trim();
+      if (cat.includes('PASSIVE') || cat.includes('SUPPORTED')) cat = 'PASSIVE TEAM';
+      wonCountsByCategory[cat] = (wonCountsByCategory[cat] || 0) + 1;
+    });
+
+    const hasSupportedTeamFilled = !!(team.supported_team_id && String(team.supported_team_id).trim() !== '') || (wonCountsByCategory['PASSIVE TEAM'] || 0) > 0;
 
     const activeCatKey = (category || '').toUpperCase().trim();
     const activeNormCategory = activeCatKey.includes('PASSIVE') || activeCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : activeCatKey;
 
     let reservedFunds = 0;
-    for (const [catKey, count] of Object.entries(releaseCountsByCategory)) {
+    for (const [catKey, releaseCount] of Object.entries(releaseCountsByCategory)) {
       const normCatKey = catKey.toUpperCase().trim();
       const normCategory = normCatKey.includes('PASSIVE') || normCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : normCatKey;
       const catInfo = getCategoryInfo(normCategory);
 
+      let remainingToFill = 0;
+      if (normCategory === 'PASSIVE TEAM') {
+        remainingToFill = hasSupportedTeamFilled ? 0 : Math.max(0, releaseCount - (wonCountsByCategory['PASSIVE TEAM'] || 0));
+      } else {
+        const wonCount = wonCountsByCategory[normCategory] || 0;
+        remainingToFill = Math.max(0, releaseCount - wonCount);
+      }
+
       const isOtherCategory = normCategory !== activeNormCategory;
       const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
-      const isTeamUncompleted = !teamWonCats.has(normCategory);
 
-      if (isOtherCategory && isRoundUncompleted && isTeamUncompleted) {
-        reservedFunds += count * catInfo.basePrice;
+      if (isOtherCategory && isRoundUncompleted && remainingToFill > 0) {
+        reservedFunds += remainingToFill * catInfo.basePrice;
       }
     }
 

@@ -324,11 +324,29 @@ function PostWindowDraftProcessContent() {
         };
       });
 
-      // Calculate reserves for other uncompleted categories (supports random round ordering)
+      // Fetch all post-release bids for this window to identify won bids
+      const allBidsRes = await fetchWithTokenRefresh(
+        `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${windowId}`
+      );
+      const allBidsData = allBidsRes.ok ? await allBidsRes.json() : { bids: [] };
+      const allWindowBids: any[] = allBidsData.bids || [];
+      const wonBids = allWindowBids.filter((b: any) => b.status === 'won');
+
+      // Calculate reserves for other uncompleted categories (only if team has remaining slots to fill)
       const activeCatKey = (activeCategory || '').toUpperCase().trim();
       const activeNormCategory = activeCatKey.includes('PASSIVE') || activeCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : activeCatKey;
 
       Object.values(teamsMap).forEach((pTeam) => {
+        const teamWonBids = wonBids.filter((b: any) => b.team_id === pTeam.team_id);
+        const wonCountsByCategory: Record<string, number> = {};
+        teamWonBids.forEach((b: any) => {
+          let cat = b.is_passive_team ? 'PASSIVE TEAM' : (b.category || '').toUpperCase().trim();
+          if (cat.includes('PASSIVE') || cat.includes('SUPPORTED')) cat = 'PASSIVE TEAM';
+          wonCountsByCategory[cat] = (wonCountsByCategory[cat] || 0) + 1;
+        });
+
+        const hasSupportedTeamFilled = !!(pTeam.supported_team_id && pTeam.supported_team_id.trim() !== '') || (wonCountsByCategory['PASSIVE TEAM'] || 0) > 0;
+
         const releaseCountsByCategory: Record<string, number> = {};
         pTeam.releases.forEach((r) => {
           const cat = r.is_passive_team ? 'PASSIVE TEAM' : (r.category || 'RED').toUpperCase().trim();
@@ -336,16 +354,24 @@ function PostWindowDraftProcessContent() {
         });
 
         let reserved = 0;
-        Object.entries(releaseCountsByCategory).forEach(([otherCat, count]) => {
+        Object.entries(releaseCountsByCategory).forEach(([otherCat, releaseCount]) => {
           const normCatKey = otherCat.toUpperCase().trim();
           const normCategory = normCatKey.includes('PASSIVE') || normCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : normCatKey;
           const catInfo = getCategoryInfo(normCategory);
 
+          let remainingToFill = 0;
+          if (normCategory === 'PASSIVE TEAM') {
+            remainingToFill = hasSupportedTeamFilled ? 0 : Math.max(0, releaseCount - (wonCountsByCategory['PASSIVE TEAM'] || 0));
+          } else {
+            const wonCount = wonCountsByCategory[normCategory] || 0;
+            remainingToFill = Math.max(0, releaseCount - wonCount);
+          }
+
           const isOtherCategory = normCategory !== activeNormCategory;
           const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
 
-          if (isOtherCategory && isRoundUncompleted) {
-            reserved += count * catInfo.basePrice;
+          if (isOtherCategory && isRoundUncompleted && remainingToFill > 0) {
+            reserved += remainingToFill * catInfo.basePrice;
           }
         });
 
@@ -356,13 +382,14 @@ function PostWindowDraftProcessContent() {
       setParticipatingTeams(Object.values(teamsMap));
 
       // 4. Fetch Submitted Bids & Ties for active category
-      let fetchedBids: Bid[] = [];
-      const bidsRes = await fetchWithTokenRefresh(
-        `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${windowId}&category=${encodeURIComponent(activeCategory)}`
-      );
-      if (bidsRes.ok) {
-        const bidsData = await bidsRes.json();
-        fetchedBids = bidsData.bids || [];
+      let fetchedBids: Bid[] = allWindowBids.filter((b: any) => {
+        const bCat = (b.category || '').toUpperCase().trim();
+        const aCat = (activeCategory || '').toUpperCase().trim();
+        if (aCat.includes('PASSIVE') || aCat.includes('SUPPORTED')) {
+          return b.is_passive_team || bCat.includes('PASSIVE') || bCat.includes('SUPPORTED');
+        }
+        return bCat === aCat;
+      });
 
         const validReleaseIds = new Set(fetchedReleases.map((r) => r.real_player_id?.replace(/_.*$/, '')));
         const validReleaseNames = new Set(fetchedReleases.map((r) => (r.player_name || '').toUpperCase().trim()));

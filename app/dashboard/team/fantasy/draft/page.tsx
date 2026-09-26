@@ -88,6 +88,7 @@ export default function TeamDraftPage() {
   const [ownedPlayerIds, setOwnedPlayerIds] = useState<Set<string>>(new Set());
   const [activeTransferWindow, setActiveTransferWindow] = useState<any>(null);
   const [windowReleasesList, setWindowReleasesList] = useState<any[]>([]);
+  const [myWonBids, setMyWonBids] = useState<any[]>([]);
   const [isWindowSubmitted, setIsWindowSubmitted] = useState<boolean>(false);
 
   const { alertState, showAlert, closeAlert } = useModal();
@@ -379,7 +380,11 @@ export default function TeamDraftPage() {
         );
         if (windowBidsRes.ok) {
           const windowBidsData = await windowBidsRes.json();
-          const teamWindowBids = (windowBidsData.bids || []).filter((b: any) => b.team_id === teamId);
+          const allBidsList = windowBidsData.bids || [];
+          const teamWindowBids = allBidsList.filter((b: any) => b.team_id === teamId);
+          const teamWon = allBidsList.filter((b: any) => b.team_id === teamId && b.status === 'won');
+          setMyWonBids(teamWon);
+
           const slotSubs: Record<number, boolean> = {};
           const mappedWindowBids: LocalBid[] = teamWindowBids.map((b: any, idx: number) => {
             const cat = (b.category || '').toUpperCase();
@@ -674,6 +679,8 @@ export default function TeamDraftPage() {
     };
 
     const releaseCountsByCategory: Record<string, number> = {};
+    const wonCountsByCategory: Record<string, number> = {};
+
     myReleases.forEach((r: any) => {
       let cat = r.is_passive_team ? 'PASSIVE TEAM' : (r.category || 'RED').toUpperCase().trim();
       if (cat === 'UNKNOWN' || cat === 'RED') {
@@ -685,20 +692,36 @@ export default function TeamDraftPage() {
       releaseCountsByCategory[cat] = (releaseCountsByCategory[cat] || 0) + 1;
     });
 
+    myWonBids.forEach((b: any) => {
+      let cat = b.is_passive_team ? 'PASSIVE TEAM' : (b.category || '').toUpperCase().trim();
+      if (cat.includes('PASSIVE') || cat.includes('SUPPORTED')) cat = 'PASSIVE TEAM';
+      wonCountsByCategory[cat] = (wonCountsByCategory[cat] || 0) + 1;
+    });
+
+    const hasSupportedTeamFilled = !!(myTeam.supported_team_id && String(myTeam.supported_team_id).trim() !== '') || (wonCountsByCategory['PASSIVE TEAM'] || 0) > 0;
+
     const activeCategoryName = getCategoryNameForSlot(activeSlotIdx || activeSlotIndex || 1);
     const activeNormCategory = (activeCategoryName || '').toUpperCase().trim().includes('PASSIVE') ? 'PASSIVE TEAM' : (activeCategoryName || '').toUpperCase().trim();
 
     let reserved = 0;
-    Object.entries(releaseCountsByCategory).forEach(([otherCat, count]) => {
+    Object.entries(releaseCountsByCategory).forEach(([otherCat, releaseCount]) => {
       const normCatKey = otherCat.toUpperCase().trim();
       const normCategory = normCatKey.includes('PASSIVE') || normCatKey.includes('SUPPORTED') ? 'PASSIVE TEAM' : normCatKey;
       const catInfo = getCategoryInfo(normCategory);
 
+      let remainingToFill = 0;
+      if (normCategory === 'PASSIVE TEAM') {
+        remainingToFill = hasSupportedTeamFilled ? 0 : Math.max(0, releaseCount - (wonCountsByCategory['PASSIVE TEAM'] || 0));
+      } else {
+        const wonCount = wonCountsByCategory[normCategory] || 0;
+        remainingToFill = Math.max(0, releaseCount - wonCount);
+      }
+
       const isOtherCategory = normCategory !== activeNormCategory;
       const isRoundUncompleted = catInfo.status !== 'completed' && catInfo.status !== 'finalized';
 
-      if (isOtherCategory && isRoundUncompleted) {
-        reserved += count * catInfo.basePrice;
+      if (isOtherCategory && isRoundUncompleted && remainingToFill > 0) {
+        reserved += remainingToFill * catInfo.basePrice;
       }
     });
 
