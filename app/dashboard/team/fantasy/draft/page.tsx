@@ -758,14 +758,22 @@ export default function TeamDraftPage() {
     const myTeamId = myTeam?.team_id || myTeam?.id;
 
     if (slot.name.toLowerCase().includes('team') || slot.list_id?.includes('team')) {
-      // Real Teams pool — show only available teams (not occupied by any fantasy team, not self-released)
+      // Real Teams pool — show only available teams (not occupied by any fantasy team, not self-released in this window)
       return realTeams
         .filter(t => {
           const cleanId = String(t.team_uid).replace(/_.*$/, '').toUpperCase();
           const cleanName = (t.team_name || '').toLowerCase().trim();
 
-          // 1. Do not show team released by self
-          if (myTeamId && String(t.released_by_team_id) === String(myTeamId)) return false;
+          // 1. Do not show team released by self in this window
+          const isReleasedBySelf = windowReleasesList.some((r: any) => {
+            if (!r.is_passive_team) return false;
+            if (String(r.team_id) !== String(myTeamId)) return false;
+            const rCleanId = String(r.real_player_id || '').replace(/_.*$/, '').toUpperCase();
+            const rCleanName = (r.player_name || '').toUpperCase().trim();
+            return rCleanId === cleanId || rCleanName === cleanName.toUpperCase();
+          });
+
+          if (isReleasedBySelf) return false;
 
           // 2. Do not show teams that are currently occupied / taken as active supported_team_id
           if (occupiedSupportedTeamIds.has(cleanId) || occupiedSupportedTeamIds.has(String(t.team_uid).toUpperCase())) {
@@ -787,8 +795,18 @@ export default function TeamDraftPage() {
 
       return availablePlayers
         .filter(p => {
-          // Self-release check: cannot bid on player released by own team
-          if (myTeamId && p.released_by_team_id === myTeamId) return false;
+          // Self-release check: cannot bid on player released by own team in this window
+          const isPlayerReleasedBySelf = windowReleasesList.some((r: any) => {
+            if (r.is_passive_team) return false;
+            if (String(r.team_id) !== String(myTeamId)) return false;
+            const rCleanId = String(r.real_player_id || '').replace(/_.*$/, '').toUpperCase();
+            const rCleanName = (r.player_name || '').toUpperCase().trim();
+            const pCleanId = String(p.real_player_id || '').replace(/_.*$/, '').toUpperCase();
+            const pCleanName = (p.player_name || '').toUpperCase().trim();
+            return rCleanId === pCleanId || rCleanName === pCleanName;
+          });
+
+          if (isPlayerReleasedBySelf) return false;
 
           // If active transfer window is running or releases exist, filter out players currently owned by ANY team
           // UNLESS the player is explicitly a window release!
