@@ -370,6 +370,9 @@ function PostWindowDraftProcessContent() {
         const validReleaseNames = new Set(fetchedReleases.map((r) => (r.player_name || '').toUpperCase().trim()));
 
         const filteredBids = fetchedBids.filter((b: Bid) => {
+          if (b.is_passive_team || (b.category || '').toUpperCase().includes('PASSIVE')) {
+            return true;
+          }
           const cleanTargetId = (b.target_id || '').replace(/_.*$/, '');
           const normTargetName = (b.target_name || '').toUpperCase().trim();
           return validReleaseIds.has(cleanTargetId) || validReleaseNames.has(normTargetName);

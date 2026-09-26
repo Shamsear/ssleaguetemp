@@ -320,6 +320,20 @@ export default function TeamDraftPage() {
         }
       });
 
+      // Ensure all 12 tournament real teams from player pool and fantasy teams exist in teamsList
+      playersList.forEach((p) => {
+        if (p.real_team_name && !p.real_team_name.startsWith('Released from')) {
+          const normName = p.real_team_name.trim();
+          const exists = teamsList.some(t => (t.team_name || '').toUpperCase().trim() === normName.toUpperCase());
+          if (!exists) {
+            teamsList.push({
+              team_uid: `team_${normName.toLowerCase().replace(/\s+/g, '_')}`,
+              team_name: normName
+            });
+          }
+        }
+      });
+
       // Deduplicate teamsList by clean name to prevent duplicate cards
       const uniqueTeamsMap = new Map<string, RealTeam>();
       teamsList.forEach((t) => {
