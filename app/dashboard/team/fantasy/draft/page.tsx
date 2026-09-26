@@ -112,16 +112,7 @@ export default function TeamDraftPage() {
       const leagueId = teamData.team.fantasy_league_id;
       const teamId = teamData.team.team_id || teamData.team.id;
 
-      // 1b. Fetch eligible post-release categories & transfer windows
-      let catDataMap: Record<string, number> = {};
-      const catRes = await fetchWithTokenRefresh(`/api/fantasy/draft/eligible-categories?team_id=${teamId}&league_id=${leagueId}`);
-      if (catRes.ok) {
-        const catData = await catRes.json();
-        catDataMap = catData.eligible_categories || {};
-        setEligibleCategories(catDataMap);
-      }
-
-      // Fetch transfer windows and releases early
+      // 1b. Fetch transfer windows and releases early
       const winRes = await fetchWithTokenRefresh(`/api/fantasy/transfer-windows?league_id=${leagueId}`);
       let activeWin: any = null;
       if (winRes.ok) {
@@ -134,6 +125,16 @@ export default function TeamDraftPage() {
       const releasesData = releasesRes.ok ? await releasesRes.json() : { releases: [] };
       const windowReleases = releasesData.releases || [];
       setWindowReleasesList(windowReleases);
+
+      // Fetch eligible post-release categories
+      let catDataMap: Record<string, number> = {};
+      const winParam = activeWin?.window_id ? `&window_id=${activeWin.window_id}` : '';
+      const catRes = await fetchWithTokenRefresh(`/api/fantasy/draft/eligible-categories?team_id=${teamId}&league_id=${leagueId}${winParam}`);
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        catDataMap = catData.eligible_categories || {};
+        setEligibleCategories(catDataMap);
+      }
 
       const checkSlotEligible = (slotIdx: number, slotNameStr?: string) => {
         if (!activeWin && windowReleases.length === 0) return true;
@@ -509,6 +510,9 @@ export default function TeamDraftPage() {
     const categoryName = getCategoryNameForSlot(slotIdx);
 
     if (categoryName === 'Passive Team') {
+      if (myTeam && (!myTeam.supported_team_id || String(myTeam.supported_team_id).trim() === '')) {
+        return true;
+      }
       return !!(eligibleCategories['Passive Team'] || eligibleCategories['Supported Team'] || eligibleCategories['PASSIVE TEAM']);
     }
 

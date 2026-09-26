@@ -25,10 +25,19 @@ export async function GET(request: NextRequest) {
       const [activeWin] = await fantasySql`
         SELECT window_id FROM fantasy_transfer_windows
         WHERE league_id = ${leagueId}
-          AND is_active = true
+          AND (is_active = true OR status = 'active')
         ORDER BY opens_at DESC LIMIT 1
       `;
       targetWindowId = activeWin?.window_id || null;
+
+      if (!targetWindowId) {
+        const [latestWin] = await fantasySql`
+          SELECT window_id FROM fantasy_transfer_windows
+          WHERE league_id = ${leagueId}
+          ORDER BY opens_at DESC LIMIT 1
+        `;
+        targetWindowId = latestWin?.window_id || null;
+      }
     }
 
     if (!targetWindowId) {
