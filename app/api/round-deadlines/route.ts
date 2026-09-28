@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         : normalizeDateString(existingRecord?.scheduled_date);
       const finalRoundStartTime = round_start_time !== undefined ? round_start_time : (existingRecord?.round_start_time || null);
       const finalHomeTime = home_fixture_deadline_time || existingRecord?.home_fixture_deadline_time || '17:00';
-      const finalAwayTime = away_fixture_deadline_time || existingRecord?.away_fixture_deadline_time || '17:00';
+      const finalAwayTime = away_fixture_deadline_time || existingRecord?.away_fixture_deadline_time || '19:00';
       const finalResultOffset = result_entry_deadline_day_offset !== undefined ? result_entry_deadline_day_offset : (existingRecord?.result_entry_deadline_day_offset || 2);
       const finalResultTime = result_entry_deadline_time || existingRecord?.result_entry_deadline_time || '00:30';
       const finalStatus = status || existingRecord?.status || 'pending';

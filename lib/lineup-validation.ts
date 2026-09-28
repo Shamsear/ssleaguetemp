@@ -245,7 +245,7 @@ export async function isLineupEditable(
     
     // Use the same time parsing as fixture page
     const homeTime = fixture.home_fixture_deadline_time || '17:00';
-    const awayTime = fixture.away_fixture_deadline_time || '17:00';
+    const awayTime = fixture.away_fixture_deadline_time || '19:00';
     
     // Parse times (HH:MM format)
     const [homeHour, homeMin] = homeTime.split(':').map(Number);

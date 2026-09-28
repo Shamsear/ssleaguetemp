@@ -157,7 +157,7 @@ export default function FixtureManagementPage() {
 
     const awayDeadline = createISTDateTime(
       scheduledDate,
-      roundData.away_fixture_deadline_time || '17:00'
+      roundData.away_fixture_deadline_time || '19:00'
     );
 
     const resultDate = new Date(baseDate);

@@ -112,6 +112,46 @@ export async function POST(request: NextRequest) {
     `;
     console.log(`🏆 Loaded ${awards.length} awards for Season 18`);
 
+    const initialSlot6 = await fantasyDb`
+      SELECT team_id, target_id 
+      FROM fantasy_draft_bids 
+      WHERE league_id = ${LEAGUE_ID} AND slot_index = 6 AND status = 'won'
+    `;
+    const initialSupportedTeamMap = new Map<string, string>();
+    initialSlot6.forEach((b: any) => initialSupportedTeamMap.set(b.team_id, b.target_id));
+
+    const passiveWonBids = await fantasyDb`
+      SELECT b.team_id, b.target_id, COALESCE(tw.start_round, 999) as acq_start_round
+      FROM fantasy_post_release_bids b
+      LEFT JOIN fantasy_transfer_windows tw ON b.draft_round_id = tw.window_id
+      WHERE b.league_id = ${LEAGUE_ID} AND b.is_passive_team = true AND b.status = 'won'
+      ORDER BY acq_start_round ASC
+    `;
+
+    const getSupportedTeamForRound = (teamId: string, roundNum: number): string | null => {
+      if (roundNum <= 6) {
+        return initialSupportedTeamMap.get(teamId) || null;
+      }
+      let currentSuppTeam = initialSupportedTeamMap.get(teamId) || null;
+
+      const w1Bid = passiveWonBids.find((b: any) => b.team_id === teamId && b.acq_start_round <= roundNum && b.acq_start_round === 7);
+      if (w1Bid && roundNum >= 7) {
+        currentSuppTeam = w1Bid.target_id;
+      }
+
+      const w2Bid = passiveWonBids.find((b: any) => b.team_id === teamId && b.acq_start_round <= roundNum && b.acq_start_round === 12);
+      if (w2Bid && roundNum >= 12) {
+        currentSuppTeam = w2Bid.target_id;
+      }
+
+      const w3Bid = passiveWonBids.find((b: any) => b.team_id === teamId && b.acq_start_round <= roundNum && b.acq_start_round === 18);
+      if (w3Bid && roundNum >= 18) {
+        currentSuppTeam = w3Bid.target_id;
+      }
+
+      return currentSuppTeam;
+    };
+
     const draftBidsAll = await fantasyDb`
       SELECT team_id, slot_index, target_id
       FROM fantasy_draft_bids
@@ -318,13 +358,14 @@ export async function POST(request: NextRequest) {
         const goals_conceded = side === 'home' ? fixture.away_score : fixture.home_score;
 
         for (const ft of currentTeams as any[]) {
-          const activeSupportedTeamId = (roundNum <= 6)
-            ? (draftSupportedTeams.get(ft.team_id) || null)
-            : (ft.supported_team_id || null);
+          const activeSupportedTeamId = getSupportedTeamForRound(ft.team_id, roundNum);
 
           if (!activeSupportedTeamId) continue;
 
-          const isMatch = activeSupportedTeamId === real_team_id || activeSupportedTeamId.startsWith(`${real_team_id}_`);
+          const isMatch = activeSupportedTeamId === real_team_id || 
+                          activeSupportedTeamId.startsWith(`${real_team_id}_`) ||
+                          real_team_id.startsWith(`${activeSupportedTeamId}_`) ||
+                          activeSupportedTeamId.replace(/_SSPSLS18$/, '') === real_team_id.replace(/_SSPSLS18$/, '');
           if (!isMatch) continue;
 
           const won = goals_scored > goals_conceded;
@@ -355,7 +396,9 @@ export async function POST(request: NextRequest) {
 
           // Check TOD and TOW awards
           const todAward = awards.find(
-            (a: any) => (a.award_type === 'TOD' || a.award_type === 'Team of the Day') && (a.team_id === real_team_id || activeSupportedTeamId.includes(a.team_id)) && a.round_number === roundNum
+            (a: any) => (a.award_type === 'TOD' || a.award_type === 'Team of the Day') &&
+                        (a.team_id === real_team_id || activeSupportedTeamId.includes(a.team_id) || a.team_id.replace(/_SSPSLS18$/, '') === real_team_id.replace(/_SSPSLS18$/, '')) &&
+                        a.round_number === roundNum
           );
           if (todAward) {
             const pts = TEAM_SCORING_RULES.get('team_of_the_day') || 5;
@@ -365,7 +408,9 @@ export async function POST(request: NextRequest) {
 
           const weekNum = Math.ceil(roundNum / 7);
           const towAward = awards.find(
-            (a: any) => (a.award_type === 'TOW' || a.award_type === 'Team of the Week') && (a.team_id === real_team_id || activeSupportedTeamId.includes(a.team_id)) && (a.round_number === roundNum || a.week_number === weekNum)
+            (a: any) => (a.award_type === 'TOW' || a.award_type === 'Team of the Week') &&
+                        (a.team_id === real_team_id || activeSupportedTeamId.includes(a.team_id) || a.team_id.replace(/_SSPSLS18$/, '') === real_team_id.replace(/_SSPSLS18$/, '')) &&
+                        (a.round_number === roundNum || a.week_number === weekNum)
           );
           if (towAward) {
             const pts = TEAM_SCORING_RULES.get('team_of_the_week') || 10;
