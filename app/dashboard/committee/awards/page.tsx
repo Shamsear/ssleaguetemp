@@ -29,7 +29,10 @@ import {
   Sparkles,
   Bot,
   Zap,
-  ArrowUpDown
+  ArrowUpDown,
+  X,
+  RotateCcw,
+  Edit3
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -172,7 +175,8 @@ function generateNomineeWhatsAppMessage(
   week: number,
   category?: string,
   opponentCategory?: string,
-  isWinner: boolean = false
+  isWinner: boolean = false,
+  weekRanges?: WeekRange[]
 ): string {
   const isPlayerAward = ['POTD', 'POTW', 'POTS'].includes(tab);
   const isRoundAward = ['POTD', 'TOD'].includes(tab);
@@ -182,7 +186,7 @@ function generateNomineeWhatsAppMessage(
   if (isRoundAward) {
     periodStr = `Round ${round}`;
   } else if (isWeekAward) {
-    const ranges = getWeekRanges(round > 0 ? round : 26);
+    const ranges = weekRanges || getWeekRanges(round > 0 ? round : 26);
     const found = ranges.find(r => r.week === week);
     const label = found ? found.label : `Week ${week}`;
     periodStr = `Week ${week} (${label})`;
@@ -225,7 +229,8 @@ function generateRoundNomineesWhatsAppMessage(
   round: number,
   week: number,
   getCat: (c: Candidate) => string,
-  getOppCat: (c: Candidate) => string
+  getOppCat: (c: Candidate) => string,
+  weekRanges?: WeekRange[]
 ): string {
   const isPlayerAward = ['POTD', 'POTW', 'POTS'].includes(tab);
   const isRoundAward = ['POTD', 'TOD'].includes(tab);
@@ -235,7 +240,7 @@ function generateRoundNomineesWhatsAppMessage(
   if (isRoundAward) {
     periodStr = `Round ${round}`;
   } else if (isWeekAward) {
-    const ranges = getWeekRanges(round > 0 ? round : 26);
+    const ranges = weekRanges || getWeekRanges(round > 0 ? round : 26);
     const found = ranges.find(r => r.week === week);
     const label = found ? found.label : `Week ${week}`;
     periodStr = `Week ${week} (${label})`;
@@ -301,7 +306,10 @@ export default function AwardsManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [tournamentId, setTournamentId] = useState<string>('');
-  const [availableTournaments, setAvailableTournaments] = useState<Array<{ id: string, name: string }>>([]);
+  const [availableTournaments, setAvailableTournaments] = useState<Array<{ id: string, name: string, week_ranges?: any }>>([]);
+  const [showWeekConfigModal, setShowWeekConfigModal] = useState(false);
+  const [editingWeekRanges, setEditingWeekRanges] = useState<Array<{ week: number; start: number; end: number }>>([]);
+  const [savingWeekRanges, setSavingWeekRanges] = useState(false);
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -314,7 +322,8 @@ export default function AwardsManagementPage() {
         if (result.success && result.tournaments && result.tournaments.length > 0) {
           const tournaments = result.tournaments.map((t: any) => ({
             id: t.id,
-            name: t.tournament_name || t.id
+            name: t.tournament_name || t.id,
+            week_ranges: t.week_ranges || null,
           }));
           setAvailableTournaments(tournaments);
 
@@ -418,7 +427,8 @@ export default function AwardsManagementPage() {
       currentWeek,
       cat,
       oppCat,
-      false
+      false,
+      availableWeekRanges
     );
 
     navigator.clipboard.writeText(message);
@@ -469,7 +479,8 @@ export default function AwardsManagementPage() {
       award.week_number || currentWeek,
       cat,
       oppCat,
-      true
+      true,
+      availableWeekRanges
     );
 
     navigator.clipboard.writeText(message);
@@ -550,7 +561,8 @@ export default function AwardsManagementPage() {
       currentRound,
       currentWeek,
       getCandidateCategory,
-      getCandidateOpponentCategory
+      getCandidateOpponentCategory,
+      availableWeekRanges
     );
 
     navigator.clipboard.writeText(message);
@@ -651,6 +663,91 @@ export default function AwardsManagementPage() {
       setError('Failed to load awards data');
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  const handleOpenWeekConfig = () => {
+    const currentRanges = availableWeekRanges.map((r, idx) => ({
+      week: r.week || idx + 1,
+      start: Number(r.start),
+      end: Number(r.end),
+    }));
+    setEditingWeekRanges(currentRanges);
+    setShowWeekConfigModal(true);
+  };
+
+  const handleAddWeekRange = () => {
+    setEditingWeekRanges(prev => {
+      const last = prev[prev.length - 1];
+      const nextWeek = prev.length + 1;
+      const nextStart = last ? Number(last.end) + 1 : 1;
+      const nextEnd = Math.min(nextStart + 6, maxRounds > 0 ? maxRounds : nextStart + 6);
+      return [...prev, { week: nextWeek, start: nextStart, end: Math.max(nextStart, nextEnd) }];
+    });
+  };
+
+  const handleRemoveWeekRange = (index: number) => {
+    setEditingWeekRanges(prev => {
+      const updated = prev.filter((_, idx) => idx !== index);
+      return updated.map((r, idx) => ({ ...r, week: idx + 1 }));
+    });
+  };
+
+  const handleUpdateWeekRangeField = (index: number, field: 'start' | 'end', val: number) => {
+    setEditingWeekRanges(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: val };
+      return updated;
+    });
+  };
+
+  const handleResetToDefaultWeekRanges = () => {
+    const total = maxRounds > 0 ? maxRounds : 26;
+    const roundsPerWeek = 7;
+    const numWeeks = Math.ceil(total / roundsPerWeek);
+    const ranges: Array<{ week: number; start: number; end: number }> = [];
+    for (let w = 1; w <= numWeeks; w++) {
+      const start = (w - 1) * roundsPerWeek + 1;
+      const end = Math.min(w * roundsPerWeek, total);
+      ranges.push({ week: w, start, end });
+    }
+    setEditingWeekRanges(ranges);
+  };
+
+  const handleSaveWeekRanges = async () => {
+    if (!tournamentId) return;
+    setSavingWeekRanges(true);
+    setError(null);
+    try {
+      const formatted = editingWeekRanges.map((r, idx) => ({
+        week: idx + 1,
+        start: Number(r.start),
+        end: Number(r.end),
+      }));
+
+      const res = await fetchWithTokenRefresh(`/api/tournaments/${tournamentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          week_ranges: formatted
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save week ranges');
+      }
+
+      setAvailableTournaments(prev => prev.map(t => t.id === tournamentId ? { ...t, week_ranges: formatted } : t));
+      setShowWeekConfigModal(false);
+      setSuccess('Week ranges updated and applied successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+      loadData();
+    } catch (err: any) {
+      console.error('Error saving week ranges:', err);
+      setError(err.message || 'Failed to save week ranges');
+    } finally {
+      setSavingWeekRanges(false);
     }
   };
 
@@ -890,9 +987,24 @@ export default function AwardsManagementPage() {
 
           {['POTW', 'TOW'].includes(activeTab) && (
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
-                Select Week
-              </label>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                    Select Week
+                  </label>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Candidates evaluated across the selected week's rounds
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenWeekConfig}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs"
+                >
+                  <Settings className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Configure Weeks</span>
+                </button>
+              </div>
               <div className="flex gap-3 flex-wrap">
                 {availableWeekRanges.map(({ week, label }) => (
                   <button
@@ -1293,6 +1405,137 @@ export default function AwardsManagementPage() {
           )}
         </div>
       </div>
+
+      {/* Week Configuration Modal */}
+      {showWeekConfigModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-mono">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-6 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">
+                    Configure Week Ranges
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Define custom start and end round boundaries for each week
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWeekConfigModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {editingWeekRanges.map((r, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl"
+                >
+                  <div className="w-20 font-bold text-xs text-slate-700">
+                    Week {r.week || idx + 1}
+                  </div>
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="flex-1">
+                      <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">
+                        Start Round
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxRounds || 50}
+                        value={r.start}
+                        onChange={(e) => handleUpdateWeekRangeField(idx, 'start', parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-hidden focus:border-amber-400"
+                      />
+                    </div>
+                    <span className="text-slate-400 font-bold mt-4">to</span>
+                    <div className="flex-1">
+                      <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">
+                        End Round
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxRounds || 50}
+                        value={r.end}
+                        onChange={(e) => handleUpdateWeekRangeField(idx, 'end', parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-hidden focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-28 text-right hidden sm:block">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-1 bg-amber-50 text-amber-800 border border-amber-200/60 rounded-lg">
+                      R{r.start} - R{r.end}
+                    </span>
+                  </div>
+                  {editingWeekRanges.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveWeekRange(idx)}
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer mt-3 sm:mt-0"
+                      title="Remove Week"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleAddWeekRange}
+                className="w-full py-2.5 border-2 border-dashed border-slate-200 hover:border-amber-400 hover:bg-amber-50/50 rounded-2xl text-xs font-extrabold text-slate-600 hover:text-amber-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Next Week
+              </button>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={handleResetToDefaultWeekRanges}
+                className="px-3.5 py-2 text-xs font-extrabold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Reset (7 rounds/wk)
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowWeekConfigModal(false)}
+                  className="px-4 py-2 text-xs font-extrabold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveWeekRanges}
+                  disabled={savingWeekRanges}
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {savingWeekRanges ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Save & Apply</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   
     </AuthGuard>

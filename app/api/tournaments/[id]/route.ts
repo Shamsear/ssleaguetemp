@@ -68,6 +68,7 @@ export async function PATCH(
       qualification_threshold,
       is_pure_knockout,
       rewards,
+      week_ranges,
     } = body;
 
     const result = await sql`
@@ -96,6 +97,7 @@ export async function PATCH(
         qualification_threshold = COALESCE(${qualification_threshold}::integer, qualification_threshold),
         is_pure_knockout = COALESCE(${is_pure_knockout}::boolean, is_pure_knockout),
         rewards = COALESCE(${rewards ? JSON.stringify(rewards) : null}::jsonb, rewards),
+        week_ranges = COALESCE(${week_ranges ? JSON.stringify(week_ranges) : null}::jsonb, week_ranges),
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

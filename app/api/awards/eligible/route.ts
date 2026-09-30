@@ -255,8 +255,8 @@ export async function GET(request: NextRequest) {
 
         const week = parseInt(weekNumber);
         const weekRange = getWeekRangeByWeek(week, maxRounds, customWeekRanges);
-        const startRound = weekRange.start;
-        const endRound = weekRange.end;
+        const startRound = searchParams.get('start_round') ? parseInt(searchParams.get('start_round')!) : weekRange.start;
+        const endRound = searchParams.get('end_round') ? parseInt(searchParams.get('end_round')!) : weekRange.end;
 
         console.log(`🔍 Searching for POTW candidates: week=${weekNumber}, rounds ${startRound}-${endRound}`);
 
@@ -585,8 +585,8 @@ export async function GET(request: NextRequest) {
 
         const week = parseInt(weekNumber);
         const weekRange = getWeekRangeByWeek(week, maxRounds, customWeekRanges);
-        const startRound = weekRange.start;
-        const endRound = weekRange.end;
+        const startRound = searchParams.get('start_round') ? parseInt(searchParams.get('start_round')!) : weekRange.start;
+        const endRound = searchParams.get('end_round') ? parseInt(searchParams.get('end_round')!) : weekRange.end;
 
         console.log(`🔍 Searching for TOW candidates: week=${weekNumber}, rounds ${startRound}-${endRound}`);
 
