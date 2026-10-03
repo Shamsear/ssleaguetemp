@@ -72,7 +72,9 @@ export async function POST(request: NextRequest) {
     const fixtures = await tournamentSql`
       SELECT 
         home_team_id,
-        away_team_id
+        away_team_id,
+        knockout_round,
+        round_number
       FROM fixtures
       WHERE id = ${fixture_id}
       LIMIT 1
@@ -83,6 +85,16 @@ export async function POST(request: NextRequest) {
     }
 
     const fixture = fixtures[0];
+
+    // Check if this fixture is a playoff or knockout match (excluded from fantasy)
+    if (fixture.knockout_round || fixture.round_number > 22 || fixture_id.includes('_ko_')) {
+      console.log(`Fixture ${fixture_id} is a playoff/knockout match - excluded from fantasy team bonus calculation`);
+      return NextResponse.json({
+        success: true,
+        message: 'Playoff / Knockout fixtures are excluded from fantasy team bonus calculation',
+        bonuses_awarded: 0,
+      });
+    }
 
     // Get matchup results to calculate team scores
     const matchups = await tournamentSql`

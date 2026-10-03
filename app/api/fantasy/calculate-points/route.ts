@@ -103,6 +103,16 @@ export async function POST(request: NextRequest) {
 
     const { fixture: fixtureData } = await fixtureResponse.json();
     
+    // Check if this fixture is a playoff or knockout match (excluded from fantasy)
+    if (fixtureData.knockout_round || fixtureData.is_knockout || fixtureData.round_number > 22 || fixtureData.id?.includes('_ko_')) {
+      console.log(`Fixture ${fixture_id} is a playoff/knockout match - excluded from fantasy league`);
+      return NextResponse.json({
+        success: true,
+        message: 'Playoff / Knockout fixtures are excluded from fantasy league',
+        points_calculated: 0,
+      });
+    }
+
     // Check if this tournament should be included in fantasy
     if (fixtureData.tournament_id) {
       try {

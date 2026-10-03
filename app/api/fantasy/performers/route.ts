@@ -121,16 +121,63 @@ export async function GET(request: NextRequest) {
         else if (raw.includes('SSPSLT0015')) name = 'LEGENDS FC';
         else if (raw.includes('SSPSLT0021')) name = 'LOS GALACTICOS';
         else if (raw.includes('SSPSLT0005')) name = 'TM ASGARDIANS';
-        else if (raw.includes('SSPSLT0006')) name = 'PES GUARDIANS';
+        else if (raw.includes('SSPSLT0006')) name = 'FC BARCELONA';
         else if (raw.includes('SSPSLT0001')) name = 'CLASSIC TENS';
         else if (raw.includes('SSPSLT0041')) name = 'ANDIMUKK FC';
         else if (raw.includes('SSPSLT0027')) name = 'PES GUARDIANS';
         else if (raw.includes('SSPSLT0003')) name = 'RED PANTHERS';
         else if (raw.includes('SSPSLT0004')) name = 'RED HAWKS FC';
+        else if (raw.includes('SSPSLT0016')) name = 'BLUE STRIKERS';
+        else if (raw.includes('SSPSLT0002')) name = 'MANCHESTER UNITED';
         else name = b.target_id;
       }
       initialSupportedTeamMap[b.team_id] = name;
     });
+
+    const realTeamNameMap: Record<string, string> = {
+      'SSPSLT0001': 'CLASSIC TENS',
+      'SSPSLT0002': 'MANCHESTER UNITED',
+      'SSPSLT0003': 'RED PANTHERS',
+      'SSPSLT0004': 'RED HAWKS FC',
+      'SSPSLT0005': 'TM ASGARDIANS',
+      'SSPSLT0006': 'FC BARCELONA',
+      'SSPSLT0015': 'LEGENDS FC',
+      'SSPSLT0016': 'BLUE STRIKERS',
+      'SSPSLT0018': 'TITANS FC',
+      'SSPSLT0021': 'LOS GALACTICOS',
+      'SSPSLT0027': 'PES GUARDIANS',
+      'SSPSLT0041': 'ANDIMUKK FC',
+    };
+
+    const normalizeRealTeamName = (idOrName: string) => {
+      if (!idOrName) return 'N/A';
+      const cleanId = idOrName.replace('_SSPSLS18', '').trim();
+      return realTeamNameMap[cleanId] || idOrName;
+    };
+
+    const getSupportedTeamForRound = (teamId: string, roundNum: number, currentTeam?: any) => {
+      // Window 1: Rounds 1–6 (Initial Window)
+      if (roundNum <= 6) {
+        const raw = initialSupportedTeamMap[teamId];
+        return normalizeRealTeamName(raw || currentTeam?.supported_team_name);
+      }
+      // Window 2: Rounds 7–11 (Transfer Window 1)
+      if (roundNum <= 11) {
+        if (teamId === 'SSPSLT0041') return 'TITANS FC';
+        if (teamId === 'SSPSLT0004') return 'RED HAWKS FC';
+        const raw = initialSupportedTeamMap[teamId];
+        return normalizeRealTeamName(raw || currentTeam?.supported_team_name);
+      }
+      // Window 3: Rounds 12–17 (Transfer Window 2)
+      if (roundNum <= 17) {
+        if (teamId === 'SSPSLT0041') return 'TITANS FC';
+        if (teamId === 'SSPSLT0004') return 'RED HAWKS FC';
+        const raw = initialSupportedTeamMap[teamId];
+        return normalizeRealTeamName(raw || currentTeam?.supported_team_name);
+      }
+      // Window 4: Rounds 18–22 (Transfer Window 3)
+      return normalizeRealTeamName(currentTeam?.supported_team_name || currentTeam?.supported_team_id);
+    };
 
     const passiveReleases = await fantasySql`
       SELECT fr.team_id, fr.real_player_id, fr.player_name, fr.is_passive_team
@@ -485,14 +532,7 @@ export async function GET(request: NextRequest) {
       const passive_points = bData ? Number(bData.passive_points) : 0;
       const total_round_points = player_points + passive_points;
 
-      let supporting_team_name = bData?.real_team_name;
-      if (!supporting_team_name) {
-        if (targetRound < 7) {
-          supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
-        } else {
-          supporting_team_name = ft.supported_team_name || initialSupportedTeamMap[ft.team_id] || 'N/A';
-        }
-      }
+      const supporting_team_name = getSupportedTeamForRound(ft.team_id, targetRound, ft);
 
       return {
         team_id: ft.team_id,
@@ -515,55 +555,21 @@ export async function GET(request: NextRequest) {
       return b.player_points - a.player_points;
     });
 
-    // 5. SUPPORTING TEAM OF THE DAY (STOD): Passive team bonus points in target round
-    const stodRawRows = await fantasySql`
-      SELECT 
-        ftbp.team_id as fantasy_team_id,
-        ft.team_name as fantasy_team_name,
-        ft.owner_name,
-        ftbp.real_team_id,
-        ftbp.real_team_name,
-        ftbp.bonus_breakdown,
-        COALESCE(ftbp.total_bonus, 0) as supporting_points
-      FROM fantasy_team_bonus_points ftbp
-      JOIN fantasy_teams ft ON ftbp.team_id = ft.team_id
-      WHERE ftbp.league_id = ${leagueId} AND ftbp.round_number = ${targetRound}
-      ORDER BY supporting_points DESC
-    `;
-
-    // Deduplicate & aggregate STOD rows per fantasy team
-    const stodSeenMap = new Map<string, any>();
-    stodRawRows.forEach((r: any) => {
-      const existing = stodSeenMap.get(r.fantasy_team_id);
-      if (!existing) {
-        let bd: any = {};
-        try {
-          bd = typeof r.bonus_breakdown === 'string' ? JSON.parse(r.bonus_breakdown) : (r.bonus_breakdown || {});
-        } catch (e) {
-          bd = {};
-        }
-        stodSeenMap.set(r.fantasy_team_id, {
-          ...r,
-          supporting_points: Number(r.supporting_points || 0),
-          bonus_breakdown: bd
-        });
-      } else {
-        existing.supporting_points += Number(r.supporting_points || 0);
-        let bd: any = {};
-        try {
-          bd = typeof r.bonus_breakdown === 'string' ? JSON.parse(r.bonus_breakdown) : (r.bonus_breakdown || {});
-        } catch (e) {}
-        Object.entries(bd).forEach(([k, v]) => {
-          if (k === 'team_of_the_day' || k === 'team_of_the_week') {
-            existing.bonus_breakdown[k] = Math.max(Number(existing.bonus_breakdown[k] || 0), Number(v || 0));
-          } else {
-            existing.bonus_breakdown[k] = (existing.bonus_breakdown[k] || 0) + Number(v || 0);
-          }
-        });
-      }
+    // 5. SUPPORTING TEAM OF THE DAY (STOD): All fantasy teams with passive team bonus points in target round
+    const stodRows = allTeams.map((ft: any) => {
+      const bData = bonusPtsMap.get(ft.team_id);
+      const suppName = getSupportedTeamForRound(ft.team_id, targetRound, ft);
+      return {
+        fantasy_team_id: ft.team_id,
+        fantasy_team_name: ft.team_name,
+        owner_name: ft.owner_name,
+        real_team_id: bData?.real_team_id || ft.supported_team_id,
+        real_team_name: suppName,
+        supporting_points: bData ? Number(bData.passive_points || 0) : 0,
+        bonus_breakdown: bData?.bonus_breakdown || null
+      };
     });
-    const stodRows = Array.from(stodSeenMap.values());
-    stodRows.sort((a, b) => Number(b.supporting_points) - Number(a.supporting_points));
+    stodRows.sort((a: any, b: any) => b.supporting_points - a.supporting_points);
 
     // 6. PLAYER OF THE DAY (POD): Drafted vs Free Agent players in target round (respecting window draft status in that round)
     const podRawRows = await fantasySql`
@@ -962,14 +968,7 @@ export async function GET(request: NextRequest) {
         return 0;
       });
 
-      let supporting_team_name = bData?.real_team_name;
-      if (!supporting_team_name) {
-        if (startR < 7) {
-          supporting_team_name = initialSupportedTeamMap[ft.team_id] || ft.supported_team_name || 'N/A';
-        } else {
-          supporting_team_name = ft.supported_team_name || initialSupportedTeamMap[ft.team_id] || 'N/A';
-        }
-      }
+      const supporting_team_name = getSupportedTeamForRound(ft.team_id, startR, ft);
 
       const player_points = pData ? Number(pData.player_points) : players.reduce((sum, p) => sum + Number(p.total_points || 0), 0);
       const passive_points = bData ? Number(bData.passive_points) : 0;
@@ -996,20 +995,20 @@ export async function GET(request: NextRequest) {
       return b.player_points - a.player_points;
     });
 
-    // 8. SUPPORTING TEAM OF THE WEEK (STOW): Passive team bonus points across 6-round block
-    const stowRows = await fantasySql`
-      SELECT 
-        ftbp.team_id as fantasy_team_id,
-        ft.team_name as fantasy_team_name,
-        ft.owner_name,
-        ftbp.real_team_name,
-        COALESCE(SUM(ftbp.total_bonus), 0) as supporting_points
-      FROM fantasy_team_bonus_points ftbp
-      LEFT JOIN fantasy_teams ft ON ftbp.team_id = ft.team_id
-      WHERE ftbp.league_id = ${leagueId} AND ftbp.round_number BETWEEN ${startR} AND ${endR}
-      GROUP BY ftbp.team_id, ft.team_name, ft.owner_name, ftbp.real_team_name
-      ORDER BY supporting_points DESC
-    `;
+    // 8. SUPPORTING TEAM OF THE WEEK (STOW): All fantasy teams with passive bonus points across week block
+    const stowRows = allTeams.map((ft: any) => {
+      const bData = teamBonusAggMap.get(ft.team_id);
+      const suppName = getSupportedTeamForRound(ft.team_id, startR, ft);
+      return {
+        fantasy_team_id: ft.team_id,
+        fantasy_team_name: ft.team_name,
+        owner_name: ft.owner_name,
+        real_team_name: suppName,
+        supporting_points: bData ? Number(bData.passive_points || 0) : 0,
+        bonus_breakdown: bData?.bonus_breakdown || null
+      };
+    });
+    stowRows.sort((a: any, b: any) => b.supporting_points - a.supporting_points);
 
     // 9. PLAYER OF THE WEEK (POW): Drafted vs Free Agent players across week block
     const powDetails = await fantasySql`
