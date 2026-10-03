@@ -1010,7 +1010,9 @@ export default function MyFantasyTeamPage() {
                       </div>
                       <div className="text-center">
                         <span className="text-[8px] text-emerald-600 font-bold uppercase block">Passive Pts</span>
-                        <span className="text-xs font-bold text-emerald-600 mt-0.5 block">+{team.passive_points || 0}</span>
+                        <span className={`text-xs font-bold ${Number(team.passive_points || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'} mt-0.5 block`}>
+                          {Number(team.passive_points || 0) >= 0 ? `+${team.passive_points || 0}` : team.passive_points}
+                        </span>
                       </div>
                       <div className="text-center">
                         <span className="text-[8px] text-slate-400 font-bold uppercase block">Total</span>

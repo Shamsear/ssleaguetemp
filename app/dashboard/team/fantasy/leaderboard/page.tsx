@@ -278,8 +278,8 @@ export default function FantasyLeaderboardPage() {
                             <span className="text-[9px] sm:text-[10px] font-bold text-slate-700 uppercase truncate max-w-[85px] sm:max-w-none">
                               {entry.supported_team_name || 'N/A'}
                             </span>
-                            <span className="text-[10px] sm:text-xs font-extrabold text-emerald-600 mt-0.5">
-                              +{entry.passive_points || 0}
+                            <span className={`text-[10px] sm:text-xs font-extrabold ${Number(entry.passive_points || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'} mt-0.5`}>
+                              {Number(entry.passive_points || 0) >= 0 ? `+${entry.passive_points || 0}` : entry.passive_points}
                             </span>
                           </div>
                         </td>

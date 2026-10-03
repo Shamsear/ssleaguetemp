@@ -288,8 +288,18 @@ export default function ShareableFantasyLeaderboard({
                           <span style={{ fontSize: 13, fontWeight: 800, color: '#111111', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                             {team.supported_team_name || 'N/A'}
                           </span>
-                          <span style={{ display: 'inline-block', background: 'rgba(5,150,105,0.08)', color: '#047857', border: '1px solid rgba(5,150,105,0.2)', padding: '3px 10px', borderRadius: '6px', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>
-                            +{team.passive_points || 0} PTS
+                          <span style={{ 
+                            display: 'inline-block', 
+                            background: Number(team.passive_points || 0) < 0 ? 'rgba(225,29,72,0.08)' : 'rgba(5,150,105,0.08)', 
+                            color: Number(team.passive_points || 0) < 0 ? '#E11D48' : '#047857', 
+                            border: `1px solid ${Number(team.passive_points || 0) < 0 ? 'rgba(225,29,72,0.2)' : 'rgba(5,150,105,0.2)'}`, 
+                            padding: '3px 10px', 
+                            borderRadius: '6px', 
+                            fontSize: 12, 
+                            fontWeight: 800, 
+                            whiteSpace: 'nowrap' 
+                          }}>
+                            {Number(team.passive_points || 0) >= 0 ? `+${team.passive_points || 0}` : team.passive_points} PTS
                           </span>
                         </div>
                       </td>

@@ -481,7 +481,9 @@ function PassiveBreakdown({ team, show, data, isLoading, onToggle }: {
         <div className="flex items-center gap-2.5 shrink-0">
           <div className="text-right">
             <p className="text-[8px] text-slate-400 uppercase font-bold">Passive points</p>
-            <p className="text-sm font-black text-emerald-600 mt-0.5">+{team.passive_points || 0}</p>
+            <p className={`text-sm font-black ${Number(team.passive_points || 0) < 0 ? 'text-rose-600' : 'text-emerald-600'} mt-0.5`}>
+              {Number(team.passive_points || 0) >= 0 ? `+${team.passive_points || 0}` : team.passive_points}
+            </p>
           </div>
           <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${show ? 'rotate-180' : ''}`} />
         </div>
@@ -536,7 +538,7 @@ function PassiveBreakdown({ team, show, data, isLoading, onToggle }: {
                           </span>
                           <p className="text-slate-800 truncate">{r.real_team_name} {r.opponent_name ? `vs ${r.opponent_name}` : ''}</p>
                         </div>
-                        <span className="text-xs font-black text-emerald-600 shrink-0">{r.total_bonus > 0 ? '+' : ''}{r.total_bonus} pts</span>
+                        <span className={`text-xs font-black ${r.total_bonus < 0 ? 'text-rose-600' : 'text-emerald-600'} shrink-0`}>{r.total_bonus > 0 ? '+' : ''}{r.total_bonus} pts</span>
                       </div>
                     ))}
                   </div>
