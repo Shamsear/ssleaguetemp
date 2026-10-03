@@ -406,14 +406,31 @@ async function executeRecalculation() {
           total_bonus += pts;
         }
 
-        if (total_bonus > 0) {
+        if (total_bonus !== 0) {
+          const realNameMap: Record<string, string> = {
+            'SSPSLT0001': 'Classic Tens',
+            'SSPSLT0002': 'Manchester United',
+            'SSPSLT0003': 'Red Panthers',
+            'SSPSLT0004': 'Red Hawks FC',
+            'SSPSLT0005': 'TM Asgardians',
+            'SSPSLT0006': 'FC Barcelona',
+            'SSPSLT0015': 'Legends FC',
+            'SSPSLT0016': 'Blue Strikers',
+            'SSPSLT0018': 'Titans FC',
+            'SSPSLT0021': 'Los Galacticos',
+            'SSPSLT0027': 'Pes Guardians',
+            'SSPSLT0041': 'ANDIMUKK FC',
+          };
+          const cleanRealId = real_team_id.replace(/_SSPSLS18$/, '');
+          const correctRealName = realNameMap[cleanRealId] || ft.supported_team_name || real_team_id;
+
           await fantasyDb`
             INSERT INTO fantasy_team_bonus_points (
               league_id, team_id, real_team_id, real_team_name,
               fixture_id, round_number, bonus_breakdown, total_bonus, calculated_at
             ) VALUES (
               ${LEAGUE_ID}, ${ft.team_id}, ${real_team_id},
-              ${ft.supported_team_name || real_team_id}, ${fixture.fixture_id}, ${fixture.round_number},
+              ${correctRealName}, ${fixture.fixture_id}, ${fixture.round_number},
               ${JSON.stringify(bonus_breakdown)}, ${total_bonus}, NOW()
             )
           `;

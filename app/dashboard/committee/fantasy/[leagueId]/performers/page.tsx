@@ -482,7 +482,7 @@ export default function CommitteePerformersPage() {
                         <span className="text-2xl font-black">{todWinner.total_round_points} Pts</span>
                       </div>
                       <p className="text-[9px] font-extrabold opacity-75 mt-0.5">
-                        Squad Pts: {todWinner.player_points} | Supporting Pts: {todWinner.passive_points}
+                        Squad Pts: {todWinner.player_points} | Supporting Pts: {Number(todWinner.passive_points) >= 0 ? `+${todWinner.passive_points}` : todWinner.passive_points}
                       </p>
                     </div>
                   ) : (
@@ -505,7 +505,9 @@ export default function CommitteePerformersPage() {
                       <p className="text-[11px] font-bold text-slate-300 uppercase">Owner Team: {stodWinner.fantasy_team_name}</p>
                       <div className="mt-3 pt-2 border-t border-slate-700 flex items-baseline justify-between">
                         <span className="text-[10px] font-black text-slate-400 uppercase">Passive Bonus:</span>
-                        <span className="text-2xl font-black text-emerald-400">+{stodWinner.supporting_points} Pts</span>
+                        <span className={`text-2xl font-black ${Number(stodWinner.supporting_points) < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          {Number(stodWinner.supporting_points) >= 0 ? `+${stodWinner.supporting_points}` : stodWinner.supporting_points} Pts
+                        </span>
                       </div>
                     </div>
                   ) : (
@@ -610,7 +612,9 @@ export default function CommitteePerformersPage() {
                                 {t.supporting_team_name || 'N/A'}
                               </td>
                               <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
-                              <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
+                              <td className={`px-6 py-3.5 text-center font-bold ${Number(t.passive_points) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                {Number(t.passive_points) >= 0 ? `+${t.passive_points}` : t.passive_points} Pts
+                              </td>
                               <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm flex items-center justify-end gap-2">
                                 <span>{t.total_round_points} Pts</span>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -706,7 +710,9 @@ export default function CommitteePerformersPage() {
                                   <div className="space-y-1.5 pt-2 border-t border-slate-200">
                                     <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-500">
                                       <span>Supporting Team ({t.supporting_team_name || 'N/A'}) — Round {data?.target_round}</span>
-                                      <span className="text-emerald-700 font-black">+{t.passive_points} Pts</span>
+                                      <span className={`font-black ${Number(t.passive_points) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                        {Number(t.passive_points) >= 0 ? `+${t.passive_points}` : t.passive_points} Pts
+                                      </span>
                                     </div>
                                     {(() => {
                                       const pbd = typeof t.passive_breakdown === 'string' ? JSON.parse(t.passive_breakdown || '{}') : (t.passive_breakdown || {});
@@ -717,7 +723,7 @@ export default function CommitteePerformersPage() {
                                       return (
                                         <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold">
                                           {entries.map(([k, v]: [string, any]) => (
-                                            <span key={k} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg uppercase">
+                                            <span key={k} className={`${Number(v) < 0 ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'} border px-2 py-0.5 rounded-lg uppercase`}>
                                               {k.replace(/_/g, ' ')}: {Number(v) > 0 ? `+${v}` : v} pts
                                             </span>
                                           ))}
@@ -1065,7 +1071,7 @@ export default function CommitteePerformersPage() {
                         <span className="text-2xl font-black">{towWinner.total_week_points} Pts</span>
                       </div>
                       <p className="text-[9px] font-extrabold opacity-75 mt-0.5">
-                        Squad Pts: {towWinner.player_points} | Supporting Pts: {towWinner.passive_points}
+                        Squad Pts: {towWinner.player_points} | Supporting Pts: {Number(towWinner.passive_points) >= 0 ? `+${towWinner.passive_points}` : towWinner.passive_points}
                       </p>
                     </div>
                   ) : (
@@ -1088,7 +1094,9 @@ export default function CommitteePerformersPage() {
                       <p className="text-[11px] font-bold text-slate-300 uppercase">Owner Team: {stowWinner.fantasy_team_name}</p>
                       <div className="mt-3 pt-2 border-t border-slate-700 flex items-baseline justify-between">
                         <span className="text-[10px] font-black text-slate-400 uppercase">Passive Bonus:</span>
-                        <span className="text-2xl font-black text-emerald-400">+{stowWinner.supporting_points} Pts</span>
+                        <span className={`text-2xl font-black ${Number(stowWinner.supporting_points) < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          {Number(stowWinner.supporting_points) >= 0 ? `+${stowWinner.supporting_points}` : stowWinner.supporting_points} Pts
+                        </span>
                       </div>
                     </div>
                   ) : (
@@ -1193,7 +1201,9 @@ export default function CommitteePerformersPage() {
                                 {t.supporting_team_name || 'N/A'}
                               </td>
                               <td className="px-6 py-3.5 text-center text-slate-700">{t.player_points} Pts</td>
-                              <td className="px-6 py-3.5 text-center text-emerald-700">+{t.passive_points} Pts</td>
+                              <td className={`px-6 py-3.5 text-center font-bold ${Number(t.passive_points) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                {Number(t.passive_points) >= 0 ? `+${t.passive_points}` : t.passive_points} Pts
+                              </td>
                               <td className="px-6 py-3.5 text-right text-amber-600 font-black text-sm flex items-center justify-end gap-2">
                                 <span>{t.total_week_points} Pts</span>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -1277,7 +1287,9 @@ export default function CommitteePerformersPage() {
                                   <div className="space-y-1.5 pt-2 border-t border-slate-200">
                                     <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-500">
                                       <span>Supporting Team ({t.supporting_team_name || 'N/A'}) — {data?.target_week?.label || 'Week'}</span>
-                                      <span className="text-emerald-700 font-black">+{t.passive_points} Pts</span>
+                                      <span className={`font-black ${Number(t.passive_points) < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                        {Number(t.passive_points) >= 0 ? `+${t.passive_points}` : t.passive_points} Pts
+                                      </span>
                                     </div>
                                     {(() => {
                                       const pbd = typeof t.passive_breakdown === 'string' ? JSON.parse(t.passive_breakdown || '{}') : (t.passive_breakdown || {});
@@ -1288,7 +1300,7 @@ export default function CommitteePerformersPage() {
                                       return (
                                         <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold">
                                           {entries.map(([k, v]: [string, any]) => (
-                                            <span key={k} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg uppercase">
+                                            <span key={k} className={`${Number(v) < 0 ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'} border px-2 py-0.5 rounded-lg uppercase`}>
                                               {k.replace(/_/g, ' ')}: {Number(v) > 0 ? `+${v}` : v} pts
                                             </span>
                                           ))}

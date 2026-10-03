@@ -425,7 +425,7 @@ export async function POST(request: NextRequest) {
             total_bonus += pts;
           }
 
-          if (total_bonus > 0) {
+          if (total_bonus !== 0) {
             await fantasyDb`
               INSERT INTO fantasy_team_bonus_points (
                 league_id, team_id, real_team_id, real_team_name,
