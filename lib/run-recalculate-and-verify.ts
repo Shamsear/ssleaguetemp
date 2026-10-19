@@ -47,11 +47,15 @@ async function executeRecalculation() {
     }
   });
 
-  // Fixtures and Matchups
+  // Fixtures and Matchups (Playoffs and Knockouts strictly excluded, regular season up to round 22)
   const fixtures = await tournamentDb`
     SELECT id as fixture_id, season_id, round_number, home_team_id, away_team_id, home_score, away_score, motm_player_id
     FROM fixtures
-    WHERE status = 'completed' AND season_id = ${SEASON_ID}
+    WHERE status = 'completed' 
+      AND season_id = ${SEASON_ID}
+      AND (knockout_round IS NULL OR knockout_round = '')
+      AND round_number <= 22
+      AND id NOT LIKE '%_ko_%'
     ORDER BY round_number ASC
   `;
   const fixtureMap = new Map();
@@ -71,6 +75,9 @@ async function executeRecalculation() {
     LEFT JOIN realplayerstats rps_home ON (m.home_player_id = rps_home.player_id AND f.season_id = rps_home.season_id)
     LEFT JOIN realplayerstats rps_away ON (m.away_player_id = rps_away.player_id AND f.season_id = rps_away.season_id)
     WHERE f.season_id = ${SEASON_ID}
+      AND (f.knockout_round IS NULL OR f.knockout_round = '')
+      AND f.round_number <= 22
+      AND f.id NOT LIKE '%_ko_%'
       AND (m.is_null IS NOT TRUE)
       AND m.home_goals IS NOT NULL 
       AND m.away_goals IS NOT NULL
