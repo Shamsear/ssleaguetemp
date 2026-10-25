@@ -31,6 +31,22 @@ interface Player {
   used_smart_assist?: string
 }
 
+function formatDateForInput(dob?: string): string {
+  if (!dob) return ''
+  const trimmed = dob.trim()
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    return trimmed.substring(0, 10)
+  }
+  const parts = trimmed.split(/[-/]/)
+  if (parts.length === 3 && parts[2].length === 4) {
+    const day = parts[0].padStart(2, '0')
+    const month = parts[1].padStart(2, '0')
+    const year = parts[2]
+    return `${year}-${month}-${day}`
+  }
+  return trimmed
+}
+
 interface FormData {
   name: string
   place: string
@@ -74,17 +90,31 @@ function PlayerVerifyContent() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [usedSmartAssist, setUsedSmartAssist] = useState<string>('')
+
+  // Kerala districts list
+  const keralaDistricts = [
+    'Alappuzha',
+    'Ernakulam',
+    'Idukki',
+    'Kannur',
+    'Kasaragod',
+    'Kollam',
+    'Kottayam',
+    'Kozhikode',
+    'Malappuram',
+    'Palakkad',
+    'Pathanamthitta',
+    'Thiruvananthapuram',
+    'Thrissur',
+    'Wayanad'
+  ]
 
   // Check if confirm registration is disabled based on completeness of required fields
   const isConfirmDisabled = useMemo(() => {
     if (submitting || uploadingPhoto) return true
 
-    // Photo upload is always required
+    // Photo is required (either existing photoPreview or newly uploaded photoFile)
     if (!photoFile && !photoPreview) return true
-
-    // Smart assist is required for existing players
-    if (!isNewPlayer && !usedSmartAssist) return true
 
     // Validate form inputs if registration form is active
     if (showForm) {
@@ -109,25 +139,7 @@ function PlayerVerifyContent() {
     }
 
     return false
-  }, [submitting, uploadingPhoto, photoFile, photoPreview, isNewPlayer, usedSmartAssist, showForm, formData, player])
-
-  // Kerala districts list
-  const keralaDistricts = [
-    'Alappuzha',
-    'Ernakulam',
-    'Idukki',
-    'Kannur',
-    'Kasaragod',
-    'Kollam',
-    'Kottayam',
-    'Kozhikode',
-    'Malappuram',
-    'Palakkad',
-    'Pathanamthitta',
-    'Thiruvananthapuram',
-    'Thrissur',
-    'Wayanad'
-  ]
+  }, [submitting, uploadingPhoto, photoFile, photoPreview, isNewPlayer, showForm, formData, player])
 
   // Filter districts based on search
   const filteredDistricts = keralaDistricts.filter(district =>
@@ -226,22 +238,26 @@ function PlayerVerifyContent() {
             setPhotoPreview(playerData.photo_url)
           }
 
-          // Pre-fill used_smart_assist if already answered
-          if (playerData.used_smart_assist) {
-            setUsedSmartAssist(playerData.used_smart_assist)
-          }
+          const formattedDob = formatDateForInput(playerData.date_of_birth)
+          const matchedPlace = keralaDistricts.find(d => d.toLowerCase() === (playerData.place || '').toLowerCase()) || playerData.place || ''
 
           // Always pre-fill existing data into form
           setFormData({
             name: playerData.name || '',
-            place: playerData.place || '',
-            date_of_birth: playerData.date_of_birth || '',
+            place: matchedPlace,
+            date_of_birth: formattedDob,
             email: playerData.email || user.email || '',
             phone: playerData.phone || ''
           })
 
           // Check if player has complete details
-          const hasCompleteDetails = playerData.place && playerData.date_of_birth && playerData.email && playerData.phone
+          const hasCompleteDetails = Boolean(
+            playerData.name &&
+            playerData.place &&
+            playerData.date_of_birth &&
+            playerData.email &&
+            playerData.phone
+          )
 
           if (!hasCompleteDetails) {
             setShowForm(true)
@@ -395,21 +411,26 @@ function PlayerVerifyContent() {
       setPhotoPreview(selectedPlayer.photo_url)
     }
 
-    if (selectedPlayer.used_smart_assist) {
-      setUsedSmartAssist(selectedPlayer.used_smart_assist)
-    }
+    const formattedDob = formatDateForInput(selectedPlayer.date_of_birth)
+    const matchedPlace = keralaDistricts.find(d => d.toLowerCase() === (selectedPlayer.place || '').toLowerCase()) || selectedPlayer.place || ''
 
     // Pre-fill form data regardless
     setFormData({
       name: selectedPlayer.name || '',
-      place: selectedPlayer.place || '',
-      date_of_birth: selectedPlayer.date_of_birth || '',
+      place: matchedPlace,
+      date_of_birth: formattedDob,
       email: selectedPlayer.email || user?.email || '',
       phone: selectedPlayer.phone || ''
     })
 
     // Check if player has missing details
-    const hasCompleteDetails = selectedPlayer.place && selectedPlayer.date_of_birth && selectedPlayer.email && selectedPlayer.phone
+    const hasCompleteDetails = Boolean(
+      selectedPlayer.name &&
+      selectedPlayer.place &&
+      selectedPlayer.date_of_birth &&
+      selectedPlayer.email &&
+      selectedPlayer.phone
+    )
 
     if (!hasCompleteDetails) {
       setShowForm(true)
@@ -504,13 +525,6 @@ function PlayerVerifyContent() {
       return
     }
 
-    // Validate smart assist option for existing players
-    if (!isNewPlayer && !usedSmartAssist) {
-      setError('Please select whether you used smart assist last season.')
-      setSubmitting(false)
-      return
-    }
-
     // Validate form if shown
     if (showForm) {
       // For existing players, only validate missing fields
@@ -598,6 +612,8 @@ function PlayerVerifyContent() {
         if (formData.date_of_birth) playerData.date_of_birth = formData.date_of_birth
         if (formData.email) playerData.email = formData.email
         if (formData.phone) playerData.phone = formData.phone
+        if (player?.category) playerData.category = player.category
+        if (player?.previous_season_category) playerData.previous_season_category = player.previous_season_category
       } else if (player) {
         // Use existing player data
         playerData.name = player.name
@@ -605,6 +621,8 @@ function PlayerVerifyContent() {
         if (player.date_of_birth) playerData.date_of_birth = player.date_of_birth
         if (player.email) playerData.email = player.email
         if (player.phone) playerData.phone = player.phone
+        if (player.category) playerData.category = player.category
+        if (player.previous_season_category) playerData.previous_season_category = player.previous_season_category
       }
       
       // Add photo URL and fileId
@@ -628,7 +646,6 @@ function PlayerVerifyContent() {
           user_email: user.email,
           user_uid: user.uid,
           player_data: playerData,
-          used_smart_assist: !isNewPlayer ? usedSmartAssist : null,
         }),
       })
 
@@ -990,42 +1007,27 @@ function PlayerVerifyContent() {
                       </div>
                     </div>
 
-                    {/* Smart Assist Option for Existing Players */}
-                    {!isNewPlayer && (
-                      <div className="bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl p-5 mb-4">
-                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-2">
-                          Did you use Smart Assist in the last season? *
-                          <span className="text-rose-500 font-extrabold ml-1">Required</span>
-                        </label>
-                        <select
-                          value={usedSmartAssist}
-                          onChange={(e) => setUsedSmartAssist(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700"
-                        >
-                          <option value="">Select option...</option>
-                          <option value="yes">Yes</option>
-                          <option value="no">No</option>
-                          <option value="partially">Partially (Used for some time last season)</option>
-                          <option value="didnt_play">Didn't play last season</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Photo Upload - Required for all players */}
+                    {/* Photo Upload */}
                     <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6 mt-4">
-                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-3">
-                        Player Photo *
-                        <span className="text-rose-500 font-extrabold ml-1">Required</span>
+                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-2">
+                        Player Photo
+                        {photoPreview ? (
+                          <span className="text-[9px] text-green-600 font-bold ml-2">(Photo Ready)</span>
+                        ) : (
+                          <span className="text-rose-500 font-extrabold ml-1">*Required</span>
+                        )}
                       </label>
                       <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-relaxed mb-4">
-                        Please upload a clear photo of yourself. This will be used for your player profile.
+                        {photoPreview
+                          ? 'Your photo is ready from database. You can upload a new photo to change it, or proceed with your current photo.'
+                          : 'Please upload a clear photo of yourself. This will be used for your player profile.'}
                       </p>
                       
                       {/* Photo Status Info */}
                       {player?.photo_url && photoPreview === player.photo_url && (
                         <div className="mb-3 px-3 py-2 bg-emerald-50 border border-emerald-200/30 rounded-xl text-emerald-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Using existing photo. Tap Upload/Change to update.</span>
+                          <span>Using existing photo from database. Tap Change Photo to update.</span>
                         </div>
                       )}
                       {photoFile && (
@@ -1137,14 +1139,69 @@ function PlayerVerifyContent() {
                 {/* Show confirm button for existing player with complete details */}
                 {player && !showForm && (
                   <div className="bg-amber-500/[0.02] rounded-xl p-6 border border-amber-500/10 font-mono space-y-6">
-                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Your Player Profile</h3>
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-5 border-b border-slate-100">
+                      {/* Photo / Avatar */}
+                      <div className="relative flex-shrink-0">
+                        {photoPreview ? (
+                          <div className="relative">
+                            <img
+                              src={photoPreview}
+                              alt={player.name}
+                              className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
+                            />
+                            {photoFile && (
+                              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+                                New
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50">
+                            <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Header Info */}
+                      <div className="flex-1 text-center sm:text-left">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                          <h3 className="text-xl sm:text-2xl font-extrabold uppercase text-slate-800 tracking-wider">
+                            {player.name}
+                          </h3>
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg font-bold border border-slate-200/60 font-mono">
+                            {player.player_id}
+                          </span>
+                        </div>
+                        {player.place && (
+                          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">
+                            {player.place}, Kerala
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                          {player.previous_season_team && (
+                            <span className="text-[10px] bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg font-extrabold border border-amber-200/60 uppercase">
+                              Prev Team: {player.previous_season_team}
+                            </span>
+                          )}
+                          {player.previous_season_category && (
+                            <span className="text-[10px] bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-extrabold border border-blue-200/60 uppercase">
+                              Category: {player.previous_season_category}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Verified Player Profile</h3>
                     <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 space-y-3">
                       <div className="flex justify-between text-xs uppercase font-bold">
                         <span className="text-slate-500">Player ID:</span>
-                        <span className="text-slate-800">{player.player_id}</span>
+                        <span className="text-slate-800 font-mono">{player.player_id}</span>
                       </div>
                       <div className="flex justify-between text-xs uppercase font-bold">
-                        <span className="text-slate-500">Name:</span>
+                        <span className="text-slate-500">Full Name:</span>
                         <span className="text-slate-800">{player.name}</span>
                       </div>
                       {player.place && (
@@ -1162,13 +1219,13 @@ function PlayerVerifyContent() {
                       {player.email && (
                         <div className="flex justify-between text-xs uppercase font-bold">
                           <span className="text-slate-500">Email:</span>
-                          <span className="text-slate-800 lowercase">{player.email}</span>
+                          <span className="text-slate-800 lowercase font-mono">{player.email}</span>
                         </div>
                       )}
                       {player.phone && (
                         <div className="flex justify-between text-xs uppercase font-bold">
                           <span className="text-slate-500">Phone:</span>
-                          <span className="text-slate-800">{player.phone}</span>
+                          <span className="text-slate-800 font-mono">{player.phone}</span>
                         </div>
                       )}
                       {player.previous_season_team && (
@@ -1187,42 +1244,29 @@ function PlayerVerifyContent() {
                       )}
                     </div>
                     
-                    {/* Smart Assist Option for Existing Players */}
-                    {!isNewPlayer && (
-                      <div className="bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl p-5 mb-4">
-                        <label className="block text-[10px] uppercase font-bold text-slate-500 mb-2">
-                          Did you use Smart Assist in the last season? *
-                          <span className="text-rose-500 font-extrabold ml-1">Required</span>
+                    {/* Photo Management */}
+                    <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[10px] uppercase font-bold text-slate-500">
+                          Player Photo
+                          {photoPreview ? (
+                            <span className="text-green-600 font-bold ml-2">(Photo Ready)</span>
+                          ) : (
+                            <span className="text-rose-500 font-extrabold ml-1">*Required</span>
+                          )}
                         </label>
-                        <select
-                          value={usedSmartAssist}
-                          onChange={(e) => setUsedSmartAssist(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/80 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700"
-                        >
-                          <option value="">Select option...</option>
-                          <option value="yes">Yes</option>
-                          <option value="no">No</option>
-                          <option value="partially">Partially (Used for some time last season)</option>
-                          <option value="didnt_play">Didn't play last season</option>
-                        </select>
                       </div>
-                    )}
-
-                    {/* Photo Upload - Required for all players */}
-                    <div className="bg-amber-500/[0.02] border border-amber-500/10 rounded-2xl p-6 mt-4">
-                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-3">
-                        Player Photo *
-                        <span className="text-rose-500 font-extrabold ml-1">Required</span>
-                      </label>
                       <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-relaxed mb-4">
-                        Please upload a clear photo of yourself. This will be used for your player profile.
+                        {photoPreview
+                          ? 'Using verified photo from database. You can keep this photo or upload a new photo to replace it.'
+                          : 'Please upload a clear photo of yourself. This will be used for your player profile.'}
                       </p>
                       
                       {/* Photo Status Info */}
                       {player?.photo_url && photoPreview === player.photo_url && (
                         <div className="mb-3 px-3 py-2 bg-emerald-50 border border-emerald-200/30 rounded-xl text-emerald-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Using existing photo. Tap Upload/Change to update.</span>
+                          <span>Using existing photo from database. Tap Change Photo to update.</span>
                         </div>
                       )}
                       {photoFile && (
