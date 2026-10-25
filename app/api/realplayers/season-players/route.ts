@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, data: players, season_id: seasonId, isModern });
+    return NextResponse.json({ success: true, data: players, players, season_id: seasonId, isModern });
   } catch (error: any) {
     console.error('[season-players] Error:', error);
     return NextResponse.json({ success: false, error: error.message || 'Failed to fetch players' }, { status: 500 });

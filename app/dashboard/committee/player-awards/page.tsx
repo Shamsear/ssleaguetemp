@@ -200,12 +200,13 @@ export default function PlayerAwardsManagementPage() {
     try {
       const res = await fetchWithTokenRefresh(`/api/realplayers/season-players?seasonId=${userSeasonId}`);
       const data = await res.json();
-      if (data.success && data.players) {
-        setPlayers(data.players);
+      const playerList: Player[] = data.players || data.data || [];
+      if (playerList.length > 0) {
+        setPlayers(playerList);
         // Extract distinct categories from players
         const cats = Array.from(
           new Set(
-            data.players
+            playerList
               .map((p: any) => p.category?.toUpperCase())
               .filter(Boolean)
           )
@@ -760,6 +761,11 @@ export default function PlayerAwardsManagementPage() {
                       <div className="w-full sm:w-auto flex-1">
                         <label className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                           Recipient {item.award_type === 'Manager of Season' ? '(Manager / Team)' : '(Player)'}:
+                          {item.player_name && (
+                            <span className="text-amber-600 font-extrabold ml-1">
+                              • {item.player_name.toUpperCase()}
+                            </span>
+                          )}
                         </label>
                         <div className="relative">
                           <select
@@ -767,6 +773,12 @@ export default function PlayerAwardsManagementPage() {
                             onChange={(e) => handleUpdatePreviewRecipient(idx, e.target.value)}
                             className="w-full py-1.5 pl-2.5 pr-8 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer appearance-none"
                           >
+                            {/* Selected recipient fallback if not yet matched in players array */}
+                            {item.player_id && !players.some(p => p.player_id === item.player_id) && !managers.some(m => m.team_id === item.player_id || m.manager_id === item.player_id) && (
+                              <option value={item.player_id}>
+                                {(item.player_name || item.player_id).toUpperCase()} (Selected)
+                              </option>
+                            )}
                             {item.award_type === 'Manager of Season' ? (
                               <>
                                 <optgroup label="Managers">
@@ -779,7 +791,7 @@ export default function PlayerAwardsManagementPage() {
                                 <optgroup label="All Players">
                                   {players.map(p => (
                                     <option key={p.player_id} value={p.player_id}>
-                                      {p.player_name.toUpperCase()} ({p.category || 'PLAYER'})
+                                      {p.player_name.toUpperCase()} ({p.category ? p.category.toUpperCase() : 'PLAYER'}{p.team ? ` • ${p.team}` : ''})
                                     </option>
                                   ))}
                                 </optgroup>
@@ -1181,7 +1193,12 @@ export default function PlayerAwardsManagementPage() {
                     className="w-full py-2.5 pl-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none cursor-pointer appearance-none"
                     required
                   >
-                    <optgroup label="Season Players">
+                    {editingAward.player_id && !players.some(p => p.player_id === editingAward.player_id) && !managers.some(m => m.team_id === editingAward.player_id || m.manager_id === editingAward.player_id) && (
+                        <option value={editingAward.player_id}>
+                          {(editingAward.player_name || editingAward.player_id).toUpperCase()} (Current Recipient)
+                        </option>
+                      )}
+                      <optgroup label="Season Players">
                       {players.map(p => (
                         <option key={p.player_id} value={p.player_id}>
                           {p.player_name.toUpperCase()} ({p.category ? p.category.toUpperCase() : 'PLAYER'}{p.team ? ` • ${p.team}` : ''})
