@@ -32,9 +32,13 @@ export default function SeasonsManagement() {
   const { seasons, loading: loadingSeasons, error } = useRealtimeSeasons(user, loading);
 
   // Sort seasons by season_number descending (high to low)
+  // Helper to determine if a season is active
+  const isSeasonActive = (s: any) => Boolean(s?.isActive || s?.is_active || s?.status === 'active');
+
+  // Sort seasons by season_number descending (high to low)
   const sortedSeasons = [...seasons].sort((a, b) => {
-    const numA = a.season_number || 0;
-    const numB = b.season_number || 0;
+    const numA = a.season_number || (a.id ? parseInt(a.id.replace(/\D/g, '')) || 0 : 0);
+    const numB = b.season_number || (b.id ? parseInt(b.id.replace(/\D/g, '')) || 0 : 0);
     return numB - numA;
   });
 
@@ -181,7 +185,7 @@ export default function SeasonsManagement() {
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
           <div className="text-[10px] font-mono font-semibold text-emerald-600 uppercase tracking-wider">Active Season</div>
           <div className="text-2xl font-extrabold text-emerald-600 mt-1 font-mono">
-            {seasons.find(s => s.isActive)?.name || 'None'}
+            {seasons.find(isSeasonActive)?.name || 'None'}
           </div>
         </div>
         <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm">
@@ -221,9 +225,9 @@ export default function SeasonsManagement() {
                           {season.name}
                         </h3>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${getStatusBadge(season.status)}`}>
-                          {season.status.toUpperCase()}
+                          {(season.status || (isSeasonActive(season) ? 'active' : 'draft')).toUpperCase()}
                         </span>
-                        {season.isActive && (
+                        {isSeasonActive(season) && (
                           <span className="inline-flex items-center px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-mono font-bold uppercase">
                             <Sparkles className="w-3 h-3 mr-1 text-amber-600 animate-pulse" />
                             Active Season Context
@@ -234,15 +238,15 @@ export default function SeasonsManagement() {
                       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 font-mono">
                         <div className="flex items-center gap-1.5">
                           <Users className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{season.totalTeams || 0} Registered Teams</span>
+                          <span>{season.totalTeams ?? season.total_teams ?? 0} Registered Teams</span>
                         </div>
 
 
                         <button
-                          onClick={() => handleToggleRegistration(season.id, season.registrationOpen)}
+                          onClick={() => handleToggleRegistration(season.id, Boolean(season.registrationOpen ?? season.registration_open))}
                           className="flex items-center gap-1.5 hover:text-slate-900 transition-all cursor-pointer"
                         >
-                          {season.registrationOpen ? (
+                          {(season.registrationOpen ?? season.registration_open) ? (
                             <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                               <Unlock className="w-3.5 h-3.5" /> Open to Managers
                             </span>
@@ -270,7 +274,7 @@ export default function SeasonsManagement() {
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200 pl-16 lg:pl-0">
-                  {!season.isActive && season.status !== 'completed' && (
+                  {!isSeasonActive(season) && season.status !== 'completed' && (
                     <button
                       onClick={() => handleActivateSeason(season.id)}
                       className="inline-flex items-center px-4 py-2 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm"
@@ -279,7 +283,7 @@ export default function SeasonsManagement() {
                     </button>
                   )}
 
-                  {season.isActive && season.status !== 'completed' && (
+                  {isSeasonActive(season) && season.status !== 'completed' && (
                     <button
                       onClick={() => handleCompleteSeason(season.id)}
                       className="inline-flex items-center px-4 py-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm"

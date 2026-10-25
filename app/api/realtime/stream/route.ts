@@ -52,7 +52,9 @@ export async function GET(request: NextRequest) {
           try {
             // Build query
             let query = `SELECT id, updated_at FROM ${collection}`;
-            let fullQuery = `SELECT * FROM ${collection}`;
+            let fullQuery = collection === 'seasons'
+              ? "SELECT s.*, COALESCE((SELECT COUNT(*) FROM team_seasons ts WHERE ts.season_id = s.id), s.total_teams, 0)::int as total_teams FROM seasons s"
+              : `SELECT * FROM ${collection}`;
             const params: any[] = [];
             const conditions: string[] = [];
             

@@ -3,7 +3,7 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getMainDb } from '@/lib/neon/main-config';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 
-// GET - List all seasons (derived from tournaments or auction_settings)
+// GET - List all seasons
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -11,7 +11,44 @@ export async function GET(request: NextRequest) {
 
     let formattedSeasons: any[] = [];
 
-    // 1. Try tournaments table in tournament DB
+    // 1. Primary: Query seasons table from main DB
+    try {
+      const mainSql = getMainDb();
+      const dbSeasons = await mainSql`
+        SELECT s.*, 
+               COALESCE((SELECT COUNT(*) FROM team_seasons ts WHERE ts.season_id = s.id), s.total_teams, 0)::int as total_teams
+        FROM seasons s
+        ORDER BY s.season_number DESC NULLS LAST, s.id DESC
+      `;
+
+      if (dbSeasons && dbSeasons.length > 0) {
+        formattedSeasons = dbSeasons.map((s: any) => {
+          const seasonNum = s.season_number ?? (s.id ? parseInt(s.id.replace(/\D/g, '')) || 0 : 0);
+          const isActive = Boolean(s.is_active ?? s.isActive ?? (s.status === 'active'));
+          return {
+            id: s.id,
+            season_id: s.id,
+            ...s,
+            name: s.name || (seasonNum ? `Season ${seasonNum}` : `Season ${s.id.replace('SSPSLS', '')}`),
+            season_number: seasonNum,
+            status: s.status || (isActive ? 'active' : 'completed'),
+            is_active: isActive,
+            isActive: isActive,
+            registration_open: Boolean(s.registration_open ?? s.registrationOpen),
+            registrationOpen: Boolean(s.registration_open ?? s.registrationOpen),
+            total_teams: Number(s.total_teams ?? 0),
+            totalTeams: Number(s.total_teams ?? 0),
+            created_at: s.created_at,
+          };
+        });
+      }
+    } catch (e: any) {
+      console.warn('⚠️ Could not query seasons table in main DB:', e.message);
+    }
+
+    // 2. Fallback to tournaments table in tournament DB if main DB returned nothing
+    if (formattedSeasons.length === 0) {
+      // Fallback query
     try {
       const tourSql = getTournamentDb();
       const tournaments = status

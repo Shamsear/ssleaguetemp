@@ -46,16 +46,29 @@ export const useRealtimeSeasons = (user?: any, userLoading?: boolean) => {
     enabled,
   });
 
-  const seasons: Season[] = rawSeasons.map((s: any) => ({
-    id: s.id,
-    ...s,
-    name: s.name || (s.season_number ? `Season ${s.season_number}` : s.year || 'Unnamed Season'),
-    year: s.year || (s.season_number ? `${s.season_number}` : 'N/A'),
-    startDate: s.startDate || s.start_date,
-    endDate: s.endDate || s.end_date,
-    createdAt: s.created_at || s.createdAt,
-    updatedAt: s.updated_at || s.updatedAt,
-  }));
+  const seasons: Season[] = rawSeasons.map((s: any) => {
+    const seasonNum = s.season_number ?? (s.id ? parseInt(s.id.replace(/\D/g, '')) || 0 : 0);
+    const isActive = Boolean(s.is_active ?? s.isActive ?? (s.status === 'active'));
+    return {
+      id: s.id,
+      ...s,
+      name: s.name || (seasonNum ? `Season ${seasonNum}` : s.year || 'Unnamed Season'),
+      year: s.year || (seasonNum ? `${seasonNum}` : 'N/A'),
+      season_number: seasonNum,
+      isActive,
+      is_active: isActive,
+      status: s.status || (isActive ? 'active' : 'draft'),
+      registrationOpen: Boolean(s.registration_open ?? s.registrationOpen),
+      is_team_registration_open: Boolean(s.registration_open ?? s.is_team_registration_open ?? s.registrationOpen),
+      totalTeams: Number(s.total_teams ?? s.totalTeams ?? 0),
+      total_teams: Number(s.total_teams ?? s.totalTeams ?? 0),
+      totalRounds: Number(s.total_rounds ?? s.totalRounds ?? 0),
+      startDate: s.startDate || s.start_date,
+      endDate: s.endDate || s.end_date,
+      createdAt: s.created_at || s.createdAt,
+      updatedAt: s.updated_at || s.updatedAt,
+    };
+  });
 
   return { seasons, loading, error: error || (!enabled ? 'Access denied' : null), refetch: () => {} };
 };
