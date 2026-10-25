@@ -19,7 +19,6 @@ interface RegisteredPlayer {
   player_name: string
   registration_date: Timestamp
   additional_info?: string
-  used_smart_assist?: string | null
 }
 
 interface RegistrationStats {
@@ -155,7 +154,6 @@ function PlayersRegistrationPageContent() {
             ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.created_at) / 1000), 0)
             : Timestamp.now(),
           additional_info: '',
-          used_smart_assist: player.used_smart_assist || null,
         }))
         .sort((a: RegisteredPlayer, b: RegisteredPlayer) => 
           a.registration_date.toMillis() - b.registration_date.toMillis()
@@ -274,7 +272,6 @@ function PlayersRegistrationPageContent() {
                 ? new Timestamp(Math.floor(parseNeonTimestampUTC(player.created_at) / 1000), 0)
                 : Timestamp.now(),
               additional_info: '',
-              used_smart_assist: player.used_smart_assist || null,
             };
           })
           .sort((a: RegisteredPlayer, b: RegisteredPlayer) => 
@@ -470,19 +467,13 @@ function PlayersRegistrationPageContent() {
           'Registration Date': formatDateLocal(player.registration_date),
           'Email': details.email,
           'Phone Number': details.phone,
-          'Smart Assist': player.used_smart_assist 
-            ? (player.used_smart_assist === 'yes' ? 'Yes' : 
-               player.used_smart_assist === 'no' ? 'No' : 
-               player.used_smart_assist === 'partially' ? 'Partially' : 
-               player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist) 
-            : 'N/A (Admin/New)'
         }
       })
 
       const ExcelJS = (await import('exceljs')).default
       const wb = new ExcelJS.Workbook()
       const ws = wb.addWorksheet('Registered Players')
-      const colWidths = [5, 25, 15, 20, 30, 15, 18]
+      const colWidths = [5, 25, 15, 20, 30, 15]
       if (exportData.length > 0) {
         ws.columns = Object.keys(exportData[0]).map((key, i) => ({ header: key, key, width: colWidths[i] || 12 }))
         exportData.forEach(row => ws.addRow(row))
@@ -868,7 +859,6 @@ function PlayersRegistrationPageContent() {
                             <th className="p-4">Name</th>
                             <th className="p-4 hidden sm:table-cell">Player ID</th>
                             <th className="p-4 hidden md:table-cell">Registration Date</th>
-                            <th className="p-4 hidden md:table-cell">Smart Assist</th>
                             <th className="p-4 text-right">Actions</th>
                           </tr>
                         </thead>
@@ -899,26 +889,6 @@ function PlayersRegistrationPageContent() {
                                 </td>
                                 <td className="p-4 text-slate-500 hidden md:table-cell">
                                    {formatDateLocal(player.registration_date)}
-                                </td>
-                                <td className="p-4 hidden md:table-cell">
-                                  {player.used_smart_assist ? (
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                      player.used_smart_assist === 'yes'
-                                        ? 'bg-green-50 text-green-700 border border-green-200/40'
-                                        : player.used_smart_assist === 'no'
-                                        ? 'bg-red-50 text-red-700 border border-red-200/40'
-                                        : player.used_smart_assist === 'partially'
-                                        ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
-                                        : 'bg-slate-50 text-slate-700 border border-slate-200/40'
-                                    }`}>
-                                      {player.used_smart_assist === 'yes' ? 'Yes' : 
-                                       player.used_smart_assist === 'no' ? 'No' : 
-                                       player.used_smart_assist === 'partially' ? 'Partially' : 
-                                       player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist}
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-400 italic text-[10px]">N/A (Admin/New)</span>
-                                  )}
                                 </td>
                                 <td className="p-4 text-right">
                                   <button
@@ -994,28 +964,6 @@ function PlayersRegistrationPageContent() {
                               <div className="flex items-center justify-between text-[10px] text-slate-500">
                                 <span>Registered:</span>
                                   <span className="font-bold text-slate-700">{formatDateLocal(player.registration_date)}</span>
-                              </div>
-
-                              <div className="flex items-center justify-between text-[10px] text-slate-500">
-                                <span>Smart Assist:</span>
-                                {player.used_smart_assist ? (
-                                  <span className={`px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
-                                    player.used_smart_assist === 'yes'
-                                      ? 'bg-green-50 text-green-700 border border-green-200/40'
-                                      : player.used_smart_assist === 'no'
-                                      ? 'bg-red-50 text-red-700 border border-red-200/40'
-                                      : player.used_smart_assist === 'partially'
-                                      ? 'bg-amber-50 text-amber-700 border border-amber-200/40'
-                                      : 'bg-slate-50 text-slate-700 border border-slate-200/40'
-                                  }`}>
-                                    {player.used_smart_assist === 'yes' ? 'Yes' : 
-                                     player.used_smart_assist === 'no' ? 'No' : 
-                                     player.used_smart_assist === 'partially' ? 'Partially' : 
-                                     player.used_smart_assist === 'didnt_play' ? "Didn't Play" : player.used_smart_assist}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-400 italic">N/A (Admin/New)</span>
-                                )}
                               </div>
                             </div>
                           </div>
