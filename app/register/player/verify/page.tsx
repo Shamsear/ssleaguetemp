@@ -25,8 +25,10 @@ interface Player {
   is_registered?: boolean
   previous_season_team?: string
   previous_season_category?: string
+  previous_season_id?: string
   photo_url?: string
   photo_file_id?: string
+  used_smart_assist?: string
 }
 
 interface FormData {
@@ -161,7 +163,7 @@ function PlayerVerifyContent() {
         // Fetch season, player data, and registration stats in parallel
         const seasonPromise = fetch(`/api/seasons/${seasonId}`)
         const playerPromise = playerId 
-          ? fetch(`/api/realplayers?player_id=${playerId}`)
+          ? fetch(`/api/realplayers?player_id=${playerId}&season_id=${seasonId}`)
           : Promise.resolve({ json: async () => ({ data: [] }) })
         const statsPromise = fetch(`/api/admin/registration-phases?season_id=${seasonId}`).catch(() => null)
 
@@ -224,19 +226,28 @@ function PlayerVerifyContent() {
             setPhotoPreview(playerData.photo_url)
           }
 
+          // Pre-fill used_smart_assist if already answered
+          if (playerData.used_smart_assist) {
+            setUsedSmartAssist(playerData.used_smart_assist)
+          }
+
+          // Always pre-fill existing data into form
+          setFormData({
+            name: playerData.name || '',
+            place: playerData.place || '',
+            date_of_birth: playerData.date_of_birth || '',
+            email: playerData.email || user.email || '',
+            phone: playerData.phone || ''
+          })
+
           // Check if player has complete details
           const hasCompleteDetails = playerData.place && playerData.date_of_birth && playerData.email && playerData.phone
 
           if (!hasCompleteDetails) {
-            // Pre-fill existing data and show form
-            setFormData({
-              name: playerData.name || '',
-              place: playerData.place || '',
-              date_of_birth: playerData.date_of_birth || '',
-              email: playerData.email || user.email || '',
-              phone: playerData.phone || ''
-            })
             setShowForm(true)
+            setIsNewPlayer(false)
+          } else {
+            setShowForm(false)
             setIsNewPlayer(false)
           }
         } else {
@@ -384,19 +395,27 @@ function PlayerVerifyContent() {
       setPhotoPreview(selectedPlayer.photo_url)
     }
 
+    if (selectedPlayer.used_smart_assist) {
+      setUsedSmartAssist(selectedPlayer.used_smart_assist)
+    }
+
+    // Pre-fill form data regardless
+    setFormData({
+      name: selectedPlayer.name || '',
+      place: selectedPlayer.place || '',
+      date_of_birth: selectedPlayer.date_of_birth || '',
+      email: selectedPlayer.email || user?.email || '',
+      phone: selectedPlayer.phone || ''
+    })
+
     // Check if player has missing details
     const hasCompleteDetails = selectedPlayer.place && selectedPlayer.date_of_birth && selectedPlayer.email && selectedPlayer.phone
 
     if (!hasCompleteDetails) {
-      // Pre-fill existing data
-      setFormData({
-        name: selectedPlayer.name || '',
-        place: selectedPlayer.place || '',
-        date_of_birth: selectedPlayer.date_of_birth || '',
-        email: selectedPlayer.email || user?.email || '',
-        phone: selectedPlayer.phone || ''
-      })
       setShowForm(true)
+      setIsNewPlayer(false)
+    } else {
+      setShowForm(false)
       setIsNewPlayer(false)
     }
   }
@@ -592,6 +611,9 @@ function PlayerVerifyContent() {
       if (photoUrl) {
         playerData.photo_url = photoUrl
         playerData.photo_file_id = photoFileId
+      } else if (!playerData.photo_url && (player?.photo_url || photoPreview)) {
+        playerData.photo_url = player?.photo_url || photoPreview
+        if (player?.photo_file_id) playerData.photo_file_id = player.photo_file_id
       }
 
       // Call API to confirm registration
@@ -1129,6 +1151,24 @@ function PlayerVerifyContent() {
                         <div className="flex justify-between text-xs uppercase font-bold">
                           <span className="text-slate-500">District:</span>
                           <span className="text-slate-800">{player.place}</span>
+                        </div>
+                      )}
+                      {player.date_of_birth && (
+                        <div className="flex justify-between text-xs uppercase font-bold">
+                          <span className="text-slate-500">Date of Birth:</span>
+                          <span className="text-slate-800">{player.date_of_birth}</span>
+                        </div>
+                      )}
+                      {player.email && (
+                        <div className="flex justify-between text-xs uppercase font-bold">
+                          <span className="text-slate-500">Email:</span>
+                          <span className="text-slate-800 lowercase">{player.email}</span>
+                        </div>
+                      )}
+                      {player.phone && (
+                        <div className="flex justify-between text-xs uppercase font-bold">
+                          <span className="text-slate-500">Phone:</span>
+                          <span className="text-slate-800">{player.phone}</span>
                         </div>
                       )}
                       {player.previous_season_team && (

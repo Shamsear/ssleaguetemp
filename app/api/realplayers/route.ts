@@ -4,6 +4,48 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
+import { getTournamentDb, isTournamentDbAvailable } from '@/lib/neon/tournament-config';
+
+function formatRealPlayerRow(row: any) {
+  const rawData = typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {};
+  const stats = typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || {});
+
+  return {
+    ...row,
+    ...rawData,
+    id: row.id,
+    player_id: row.player_id || row.id,
+    name: row.name || rawData.name || '',
+    display_name: row.display_name || rawData.display_name || row.name || rawData.name || '',
+    email: row.email || rawData.email || '',
+    phone: row.phone || rawData.phone || '',
+    team: row.team || row.team_name || rawData.team || '',
+    team_name: row.team_name || row.team || rawData.team || '',
+    team_code: row.team_code || rawData.team_code || '',
+    team_id: row.team_id || rawData.team_id || '',
+    season_id: row.season_id || rawData.season_id || '',
+    season_name: row.season_name || rawData.season_name || '',
+    category: row.category || row.category_name || row.category_id || rawData.category || '',
+    category_name: row.category_name || row.category || rawData.category_name || '',
+    category_id: row.category_id || rawData.category_id || '',
+    role: row.role || rawData.role || 'player',
+    is_registered: row.is_registered ?? rawData.is_registered ?? false,
+    is_active: row.is_active ?? rawData.is_active ?? true,
+    is_available: row.is_available ?? rawData.is_available ?? true,
+    place: row.place || rawData.place || '',
+    date_of_birth: row.date_of_birth || rawData.date_of_birth || '',
+    photo_url: row.photo_url || rawData.photo_url || row.profile_image || rawData.profile_image || '',
+    photo_file_id: row.photo_file_id || rawData.photo_file_id || '',
+    used_smart_assist: row.used_smart_assist || rawData.used_smart_assist || '',
+    previous_season_team: row.previous_season_team || rawData.previous_season_team || '',
+    previous_season_team_id: row.previous_season_team_id || rawData.previous_season_team_id || '',
+    previous_season_category: row.previous_season_category || rawData.previous_season_category || '',
+    previous_season_id: row.previous_season_id || rawData.previous_season_id || '',
+    stats,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +60,7 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name');
     const categoryId = searchParams.get('category_id');
 
-    let result;
+    let result: any[];
 
     if (playerId) {
       result = await sql`
@@ -31,6 +73,48 @@ export async function GET(request: NextRequest) {
         WHERE rp.player_id = ${playerId} OR rp.id = ${playerId}
         LIMIT 1
       `;
+
+      if (result.length > 0 && isTournamentDbAvailable()) {
+        try {
+          const tSql = getTournamentDb();
+          const pId = result[0].player_id || playerId;
+          const targetSeasonNum = seasonId ? parseInt(seasonId.replace(/\D/g, '')) || 999 : 999;
+
+          const [rpsHistory, psHistory] = await Promise.all([
+            tSql`
+              SELECT season_id, team, team_id, category, used_smart_assist
+              FROM realplayerstats
+              WHERE (player_id = ${pId} OR id = ${pId}) AND team IS NOT NULL AND team != ''
+            `.catch(() => []),
+            tSql`
+              SELECT season_id, team, team_id, category
+              FROM player_seasons
+              WHERE (player_id = ${pId} OR id = ${pId}) AND team IS NOT NULL AND team != ''
+            `.catch(() => []),
+          ]);
+
+          const combined = [...rpsHistory, ...psHistory]
+            .map((entry: any) => {
+              const sNum = parseInt((entry.season_id || '').replace(/\D/g, '')) || 0;
+              return { ...entry, sNum };
+            })
+            .filter((entry: any) => entry.sNum < targetSeasonNum)
+            .sort((a: any, b: any) => b.sNum - a.sNum);
+
+          if (combined.length > 0) {
+            const latestPrev = combined[0];
+            result[0].previous_season_team = latestPrev.team;
+            result[0].previous_season_team_id = latestPrev.team_id;
+            result[0].previous_season_category = latestPrev.category;
+            result[0].previous_season_id = latestPrev.season_id;
+            if (latestPrev.used_smart_assist && !result[0].used_smart_assist) {
+              result[0].used_smart_assist = latestPrev.used_smart_assist;
+            }
+          }
+        } catch (e: any) {
+          console.warn('Could not fetch player season history:', e.message);
+        }
+      }
     } else if (teamId && seasonId) {
       result = await sql`
         SELECT rp.*, s.name as season_name, c.name as category_name,
@@ -75,7 +159,7 @@ export async function GET(request: NextRequest) {
       `;
     }
 
-    return NextResponse.json({ success: true, data: result });
+    return NextResponse.json({ success: true, data: result.map(formatRealPlayerRow) });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
