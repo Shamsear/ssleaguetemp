@@ -9,14 +9,17 @@ export interface Season {
   season_number?: number; // For historical seasons imported from Excel
   type: SeasonType; // Determines if contracts span multiple seasons
   isActive: boolean;
+  is_active?: boolean;
   status: SeasonStatus;
   registrationOpen: boolean;
+  registration_open?: boolean;
   is_team_registration_open?: boolean;
   is_player_registration_open?: boolean;
   
   startDate?: Date;
   endDate?: Date;
   totalTeams: number;
+  total_teams?: number;
   totalRounds: number;
   purseAmount?: number; // Legacy: for single-season type
   maxPlayersPerTeam?: number;
@@ -48,7 +51,7 @@ export interface CreateSeasonData {
   dollar_budget?: number;
   euro_budget?: number;
   required_real_players?: number; // Exact number of real players required (default: 5)
-  max_football_players?: number;
+  max_football_players?: number; // Maximum football players (default: 25)
   category_fine_amount?: number;
   category_fine_currency?: 'dollar' | 'euro';
 }
