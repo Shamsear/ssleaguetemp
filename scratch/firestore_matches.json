@@ -1,0 +1,6137 @@
+[
+  {
+    "collection": "inviteUsages",
+    "docId": "KVCuJCm3fQGSEsMwZc4U",
+    "data": {
+      "inviteId": "DFSK-D35K-URRA",
+      "inviteCode": "DFSK-D35K-URRA",
+      "userId": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "username": "Shamsear1",
+      "email": "Shamsear1@ssleague.com",
+      "seasonId": "SSPSLS17",
+      "seasonName": "Season 17",
+      "usedAt": {
+        "_seconds": 1772012726,
+        "_nanoseconds": 204000000
+      }
+    }
+  },
+  {
+    "collection": "inviteUsages",
+    "docId": "KgE7IccGzmARdfAe0BCA",
+    "data": {
+      "inviteId": "8GYY-M24C-749U",
+      "inviteCode": "8GYY-M24C-749U",
+      "userId": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "username": "Shamsear",
+      "email": "Shamsear@ssleague.com",
+      "seasonId": "SSPSLS16",
+      "seasonName": "Season 16",
+      "usedAt": {
+        "_seconds": 1762691318,
+        "_nanoseconds": 933000000
+      }
+    }
+  },
+  {
+    "collection": "inviteUsages",
+    "docId": "juHR6hSf1EIZtNrRlYKP",
+    "data": {
+      "inviteId": "25WP-3F2G-SWF8",
+      "inviteCode": "25WP-3F2G-SWF8",
+      "userId": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "username": "Shamsear2",
+      "email": "Shamsear2@ssleague.com",
+      "seasonId": "SSPSLS18",
+      "seasonName": "Season 18",
+      "usedAt": {
+        "_seconds": 1782664530,
+        "_nanoseconds": 289000000
+      }
+    }
+  },
+  {
+    "collection": "inviteUsages",
+    "docId": "mpbmbXHwmBjHXgZzwnui",
+    "data": {
+      "inviteId": "6D3D-6TQC-QZ2F",
+      "inviteCode": "6D3D-6TQC-QZ2F",
+      "userId": "m09NKRVxJMNBLNwSfO53ep8RYNf2",
+      "username": "Adilmubarack",
+      "email": "Adilmubarack@ssleague.com",
+      "seasonId": "SSPSLS16",
+      "seasonName": "Season 16",
+      "usedAt": {
+        "_seconds": 1764486372,
+        "_nanoseconds": 523000000
+      }
+    }
+  },
+  {
+    "collection": "inviteUsages",
+    "docId": "rpH4IF8QTCZifd1X67zY",
+    "data": {
+      "inviteId": "DX84-4LW7-EZUJ",
+      "inviteCode": "DX84-4LW7-EZUJ",
+      "userId": "oKjtRXVcmrggEMKoauaxhxbEKKh1",
+      "username": "Adil",
+      "email": "Adil@ssleague.com",
+      "seasonId": "SSPSLS16",
+      "seasonName": "Season 16",
+      "usedAt": {
+        "_seconds": 1763648724,
+        "_nanoseconds": 146000000
+      }
+    }
+  },
+  {
+    "collection": "notifications",
+    "docId": "SSPSLT0015_1785347400485_v5mf6w0iz",
+    "data": {
+      "team_id": "SSPSLT0015",
+      "season_id": "SSPSLS18",
+      "type": "player_assignment",
+      "title": "New Player Assigned",
+      "message": "SHAMSEER has been assigned to your team for 15 coins",
+      "read": false,
+      "created_at": {
+        "_seconds": 1785347400,
+        "_nanoseconds": 483000000
+      },
+      "data": {
+        "player_id": "sspslpsl0024_SSPSLS18",
+        "player_name": "SHAMSEER",
+        "auction_value": 15,
+        "team_name": "Legends FC"
+      }
+    }
+  },
+  {
+    "collection": "notifications",
+    "docId": "SSPSLT0041_1785347562326_2ebgh2b57",
+    "data": {
+      "team_id": "SSPSLT0041",
+      "season_id": "SSPSLS18",
+      "type": "player_assignment",
+      "title": "New Player Assigned",
+      "message": "ADHIL has been assigned to your team for 168 coins",
+      "read": false,
+      "created_at": {
+        "_seconds": 1785347562,
+        "_nanoseconds": 324000000
+      },
+      "data": {
+        "player_id": "sspslpsl0063_SSPSLS18",
+        "player_name": "ADHIL",
+        "auction_value": 168,
+        "team_name": "ANDIMUKK FC"
+      }
+    }
+  },
+  {
+    "collection": "passwordResetRequests",
+    "docId": "k5nat1kxwKkxT5d9IxI2",
+    "data": {
+      "userId": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "userEmail": "Shamsear1@ssleague.com",
+      "username": "Shamsear1",
+      "teamName": null,
+      "reason": null,
+      "requestedAt": {
+        "_seconds": 1773844384,
+        "_nanoseconds": 419000000
+      },
+      "adminNotes": null,
+      "resetLink": "https://ssleague.vercel.app/reset-password?token=A7QT3R6hbw6dWaDaY_kX8k6O-5qE0cOY",
+      "reviewedAt": {
+        "_seconds": 1773844396,
+        "_nanoseconds": 268000000
+      },
+      "resetLinkExpiresAt": {
+        "_seconds": 1773930796,
+        "_nanoseconds": 626000000
+      },
+      "resetToken": "A7QT3R6hbw6dWaDaY_kX8k6O-5qE0cOY",
+      "reviewedBy": "RDlHwzxq3MV2vfbpV5nKTULaTm52",
+      "completedAt": {
+        "_seconds": 1773844424,
+        "_nanoseconds": 277000000
+      },
+      "status": "completed"
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "9jWcDL1eOw6KLyVIBQKj",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "162163",
+      "player_a_name": "Aleksandar Pavlović",
+      "player_b_id": "119835",
+      "player_b_name": "Anthony Gordon",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0002",
+      "team_b_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "swap_number": 2,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777197421,
+        "_nanoseconds": 516000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "BfyvcU8pbu0EGZpfCphF",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "16903552",
+      "player_a_name": "João Félix",
+      "player_b_id": "144440",
+      "player_b_name": "Benjamin Šeško",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0041",
+      "team_b_id": "SSPSLT0003",
+      "season_id": "SSPSLS18",
+      "fee_amount": 0,
+      "fee_paid_by": null,
+      "fee_paid_to": null,
+      "processed_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "processed_by_name": "Shamsear2",
+      "created_at": {
+        "_seconds": 1786115608,
+        "_nanoseconds": 398000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "Dkwln6mHzcPvnxR3sC6C",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "126614",
+      "player_a_name": "Mohammed Kudus",
+      "player_b_id": "16899208",
+      "player_b_name": "Moussa Diaby",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0027",
+      "team_b_id": "SSPSLT0018",
+      "season_id": "SSPSLS18",
+      "fee_amount": 0,
+      "fee_paid_by": null,
+      "fee_paid_to": null,
+      "processed_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "processed_by_name": "Shamsear2",
+      "created_at": {
+        "_seconds": 1786206308,
+        "_nanoseconds": 925000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "E0mAJkiLutPYmXEQNypq",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "139679",
+      "player_a_name": "Hugo Ekitiké",
+      "player_b_id": "40002",
+      "player_b_name": "Robert Lewandowski",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0041",
+      "team_b_id": "SSPSLT0001",
+      "season_id": "SSPSLS18",
+      "fee_amount": 0,
+      "fee_paid_by": null,
+      "fee_paid_to": null,
+      "processed_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "processed_by_name": "Shamsear2",
+      "created_at": {
+        "_seconds": 1786278381,
+        "_nanoseconds": 673000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "GJ6uQ38lNyoaKBvhHPFM",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "133470",
+      "player_a_name": "Charles De Ketelaere",
+      "player_b_id": "126614",
+      "player_b_name": "Mohammed Kudus",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0010",
+      "team_b_id": "SSPSLT0021",
+      "season_id": "SSPSLS17",
+      "swap_number": 3,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201778,
+        "_nanoseconds": 453000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "Idf9s8VR0PfjR3sYG66M",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "114808",
+      "player_a_name": "Phil Foden",
+      "player_b_id": "114235",
+      "player_b_name": "Federico Chiesa",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0010",
+      "team_b_id": "SSPSLT0021",
+      "season_id": "SSPSLS17",
+      "swap_number": 5,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201779,
+        "_nanoseconds": 928000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "TO7IhVvadBeKqGsNak4k",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "108200",
+      "player_a_name": "Gabriel Jesus",
+      "player_b_id": "133215",
+      "player_b_name": "Ansu Fati",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0013",
+      "team_b_id": "SSPSLT0006",
+      "season_id": "SSPSLS17",
+      "swap_number": 2,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201777,
+        "_nanoseconds": 773000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "b88o7PONJBT0qIkEIcwD",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "108657",
+      "player_a_name": "Lautaro Martínez",
+      "player_b_id": "126918",
+      "player_b_name": "Viktor Gyökeres",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0009",
+      "team_b_id": "SSPSLT0016",
+      "season_id": "SSPSLS17",
+      "swap_number": 1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201645,
+        "_nanoseconds": 880000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "dFGdcwoZ4vEReUxiIegV",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "137924",
+      "player_a_name": "Florian Wirtz",
+      "player_b_id": "60512",
+      "player_b_name": "Bruno Fernandes",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0002",
+      "team_b_id": "SSPSLT0021",
+      "season_id": "SSPSLS18",
+      "fee_amount": 0,
+      "fee_paid_by": null,
+      "fee_paid_to": null,
+      "processed_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "processed_by_name": "Shamsear2",
+      "created_at": {
+        "_seconds": 1786206325,
+        "_nanoseconds": 202000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "g0lUsQeioVU8NVqkxdd0",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "127038",
+      "player_a_name": "Diogo Costa",
+      "player_b_id": "60447",
+      "player_b_name": "Mike Maignan",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0005",
+      "team_b_id": "SSPSLT0020",
+      "season_id": "SSPSLS17",
+      "swap_number": 4,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201779,
+        "_nanoseconds": 114000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "h7DRedPaomEm9ZaqwoJ6",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "116543",
+      "player_a_name": "Alexis Mac Allister",
+      "player_b_id": "16881420",
+      "player_b_name": "Rúben Neves",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0015",
+      "team_b_id": "SSPSLT0041",
+      "season_id": "SSPSLS18",
+      "fee_amount": 0,
+      "fee_paid_by": null,
+      "fee_paid_to": null,
+      "processed_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "processed_by_name": "Shamsear2",
+      "created_at": {
+        "_seconds": 1786278801,
+        "_nanoseconds": 742000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "nEQfBiGaOHssL2cSbGzs",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "104680",
+      "player_a_name": "Dominic Solanke",
+      "player_b_id": "60241",
+      "player_b_name": "Rodrigo De Paul",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0010",
+      "team_b_id": "SSPSLT0034",
+      "season_id": "SSPSLS17",
+      "swap_number": 1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201776,
+        "_nanoseconds": 794000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "pznAD3CFqVEVcfwRi0IQ",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "115079",
+      "player_a_name": "Alexander Isak",
+      "player_b_id": "141221",
+      "player_b_name": "Rasmus Højlund",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0020",
+      "team_b_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "swap_number": 1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777197420,
+        "_nanoseconds": 719000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "q4SDl8Goz6NsLz3p2Dxf",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "116751",
+      "player_a_name": "Ferran Torres",
+      "player_b_id": "121864",
+      "player_b_name": "Takefusa Kubo",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0009",
+      "team_b_id": "SSPSLT0034",
+      "season_id": "SSPSLS17",
+      "swap_number": 2,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1777201646,
+        "_nanoseconds": 538000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "tUt4nNATmpUDQ7cWB44f",
+    "data": {
+      "transaction_type": "swap",
+      "player_a_id": "44104",
+      "player_a_name": "Jan Oblak",
+      "player_b_id": "101520",
+      "player_b_name": "David Raya",
+      "player_type": "football",
+      "team_a_id": "SSPSLT0027",
+      "team_b_id": "SSPSLT0016",
+      "season_id": "SSPSLS18",
+      "fee_amount": 0,
+      "fee_paid_by": null,
+      "fee_paid_to": null,
+      "processed_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "processed_by_name": "Shamsear2",
+      "created_at": {
+        "_seconds": 1786115384,
+        "_nanoseconds": 503000000
+      }
+    }
+  },
+  {
+    "collection": "player_transactions",
+    "docId": "xZBy3xKMXrohdj4re9Tv",
+    "data": {
+      "transaction_type": "swap",
+      "season_id": "SSPSLS16",
+      "player_a_id": "sspslpsl0074",
+      "player_a_name": "ANVAR",
+      "player_a_type": "real",
+      "player_a_old_value": 170,
+      "player_a_old_star": 5,
+      "player_b_id": "sspslpsl0069",
+      "player_b_name": "Shaan",
+      "player_b_type": "real",
+      "player_b_old_value": 85,
+      "player_b_new_value": 102,
+      "player_b_old_star": 4,
+      "team_a_id": "SSPSLT0021",
+      "team_b_id": "SSPSLT0016",
+      "cash_amount": 0,
+      "cash_direction": "none",
+      "total_committee_fees": 90,
+      "affected_season_ids": [
+        "SSPSLS16"
+      ],
+      "is_multi_season": false,
+      "player_a_affected_seasons": [
+        "SSPSLS16"
+      ],
+      "player_b_affected_seasons": [
+        "SSPSLS16"
+      ],
+      "player_a_future_seasons": [],
+      "player_b_future_seasons": [],
+      "player_a_budget_field": "real_player_budget",
+      "player_a_spent_field": "real_player_spent",
+      "player_b_budget_field": "real_player_budget",
+      "player_b_spent_field": "real_player_spent",
+      "processed_by": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "processed_by_name": "Shamsear",
+      "updated_at": {
+        "_seconds": 1764182543,
+        "_nanoseconds": 978000000
+      },
+      "created_at": {
+        "_seconds": 1764182543,
+        "_nanoseconds": 978000000
+      },
+      "player_a_new_value": 221,
+      "player_a_new_salary": 1.1,
+      "player_a_new_star": 5,
+      "player_a_points_added": 10,
+      "player_b_new_salary": 0.41,
+      "player_b_new_star": 4,
+      "player_b_points_added": 3,
+      "team_a_fee": 50,
+      "team_a_pays": 50,
+      "team_b_fee": 40,
+      "team_b_pays": 40
+    }
+  },
+  {
+    "collection": "realplayers",
+    "docId": "sspslpsl0024",
+    "data": {
+      "player_id": "sspslpsl0024",
+      "place": "Kozhikode",
+      "email": "shamsear1@gmail.com",
+      "phone": "9207936269",
+      "photo_url": "https://ik.imagekit.io/ssleague/player-photos/sspslpsl0024.jpeg",
+      "photo_file_id": "6910911f5c7cd75eb869751d",
+      "is_registered": true,
+      "season_id": "SSPSLS16",
+      "registered_email": "shamsear1@gmail.com",
+      "is_active": true,
+      "is_available": true,
+      "role": "player",
+      "created_at": {
+        "_seconds": 1762693408,
+        "_nanoseconds": 726000000
+      },
+      "notes": "",
+      "steam_id": "",
+      "psn_id": "",
+      "xbox_id": "",
+      "photo_position_y_circle": 1.400773624336224,
+      "photo_position_circle": "custom",
+      "photo_scale_circle": 1.2,
+      "photo_position_x_circle": 2.444987775061125,
+      "photo_position_x_square": 2.689486552567237,
+      "photo_scale_square": 1.2,
+      "photo_position_y_square": 4.986755072633328,
+      "photo_position_square": "custom",
+      "date_of_birth": "2002-03-04",
+      "registration_date": {
+        "_seconds": 1784210474,
+        "_nanoseconds": 278000000
+      },
+      "current_season_id": "SSPSLS18",
+      "used_smart_assist": "partially",
+      "updated_at": {
+        "_seconds": 1785251283,
+        "_nanoseconds": 35000000
+      },
+      "name": "SHAMSEAR",
+      "display_name": "SHAMSEAR"
+    }
+  },
+  {
+    "collection": "realplayers",
+    "docId": "sspslpsl0042",
+    "data": {
+      "player_id": "sspslpsl0042",
+      "place": "Malappuram",
+      "date_of_birth": "2004-10-27",
+      "email": "shamsear061@gmail.com",
+      "phone": "7736726288",
+      "photo_url": "https://ik.imagekit.io/ssleague/player-photos/sspslpsl0042.jpg",
+      "photo_file_id": "69109b0e5c7cd75eb8ad07d4",
+      "is_registered": true,
+      "season_id": "SSPSLS16",
+      "registered_email": "shamsear061@gmail.com",
+      "is_active": true,
+      "is_available": true,
+      "role": "player",
+      "created_at": {
+        "_seconds": 1762695951,
+        "_nanoseconds": 822000000
+      },
+      "notes": "",
+      "steam_id": "",
+      "psn_id": "",
+      "xbox_id": "",
+      "photo_position_x_square": 43.52078239608802,
+      "photo_scale_square": 1.9,
+      "photo_position_y_square": 32.61511693082404,
+      "photo_position_square": "custom",
+      "registration_date": {
+        "_seconds": 1784894562,
+        "_nanoseconds": 249000000
+      },
+      "current_season_id": "SSPSLS18",
+      "used_smart_assist": "no",
+      "updated_at": {
+        "_seconds": 1785251283,
+        "_nanoseconds": 35000000
+      },
+      "name": "ANUANSHIN",
+      "display_name": "ANUANSHIN"
+    }
+  },
+  {
+    "collection": "realplayers",
+    "docId": "sspslpsl0055",
+    "data": {
+      "player_id": "sspslpsl0055",
+      "place": "Palakkad",
+      "date_of_birth": "2005-05-08",
+      "email": "shamsear@ssleague.com",
+      "phone": "7559854853",
+      "is_registered": true,
+      "season_id": "SSPSLS16",
+      "registered_email": "shamsear@ssleague.com",
+      "is_active": true,
+      "is_available": true,
+      "role": "player",
+      "created_at": {
+        "_seconds": 1762699499,
+        "_nanoseconds": 411000000
+      },
+      "notes": "",
+      "steam_id": "",
+      "psn_id": "",
+      "xbox_id": "",
+      "photo_position_y_circle": 53.316014669926645,
+      "photo_position_circle": "custom",
+      "photo_scale_circle": 1.3,
+      "photo_position_x_circle": 93.39853300733496,
+      "photo_position_x_square": 80.92909535452323,
+      "photo_scale_square": 1.5,
+      "photo_position_y_square": 47.529542358696894,
+      "photo_position_square": "custom",
+      "registration_date": {
+        "_seconds": 1784390669,
+        "_nanoseconds": 853000000
+      },
+      "photo_file_id": "6a5ba40b5c7cd75eb8fd5d13",
+      "current_season_id": "SSPSLS18",
+      "photo_url": "https://ik.imagekit.io/ssleague/player-photos/sspslpsl0055_1784390638949.jpg",
+      "used_smart_assist": "no",
+      "updated_at": {
+        "_seconds": 1785251056,
+        "_nanoseconds": 351000000
+      },
+      "name": "SANJU K",
+      "rename_note": "Renamed from Sanju on 2026-07-28T15:04:14.661Z",
+      "display_name": "SANJU K"
+    }
+  },
+  {
+    "collection": "realplayers",
+    "docId": "sspslpsl0063",
+    "data": {
+      "player_id": "sspslpsl0063",
+      "place": "Kozhikode",
+      "date_of_birth": "2000-08-12",
+      "email": "adilmubarackam10@gmail.com",
+      "phone": "8848810435",
+      "photo_url": "https://ik.imagekit.io/ssleague/player-photos/sspslpsl0063_1762703064845.jpg",
+      "photo_file_id": "6910b6da5c7cd75eb85f3f5c",
+      "is_registered": true,
+      "season_id": "SSPSLS16",
+      "registered_email": "adilmubarackam10@gmail.com",
+      "is_active": true,
+      "is_available": true,
+      "role": "player",
+      "created_at": {
+        "_seconds": 1762703067,
+        "_nanoseconds": 799000000
+      },
+      "notes": "",
+      "steam_id": "",
+      "psn_id": "",
+      "xbox_id": "",
+      "photo_position_circle": "custom",
+      "photo_position_y_circle": 35.223105134474324,
+      "photo_scale_circle": 1.4,
+      "photo_position_x_circle": 99.02200488997555,
+      "photo_position_x_square": 99.75550122249389,
+      "photo_scale_square": 1.5,
+      "photo_position_y_square": 35.060104705885166,
+      "photo_position_square": "custom",
+      "registration_date": {
+        "_seconds": 1785000378,
+        "_nanoseconds": 402000000
+      },
+      "current_season_id": "SSPSLS18",
+      "updated_at": {
+        "_seconds": 1785251283,
+        "_nanoseconds": 35000000
+      },
+      "name": "ADHIL",
+      "display_name": "ADHIL"
+    }
+  },
+  {
+    "collection": "team_seasons",
+    "docId": "SSPSLT0010_SSPSLS16",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "user_id": "kplwDci6lngs5Ew7CGuTn28qM8F3",
+      "season_id": "SSPSLS16",
+      "username": "varsitysoccers",
+      "team_email": "varsitysoccers@historical.team",
+      "status": "registered",
+      "contract_id": "contract_SSPSLT0010_SSPSLS16_1763278736031",
+      "contract_start_season": "SSPSLS16",
+      "contract_end_season": "SSPSLS17",
+      "contract_length": 2,
+      "is_auto_registered": false,
+      "skipped_seasons": 0,
+      "penalty_amount": 0,
+      "last_played_season": null,
+      "football_starting_balance": 10000,
+      "real_player_starting_balance": 1000,
+      "currency_system": "dual",
+      "joined_at": {
+        "_seconds": 1763278736,
+        "_nanoseconds": 276000000
+      },
+      "created_at": {
+        "_seconds": 1763278736,
+        "_nanoseconds": 276000000
+      },
+      "owner_name": "Adil",
+      "team_logo": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "last_lineup_warning_fixture": "SSPSLS16L_leg1_r7_m7",
+      "last_lineup_warning_date": {
+        "_seconds": 1766422420,
+        "_nanoseconds": 848000000
+      },
+      "lineup_warnings": 1,
+      "total_spent": 7931,
+      "position_counts": {
+        "GK": 1,
+        "CMF": 2,
+        "RWF": 2,
+        "DMF": 2,
+        "LMF": 1,
+        "LB": 1,
+        "LWF": 4,
+        "FWD": 0,
+        "CB": 4,
+        "AMF": 2,
+        "SS": 1,
+        "RB": 2,
+        "DEF": 0,
+        "RMF": 1,
+        "MID": 0,
+        "CF": 4
+      },
+      "players_count": 25,
+      "last_salary_deduction": {
+        "round": 19,
+        "amount": 784.7,
+        "date": {
+          "_seconds": 1772013754,
+          "_nanoseconds": 252000000
+        }
+      },
+      "football_spent": 9506.800000000001,
+      "transfers_used": 0,
+      "real_player_budget": 612.61,
+      "real_player_spent": 1051.39,
+      "football_budget": 3825.2,
+      "logo_url": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "logo_position_x_circle": 51.020405646613774,
+      "logo_position_y_circle": 36.831630489884844,
+      "logo_scale_circle": 0.7,
+      "updated_at": {
+        "_seconds": 1785236075,
+        "_nanoseconds": 135000000
+      },
+      "logo_scale_square": 0.9,
+      "logo_position_x_square": 50,
+      "logo_position_y_square": 50,
+      "team_name": "VARSITY SOCCERS"
+    }
+  },
+  {
+    "collection": "team_seasons",
+    "docId": "SSPSLT0010_SSPSLS17",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "user_id": "kplwDci6lngs5Ew7CGuTn28qM8F3",
+      "season_id": "SSPSLS17",
+      "username": "varsitysoccers",
+      "team_email": "varsitysoccers@historical.team",
+      "status": "registered",
+      "contract_id": "contract_SSPSLT0010_SSPSLS16_1763278736031",
+      "contract_start_season": "SSPSLS16",
+      "contract_end_season": "SSPSLS17",
+      "contract_length": 2,
+      "currency_system": "dual",
+      "budget_pending": true,
+      "joined_at": {
+        "_seconds": 1763278736,
+        "_nanoseconds": 276000000
+      },
+      "created_at": {
+        "_seconds": 1763278736,
+        "_nanoseconds": 276000000
+      },
+      "owner_name": "Adil",
+      "real_player_starting_balance": 1000,
+      "football_starting_balance": 10000,
+      "penalty_amount": 0,
+      "is_auto_registered": false,
+      "last_played_season": null,
+      "team_logo": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "lineup_warnings": 0,
+      "last_lineup_warning_fixture": null,
+      "last_lineup_warning_date": null,
+      "skipped_seasons": 0,
+      "last_updated": {
+        "_seconds": 1774771243,
+        "_nanoseconds": 798000000
+      },
+      "transfers_used": 0,
+      "football_purchased_slots": 3,
+      "football_total_slots": 28,
+      "total_spent": 50,
+      "players_count": 10,
+      "position_counts": {
+        "RB": 2,
+        "CB": 3,
+        "GK": 2,
+        "LB": 2,
+        "RMF": 1,
+        "AMF": 2,
+        "DMF": 5,
+        "SS": 1,
+        "RWF": 1,
+        "CF": 3,
+        "LMF": 1,
+        "LWF": 4,
+        "CMF": 3
+      },
+      "football_swap_count": 6,
+      "last_salary_deduction": {
+        "round": 19,
+        "amount": 787.1,
+        "date": {
+          "_seconds": 1779118699,
+          "_nanoseconds": 215000000
+        }
+      },
+      "football_spent": 4186.1,
+      "football_budget": 2950.1,
+      "real_player_budget": 365.70000000000016,
+      "real_player_spent": 951.9100000000027,
+      "logo_url": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "logo_position_x_circle": 51.020405646613774,
+      "logo_position_y_circle": 36.831630489884844,
+      "logo_scale_circle": 0.7,
+      "updated_at": {
+        "_seconds": 1785236075,
+        "_nanoseconds": 137000000
+      },
+      "logo_scale_square": 0.9,
+      "logo_position_x_square": 50,
+      "logo_position_y_square": 50,
+      "team_name": "VARSITY SOCCERS"
+    }
+  },
+  {
+    "collection": "teams",
+    "docId": "SSPSLT0010",
+    "data": {
+      "id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "owner_name": "ADHIL",
+      "userId": "kplwDci6lngs5Ew7CGuTn28qM8F3",
+      "userEmail": "varsitysoccers@historical.team",
+      "hasUserAccount": true,
+      "is_active": true,
+      "is_historical": true,
+      "name_history": [],
+      "previous_names": [],
+      "created_at": {
+        "_seconds": 1762765905,
+        "_nanoseconds": 941000000
+      },
+      "teamLogo": null,
+      "fantasy_joined_at": {
+        "_seconds": 1763278736,
+        "_nanoseconds": 276000000
+      },
+      "email": "varsitysoccers@historical.team",
+      "fantasy_participating": true,
+      "updatedAt": {
+        "_seconds": 1763278736,
+        "_nanoseconds": 276000000
+      },
+      "fantasy_league_id": "SSPSLFLS16",
+      "logo_url": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "logo": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "team_logo": "https://ik.imagekit.io/ssleague/team-logos/team_SSPSLT0010_1765863242278_varsulogo_9XBVUwT7h.png",
+      "current_season_id": "SSPSLS9",
+      "total_seasons_participated": 9,
+      "seasons": [
+        "SSPSLS15",
+        "SSPSLS14",
+        "SSPSLS13",
+        "SSPSLS12",
+        "SSPSLS11",
+        "SSPSLS16",
+        "SSPSLS17",
+        "SSPSLS10",
+        "SSPSLS9"
+      ],
+      "payment_type": "seasonal",
+      "updated_at": {
+        "_seconds": 1784711482,
+        "_nanoseconds": 307000000
+      },
+      "logo_position_x_circle": 51.020405646613774,
+      "logo_position_y_circle": 36.831630489884844,
+      "logo_scale_circle": 0.7,
+      "logo_scale_square": 0.9,
+      "logo_position_x_square": 50,
+      "logo_position_y_square": 50,
+      "name": "VARSITY SOCCERS"
+    }
+  },
+  {
+    "collection": "teams",
+    "docId": "SSPSLT0022",
+    "data": {
+      "id": "SSPSLT0022",
+      "team_name": "Sentinels",
+      "owner_name": "SHAMSEAR",
+      "userId": "gDNe0qbTwfU4P1zu3fAYloUfEw22",
+      "userEmail": "sentinels@historical.team",
+      "hasUserAccount": true,
+      "is_active": true,
+      "is_historical": true,
+      "name_history": [],
+      "previous_names": [],
+      "created_at": {
+        "_seconds": 1762806014,
+        "_nanoseconds": 902000000
+      },
+      "total_seasons_participated": 3,
+      "seasons": [
+        "SSPSLS14",
+        "SSPSLS13",
+        "SSPSLS12"
+      ],
+      "current_season_id": "SSPSLS12",
+      "payment_type": "seasonal",
+      "updated_at": {
+        "_seconds": 1784711408,
+        "_nanoseconds": 221000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "0SWFNjBtbAhhtdZrMuRr",
+    "data": {
+      "description": "Salary: Shamsear",
+      "updated_at": {
+        "_seconds": 1766514889,
+        "_nanoseconds": 638000000
+      },
+      "currency_type": "real_player",
+      "transaction_type": "salary_payment",
+      "balance_after": 20.710000000000004,
+      "amount": -1.1,
+      "season_id": "SSPSLS16",
+      "balance_before": 21.810000000000006,
+      "metadata": {
+        "player_name": "Shamsear",
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.1,
+        "player_count": 1,
+        "fixture_id": "SSPSLS16L_leg1_r8_m3"
+      },
+      "created_at": {
+        "_seconds": 1766514889,
+        "_nanoseconds": 638000000
+      },
+      "team_id": "SSPSLT0021"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "0rUfge0BzuDwXgXKVN3V",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "118977",
+      "player_name": "Rodrygo",
+      "player_type": "football",
+      "team_id": "SSPSLT0002",
+      "team_name": "Manchester United",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 389,
+      "refund_percentage": 50,
+      "acquisition_value": 777,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504134,
+        "_nanoseconds": 654000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "1FJW97blaT6Jdxd32Tub",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 130.41999999999948,
+      "balance_after": 129.16999999999948,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r22_m2",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780676509,
+        "_nanoseconds": 875000000
+      },
+      "updated_at": {
+        "_seconds": 1780676509,
+        "_nanoseconds": 875000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "1N43D3aCr1YOxEiSsxrk",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0008",
+      "player_name": "Ansil",
+      "player_type": "real",
+      "team_id": "SSPSLT0004",
+      "team_name": "Red Hawks FC",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 105,
+      "refund_percentage": 50,
+      "auction_value": 210,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775038702,
+        "_nanoseconds": 249000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "1nHM3NMvvzuvJz0M5xLq",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 148.9899999999998,
+      "balance_after": 147.4899999999998,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r7_m4",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778863076,
+        "_nanoseconds": 565000000
+      },
+      "updated_at": {
+        "_seconds": 1778863076,
+        "_nanoseconds": 565000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "1vjFG2ASrKLlzLR4X54r",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "real_player_fee",
+      "currency_type": "real_player",
+      "amount": -220,
+      "balance_after": 70,
+      "reason": "Assigned real player: Shamsear (5⭐)",
+      "metadata": {
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear",
+        "star_rating": 5,
+        "auction_value": 220,
+        "salary_per_match": 1.1,
+        "contract_start": "SSPSLS16",
+        "contract_end": "SSPSLS17"
+      },
+      "updated_at": {
+        "_seconds": 1763629569,
+        "_nanoseconds": 858000000
+      },
+      "created_at": {
+        "_seconds": 1763629569,
+        "_nanoseconds": 858000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "1xFNp86p1IpsnSPi3YP0",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 134.34999999999954,
+      "balance_after": 133.09999999999954,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r21_m3",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780596141,
+        "_nanoseconds": 992000000
+      },
+      "updated_at": {
+        "_seconds": 1780596141,
+        "_nanoseconds": 992000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "2drGoFlepJv5bIPc00kx",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 159.2799999999998,
+      "balance_after": 157.9099999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r11_m3",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778857393,
+        "_nanoseconds": 277000000
+      },
+      "updated_at": {
+        "_seconds": 1778857393,
+        "_nanoseconds": 277000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "2j2eLJK6e5wcRWRPSvfi",
+    "data": {
+      "balance_before": 278.8100000000001,
+      "metadata": {
+        "player_count": 1,
+        "player_name": "Adil Mubarack",
+        "fixture_id": "SSPSLS16L_leg1_r13_m1",
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.17
+      },
+      "updated_at": {
+        "_seconds": 1767089618,
+        "_nanoseconds": 846000000
+      },
+      "transaction_type": "salary_payment",
+      "balance_after": 277.6400000000001,
+      "description": "Salary: Adil Mubarack",
+      "created_at": {
+        "_seconds": 1767089618,
+        "_nanoseconds": 846000000
+      },
+      "amount": -1.17,
+      "season_id": "SSPSLS16",
+      "team_id": "SSPSLT0010",
+      "currency_type": "real_player"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "2qPhJktA0Gs6hVOetq8K",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 386.36000000000007,
+      "balance_after": 384.80000000000007,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r30_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782330130,
+        "_nanoseconds": 587000000
+      },
+      "updated_at": {
+        "_seconds": 1782330130,
+        "_nanoseconds": 587000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "31L07oGjxI5LScQPTKIX",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 147.27999999999977,
+      "balance_after": 145.77999999999977,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r13_m4",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1779038073,
+        "_nanoseconds": 308000000
+      },
+      "updated_at": {
+        "_seconds": 1779038073,
+        "_nanoseconds": 308000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "360V5X8IWPoQcHLP7Xex",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "16786160",
+      "player_name": "Karim Benzema",
+      "player_type": "football",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 8,
+      "refund_percentage": 75,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -296,
+      "remaining_half_seasons": 336,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504205,
+        "_nanoseconds": 969000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "3WQuUt0ZO1EaAHuvJSE8",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "47522",
+      "player_name": "Aymeric Laporte",
+      "player_type": "football",
+      "team_id": "SSPSLT0015",
+      "team_name": "Legends FC",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 3,
+      "refund_percentage": 25,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779266116,
+        "_nanoseconds": 920000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "4zsAz98HHurVvMK8itq1",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0007",
+      "player_name": "Unni Torres",
+      "player_type": "real",
+      "team_id": "SSPSLT0020",
+      "team_name": "Skill 555",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 65,
+      "refund_percentage": 50,
+      "auction_value": 130,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775039198,
+        "_nanoseconds": 229000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "57K92xveAtAJPZLiax4A",
+    "data": {
+      "created_at": {
+        "_seconds": 1766408902,
+        "_nanoseconds": 772000000
+      },
+      "updated_at": {
+        "_seconds": 1766408902,
+        "_nanoseconds": 772000000
+      },
+      "season_id": "SSPSLS16",
+      "team_id": "SSPSLT0021",
+      "balance_before": 20.210000000000004,
+      "currency_type": "real_player",
+      "balance_after": 19.110000000000003,
+      "amount": -1.1,
+      "metadata": {
+        "player_name": "Shamsear",
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.1,
+        "player_count": 1,
+        "fixture_id": "SSPSLS16L_leg1_r7_m2"
+      },
+      "transaction_type": "salary_payment",
+      "description": "Salary: Shamsear"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "5wWVHo8mlS29rsQQPRS8",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 83.96,
+      "balance_after": 82.58999999999999,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r24_m3",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768474426,
+        "_nanoseconds": 713000000
+      },
+      "updated_at": {
+        "_seconds": 1768474426,
+        "_nanoseconds": 713000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "65oaWKw6Uq7N6SC3QM4R",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 152.01999999999987,
+      "balance_after": 150.51999999999987,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r9_m2",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778684090,
+        "_nanoseconds": 182000000
+      },
+      "updated_at": {
+        "_seconds": 1778684090,
+        "_nanoseconds": 182000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "6QCoBhQTl6OOkwvjvgCd",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 17.60000000000001,
+      "balance_after": 16.500000000000007,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r19_m1",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1768229207,
+        "_nanoseconds": 240000000
+      },
+      "updated_at": {
+        "_seconds": 1768229207,
+        "_nanoseconds": 240000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "6XEoTJLZovAJyykOUmTw",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 178.4799999999999,
+      "balance_after": 177.1099999999999,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r4_m5",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778178355,
+        "_nanoseconds": 936000000
+      },
+      "updated_at": {
+        "_seconds": 1778178355,
+        "_nanoseconds": 936000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "6wjgMul2Tf43ar6ijh2U",
+    "data": {
+      "currency_type": "real_player",
+      "balance_before": 14.930000000000005,
+      "transaction_type": "salary_payment",
+      "season_id": "SSPSLS16",
+      "team_id": "SSPSLT0021",
+      "created_at": {
+        "_seconds": 1766855516,
+        "_nanoseconds": 916000000
+      },
+      "amount": -1.1,
+      "balance_after": 13.830000000000005,
+      "updated_at": {
+        "_seconds": 1766855516,
+        "_nanoseconds": 916000000
+      },
+      "metadata": {
+        "salary_amount": 1.1,
+        "fixture_id": "SSPSLS16L_leg1_r10_m5",
+        "player_name": "Shamsear",
+        "player_id": "sspslpsl0024",
+        "player_count": 1
+      },
+      "description": "Salary: Shamsear"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "6yPdnqGDhWIVBHkCStV2",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 114.9599999999998,
+      "balance_after": 113.58999999999979,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r20_m7",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780488303,
+        "_nanoseconds": 452000000
+      },
+      "updated_at": {
+        "_seconds": 1780488303,
+        "_nanoseconds": 452000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "77L6WOYVwifbOf6jAiLb",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 147.22999999999976,
+      "balance_after": 145.72999999999976,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r12_m3",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778955546,
+        "_nanoseconds": 892000000
+      },
+      "updated_at": {
+        "_seconds": 1778955546,
+        "_nanoseconds": 892000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "7TiwzVCgX7KmRXjNypdI",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "118744",
+      "player_name": "Santiago Giménez",
+      "player_type": "football",
+      "team_id": "SSPSLT0005",
+      "team_name": "TM Asgardians",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 5,
+      "refund_percentage": 50,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776503807,
+        "_nanoseconds": 921000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "81vvZNQYZo6LFFHLhfwQ",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0076",
+      "player_name": "Anshad ",
+      "player_type": "real",
+      "team_id": "SSPSLT0023",
+      "team_name": "Kopites",
+      "season_id": "SSPSLS16",
+      "release_timing": "mid",
+      "release_season": "SSPSLS16.5",
+      "refund_amount": 56,
+      "refund_percentage": 75,
+      "auction_value": 75,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS16",
+      "total_half_seasons": 0,
+      "elapsed_half_seasons": 1,
+      "remaining_half_seasons": -1,
+      "processed_by": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "processed_by_name": "Shamsear@ssleague.com",
+      "created_at": {
+        "_seconds": 1768157251,
+        "_nanoseconds": 927000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "8dE0ZP07YmbKvhwxbUrk",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0017",
+      "player_name": "Binto K Benny",
+      "player_type": "real",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 20,
+      "refund_percentage": 50,
+      "auction_value": 40,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1777799182,
+        "_nanoseconds": 757000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "8qtluqOWGCbDpzuM3oYn",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 87.96999999999998,
+      "balance_after": 86.59999999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r25_m2",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768669597,
+        "_nanoseconds": 566000000
+      },
+      "updated_at": {
+        "_seconds": 1768669597,
+        "_nanoseconds": 566000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "8s1YUYrGRdUQ2Y8hz1Y9",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "104717",
+      "player_name": "Lucas Hernández",
+      "player_type": "football",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 3,
+      "refund_percentage": 25,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779266116,
+        "_nanoseconds": 262000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "997ualY7RiIhKtsAz8xT",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 364.3400000000001,
+      "balance_after": 362.9700000000001,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_grpB_leg1_r3_m1",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1769268414,
+        "_nanoseconds": 914000000
+      },
+      "updated_at": {
+        "_seconds": 1769268414,
+        "_nanoseconds": 914000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "9LKlxfEEHgrX5UaRF8hV",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 161.8499999999998,
+      "balance_after": 160.4799999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r10_m4",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778770505,
+        "_nanoseconds": 824000000
+      },
+      "updated_at": {
+        "_seconds": 1778770505,
+        "_nanoseconds": 824000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "9uSVMsJEGlolIwIAi8wv",
+    "data": {
+      "balance_after": 271.7300000000001,
+      "amount": -1.17,
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "updated_at": {
+        "_seconds": 1766600041,
+        "_nanoseconds": 232000000
+      },
+      "created_at": {
+        "_seconds": 1766600041,
+        "_nanoseconds": 232000000
+      },
+      "balance_before": 272.9000000000001,
+      "currency_type": "real_player",
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg1_r9_m5",
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.17,
+        "player_count": 1,
+        "player_name": "Adil Mubarack"
+      },
+      "team_id": "SSPSLT0010"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "A5fjZKAGK0j8yOz39upU",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 104.7799999999998,
+      "balance_after": 103.4099999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r23_m4",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780766285,
+        "_nanoseconds": 432000000
+      },
+      "updated_at": {
+        "_seconds": 1780766285,
+        "_nanoseconds": 432000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "AAmtTZv6OTfzDQyi1kpY",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "40425",
+      "player_name": "Jordi Alba",
+      "player_type": "football",
+      "team_id": "SSPSLT0008",
+      "team_name": "La Masia",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 15,
+      "refund_percentage": 50,
+      "acquisition_value": 30,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504266,
+        "_nanoseconds": 549000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "AAneozPUylhdkN3PZzal",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0067",
+      "player_name": "Mohammed Suhail PA",
+      "player_type": "real",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 45,
+      "refund_percentage": 50,
+      "auction_value": 90,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775039651,
+        "_nanoseconds": 608000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "AMrdLwnloE83ENWDjevZ",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 273.07999999999964,
+      "balance_after": 271.9799999999996,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_ko_r27_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1770316090,
+        "_nanoseconds": 188000000
+      },
+      "updated_at": {
+        "_seconds": 1770316090,
+        "_nanoseconds": 188000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "AqDU4VmuxjuH8Cn3Z9Cd",
+    "data": {
+      "balance_after": 79.56,
+      "team_id": "SSPSLT0010",
+      "description": "Salary: Adil Mubarack",
+      "updated_at": {
+        "_seconds": 1767630133,
+        "_nanoseconds": 562000000
+      },
+      "transaction_type": "salary_payment",
+      "amount": -1.17,
+      "currency_type": "real_player",
+      "season_id": "SSPSLS16",
+      "created_at": {
+        "_seconds": 1767630133,
+        "_nanoseconds": 562000000
+      },
+      "balance_before": 80.73,
+      "metadata": {
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.17,
+        "player_count": 1,
+        "player_name": "Adil Mubarack",
+        "fixture_id": "SSPSLS16L_leg2_r14_m2"
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "BDGMmafJmtFv5Mo0JSVl",
+    "data": {
+      "amount": -1.17,
+      "season_id": "SSPSLS16",
+      "updated_at": {
+        "_seconds": 1766659688,
+        "_nanoseconds": 442000000
+      },
+      "balance_before": 277.61000000000007,
+      "currency_type": "real_player",
+      "created_at": {
+        "_seconds": 1766659688,
+        "_nanoseconds": 442000000
+      },
+      "metadata": {
+        "player_count": 1,
+        "player_id": "sspslpsl0063",
+        "fixture_id": "SSPSLS16L_leg1_r8_m6",
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack"
+      },
+      "team_id": "SSPSLT0010",
+      "balance_after": 276.44000000000005,
+      "description": "Salary: Adil Mubarack",
+      "transaction_type": "salary_payment"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "BHeHg26IUq4wVWGl8NBy",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 153.3299999999999,
+      "balance_after": 151.8299999999999,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r6_m5",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778435939,
+        "_nanoseconds": 411000000
+      },
+      "updated_at": {
+        "_seconds": 1778435939,
+        "_nanoseconds": 411000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "CW5Wy9gcL1rEdFjnGfR0",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0080",
+      "player_name": "Aboobaker Siddique",
+      "player_type": "real",
+      "team_id": "SSPSLT0023",
+      "team_name": "Kopites",
+      "season_id": "SSPSLS16",
+      "release_timing": "mid",
+      "release_season": "SSPSLS16.5",
+      "refund_amount": 53,
+      "refund_percentage": 50,
+      "auction_value": 105,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 1,
+      "remaining_half_seasons": 1,
+      "processed_by": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "processed_by_name": "Shamsear@ssleague.com",
+      "created_at": {
+        "_seconds": 1768402890,
+        "_nanoseconds": 646000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "CtqHi8mHsEG0XXCg5fmh",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "description": "Salary: Adil Mubarack",
+      "balance_before": 270.63000000000005,
+      "transaction_type": "salary_payment",
+      "balance_after": 269.46000000000004,
+      "amount": -1.17,
+      "season_id": "SSPSLS16",
+      "metadata": {
+        "player_count": 1,
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack",
+        "player_id": "sspslpsl0063",
+        "fixture_id": "SSPSLS16L_leg1_r7_m7"
+      },
+      "created_at": {
+        "_seconds": 1766422610,
+        "_nanoseconds": 118000000
+      },
+      "updated_at": {
+        "_seconds": 1766422610,
+        "_nanoseconds": 118000000
+      },
+      "currency_type": "real_player"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Cyzsra0kW7MxSNktmbGa",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 79.28,
+      "balance_after": 77.91,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r18_m6",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1767975033,
+        "_nanoseconds": 200000000
+      },
+      "updated_at": {
+        "_seconds": 1767975033,
+        "_nanoseconds": 200000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "DE73le1ngUsBao7QwFcH",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0006",
+      "player_name": "Arjun Ravi",
+      "player_type": "real",
+      "team_id": "SSPSLT0026",
+      "team_name": "Portland Timbers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 88,
+      "refund_percentage": 50,
+      "auction_value": 175,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775039080,
+        "_nanoseconds": 720000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "DtmHzxTl4vIO6AjwXNzz",
+    "data": {
+      "currency_type": "real_player",
+      "season_id": "SSPSLS16",
+      "amount": -1.17,
+      "balance_after": 258.45,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "round_number": 2,
+        "fixture_id": "SSPSLS16L_leg1_r2_m3",
+        "player_id": "sspslpsl0063",
+        "player_count": 1,
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack"
+      },
+      "team_id": "SSPSLT0010",
+      "balance_before": 259.62,
+      "transaction_type": "salary_payment",
+      "updated_at": {
+        "_seconds": 1766307176,
+        "_nanoseconds": 812000000
+      },
+      "created_at": {
+        "_seconds": 1766307176,
+        "_nanoseconds": 812000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ETJll7sj1k82e3DBxH7h",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 151.51999999999987,
+      "balance_after": 150.01999999999987,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r8_m3",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778609574,
+        "_nanoseconds": 699000000
+      },
+      "updated_at": {
+        "_seconds": 1778609574,
+        "_nanoseconds": 699000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "EmYXRzhnT8qpmnvVAEcB",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 131.63999999999956,
+      "balance_after": 130.38999999999956,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r19_m5",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780420725,
+        "_nanoseconds": 870000000
+      },
+      "updated_at": {
+        "_seconds": 1780420725,
+        "_nanoseconds": 870000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "FTza0X8yffaEKFiLLi8Q",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 124.92999999999947,
+      "balance_after": 123.67999999999947,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r26_m4",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1781021091,
+        "_nanoseconds": 522000000
+      },
+      "updated_at": {
+        "_seconds": 1781021091,
+        "_nanoseconds": 522000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "FXTWo8Nlh6w9EwpzBPnU",
+    "data": {
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "balance_after": 141.7599999999997,
+      "amount": -1.25,
+      "team_id": "SSPSLT0004",
+      "created_at": {
+        "_seconds": 1780170681,
+        "_nanoseconds": 115000000
+      },
+      "balance_before": 143.0099999999997,
+      "currency_type": "real_player",
+      "updated_at": {
+        "_seconds": 1780170681,
+        "_nanoseconds": 115000000
+      },
+      "metadata": {
+        "player_count": 1,
+        "player_name": "Shamsear",
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r16_m7",
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.25
+      },
+      "description": "Salary: Shamsear"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "FeSl5X0PZPTQbEYzQdzP",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "currency_type": "real_player",
+      "description": "Salary: Shamsear",
+      "season_id": "SSPSLS16",
+      "updated_at": {
+        "_seconds": 1766937721,
+        "_nanoseconds": 96000000
+      },
+      "metadata": {
+        "salary_amount": 1.1,
+        "player_count": 1,
+        "player_name": "Shamsear",
+        "player_id": "sspslpsl0024",
+        "fixture_id": "SSPSLS16L_leg1_r11_m6"
+      },
+      "created_at": {
+        "_seconds": 1766937721,
+        "_nanoseconds": 96000000
+      },
+      "balance_before": 16.620000000000005,
+      "balance_after": 15.520000000000005,
+      "transaction_type": "salary_payment",
+      "amount": -1.1
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "GNY0Jjv7u6Q7t1c8O9pW",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 153.0999999999999,
+      "balance_after": 151.5999999999999,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r5_m6",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778342233,
+        "_nanoseconds": 913000000
+      },
+      "updated_at": {
+        "_seconds": 1778342233,
+        "_nanoseconds": 913000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "HKJ2PQwcOLh43UeB7VKe",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "125370",
+      "player_name": "Loïs Openda",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "mid",
+      "release_season": "SSPSLS17.5",
+      "refund_amount": 247,
+      "refund_percentage": 25,
+      "acquisition_value": 986,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 3,
+      "remaining_half_seasons": -1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779267728,
+        "_nanoseconds": 817000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "HUwnstOhdclSK5OQvtDC",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "115098",
+      "player_name": "A. Buongiorno",
+      "player_type": "football",
+      "team_id": "SSPSLT0002",
+      "team_name": "Manchester United",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 5,
+      "refund_percentage": 50,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504135,
+        "_nanoseconds": 689000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Ho1bjYHdbYVkFNuGSKHC",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 86.13999999999999,
+      "balance_after": 84.76999999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r21_m6",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768379731,
+        "_nanoseconds": 147000000
+      },
+      "updated_at": {
+        "_seconds": 1768379731,
+        "_nanoseconds": 147000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "HxpIxhyaeF0h44Uj6xbG",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "47051",
+      "player_name": "Adrien Rabiot",
+      "player_type": "football",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 9,
+      "refund_percentage": 50,
+      "acquisition_value": 17,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504207,
+        "_nanoseconds": 14000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "JETruDMD3pEi2ZPpkmY0",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 150.13999999999982,
+      "balance_after": 148.7699999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r13_m1",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1779038937,
+        "_nanoseconds": 222000000
+      },
+      "updated_at": {
+        "_seconds": 1779038937,
+        "_nanoseconds": 222000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "KcbRPxrwLvlJUFgP2DiU",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 445.1499999999998,
+      "balance_after": 443.5899999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r29_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782304468,
+        "_nanoseconds": 273000000
+      },
+      "updated_at": {
+        "_seconds": 1782304468,
+        "_nanoseconds": 273000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "LFH1m1r7VkqXP54SbSX8",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 149.1499999999998,
+      "balance_after": 147.6499999999998,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r10_m1",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778781281,
+        "_nanoseconds": 365000000
+      },
+      "updated_at": {
+        "_seconds": 1778781281,
+        "_nanoseconds": 365000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "LQ6xUEYkpLYt7gPVRDVT",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 183.47999999999993,
+      "balance_after": 182.10999999999993,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r3_m4",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778173778,
+        "_nanoseconds": 326000000
+      },
+      "updated_at": {
+        "_seconds": 1778173778,
+        "_nanoseconds": 326000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "LhV5LoCy9UyXNqY4YGtg",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0024",
+      "player_name": "Shamsear",
+      "player_type": "real",
+      "team_id": "SSPSLT0021",
+      "team_name": "Los Galacticos",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 110,
+      "refund_percentage": 50,
+      "auction_value": 220,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1776009539,
+        "_nanoseconds": 355000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "LsG2ZHsbgU1Oaz7qIaCG",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 154.55999999999992,
+      "balance_after": 153.05999999999992,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r4_m7",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778261719,
+        "_nanoseconds": 532000000
+      },
+      "updated_at": {
+        "_seconds": 1778261719,
+        "_nanoseconds": 532000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "MU4iqX8RP9dZBkKFLCpr",
+    "data": {
+      "transaction_type": "salary_payment",
+      "created_at": {
+        "_seconds": 1767893817,
+        "_nanoseconds": 956000000
+      },
+      "amount": -1.1,
+      "balance_after": 12.700000000000008,
+      "description": "Salary: Shamsear",
+      "currency_type": "real_player",
+      "updated_at": {
+        "_seconds": 1767893817,
+        "_nanoseconds": 956000000
+      },
+      "balance_before": 13.800000000000008,
+      "metadata": {
+        "player_name": "Shamsear",
+        "salary_amount": 1.1,
+        "fixture_id": "SSPSLS16L_leg2_r17_m3",
+        "player_id": "sspslpsl0024",
+        "player_count": 1
+      },
+      "season_id": "SSPSLS16",
+      "team_id": "SSPSLT0021"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Mps0bHGN1B2XnRHFgj0t",
+    "data": {
+      "season_id": "SSPSLS16",
+      "description": "Salary: Adil Mubarack",
+      "balance_after": 252.14000000000001,
+      "currency_type": "real_player",
+      "team_id": "SSPSLT0010",
+      "balance_before": 253.31,
+      "transaction_type": "salary_payment",
+      "amount": -1.17,
+      "metadata": {
+        "round_number": 4,
+        "player_count": 1,
+        "player_name": "Adil Mubarack",
+        "fixture_id": "SSPSLS16L_leg1_r4_m5",
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.17
+      },
+      "updated_at": {
+        "_seconds": 1766309389,
+        "_nanoseconds": 658000000
+      },
+      "created_at": {
+        "_seconds": 1766309389,
+        "_nanoseconds": 658000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "MxMkvEvwYFl7GukHiWsG",
+    "data": {
+      "balance_before": 257.04,
+      "balance_after": 255.87000000000003,
+      "currency_type": "real_player",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0010",
+      "description": "Salary: Adil Mubarack",
+      "amount": -1.17,
+      "metadata": {
+        "player_count": 1,
+        "player_name": "Adil Mubarack",
+        "salary_amount": 1.17,
+        "player_id": "sspslpsl0063",
+        "round_number": 3,
+        "fixture_id": "SSPSLS16L_leg1_r3_m4"
+      },
+      "updated_at": {
+        "_seconds": 1766308119,
+        "_nanoseconds": 814000000
+      },
+      "created_at": {
+        "_seconds": 1766308119,
+        "_nanoseconds": 814000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "NyEypszLROhQYtEyDd1r",
+    "data": {
+      "metadata": {
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.1,
+        "player_count": 1,
+        "player_name": "Shamsear",
+        "fixture_id": "SSPSLS16L_leg1_r13_m7"
+      },
+      "amount": -1.1,
+      "season_id": "SSPSLS16",
+      "created_at": {
+        "_seconds": 1767110832,
+        "_nanoseconds": 996000000
+      },
+      "description": "Salary: Shamsear",
+      "balance_before": 13.280000000000006,
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0021",
+      "updated_at": {
+        "_seconds": 1767110832,
+        "_nanoseconds": 996000000
+      },
+      "balance_after": 12.180000000000007,
+      "currency_type": "real_player"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "O9KwcBgoy0Qhq8s2I6gc",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 270.1799999999999,
+      "balance_after": 269.07999999999987,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_grpB_leg1_r3_m2",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1769277427,
+        "_nanoseconds": 58000000
+      },
+      "updated_at": {
+        "_seconds": 1769277427,
+        "_nanoseconds": 58000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "OC6at7eRDg6D3xVJDbWU",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "117793",
+      "player_name": "Lisandro Martínez",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "mid",
+      "release_season": "SSPSLS17.5",
+      "refund_amount": 6,
+      "refund_percentage": 25,
+      "acquisition_value": 22,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 3,
+      "remaining_half_seasons": -1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779267729,
+        "_nanoseconds": 381000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "OFenz70nE7d1k1qfy9oo",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "104527",
+      "player_name": "Gerson",
+      "player_type": "football",
+      "team_id": "SSPSLT0021",
+      "team_name": "Los Galacticos",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 6,
+      "refund_percentage": 50,
+      "acquisition_value": 11,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776503921,
+        "_nanoseconds": 232000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "OnJk6iPRX3M60nDiUrG6",
+    "data": {
+      "season_id": "SSPSLS16",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg1_r1_m2",
+        "round_number": 1,
+        "salary_amount": 1.17,
+        "player_id": "sspslpsl0063",
+        "player_count": 1,
+        "player_name": "Adil Mubarack"
+      },
+      "currency_type": "real_player",
+      "transaction_type": "salary_payment",
+      "description": "Salary: Adil Mubarack",
+      "amount": -1.17,
+      "team_id": "SSPSLT0010",
+      "balance_before": 262.85,
+      "balance_after": 261.68,
+      "updated_at": {
+        "_seconds": 1766304568,
+        "_nanoseconds": 188000000
+      },
+      "created_at": {
+        "_seconds": 1766304568,
+        "_nanoseconds": 188000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "OoKaU19l2TENHlkBPsuQ",
+    "data": {
+      "updated_at": {
+        "_seconds": 1779733288,
+        "_nanoseconds": 249000000
+      },
+      "balance_before": 145.04999999999973,
+      "season_id": "SSPSLS17",
+      "team_id": "SSPSLT0004",
+      "currency_type": "real_player",
+      "metadata": {
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.25,
+        "player_name": "Shamsear",
+        "player_count": 1,
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r15_m6"
+      },
+      "description": "Salary: Shamsear",
+      "amount": -1.25,
+      "transaction_type": "salary_payment",
+      "created_at": {
+        "_seconds": 1779733288,
+        "_nanoseconds": 249000000
+      },
+      "balance_after": 143.79999999999973
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "P3t97iWaTyK5gm2N3Fm5",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 443.5899999999998,
+      "balance_after": 442.0299999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r29_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782304468,
+        "_nanoseconds": 755000000
+      },
+      "updated_at": {
+        "_seconds": 1782304468,
+        "_nanoseconds": 755000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "PDwkJ9v2bm7779AZJWdf",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "122264",
+      "player_name": "Alexis Saelemaekers",
+      "player_type": "football",
+      "team_id": "SSPSLT0005",
+      "team_name": "TM Asgardians",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 56,
+      "refund_percentage": 50,
+      "acquisition_value": 111,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776503806,
+        "_nanoseconds": 613000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "PvScjTqvvzO4zZHj9cSV",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 122.64999999999979,
+      "balance_after": 121.27999999999979,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r19_m7",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780420274,
+        "_nanoseconds": 839000000
+      },
+      "updated_at": {
+        "_seconds": 1780420274,
+        "_nanoseconds": 839000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "QMQ6YWf4UwaOlzRr9iDn",
+    "data": {
+      "balance_before": 273,
+      "amount": -1.17,
+      "updated_at": {
+        "_seconds": 1766341171,
+        "_nanoseconds": 3000000
+      },
+      "transaction_type": "salary_payment",
+      "season_id": "SSPSLS16",
+      "description": "Salary: Adil Mubarack",
+      "team_id": "SSPSLT0010",
+      "balance_after": 271.83,
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg1_r6_m7",
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack",
+        "player_count": 1
+      },
+      "currency_type": "real_player",
+      "created_at": {
+        "_seconds": 1766341171,
+        "_nanoseconds": 3000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "QQavYYTxSrpoZDZFIn6I",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0049",
+      "player_name": "Muhammed Badhusha ",
+      "player_type": "real",
+      "team_id": "SSPSLT0020",
+      "team_name": "Skill 555",
+      "season_id": "SSPSLS17",
+      "release_timing": "mid",
+      "release_season": "SSPSLS17.5",
+      "refund_amount": 10,
+      "refund_percentage": 25,
+      "auction_value": 40,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 3,
+      "remaining_half_seasons": -1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1779266174,
+        "_nanoseconds": 928000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Qt4mIKoqwmoriEuwFoDV",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "40714",
+      "player_name": "Thomas Müller",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "mid",
+      "release_season": "SSPSLS17.5",
+      "refund_amount": 33,
+      "refund_percentage": 25,
+      "acquisition_value": 131,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 3,
+      "remaining_half_seasons": -1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779267729,
+        "_nanoseconds": 882000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "RBp64XMjoNeoPp0HKusv",
+    "data": {
+      "transaction_type": "salary_payment",
+      "balance_before": 14.180000000000007,
+      "amount": -1.1,
+      "currency_type": "real_player",
+      "updated_at": {
+        "_seconds": 1767635400,
+        "_nanoseconds": 289000000
+      },
+      "season_id": "SSPSLS16",
+      "created_at": {
+        "_seconds": 1767635400,
+        "_nanoseconds": 289000000
+      },
+      "team_id": "SSPSLT0021",
+      "metadata": {
+        "salary_amount": 1.1,
+        "player_count": 1,
+        "fixture_id": "SSPSLS16L_leg2_r14_m6",
+        "player_name": "Shamsear",
+        "player_id": "sspslpsl0024"
+      },
+      "balance_after": 13.080000000000007,
+      "description": "Salary: Shamsear"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "RpZam9yTBOq2qv1wzpoz",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 158.13999999999996,
+      "balance_after": 156.63999999999996,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r1_m5",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1777957362,
+        "_nanoseconds": 327000000
+      },
+      "updated_at": {
+        "_seconds": 1777957362,
+        "_nanoseconds": 327000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "SSPSLT0015_SSPSLS18_sspslpsl0024_SSPSLS18_1785347400484_ygput",
+    "data": {
+      "team_id": "SSPSLT0015",
+      "team_name": "Legends FC",
+      "season_id": "SSPSLS18",
+      "player_id": "sspslpsl0024_SSPSLS18",
+      "player_name": "SHAMSEER",
+      "transaction_type": "player_assignment",
+      "amount": 15,
+      "currency_type": "real_player",
+      "description": "SHAMSEER assigned to Legends FC for 15 coins",
+      "created_at": {
+        "_seconds": 1785347400,
+        "_nanoseconds": 483000000
+      },
+      "created_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "SSPSLT0041_SSPSLS18_sspslpsl0063_SSPSLS18_1785347562325_jzxbo",
+    "data": {
+      "team_id": "SSPSLT0041",
+      "team_name": "ANDIMUKK FC",
+      "season_id": "SSPSLS18",
+      "player_id": "sspslpsl0063_SSPSLS18",
+      "player_name": "ADHIL",
+      "transaction_type": "player_assignment",
+      "amount": 168,
+      "currency_type": "real_player",
+      "description": "ADHIL assigned to ANDIMUKK FC for 168 coins",
+      "created_at": {
+        "_seconds": 1785347562,
+        "_nanoseconds": 324000000
+      },
+      "created_by": "tkWYmkuHxFhuHUkOQfto2lu3Lc93"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "SYYQ8fY2GH7obRtTdqSc",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0062",
+      "player_name": "FAIZAL ",
+      "player_type": "real",
+      "team_id": "SSPSLT0002",
+      "team_name": "Manchester United",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 80,
+      "refund_percentage": 50,
+      "auction_value": 160,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775038454,
+        "_nanoseconds": 160000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "SqFY060JuHFbCcjQBGfm",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 154.7099999999998,
+      "balance_after": 153.3399999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r12_m2",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778951675,
+        "_nanoseconds": 400000000
+      },
+      "updated_at": {
+        "_seconds": 1778951675,
+        "_nanoseconds": 400000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "SwbdJhuwF7grUBZstujQ",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "amount": -1.1,
+      "description": "Salary: Shamsear",
+      "balance_before": 17.55,
+      "balance_after": 16.45,
+      "season_id": "SSPSLS16",
+      "currency_type": "real_player",
+      "transaction_type": "salary_payment",
+      "metadata": {
+        "player_name": "Shamsear",
+        "round_number": 1,
+        "salary_amount": 1.1,
+        "fixture_id": "SSPSLS16L_leg1_r1_m6",
+        "player_id": "sspslpsl0024",
+        "player_count": 1
+      },
+      "updated_at": {
+        "_seconds": 1766304591,
+        "_nanoseconds": 520000000
+      },
+      "created_at": {
+        "_seconds": 1766304591,
+        "_nanoseconds": 520000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "T9lOO4DVsj4J330Tdduq",
+    "data": {
+      "created_at": {
+        "_seconds": 1767030597,
+        "_nanoseconds": 141000000
+      },
+      "team_id": "SSPSLT0010",
+      "metadata": {
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack",
+        "fixture_id": "SSPSLS16L_leg1_r12_m2",
+        "player_count": 1
+      },
+      "balance_after": 276.7800000000001,
+      "currency_type": "real_player",
+      "transaction_type": "salary_payment",
+      "description": "Salary: Adil Mubarack",
+      "amount": -1.17,
+      "updated_at": {
+        "_seconds": 1767030597,
+        "_nanoseconds": 141000000
+      },
+      "balance_before": 277.9500000000001,
+      "season_id": "SSPSLS16"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "U3R04I5IDJ2ZPQb2hQ0Z",
+    "data": {
+      "balance_before": 145.22999999999973,
+      "updated_at": {
+        "_seconds": 1779636231,
+        "_nanoseconds": 753000000
+      },
+      "team_id": "SSPSLT0004",
+      "created_at": {
+        "_seconds": 1779636231,
+        "_nanoseconds": 753000000
+      },
+      "transaction_type": "salary_payment",
+      "description": "Salary: Shamsear",
+      "amount": -1.25,
+      "currency_type": "real_player",
+      "balance_after": 143.97999999999973,
+      "season_id": "SSPSLS17",
+      "metadata": {
+        "player_count": 1,
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.25,
+        "player_name": "Shamsear",
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r14_m5"
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "UCrKgcZZU31oG4S8sHHt",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "134939",
+      "player_name": "Terem Moffi",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "mid",
+      "release_season": "SSPSLS17.5",
+      "refund_amount": 3,
+      "refund_percentage": 25,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS17",
+      "original_contract_end": "SSPSLS18",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 1,
+      "remaining_half_seasons": 1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779267730,
+        "_nanoseconds": 490000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "UPNVxmJGmVXEZWCDhrmd",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 173.3499999999998,
+      "balance_after": 171.9799999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r7_m7",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778505314,
+        "_nanoseconds": 312000000
+      },
+      "updated_at": {
+        "_seconds": 1778505314,
+        "_nanoseconds": 312000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "UW1eMDhRVrdQW6X6p3uX",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 8.37000000000001,
+      "balance_after": 7.27000000000001,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r24_m6",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1768594226,
+        "_nanoseconds": 506000000
+      },
+      "updated_at": {
+        "_seconds": 1768594226,
+        "_nanoseconds": 506000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "UhDvLlhFdlM0woDL87HU",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "60168",
+      "player_name": "Ángel Correa",
+      "player_type": "football",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 8,
+      "refund_percentage": 75,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -296,
+      "remaining_half_seasons": 336,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504208,
+        "_nanoseconds": 63000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Ui0if2PhnU6GoiVMc8dG",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 107.48999999999981,
+      "balance_after": 106.1199999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r24_m3",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780854651,
+        "_nanoseconds": 815000000
+      },
+      "updated_at": {
+        "_seconds": 1780854651,
+        "_nanoseconds": 815000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "VjlFBecTZN8gfKLYQo7C",
+    "data": {
+      "updated_at": {
+        "_seconds": 1779638000,
+        "_nanoseconds": 452000000
+      },
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0010",
+      "created_at": {
+        "_seconds": 1779638000,
+        "_nanoseconds": 452000000
+      },
+      "description": "Salary: Adil Mubarack",
+      "currency_type": "real_player",
+      "season_id": "SSPSLS17",
+      "balance_before": 147.6499999999998,
+      "metadata": {
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.37,
+        "player_count": 1,
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r14_m2",
+        "player_name": "Adil Mubarack"
+      },
+      "balance_after": 146.2799999999998,
+      "amount": -1.37
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "VtnUFaVr5D38uGvNA4Ag",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 10.75000000000001,
+      "balance_after": 9.650000000000011,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r26_m7",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1768681978,
+        "_nanoseconds": 343000000
+      },
+      "updated_at": {
+        "_seconds": 1768681978,
+        "_nanoseconds": 343000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "WCWLXFpt8I4yRQvmvVXL",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0003",
+      "player_name": "Shamil Mohd",
+      "player_type": "real",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 93,
+      "refund_percentage": 50,
+      "auction_value": 185,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775039136,
+        "_nanoseconds": 854000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "WDhuX7eI6RvpjMk8xnX3",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 448.2699999999998,
+      "balance_after": 446.7099999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r29_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782304467,
+        "_nanoseconds": 219000000
+      },
+      "updated_at": {
+        "_seconds": 1782304467,
+        "_nanoseconds": 219000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "WG0cThMATVZYXaCdBoMR",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0100",
+      "player_name": "Shinto",
+      "player_type": "real",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 20,
+      "refund_percentage": 50,
+      "auction_value": 40,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775039011,
+        "_nanoseconds": 722000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "WhXW9uHK38v6qIlgjzd6",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 272.1399999999998,
+      "balance_after": 271.0399999999998,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_ko_r4_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1769876502,
+        "_nanoseconds": 150000000
+      },
+      "updated_at": {
+        "_seconds": 1769876502,
+        "_nanoseconds": 150000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "XPKGbASWX8ElEv9lOwXH",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 112.4699999999998,
+      "balance_after": 111.0999999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r22_m5",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780683051,
+        "_nanoseconds": 996000000
+      },
+      "updated_at": {
+        "_seconds": 1780683051,
+        "_nanoseconds": 996000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Y0f7Ni24myRdyKEuHBS7",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 151.22999999999985,
+      "balance_after": 149.72999999999985,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r3_m7",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778748477,
+        "_nanoseconds": 175000000
+      },
+      "updated_at": {
+        "_seconds": 1778748477,
+        "_nanoseconds": 175000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "YC5Xl1VnOFPQDeDA5MmQ",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "104324",
+      "player_name": "Guido Rodríguez",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 22,
+      "refund_percentage": 50,
+      "acquisition_value": 43,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504021,
+        "_nanoseconds": 908000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "YlZnXshMGy7sdJzftba3",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 266.38999999999993,
+      "balance_after": 265.2899999999999,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_grpB_leg1_r2_m2",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1769187263,
+        "_nanoseconds": 90000000
+      },
+      "updated_at": {
+        "_seconds": 1769187263,
+        "_nanoseconds": 90000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Z2VS0KGnZTpXB7nZu3JO",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 274.20999999999975,
+      "balance_after": 273.10999999999973,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_ko_r4_m1_second",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1769876626,
+        "_nanoseconds": 966000000
+      },
+      "updated_at": {
+        "_seconds": 1769876626,
+        "_nanoseconds": 966000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ZQ9TYCtlsGOkNslznC9i",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 83.41,
+      "balance_after": 82.03999999999999,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r19_m7",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768063116,
+        "_nanoseconds": 758000000
+      },
+      "updated_at": {
+        "_seconds": 1768063116,
+        "_nanoseconds": 758000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ZRr4teorEU5pM1KcdXCE",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 91.30999999999999,
+      "balance_after": 89.93999999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r26_m1",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768742155,
+        "_nanoseconds": 528000000
+      },
+      "updated_at": {
+        "_seconds": 1768742155,
+        "_nanoseconds": 528000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ZUsN6HL93QWcNGaoe5AC",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0022",
+      "player_name": "SHAFIR CKD",
+      "player_type": "real",
+      "team_id": "SSPSLT0023",
+      "team_name": "Kopites",
+      "season_id": "SSPSLS16",
+      "release_timing": "start",
+      "release_season": "SSPSLS16",
+      "refund_amount": 70,
+      "refund_percentage": 100,
+      "auction_value": 70,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -298,
+      "remaining_half_seasons": 338,
+      "processed_by": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "processed_by_name": "Shamsear@ssleague.com",
+      "created_at": {
+        "_seconds": 1769020827,
+        "_nanoseconds": 284000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ZbU93cQwCWDwEsn7XJJJ",
+    "data": {
+      "balance_before": 130.42999999999978,
+      "description": "Salary: Adil Mubarack",
+      "currency_type": "real_player",
+      "team_id": "SSPSLT0010",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r18_m6",
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack",
+        "salary_amount": 1.37,
+        "player_count": 1
+      },
+      "amount": -1.37,
+      "transaction_type": "salary_payment",
+      "season_id": "SSPSLS17",
+      "created_at": {
+        "_seconds": 1780324114,
+        "_nanoseconds": 754000000
+      },
+      "updated_at": {
+        "_seconds": 1780324114,
+        "_nanoseconds": 754000000
+      },
+      "balance_after": 129.05999999999977
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "Zw8BdvDkdeWSGYcUNlH4",
+    "data": {
+      "balance_after": 130.9199999999998,
+      "season_id": "SSPSLS17",
+      "created_at": {
+        "_seconds": 1780245272,
+        "_nanoseconds": 462000000
+      },
+      "amount": -1.37,
+      "balance_before": 132.2899999999998,
+      "currency_type": "real_player",
+      "updated_at": {
+        "_seconds": 1780245272,
+        "_nanoseconds": 462000000
+      },
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0010",
+      "metadata": {
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r17_m5",
+        "player_name": "Adil Mubarack",
+        "player_count": 1
+      },
+      "description": "Salary: Adil Mubarack"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "a58cdffpUup6LPGftGjA",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "43288",
+      "player_name": "Stefan Savić",
+      "player_type": "football",
+      "team_id": "SSPSLT0008",
+      "team_name": "La Masia",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 8,
+      "refund_percentage": 75,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -296,
+      "remaining_half_seasons": 336,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504267,
+        "_nanoseconds": 611000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "a71ogDYlEjzMTcyIwHMv",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 16.03000000000001,
+      "balance_after": 14.930000000000009,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r20_m2",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1768150585,
+        "_nanoseconds": 740000000
+      },
+      "updated_at": {
+        "_seconds": 1768150585,
+        "_nanoseconds": 740000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "aLsCdWylUVE72JZwbxWI",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "131334",
+      "player_name": "Rodrigo Riquelme",
+      "player_type": "football",
+      "team_id": "SSPSLT0016",
+      "team_name": "Blue Strikers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 11,
+      "refund_percentage": 50,
+      "acquisition_value": 22,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776452050,
+        "_nanoseconds": 655000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "aezU7oGdcX3GShC3WuIU",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 175.05999999999983,
+      "balance_after": 173.68999999999983,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r6_m7",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778421175,
+        "_nanoseconds": 69000000
+      },
+      "updated_at": {
+        "_seconds": 1778421175,
+        "_nanoseconds": 69000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "bBiGB95xfBEnt50iaWaL",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "114057",
+      "player_name": "Juan Brunetta",
+      "player_type": "football",
+      "team_id": "SSPSLT0015",
+      "team_name": "Legends FC",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 3,
+      "refund_percentage": 25,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS17",
+      "original_contract_end": "SSPSLS18",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 0,
+      "remaining_half_seasons": 2,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779266118,
+        "_nanoseconds": 521000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "be4bKxJ3Gdd7rpohe9VP",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 171.71999999999986,
+      "balance_after": 170.34999999999985,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r5_m6",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778342233,
+        "_nanoseconds": 116000000
+      },
+      "updated_at": {
+        "_seconds": 1778342233,
+        "_nanoseconds": 116000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "cTADve9ZAHCNCeQqRC6P",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0052",
+      "player_name": "Nihal",
+      "player_type": "real",
+      "team_id": "SSPSLT0034",
+      "team_name": "Los Blancos",
+      "season_id": "SSPSLS17",
+      "release_timing": "mid",
+      "release_season": "SSPSLS17.5",
+      "refund_amount": 53,
+      "refund_percentage": 25,
+      "auction_value": 210,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 3,
+      "remaining_half_seasons": -1,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1779295766,
+        "_nanoseconds": 251000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "cW9VlfRSNocbJvdSixgP",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 446.7099999999998,
+      "balance_after": 445.1499999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r29_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782304467,
+        "_nanoseconds": 764000000
+      },
+      "updated_at": {
+        "_seconds": 1782304467,
+        "_nanoseconds": 764000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ceBoNu7OXgqFLOY4KquJ",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0034",
+      "player_name": "ASHRAF",
+      "player_type": "real",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 30,
+      "refund_percentage": 50,
+      "auction_value": 60,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775654812,
+        "_nanoseconds": 942000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "cfzTYW8TbwyX2ttti8yT",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "141008",
+      "player_name": "Yeremy Pino",
+      "player_type": "football",
+      "team_id": "SSPSLT0016",
+      "team_name": "Blue Strikers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 10,
+      "refund_percentage": 50,
+      "acquisition_value": 19,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776452048,
+        "_nanoseconds": 398000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "dRkBR9dmbdzzgl6obrzQ",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 154.81999999999994,
+      "balance_after": 153.31999999999994,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r2_m6",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778092017,
+        "_nanoseconds": 859000000
+      },
+      "updated_at": {
+        "_seconds": 1778092017,
+        "_nanoseconds": 859000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "deazUy7oPwAF9XdAvLrK",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 13.630000000000011,
+      "balance_after": 12.530000000000012,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r23_m5",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1768383238,
+        "_nanoseconds": 257000000
+      },
+      "updated_at": {
+        "_seconds": 1768383238,
+        "_nanoseconds": 257000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "dg5LsWDDdLdgSeIn7O5g",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 367.90000000000003,
+      "balance_after": 366.53000000000003,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_grpB_leg1_r2_m2",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1769187260,
+        "_nanoseconds": 218000000
+      },
+      "updated_at": {
+        "_seconds": 1769187260,
+        "_nanoseconds": 218000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "diGFcMpa5nC4JuXDd3T8",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 369.0500000000001,
+      "balance_after": 367.4900000000001,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r30_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782330135,
+        "_nanoseconds": 108000000
+      },
+      "updated_at": {
+        "_seconds": 1782330135,
+        "_nanoseconds": 108000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ejdwFbUFA09hSxrowsWy",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0028",
+      "player_name": "ARIF LEO",
+      "player_type": "real",
+      "team_id": "SSPSLT0008",
+      "team_name": "La Masia FC",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 70,
+      "refund_percentage": 50,
+      "auction_value": 140,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775575438,
+        "_nanoseconds": 351000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "fSkRjkfhKWT5JuEbQhmT",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 125.97999999999945,
+      "balance_after": 124.72999999999945,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r24_m2",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780886061,
+        "_nanoseconds": 412000000
+      },
+      "updated_at": {
+        "_seconds": 1780886061,
+        "_nanoseconds": 412000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "fcU5o13hHYufyMQJbjDB",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0094",
+      "player_name": "Rukshan",
+      "player_type": "real",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 154,
+      "refund_percentage": 75,
+      "auction_value": 205,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -296,
+      "remaining_half_seasons": 336,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775038531,
+        "_nanoseconds": 516000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "g17NpTYuyMqBShh0nfy1",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 403.67,
+      "balance_after": 402.11,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r30_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782330125,
+        "_nanoseconds": 745000000
+      },
+      "updated_at": {
+        "_seconds": 1782330125,
+        "_nanoseconds": 745000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "gp8GPwrRMSXjRwcj5XwX",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 350.9400000000002,
+      "balance_after": 349.5700000000002,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_ko_r29_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1770994323,
+        "_nanoseconds": 466000000
+      },
+      "updated_at": {
+        "_seconds": 1770994323,
+        "_nanoseconds": 466000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "h4IunWrxcfjPmmACOZKW",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 449.8299999999998,
+      "balance_after": 448.2699999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r29_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782304466,
+        "_nanoseconds": 334000000
+      },
+      "updated_at": {
+        "_seconds": 1782304466,
+        "_nanoseconds": 334000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "hAQdvBaUZI9MLNccPNyr",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 226.2399999999994,
+      "balance_after": 225.13999999999942,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_ko_r30_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1771430228,
+        "_nanoseconds": 97000000
+      },
+      "updated_at": {
+        "_seconds": 1771430228,
+        "_nanoseconds": 97000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "hGtsOB0Z0LwR5iYhTid6",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.5,
+      "balance_before": 148.73999999999978,
+      "balance_after": 147.23999999999978,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r11_m2",
+        "player_count": 1,
+        "salary_amount": 1.5,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1778864758,
+        "_nanoseconds": 372000000
+      },
+      "updated_at": {
+        "_seconds": 1778864758,
+        "_nanoseconds": 372000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "hkO4413imvKygZmzoWf8",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "118425",
+      "player_name": "Marcus Tavernier",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 9,
+      "refund_percentage": 50,
+      "acquisition_value": 17,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504020,
+        "_nanoseconds": 890000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "iGy3e9HEaunVK9Ss5rW8",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 368.5800000000001,
+      "balance_after": 367.2100000000001,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_ko_r28_m2_second",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1770313724,
+        "_nanoseconds": 303000000
+      },
+      "updated_at": {
+        "_seconds": 1770313724,
+        "_nanoseconds": 303000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "iHl0OKA56aoBIY5gcz46",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 368.59000000000003,
+      "balance_after": 367.22,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16CH_grpB_leg1_r1_m2",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1769102723,
+        "_nanoseconds": 134000000
+      },
+      "updated_at": {
+        "_seconds": 1769102723,
+        "_nanoseconds": 134000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "iKv0s3JfpAOJ7qyfbfDA",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 88.87999999999998,
+      "balance_after": 87.50999999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r23_m4",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768410291,
+        "_nanoseconds": 26000000
+      },
+      "updated_at": {
+        "_seconds": 1768410291,
+        "_nanoseconds": 26000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "iZfVxFITVR4K99PsYAKo",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 159.2199999999998,
+      "balance_after": 157.8499999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r9_m5",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778692751,
+        "_nanoseconds": 229000000
+      },
+      "updated_at": {
+        "_seconds": 1778692751,
+        "_nanoseconds": 229000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "iqyDbRs0KkXbprPLAsMU",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "127206",
+      "player_name": "Benoît Badiashile",
+      "player_type": "football",
+      "team_id": "SSPSLT0016",
+      "team_name": "Blue Strikers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 5,
+      "refund_percentage": 50,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776452049,
+        "_nanoseconds": 442000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "j0pg5mrNfoFJl1lWsAYj",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 169.6999999999998,
+      "balance_after": 168.32999999999979,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r8_m6",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778608538,
+        "_nanoseconds": 148000000
+      },
+      "updated_at": {
+        "_seconds": 1778608538,
+        "_nanoseconds": 148000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "jPyZoNkEdkiGHvYd2E8e",
+    "data": {
+      "transaction_type": "salary_payment",
+      "updated_at": {
+        "_seconds": 1767892188,
+        "_nanoseconds": 74000000
+      },
+      "balance_after": 78.13999999999999,
+      "amount": -1.37,
+      "currency_type": "real_player",
+      "metadata": {
+        "salary_amount": 1.37,
+        "player_name": "Adil Mubarack",
+        "fixture_id": "SSPSLS16L_leg2_r17_m5",
+        "player_id": "sspslpsl0063",
+        "player_count": 1
+      },
+      "balance_before": 79.50999999999999,
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "created_at": {
+        "_seconds": 1767892188,
+        "_nanoseconds": 74000000
+      },
+      "description": "Salary: Adil Mubarack"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "jYgDqQwxbEjfrPxeieRN",
+    "data": {
+      "balance_before": 138.68999999999966,
+      "season_id": "SSPSLS17",
+      "updated_at": {
+        "_seconds": 1780251809,
+        "_nanoseconds": 56000000
+      },
+      "description": "Salary: Shamsear",
+      "created_at": {
+        "_seconds": 1780251809,
+        "_nanoseconds": 56000000
+      },
+      "currency_type": "real_player",
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0004",
+      "balance_after": 137.43999999999966,
+      "metadata": {
+        "salary_amount": 1.25,
+        "player_name": "Shamsear",
+        "player_count": 1,
+        "player_id": "sspslpsl0024",
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r17_m7"
+      },
+      "amount": -1.25
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "k2EwrNyqSc4WhRihR28F",
+    "data": {
+      "transaction_type": "salary_payment",
+      "balance_before": 270.17,
+      "amount": -1.17,
+      "metadata": {
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack",
+        "player_id": "sspslpsl0063",
+        "player_count": 1,
+        "round_number": 5,
+        "fixture_id": "SSPSLS16L_leg1_r5_m6"
+      },
+      "description": "Salary: Adil Mubarack",
+      "balance_after": 269,
+      "currency_type": "real_player",
+      "season_id": "SSPSLS16",
+      "team_id": "SSPSLT0010",
+      "updated_at": {
+        "_seconds": 1766312352,
+        "_nanoseconds": 474000000
+      },
+      "created_at": {
+        "_seconds": 1766312352,
+        "_nanoseconds": 474000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "k5hzGUyq8kBhlWxkwVL2",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 181.26999999999998,
+      "balance_after": 179.89999999999998,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r1_m2",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1777995673,
+        "_nanoseconds": 154000000
+      },
+      "updated_at": {
+        "_seconds": 1777995673,
+        "_nanoseconds": 154000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "k5sviUQO5k7Mq2huSeb0",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "132905",
+      "player_name": "Samuel Lino",
+      "player_type": "football",
+      "team_id": "SSPSLT0013",
+      "team_name": "Psychoz",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 11,
+      "refund_percentage": 25,
+      "acquisition_value": 45,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779266118,
+        "_nanoseconds": 42000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "kwLolWlhYnYlF9SGpNVf",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 368.54000000000013,
+      "balance_after": 367.17000000000013,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_ko_r27_m2_first",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1770313934,
+        "_nanoseconds": 215000000
+      },
+      "updated_at": {
+        "_seconds": 1770313934,
+        "_nanoseconds": 215000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "mKiWo9WwMMhncEbeogJf",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 185.89999999999998,
+      "balance_after": 184.52999999999997,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg1_r2_m3",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1778091709,
+        "_nanoseconds": 25000000
+      },
+      "updated_at": {
+        "_seconds": 1778091709,
+        "_nanoseconds": 25000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "mzE1HwIi9UIKXZ79IIk3",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0048",
+      "player_name": "Abdul Gafoor",
+      "player_type": "real",
+      "team_id": "SSPSLT0002",
+      "team_name": "Manchester United",
+      "season_id": "SSPSLS16",
+      "release_timing": "mid",
+      "release_season": "SSPSLS16.5",
+      "refund_amount": 20,
+      "refund_percentage": 50,
+      "auction_value": 40,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 1,
+      "remaining_half_seasons": 1,
+      "processed_by": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "processed_by_name": "Shamsear@ssleague.com",
+      "created_at": {
+        "_seconds": 1769879316,
+        "_nanoseconds": 811000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "nDykABzsWITQENHiTkXt",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 104.99999999999982,
+      "balance_after": 103.62999999999981,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r25_m2",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780941974,
+        "_nanoseconds": 211000000
+      },
+      "updated_at": {
+        "_seconds": 1780941974,
+        "_nanoseconds": 211000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "oYxXb5JQylOt9OpFjr6u",
+    "data": {
+      "season_id": "SSPSLS16",
+      "created_at": {
+        "_seconds": 1767023110,
+        "_nanoseconds": 839000000
+      },
+      "description": "Salary: Shamsear",
+      "balance_after": 14.280000000000006,
+      "amount": -1.1,
+      "metadata": {
+        "player_name": "Shamsear",
+        "fixture_id": "SSPSLS16L_leg1_r12_m7",
+        "player_count": 1,
+        "player_id": "sspslpsl0024",
+        "salary_amount": 1.1
+      },
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0021",
+      "updated_at": {
+        "_seconds": 1767023110,
+        "_nanoseconds": 839000000
+      },
+      "balance_before": 15.380000000000006,
+      "currency_type": "real_player"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "pBMzlO2ug2N3uBghsNND",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -0.75,
+      "balance_before": 220.88999999999947,
+      "balance_after": 220.13999999999947,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r26_m4",
+        "player_count": 1,
+        "salary_amount": 0.75,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1782722919,
+        "_nanoseconds": 197000000
+      },
+      "updated_at": {
+        "_seconds": 1782722919,
+        "_nanoseconds": 197000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "phv837KXdSBiVICh9xNy",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "46637",
+      "player_name": "Mauro Icardi",
+      "player_type": "football",
+      "team_id": "SSPSLT0009",
+      "team_name": "Qatar Gladiators",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 5,
+      "refund_percentage": 50,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504019,
+        "_nanoseconds": 853000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "q2G4gPUdtG4Usc2f8JLq",
+    "data": {
+      "team_id": "SSPSLT0021",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.1,
+      "balance_before": 15.74000000000001,
+      "balance_after": 14.640000000000011,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r22_m4",
+        "player_count": 1,
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1768328125,
+        "_nanoseconds": 386000000
+      },
+      "updated_at": {
+        "_seconds": 1768328125,
+        "_nanoseconds": 386000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "qvftcR8deT9o2VvulpZx",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0064",
+      "player_name": "Ambady ",
+      "player_type": "real",
+      "team_id": "SSPSLT0004",
+      "team_name": "Red Hawks FC",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 80,
+      "refund_percentage": 50,
+      "auction_value": 160,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775038814,
+        "_nanoseconds": 392000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rBN8zzwIT2TDYVKGzkDV",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 83.38,
+      "balance_after": 82.00999999999999,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r20_m7",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768148294,
+        "_nanoseconds": 401000000
+      },
+      "updated_at": {
+        "_seconds": 1768148294,
+        "_nanoseconds": 401000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rIDVnNGzmvHnvbf4e2EG",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0130",
+      "player_name": "Hashim",
+      "player_type": "real",
+      "team_id": "SSPSLT0004",
+      "team_name": "Red Hawks FC",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 150,
+      "refund_percentage": 75,
+      "auction_value": 200,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -296,
+      "remaining_half_seasons": 336,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775654799,
+        "_nanoseconds": 795000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rJzwlGLwb4UJf5spYysy",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 126.72999999999945,
+      "balance_after": 125.47999999999945,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r25_m3",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780939749,
+        "_nanoseconds": 969000000
+      },
+      "updated_at": {
+        "_seconds": 1780939749,
+        "_nanoseconds": 969000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rkleeoTaMcpQX2J3EbVq",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "sspslpsl0019",
+      "player_name": "Anshad ameer",
+      "player_type": "real",
+      "team_id": "SSPSLT0020",
+      "team_name": "Skill 555",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 60,
+      "refund_percentage": 50,
+      "auction_value": 120,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1@ssleague.com",
+      "created_at": {
+        "_seconds": 1775574082,
+        "_nanoseconds": 432000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rpLy26Rueg8pvsr1le4s",
+    "data": {
+      "balance_before": 17.840000000000007,
+      "description": "Salary: Shamsear",
+      "season_id": "SSPSLS16",
+      "amount": -1.1,
+      "created_at": {
+        "_seconds": 1766597845,
+        "_nanoseconds": 487000000
+      },
+      "metadata": {
+        "player_name": "Shamsear",
+        "salary_amount": 1.1,
+        "player_id": "sspslpsl0024",
+        "player_count": 1,
+        "fixture_id": "SSPSLS16L_leg1_r9_m4"
+      },
+      "currency_type": "real_player",
+      "team_id": "SSPSLT0021",
+      "balance_after": 16.740000000000006,
+      "updated_at": {
+        "_seconds": 1766597845,
+        "_nanoseconds": 487000000
+      },
+      "transaction_type": "salary_payment"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rvwSxV4nhlG0uRVK4eaR",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 114.9599999999998,
+      "balance_after": 113.58999999999979,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r21_m6",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1780591137,
+        "_nanoseconds": 219000000
+      },
+      "updated_at": {
+        "_seconds": 1780591137,
+        "_nanoseconds": 219000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "rxDa37IBf2vSMW8umpWu",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 133.59999999999954,
+      "balance_after": 132.34999999999954,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r20_m4",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780508738,
+        "_nanoseconds": 803000000
+      },
+      "updated_at": {
+        "_seconds": 1780508738,
+        "_nanoseconds": 803000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "sL2KFLCG6WKm9ratPL67",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 377.8100000000001,
+      "balance_after": 376.2500000000001,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r30_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782330132,
+        "_nanoseconds": 852000000
+      },
+      "updated_at": {
+        "_seconds": 1782330132,
+        "_nanoseconds": 852000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ss1A1TzNspffTpNypV8T",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 100.58999999999983,
+      "balance_after": 99.02999999999983,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r26_m1",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1781028448,
+        "_nanoseconds": 234000000
+      },
+      "updated_at": {
+        "_seconds": 1781028448,
+        "_nanoseconds": 234000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "u6u0MuHUESIcEhBPswy6",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.37,
+      "balance_before": 84.00999999999999,
+      "balance_after": 82.63999999999999,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r22_m5",
+        "player_count": 1,
+        "salary_amount": 1.37,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1768321268,
+        "_nanoseconds": 646000000
+      },
+      "updated_at": {
+        "_seconds": 1768321268,
+        "_nanoseconds": 646000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "uVMqNPLRUgEINaqFOrNr",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "106958",
+      "player_name": "Yeray Álvarez",
+      "player_type": "football",
+      "team_id": "SSPSLT0020",
+      "team_name": "Skill 555",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 8,
+      "refund_percentage": 75,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16.5",
+      "original_contract_end": "SSPSLS18.5",
+      "total_half_seasons": 40,
+      "elapsed_half_seasons": -296,
+      "remaining_half_seasons": 336,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776503920,
+        "_nanoseconds": 177000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "uvDinN6iJN35c6xjIVJy",
+    "data": {
+      "description": "Salary: Shamsear",
+      "transaction_type": "salary_payment",
+      "metadata": {
+        "player_count": 1,
+        "round_number": 2,
+        "fixture_id": "SSPSLS16L_leg1_r2_m5",
+        "salary_amount": 1.1,
+        "player_name": "Shamsear",
+        "player_id": "sspslpsl0024"
+      },
+      "balance_after": 11.169999999999998,
+      "amount": -1.1,
+      "currency_type": "real_player",
+      "season_id": "SSPSLS16",
+      "team_id": "SSPSLT0021",
+      "balance_before": 12.269999999999998,
+      "updated_at": {
+        "_seconds": 1766307195,
+        "_nanoseconds": 95000000
+      },
+      "created_at": {
+        "_seconds": 1766307195,
+        "_nanoseconds": 95000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "vEoR9Gs9gQFKEBGtAbiW",
+    "data": {
+      "metadata": {
+        "player_count": 1,
+        "salary_amount": 1.17,
+        "player_name": "Adil Mubarack",
+        "player_id": "sspslpsl0063",
+        "fixture_id": "SSPSLS16L_leg1_r10_m4"
+      },
+      "created_at": {
+        "_seconds": 1766860136,
+        "_nanoseconds": 858000000
+      },
+      "amount": -1.17,
+      "balance_before": 278.3500000000001,
+      "team_id": "SSPSLT0010",
+      "balance_after": 277.18000000000006,
+      "currency_type": "real_player",
+      "updated_at": {
+        "_seconds": 1766860136,
+        "_nanoseconds": 858000000
+      },
+      "season_id": "SSPSLS16",
+      "description": "Salary: Adil Mubarack",
+      "transaction_type": "salary_payment"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "vmfYJePzBio2O1gZSngi",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "116649",
+      "player_name": "Willi Orban",
+      "player_type": "football",
+      "team_id": "SSPSLT0034",
+      "team_name": "Los Blancos",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 5,
+      "refund_percentage": 50,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1776504076,
+        "_nanoseconds": 369000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "w1apW8hLGkkF9wzOnMwt",
+    "data": {
+      "updated_at": {
+        "_seconds": 1780156723,
+        "_nanoseconds": 438000000
+      },
+      "balance_after": 138.0399999999998,
+      "amount": -1.37,
+      "season_id": "SSPSLS17",
+      "description": "Salary: Adil Mubarack",
+      "currency_type": "real_player",
+      "transaction_type": "salary_payment",
+      "team_id": "SSPSLT0010",
+      "balance_before": 139.4099999999998,
+      "metadata": {
+        "salary_amount": 1.37,
+        "player_count": 1,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack",
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r16_m4"
+      },
+      "created_at": {
+        "_seconds": 1780156723,
+        "_nanoseconds": 438000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "wN8v7VytuoZEJm8KSYBw",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "117835",
+      "player_name": "Timothy Weah",
+      "player_type": "football",
+      "team_id": "SSPSLT0013",
+      "team_name": "Psychoz",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 7,
+      "refund_percentage": 25,
+      "acquisition_value": 28,
+      "original_contract_start": "SSPSLS16",
+      "original_contract_end": "SSPSLS17",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 2,
+      "remaining_half_seasons": 0,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779301060,
+        "_nanoseconds": 976000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "x2t3uqKvdUfX62tSM0xr",
+    "data": {
+      "transaction_type": "release",
+      "player_id": "118750",
+      "player_name": "Edson Álvarez",
+      "player_type": "football",
+      "team_id": "SSPSLT0010",
+      "team_name": "Varsity Soccers",
+      "season_id": "SSPSLS17",
+      "release_timing": "start",
+      "release_season": "SSPSLS17",
+      "refund_amount": 3,
+      "refund_percentage": 25,
+      "acquisition_value": 10,
+      "original_contract_start": "SSPSLS17",
+      "original_contract_end": "SSPSLS18",
+      "total_half_seasons": 2,
+      "elapsed_half_seasons": 0,
+      "remaining_half_seasons": 2,
+      "processed_by": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "processed_by_name": "Shamsear1",
+      "created_at": {
+        "_seconds": 1779266117,
+        "_nanoseconds": 553000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "x9utIoMo4FjQynAtkR5J",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 127.95999999999945,
+      "balance_after": 126.70999999999945,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r23_m1",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780769978,
+        "_nanoseconds": 233000000
+      },
+      "updated_at": {
+        "_seconds": 1780769978,
+        "_nanoseconds": 233000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "y6bVobOvKo7VrJJ2J5rc",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS16",
+      "transaction_type": "real_player_fee",
+      "currency_type": "real_player",
+      "amount": -195,
+      "balance_after": 465,
+      "reason": "Assigned real player: Adil Mubarack (6⭐)",
+      "metadata": {
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack",
+        "star_rating": 6,
+        "auction_value": 195,
+        "salary_per_match": 1.17,
+        "contract_start": "SSPSLS16",
+        "contract_end": "SSPSLS17"
+      },
+      "updated_at": {
+        "_seconds": 1763630058,
+        "_nanoseconds": 867000000
+      },
+      "created_at": {
+        "_seconds": 1763630058,
+        "_nanoseconds": 867000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "ycVtdHTrwhygIi2xSdJL",
+    "data": {
+      "team_id": "SSPSLT0010",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.56,
+      "balance_before": 395.12000000000006,
+      "balance_after": 393.56000000000006,
+      "description": "Salary: Adil Mubarack",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_ko_r30_m1_first",
+        "player_count": 1,
+        "salary_amount": 1.56,
+        "player_id": "sspslpsl0063",
+        "player_name": "Adil Mubarack"
+      },
+      "created_at": {
+        "_seconds": 1782330128,
+        "_nanoseconds": 221000000
+      },
+      "updated_at": {
+        "_seconds": 1782330128,
+        "_nanoseconds": 221000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "z9CyqH38vr1KZn3IBdSZ",
+    "data": {
+      "balance_after": 278.01000000000005,
+      "amount": -1.17,
+      "created_at": {
+        "_seconds": 1766942420,
+        "_nanoseconds": 353000000
+      },
+      "transaction_type": "salary_payment",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg1_r11_m3",
+        "player_name": "Adil Mubarack",
+        "player_id": "sspslpsl0063",
+        "player_count": 1,
+        "salary_amount": 1.17
+      },
+      "team_id": "SSPSLT0010",
+      "updated_at": {
+        "_seconds": 1766942420,
+        "_nanoseconds": 353000000
+      },
+      "currency_type": "real_player",
+      "balance_before": 279.18000000000006,
+      "season_id": "SSPSLS16",
+      "description": "Salary: Adil Mubarack"
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "zWnJKpRFNMSKZPb23Ifz",
+    "data": {
+      "team_id": "SSPSLT0004",
+      "season_id": "SSPSLS17",
+      "transaction_type": "salary_payment",
+      "currency_type": "real_player",
+      "amount": -1.25,
+      "balance_before": 135.4399999999996,
+      "balance_after": 134.1899999999996,
+      "description": "Salary: Shamsear",
+      "metadata": {
+        "fixture_id": "SSPSLS17-LEAGUE_leg2_r19_m5",
+        "player_count": 1,
+        "salary_amount": 1.25,
+        "player_id": "sspslpsl0024",
+        "player_name": "Shamsear"
+      },
+      "created_at": {
+        "_seconds": 1780420556,
+        "_nanoseconds": 938000000
+      },
+      "updated_at": {
+        "_seconds": 1780420556,
+        "_nanoseconds": 938000000
+      }
+    }
+  },
+  {
+    "collection": "transactions",
+    "docId": "zjgG6RsO1odfodAhEtIn",
+    "data": {
+      "description": "Salary: Adil Mubarack",
+      "updated_at": {
+        "_seconds": 1767800347,
+        "_nanoseconds": 392000000
+      },
+      "season_id": "SSPSLS16",
+      "transaction_type": "salary_payment",
+      "metadata": {
+        "fixture_id": "SSPSLS16L_leg2_r16_m4",
+        "player_name": "Adil Mubarack",
+        "player_id": "sspslpsl0063",
+        "salary_amount": 1.37,
+        "player_count": 1
+      },
+      "created_at": {
+        "_seconds": 1767800347,
+        "_nanoseconds": 392000000
+      },
+      "team_id": "SSPSLT0010",
+      "amount": -1.37,
+      "balance_after": 73.50999999999999,
+      "balance_before": 74.88,
+      "currency_type": "real_player"
+    }
+  },
+  {
+    "collection": "usernames",
+    "docId": "adil",
+    "data": {
+      "uid": "oKjtRXVcmrggEMKoauaxhxbEKKh1",
+      "createdAt": {
+        "_seconds": 1763648719,
+        "_nanoseconds": 545000000
+      }
+    }
+  },
+  {
+    "collection": "usernames",
+    "docId": "adilmubarack",
+    "data": {
+      "uid": "m09NKRVxJMNBLNwSfO53ep8RYNf2",
+      "createdAt": {
+        "_seconds": 1764486367,
+        "_nanoseconds": 556000000
+      }
+    }
+  },
+  {
+    "collection": "usernames",
+    "docId": "shamsear",
+    "data": {
+      "uid": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "createdAt": {
+        "_seconds": 1762691315,
+        "_nanoseconds": 453000000
+      }
+    }
+  },
+  {
+    "collection": "usernames",
+    "docId": "shamsear1",
+    "data": {
+      "uid": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "createdAt": {
+        "_seconds": 1772012725,
+        "_nanoseconds": 579000000
+      }
+    }
+  },
+  {
+    "collection": "usernames",
+    "docId": "shamsear2",
+    "data": {
+      "uid": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "createdAt": {
+        "_seconds": 1782664526,
+        "_nanoseconds": 712000000
+      }
+    }
+  },
+  {
+    "collection": "users",
+    "docId": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+    "data": {
+      "uid": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+      "email": "Shamsear@ssleague.com",
+      "username": "Shamsear",
+      "role": "committee_admin",
+      "isActive": true,
+      "isApproved": true,
+      "seasonId": "SSPSLS16",
+      "seasonName": "Season 16",
+      "seasonYear": "2025",
+      "committeeId": "",
+      "committeeName": "",
+      "permissions": [
+        "manage_teams",
+        "manage_auctions",
+        "manage_players"
+      ],
+      "canManageTeams": true,
+      "canManageAuctions": true,
+      "createdAt": {
+        "_seconds": 1762691315,
+        "_nanoseconds": 999000000
+      },
+      "lastLogin": {
+        "_seconds": 1781014827,
+        "_nanoseconds": 530000000
+      },
+      "updatedAt": {
+        "_seconds": 1781014827,
+        "_nanoseconds": 530000000
+      }
+    }
+  },
+  {
+    "collection": "users",
+    "docId": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+    "data": {
+      "uid": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+      "email": "Shamsear1@ssleague.com",
+      "username": "Shamsear1",
+      "role": "committee_admin",
+      "isActive": true,
+      "isApproved": true,
+      "seasonId": "SSPSLS17",
+      "seasonName": "Season 17",
+      "seasonYear": "2026",
+      "committeeId": "",
+      "committeeName": "",
+      "permissions": [
+        "manage_teams",
+        "manage_auctions",
+        "manage_players"
+      ],
+      "canManageTeams": true,
+      "canManageAuctions": true,
+      "createdAt": {
+        "_seconds": 1772012725,
+        "_nanoseconds": 730000000
+      },
+      "lastLogin": {
+        "_seconds": 1785408627,
+        "_nanoseconds": 747000000
+      },
+      "updatedAt": {
+        "_seconds": 1785408627,
+        "_nanoseconds": 747000000
+      }
+    }
+  },
+  {
+    "collection": "users",
+    "docId": "m09NKRVxJMNBLNwSfO53ep8RYNf2",
+    "data": {
+      "uid": "m09NKRVxJMNBLNwSfO53ep8RYNf2",
+      "email": "Adilmubarack@ssleague.com",
+      "username": "Adilmubarack",
+      "role": "committee_admin",
+      "isActive": true,
+      "isApproved": true,
+      "seasonId": "SSPSLS16",
+      "seasonName": "Season 16",
+      "seasonYear": "2025",
+      "committeeId": "",
+      "committeeName": "",
+      "permissions": [
+        "manage_teams",
+        "manage_auctions",
+        "manage_players"
+      ],
+      "canManageTeams": true,
+      "canManageAuctions": true,
+      "createdAt": {
+        "_seconds": 1764486368,
+        "_nanoseconds": 123000000
+      },
+      "updatedAt": {
+        "_seconds": 1764486368,
+        "_nanoseconds": 123000000
+      }
+    }
+  },
+  {
+    "collection": "users",
+    "docId": "oKjtRXVcmrggEMKoauaxhxbEKKh1",
+    "data": {
+      "uid": "oKjtRXVcmrggEMKoauaxhxbEKKh1",
+      "email": "Adil@ssleague.com",
+      "username": "Adil",
+      "role": "committee_admin",
+      "isActive": true,
+      "isApproved": true,
+      "seasonId": "SSPSLS16",
+      "seasonName": "Season 16",
+      "seasonYear": "2025",
+      "committeeId": "",
+      "committeeName": "",
+      "permissions": [
+        "manage_teams",
+        "manage_auctions",
+        "manage_players"
+      ],
+      "canManageTeams": true,
+      "canManageAuctions": true,
+      "createdAt": {
+        "_seconds": 1763648720,
+        "_nanoseconds": 26000000
+      },
+      "updatedAt": {
+        "_seconds": 1763648720,
+        "_nanoseconds": 26000000
+      }
+    }
+  },
+  {
+    "collection": "users",
+    "docId": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+    "data": {
+      "uid": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+      "email": "Shamsear2@ssleague.com",
+      "username": "Shamsear2",
+      "role": "committee_admin",
+      "isActive": true,
+      "isApproved": true,
+      "seasonId": "SSPSLS18",
+      "seasonName": "Season 18",
+      "seasonYear": "2026",
+      "committeeId": "",
+      "committeeName": "",
+      "permissions": [
+        "manage_teams",
+        "manage_auctions",
+        "manage_players"
+      ],
+      "canManageTeams": true,
+      "canManageAuctions": true,
+      "createdAt": {
+        "_seconds": 1782664527,
+        "_nanoseconds": 220000000
+      },
+      "fcmTokenUpdatedAt": {
+        "_seconds": 1786204357,
+        "_nanoseconds": 930000000
+      },
+      "notificationsEnabled": true,
+      "fcmToken": "dM2Cq4atQ3ZEDjk2YlRL79:APA91bHFvmk9nbaBGdMgkVaUj9_VQhdqfwpD9oW458JR6q0wEfPhA8gPsQcLJB_dyzNe5LdYPT9LjOvoBweR0yQjWYP167RbQtGr9Se4xDt4lNx1jqvxv2E",
+      "lastLogin": {
+        "_seconds": 1789975461,
+        "_nanoseconds": 134000000
+      },
+      "updatedAt": {
+        "_seconds": 1789975461,
+        "_nanoseconds": 134000000
+      }
+    }
+  }
+]

@@ -19,16 +19,12 @@ interface PlayerAwardResult {
  * Auto-award player awards based on season statistics
  * 
  * Individual Awards (season-wide):
- * - Golden Boot (Top 3 goal scorers)
- * - Most Assists (Top 3)
- * - Most Clean Sheets (Top 3 goalkeepers)
- * - Most MOTM Awards (Top 3)
+ * - Golden Boot (Top goal scorers)
+ * - Most Assists (Top assists)
+ * - Most Clean Sheets (Top clean sheets)
  * 
- * Category Awards (per position):
- * - Best Attacker (Top 3 attackers by goals + assists)
- * - Best Midfielder (Top 3 midfielders by goals + assists)
- * - Best Defender (Top 3 defenders by clean sheets)
- * - Best Goalkeeper (Top 3 goalkeepers by clean sheets + saves)
+ * Category Awards (per season category):
+ * - Best RED, Best BLACK, Best BLUE, Best WHITE, etc. (Top player by points in each category)
  */
 export async function autoAwardPlayerAwards(
   seasonId: string,
@@ -70,7 +66,7 @@ export async function autoAwardPlayerAwards(
         VALUES (
           ${player.player_id}, ${player.player_name}, ${seasonId},
           'individual', 'Golden Boot', ${position},
-          NULL, 'system', 'Auto-awarded based on goals scored',
+          ${player.category || null}, 'system', 'Auto-awarded based on goals scored',
           ${JSON.stringify({ goals: player.goals_scored })}
         )
         ON CONFLICT (player_id, season_id, award_category, award_type, award_position) DO NOTHING
@@ -85,18 +81,18 @@ export async function autoAwardPlayerAwards(
           award_category: 'individual',
           award_type: 'Golden Boot',
           award_position: position,
-          player_category: null
+          player_category: player.category || null
         });
         console.log(`    ✅ ${position}: ${player.player_name} (${player.goals_scored} goals)`);
         
-        // Update awards_count
-        await sql`
-          UPDATE player_season
-          SET awards_count = COALESCE(awards_count, 0) + 1
-          WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
-        `;
+        try {
+          await sql`
+            UPDATE player_season
+            SET awards_count = COALESCE(awards_count, 0) + 1
+            WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
+          `;
+        } catch (e) {}
         
-        // Add fantasy points
         await addFantasyPointsForAward(
           player.player_id,
           player.player_name,
@@ -109,9 +105,9 @@ export async function autoAwardPlayerAwards(
     // 2. Most Assists - Top assist providers
     console.log('  📊 Awarding Most Assists...');
     const topAssisters = await sql`
-      SELECT player_id, player_name, assists
+      SELECT player_id, player_name, assists, category
       FROM realplayerstats
-      WHERE season_id = ${seasonId}
+      WHERE season_id = ${seasonId} AND assists > 0
       ORDER BY assists DESC, goals_scored DESC
       LIMIT ${awardTopN}
     `;
@@ -130,7 +126,7 @@ export async function autoAwardPlayerAwards(
         VALUES (
           ${player.player_id}, ${player.player_name}, ${seasonId},
           'individual', 'Most Assists', ${position},
-          NULL, 'system', 'Auto-awarded based on assists',
+          ${player.category || null}, 'system', 'Auto-awarded based on assists',
           ${JSON.stringify({ assists: player.assists })}
         )
         ON CONFLICT (player_id, season_id, award_category, award_type, award_position) DO NOTHING
@@ -145,17 +141,18 @@ export async function autoAwardPlayerAwards(
           award_category: 'individual',
           award_type: 'Most Assists',
           award_position: position,
-          player_category: null
+          player_category: player.category || null
         });
         console.log(`    ✅ ${position}: ${player.player_name} (${player.assists} assists)`);
         
-        await sql`
-          UPDATE player_season
-          SET awards_count = COALESCE(awards_count, 0) + 1
-          WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
-        `;
+        try {
+          await sql`
+            UPDATE player_season
+            SET awards_count = COALESCE(awards_count, 0) + 1
+            WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
+          `;
+        } catch (e) {}
         
-        // Add fantasy points
         await addFantasyPointsForAward(
           player.player_id,
           player.player_name,
@@ -165,13 +162,13 @@ export async function autoAwardPlayerAwards(
       }
     }
 
-    // 3. Most Clean Sheets (Goalkeepers)
+    // 3. Most Clean Sheets
     console.log('  📊 Awarding Most Clean Sheets...');
     const topKeepers = await sql`
-      SELECT player_id, player_name, clean_sheets
+      SELECT player_id, player_name, clean_sheets, category
       FROM realplayerstats
-      WHERE season_id = ${seasonId} AND category = 'Goalkeeper'
-      ORDER BY clean_sheets DESC, saves DESC
+      WHERE season_id = ${seasonId} AND clean_sheets > 0
+      ORDER BY clean_sheets DESC, (goals_scored - goals_conceded) DESC
       LIMIT ${awardTopN}
     `;
     
@@ -189,7 +186,7 @@ export async function autoAwardPlayerAwards(
         VALUES (
           ${player.player_id}, ${player.player_name}, ${seasonId},
           'individual', 'Most Clean Sheets', ${position},
-          NULL, 'system', 'Auto-awarded based on clean sheets',
+          ${player.category || null}, 'system', 'Auto-awarded based on clean sheets',
           ${JSON.stringify({ clean_sheets: player.clean_sheets })}
         )
         ON CONFLICT (player_id, season_id, award_category, award_type, award_position) DO NOTHING
@@ -204,17 +201,18 @@ export async function autoAwardPlayerAwards(
           award_category: 'individual',
           award_type: 'Most Clean Sheets',
           award_position: position,
-          player_category: null
+          player_category: player.category || null
         });
         console.log(`    ✅ ${position}: ${player.player_name} (${player.clean_sheets} clean sheets)`);
         
-        await sql`
-          UPDATE player_season
-          SET awards_count = COALESCE(awards_count, 0) + 1
-          WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
-        `;
+        try {
+          await sql`
+            UPDATE player_season
+            SET awards_count = COALESCE(awards_count, 0) + 1
+            WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
+          `;
+        } catch (e) {}
         
-        // Add fantasy points
         await addFantasyPointsForAward(
           player.player_id,
           player.player_name,
@@ -225,31 +223,32 @@ export async function autoAwardPlayerAwards(
     }
 
     // ============================================
-    // CATEGORY AWARDS (Per Position)
+    // CATEGORY AWARDS (Per Season Category: RED, BLACK, BLUE, WHITE, etc.)
     // ============================================
-    
-    const categories = ['Attacker', 'Midfielder', 'Defender', 'Goalkeeper'];
+    const catRows = await sql`
+      SELECT DISTINCT UPPER(category) as category
+      FROM realplayerstats
+      WHERE season_id = ${seasonId} AND category IS NOT NULL AND category != ''
+      ORDER BY category ASC
+    `;
+    const categories = catRows.map((r: any) => r.category);
     
     for (const category of categories) {
       console.log(`  📊 Awarding Best ${category}...`);
       
-      let orderBy = 'goals_scored DESC, assists DESC';
-      if (category === 'Defender' || category === 'Goalkeeper') {
-        orderBy = 'clean_sheets DESC, goals_scored DESC';
-      }
-      
-      const topPlayers = await sql.unsafe(`
+      const topPlayers = await sql`
         SELECT player_id, player_name, category, 
-               goals_scored, assists, clean_sheets
+               points, goals_scored, assists, clean_sheets
         FROM realplayerstats
-        WHERE season_id = '${seasonId}' AND category = '${category}'
-        ORDER BY ${orderBy}
+        WHERE season_id = ${seasonId} AND UPPER(category) = ${category}
+        ORDER BY points DESC, (goals_scored - goals_conceded) DESC, goals_scored DESC
         LIMIT ${awardTopN}
-      `);
+      `;
       
       for (let i = 0; i < topPlayers.length; i++) {
         const player = topPlayers[i];
         const position = i === 0 ? 'Winner' : i === 1 ? 'Runner Up' : 'Third Place';
+        const finalAwardType = `Best ${category}`;
         
         const result = await sql`
           INSERT INTO player_awards (
@@ -260,9 +259,10 @@ export async function autoAwardPlayerAwards(
           )
           VALUES (
             ${player.player_id}, ${player.player_name}, ${seasonId},
-            'category', ${`Best ${category}`}, ${position},
+            'category', ${finalAwardType}, ${position},
             ${category}, 'system', 'Auto-awarded based on category performance',
             ${JSON.stringify({
+              points: player.points,
               goals: player.goals_scored,
               assists: player.assists,
               clean_sheets: player.clean_sheets
@@ -278,24 +278,25 @@ export async function autoAwardPlayerAwards(
             player_id: player.player_id,
             player_name: player.player_name,
             award_category: 'category',
-            award_type: `Best ${category}`,
+            award_type: finalAwardType,
             award_position: position,
             player_category: category
           });
           console.log(`    ✅ ${position}: ${player.player_name}`);
           
-          await sql`
-            UPDATE player_season
-            SET awards_count = COALESCE(awards_count, 0) + 1
-            WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
-          `;
+          try {
+            await sql`
+              UPDATE player_season
+              SET awards_count = COALESCE(awards_count, 0) + 1
+              WHERE player_id = ${player.player_id} AND season_id = ${seasonId}
+            `;
+          } catch (e) {}
           
-          // Add fantasy points
           await addFantasyPointsForAward(
             player.player_id,
             player.player_name,
             seasonId,
-            `Best ${category}`
+            finalAwardType
           );
         }
       }

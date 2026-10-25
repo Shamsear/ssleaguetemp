@@ -1,0 +1,117 @@
+[
+  {
+    "uid": "4rqabGhDdxgA2vlLbrz5enfI4s43",
+    "email": "shamsear61@gmail.com",
+    "displayName": "Shamsear",
+    "metadata": {
+      "lastSignInTime": "Fri, 02 Jan 2026 14:28:52 GMT",
+      "creationTime": "Fri, 02 Jan 2026 14:04:10 GMT",
+      "lastRefreshTime": "Fri, 02 Jan 2026 14:55:11 GMT"
+    }
+  },
+  {
+    "uid": "9gJJQd63qzYzXboVR5DsL3EU3Vw2",
+    "email": "shamsear@ssleague.com",
+    "customClaims": {
+      "role": "committee_admin",
+      "seasonId": "SSPSLS16"
+    },
+    "metadata": {
+      "lastSignInTime": "Tue, 09 Jun 2026 14:20:23 GMT",
+      "creationTime": "Sun, 09 Nov 2025 12:28:30 GMT",
+      "lastRefreshTime": "Wed, 22 Jul 2026 16:35:21 GMT"
+    }
+  },
+  {
+    "uid": "P9Ade4WCw1emk6RSIxvS0YPEGkY2",
+    "email": "eshamsear@gmail.com",
+    "displayName": "Shamsear Ebrahim",
+    "metadata": {
+      "lastSignInTime": "Sun, 19 Jul 2026 14:15:56 GMT",
+      "creationTime": "Mon, 29 Dec 2025 10:30:02 GMT",
+      "lastRefreshTime": "Wed, 29 Jul 2026 08:17:19 GMT"
+    }
+  },
+  {
+    "uid": "Va1y6mt7rwRSjagftfCITzG2QMw2",
+    "email": "shamsear517@gmail.com",
+    "displayName": "Shamsear",
+    "metadata": {
+      "lastSignInTime": "Sat, 13 Jun 2026 13:45:44 GMT",
+      "creationTime": "Sat, 13 Jun 2026 13:45:44 GMT",
+      "lastRefreshTime": "Sat, 13 Jun 2026 13:45:46 GMT"
+    }
+  },
+  {
+    "uid": "cHcX5PqnxBUGEL19asRsxCIIQLE2",
+    "email": "shamsear1@ssleague.com",
+    "customClaims": {
+      "role": "committee_admin",
+      "seasonId": "SSPSLS17"
+    },
+    "metadata": {
+      "lastSignInTime": "Thu, 30 Jul 2026 10:50:24 GMT",
+      "creationTime": "Wed, 25 Feb 2026 09:45:24 GMT",
+      "lastRefreshTime": "Thu, 30 Jul 2026 10:50:25 GMT"
+    }
+  },
+  {
+    "uid": "m09NKRVxJMNBLNwSfO53ep8RYNf2",
+    "email": "adilmubarack@ssleague.com",
+    "customClaims": {
+      "role": "committee_admin",
+      "seasonId": "SSPSLS16"
+    },
+    "metadata": {
+      "lastSignInTime": "Sun, 30 Nov 2025 07:06:05 GMT",
+      "creationTime": "Sun, 30 Nov 2025 07:06:05 GMT",
+      "lastRefreshTime": "Mon, 01 Dec 2025 03:19:59 GMT"
+    }
+  },
+  {
+    "uid": "nJIPhWGFOoYHLuFyhfUivvipAcX2",
+    "email": "shamsear@gmail.com",
+    "displayName": "Shamsear Ebrahim",
+    "metadata": {
+      "lastSignInTime": "Fri, 17 Jul 2026 15:56:26 GMT",
+      "creationTime": "Sun, 29 Mar 2026 07:24:48 GMT",
+      "lastRefreshTime": "Sun, 19 Jul 2026 10:40:40 GMT"
+    }
+  },
+  {
+    "uid": "oKjtRXVcmrggEMKoauaxhxbEKKh1",
+    "email": "adil@ssleague.com",
+    "customClaims": {
+      "role": "committee_admin",
+      "seasonId": "SSPSLS16"
+    },
+    "metadata": {
+      "lastSignInTime": "Thu, 20 Nov 2025 14:25:17 GMT",
+      "creationTime": "Thu, 20 Nov 2025 14:25:17 GMT",
+      "lastRefreshTime": "Sat, 22 Nov 2025 16:35:23 GMT"
+    }
+  },
+  {
+    "uid": "tkWYmkuHxFhuHUkOQfto2lu3Lc93",
+    "email": "shamsear2@ssleague.com",
+    "customClaims": {
+      "role": "committee_admin",
+      "seasonId": "SSPSLS18"
+    },
+    "metadata": {
+      "lastSignInTime": "Mon, 21 Sep 2026 07:24:17 GMT",
+      "creationTime": "Sun, 28 Jun 2026 16:35:24 GMT",
+      "lastRefreshTime": "Wed, 07 Oct 2026 07:37:52 GMT"
+    }
+  },
+  {
+    "uid": "zJlGT8Qb9ITIPLShOluzFqdHhQG2",
+    "email": "adilmubarackam10@gmail.com",
+    "displayName": "Adil Mubarack",
+    "metadata": {
+      "lastSignInTime": "Sun, 09 Nov 2025 15:40:29 GMT",
+      "creationTime": "Sun, 09 Nov 2025 15:16:59 GMT",
+      "lastRefreshTime": "Sun, 16 Nov 2025 07:34:28 GMT"
+    }
+  }
+]

@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Previewing player awards for tournament ${tournament_id}...`);
 
-    // Get tournament-specific player stats by aggregating from matchups
     for (const awardType of award_types) {
       console.log(`  📊 Previewing ${awardType}...`);
 
@@ -60,14 +59,16 @@ export async function POST(request: NextRequest) {
         if (topScorer.length > 0) {
           preview.push({
             award_type: 'Golden Boot',
+            award_category: 'individual',
+            award_position: 'Winner',
             player_id: topScorer[0].player_id,
             player_name: topScorer[0].player_name,
+            player_category: null,
             stats: { goals: topScorer[0].total_goals }
           });
         }
       } else if (awardType === 'Golden Glove') {
         // Best goalkeeper (lowest goals conceded per match)
-        // Note: No position filtering since players table doesn't have position field
         const topKeeper = await sql`
           WITH keeper_stats AS (
             SELECT 
@@ -111,8 +112,11 @@ export async function POST(request: NextRequest) {
         if (topKeeper.length > 0) {
           preview.push({
             award_type: 'Golden Glove',
+            award_category: 'individual',
+            award_position: 'Winner',
             player_id: topKeeper[0].player_id,
             player_name: topKeeper[0].player_name,
+            player_category: null,
             stats: { 
               goals_conceded: topKeeper[0].total_goals_conceded,
               matches: topKeeper[0].total_matches,
@@ -130,6 +134,7 @@ export async function POST(request: NextRequest) {
               SELECT 
                 ps.player_id,
                 ps.player_name,
+                ps.category,
                 ps.points,
                 ps.goals_scored,
                 (ps.goals_scored - ps.goals_conceded) as goal_difference,
@@ -144,6 +149,7 @@ export async function POST(request: NextRequest) {
               SELECT 
                 ps.player_id,
                 ps.player_name,
+                ps.category,
                 ps.points,
                 ps.goals_scored,
                 (ps.goals_scored - ps.goals_conceded) as goal_difference,
@@ -158,8 +164,11 @@ export async function POST(request: NextRequest) {
         if (bestPlayer.length > 0) {
           preview.push({
             award_type: 'Golden Ball',
+            award_category: 'individual',
+            award_position: 'Winner',
             player_id: bestPlayer[0].player_id,
             player_name: bestPlayer[0].player_name,
+            player_category: bestPlayer[0].category || null,
             stats: { 
               points: bestPlayer[0].points,
               goals: bestPlayer[0].goals_scored,
@@ -175,9 +184,10 @@ export async function POST(request: NextRequest) {
           SELECT 
             ts.team_id,
             ts.team_name,
-            ts.manager_name,
+            COALESCE(m.name, ts.team_name) as manager_name,
             ts.points
           FROM teamstats ts
+          LEFT JOIN managers m ON (m.team_id = ts.team_id AND m.season_id = ts.season_id AND m.is_active = true)
           WHERE ts.season_id = ${season_id}
             AND ts.tournament_id = ${tournament_id}
           ORDER BY ts.points DESC, ts.goal_difference DESC
@@ -187,23 +197,56 @@ export async function POST(request: NextRequest) {
         if (bestManager.length > 0 && bestManager[0].manager_name) {
           preview.push({
             award_type: 'Manager of Season',
+            award_category: 'individual',
+            award_position: 'Winner',
             player_id: bestManager[0].team_id,
             player_name: bestManager[0].manager_name,
+            player_category: null,
             stats: { team: bestManager[0].team_name, points: bestManager[0].points }
           });
         }
-      } else if (awardType === 'Best Attacker') {
-        // Note: Category-based awards disabled - no position field in players table
-        console.log(`    ⚠️  Best Attacker award skipped - no position data available`);
-      } else if (awardType === 'Best Midfielder') {
-        // Note: Category-based awards disabled - no position field in players table
-        console.log(`    ⚠️  Best Midfielder award skipped - no position data available`);
-      } else if (awardType === 'Best Defender') {
-        // Note: Category-based awards disabled - no position field in players table
-        console.log(`    ⚠️  Best Defender award skipped - no position data available`);
-      } else if (awardType === 'Best Goalkeeper') {
-        // Note: Category-based awards disabled - no position field in players table
-        console.log(`    ⚠️  Best Goalkeeper award skipped - no position data available`);
+      } else if (awardType.startsWith('Best ') || awardType.toLowerCase().includes('category')) {
+        // Category awards (e.g. Best RED, Best BLACK, Best BLUE, Best WHITE)
+        const catName = awardType
+          .replace(/^Best\s+/i, '')
+          .replace(/\s+Player$/i, '')
+          .replace(/\s+Category$/i, '')
+          .trim();
+
+        const topInCat = await sql`
+          SELECT 
+            ps.player_id,
+            ps.player_name,
+            ps.category,
+            ps.points,
+            ps.goals_scored,
+            (ps.goals_scored - ps.goals_conceded) as goal_difference,
+            ps.matches_played,
+            ps.clean_sheets
+          FROM realplayerstats ps
+          WHERE ps.season_id = ${season_id}
+            AND UPPER(ps.category) = UPPER(${catName})
+          ORDER BY ps.points DESC, (ps.goals_scored - ps.goals_conceded) DESC, ps.goals_scored DESC
+          LIMIT 1
+        `;
+
+        if (topInCat.length > 0) {
+          preview.push({
+            award_type: `Best ${topInCat[0].category.toUpperCase()}`,
+            award_category: 'category',
+            award_position: 'Winner',
+            player_id: topInCat[0].player_id,
+            player_name: topInCat[0].player_name,
+            player_category: topInCat[0].category.toUpperCase(),
+            stats: {
+              points: topInCat[0].points,
+              goals: topInCat[0].goals_scored,
+              goal_difference: topInCat[0].goal_difference,
+              matches: topInCat[0].matches_played,
+              clean_sheets: topInCat[0].clean_sheets
+            }
+          });
+        }
       }
     }
 
