@@ -27,6 +27,14 @@ export async function GET(
 
     const seasonData = rows[0];
 
+    const isRegistrationOpen = Boolean(
+      seasonData.is_player_registration_open ??
+      seasonData.registration_open ??
+      seasonData.registrationOpen ??
+      (typeof seasonData.raw_data === 'object' && seasonData.raw_data ? seasonData.raw_data.is_player_registration_open : undefined) ??
+      false
+    );
+
     const responseData = {
       id: seasonData.id,
       name: seasonData.name,
@@ -34,8 +42,10 @@ export async function GET(
       is_active: seasonData.is_active || false,
       isActive: seasonData.is_active || false,
       status: seasonData.status || 'upcoming',
-      registration_open: seasonData.registration_open || false,
-      registrationOpen: seasonData.registration_open || false,
+      registration_open: isRegistrationOpen,
+      registrationOpen: isRegistrationOpen,
+      is_player_registration_open: isRegistrationOpen,
+      isPlayerRegistrationOpen: isRegistrationOpen,
       total_teams: seasonData.total_teams || 0,
       totalTeams: seasonData.total_teams || 0,
       starting_balance: seasonData.starting_balance || 15000,
@@ -75,7 +85,7 @@ export async function PATCH(
     const mappedBody: Record<string, any> = {};
     for (const [key, value] of Object.entries(body)) {
       if (key === 'isActive') mappedBody['is_active'] = value;
-      else if (key === 'registrationOpen') mappedBody['registration_open'] = value;
+      else if (key === 'registrationOpen' || key === 'is_player_registration_open' || key === 'isPlayerRegistrationOpen') mappedBody['registration_open'] = value;
       else if (key === 'totalTeams') mappedBody['total_teams'] = value;
       else if (key === 'startDate') mappedBody['start_date'] = value;
       else if (key === 'endDate') mappedBody['end_date'] = value;

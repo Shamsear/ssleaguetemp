@@ -63,7 +63,13 @@ export async function POST(request: NextRequest) {
       seasonData = seasonDoc.data();
       
       // Simple check: is player registration open?
-      if (!is_admin_registration && !seasonData?.is_player_registration_open) {
+      const isRegOpen = Boolean(
+        seasonData?.is_player_registration_open ??
+        seasonData?.registration_open ??
+        seasonData?.registrationOpen ??
+        false
+      );
+      if (!is_admin_registration && !isRegOpen) {
         return NextResponse.json(
           { success: false, error: 'Registration is closed for this season' },
           { status: 403 }

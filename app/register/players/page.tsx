@@ -9,6 +9,8 @@ interface Season {
   id: string
   name: string
   is_player_registration_open: boolean
+  registration_open?: boolean
+  registrationOpen?: boolean
 }
 
 interface RegisteredPlayer {
@@ -111,7 +113,18 @@ function PlayersRegistrationPageContent() {
         return
       }
 
-      const seasonData = { id: seasonJson.data.id, ...seasonJson.data } as Season
+      const isRegOpen = Boolean(
+        seasonJson.data.is_player_registration_open ??
+        seasonJson.data.registration_open ??
+        seasonJson.data.registrationOpen ??
+        false
+      )
+      const seasonData = {
+        id: seasonJson.data.id,
+        ...seasonJson.data,
+        is_player_registration_open: isRegOpen,
+        registration_open: isRegOpen,
+      } as Season
       setSeason(seasonData)
 
       const statsResult = await statsResponse.json()
@@ -169,13 +182,39 @@ function PlayersRegistrationPageContent() {
     es.addEventListener('initial', (event) => {
       const payload = JSON.parse(event.data)
       if (payload.data?.[0]) {
-        setSeason({ id: payload.data[0].id, ...payload.data[0] } as Season)
+        const s = payload.data[0]
+        const isRegOpen = Boolean(
+          s.is_player_registration_open ??
+          s.registration_open ??
+          s.registrationOpen ??
+          (typeof s.raw_data === 'object' && s.raw_data ? s.raw_data.is_player_registration_open : undefined) ??
+          false
+        )
+        setSeason({
+          id: s.id,
+          ...s,
+          is_player_registration_open: isRegOpen,
+          registration_open: isRegOpen,
+        } as Season)
       }
     })
     es.addEventListener('update', (event) => {
       const payload = JSON.parse(event.data)
       if (payload.data?.[0]) {
-        setSeason({ id: payload.data[0].id, ...payload.data[0] } as Season)
+        const s = payload.data[0]
+        const isRegOpen = Boolean(
+          s.is_player_registration_open ??
+          s.registration_open ??
+          s.registrationOpen ??
+          (typeof s.raw_data === 'object' && s.raw_data ? s.raw_data.is_player_registration_open : undefined) ??
+          false
+        )
+        setSeason({
+          id: s.id,
+          ...s,
+          is_player_registration_open: isRegOpen,
+          registration_open: isRegOpen,
+        } as Season)
       }
     })
 
@@ -473,7 +512,14 @@ function PlayersRegistrationPageContent() {
   const togglePlayerRegistration = async () => {
     if (!seasonId || isTogglingRegistration) return
 
-    const confirmMessage = season?.is_player_registration_open
+    const isCurrentOpen = Boolean(
+      season?.is_player_registration_open ??
+      season?.registration_open ??
+      season?.registrationOpen ??
+      false
+    )
+
+    const confirmMessage = isCurrentOpen
       ? `Close player registration for ${season?.name}?`
       : `Open player registration for ${season?.name}?`
     
@@ -492,9 +538,17 @@ function PlayersRegistrationPageContent() {
       const result = await response.json()
 
       if (result.success && season) {
+        const isOpen = Boolean(
+          result.season?.is_player_registration_open ??
+          result.season?.registration_open ??
+          result.season?.registrationOpen ??
+          !isCurrentOpen
+        )
         setSeason({
           ...season,
-          is_player_registration_open: result.season.is_player_registration_open
+          is_player_registration_open: isOpen,
+          registration_open: isOpen,
+          registrationOpen: isOpen,
         })
         setSuccess(result.message)
       } else {
@@ -1119,7 +1173,7 @@ function PlayersRegistrationPageContent() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
                       <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Registration Status:</span>
-                      {season?.is_player_registration_open ? (
+                      {(season?.is_player_registration_open ?? season?.registration_open) ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200/40 uppercase tracking-wider">
                           <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/>
@@ -1140,7 +1194,7 @@ function PlayersRegistrationPageContent() {
                       onClick={togglePlayerRegistration}
                       disabled={isTogglingRegistration}
                       className={`inline-flex items-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:-translate-y-0.5 active:translate-y-0 ${
-                        season?.is_player_registration_open
+                        (season?.is_player_registration_open ?? season?.registration_open)
                           ? 'bg-red-600 hover:bg-red-500 text-white border border-red-700'
                           : 'bg-green-600 hover:bg-green-500 text-white border border-green-700'
                       }`}
@@ -1153,7 +1207,7 @@ function PlayersRegistrationPageContent() {
                           </svg>
                           Processing...
                         </>
-                      ) : season?.is_player_registration_open ? (
+                      ) : (season?.is_player_registration_open ?? season?.registration_open) ? (
                         <>
                           <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -1171,7 +1225,7 @@ function PlayersRegistrationPageContent() {
                     </button>
                   </div>
 
-                  {season?.is_player_registration_open ? (
+                  {(season?.is_player_registration_open ?? season?.registration_open) ? (
                     <div className="space-y-4">
                       <div className="p-4 bg-green-50/50 border border-green-200/50 rounded-xl">
                         <p className="text-[10px] uppercase font-bold text-green-800 flex items-start leading-relaxed tracking-wider">

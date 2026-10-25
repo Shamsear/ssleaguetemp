@@ -117,13 +117,22 @@ function PlayerSearchContent() {
         const seasonData = seasonDoc.data as Season
 
         // Check registration status
-        if (!seasonData.is_player_registration_open) {
+        const isRegOpen = Boolean(
+          seasonData.is_player_registration_open ??
+          (seasonData as any).registration_open ??
+          (seasonData as any).registrationOpen ??
+          false
+        )
+        if (!isRegOpen) {
           setError('Player registration is currently closed for this season')
           setLoading(false)
           return
         }
 
-        setSeason(seasonData)
+        setSeason({
+          ...seasonData,
+          is_player_registration_open: isRegOpen,
+        })
         setLoading(false)
       } catch (err: any) {
         console.error('Error fetching season:', err)

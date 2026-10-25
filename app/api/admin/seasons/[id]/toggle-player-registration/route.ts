@@ -25,13 +25,20 @@ export async function POST(
     }
     
     const seasonData = seasonDoc.data()!;
-    const currentStatus = seasonData.is_player_registration_open || false;
+    const currentStatus = Boolean(
+      seasonData.is_player_registration_open ??
+      seasonData.registration_open ??
+      seasonData.registrationOpen ??
+      (typeof seasonData.raw_data === 'object' && seasonData.raw_data ? seasonData.raw_data.is_player_registration_open : undefined) ??
+      false
+    );
     const newStatus = !currentStatus;
     
-    // Update the status in Firestore
+    // Update the status in Firestore / adminDb wrapper
     await seasonRef.update({
       is_player_registration_open: newStatus,
       registrationOpen: newStatus,
+      registration_open: newStatus,
       updated_at: FieldValue.serverTimestamp(),
     });
     
@@ -42,6 +49,7 @@ export async function POST(
         await sql`
           UPDATE seasons
           SET registration_open = ${newStatus},
+              raw_data = COALESCE(raw_data, '{}'::jsonb) || ${JSON.stringify({ is_player_registration_open: newStatus, registrationOpen: newStatus, registration_open: newStatus })}::jsonb,
               updated_at = NOW()
           WHERE id = ${seasonId}
         `;
@@ -57,6 +65,8 @@ export async function POST(
         id: seasonId,
         name: seasonData.name,
         is_player_registration_open: newStatus,
+        registration_open: newStatus,
+        registrationOpen: newStatus,
       },
     });
     
@@ -93,13 +103,22 @@ export async function GET(
     }
     
     const seasonData = seasonDoc.data()!;
+    const isOpen = Boolean(
+      seasonData.is_player_registration_open ??
+      seasonData.registration_open ??
+      seasonData.registrationOpen ??
+      (typeof seasonData.raw_data === 'object' && seasonData.raw_data ? seasonData.raw_data.is_player_registration_open : undefined) ??
+      false
+    );
     
     return NextResponse.json({
       success: true,
       season: {
         id: seasonId,
         name: seasonData.name,
-        is_player_registration_open: seasonData.is_player_registration_open || false,
+        is_player_registration_open: isOpen,
+        registration_open: isOpen,
+        registrationOpen: isOpen,
       },
     });
     

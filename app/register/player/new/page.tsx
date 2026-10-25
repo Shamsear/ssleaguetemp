@@ -67,14 +67,23 @@ function PlayerRegistrationContent() {
         }
 
         const seasonData = { id: (seasonDoc as any).id, ...seasonDoc.data() } as Season
+        const isRegOpen = Boolean(
+          seasonData.is_player_registration_open ??
+          (seasonData as any).registration_open ??
+          (seasonData as any).registrationOpen ??
+          false
+        )
 
-        if (!seasonData.is_player_registration_open) {
+        if (!isRegOpen) {
           setError('Player registration is currently closed for this season')
           setLoading(false)
           return
         }
 
-        setSeason(seasonData)
+        setSeason({
+          ...seasonData,
+          is_player_registration_open: isRegOpen,
+        })
 
         // Fetch teams for this season
         const teamsRes = await fetch('/api/teams')
@@ -119,7 +128,13 @@ function PlayerRegistrationContent() {
       }
 
       const currentSeasonData = seasonDoc.data() as Season
-      if (!currentSeasonData.is_player_registration_open) {
+      const isRegOpenSubmit = Boolean(
+        currentSeasonData.is_player_registration_open ??
+        (currentSeasonData as any).registration_open ??
+        (currentSeasonData as any).registrationOpen ??
+        false
+      )
+      if (!isRegOpenSubmit) {
         setError('Player registration has been closed. Please try again later.')
         setSubmitting(false)
         return

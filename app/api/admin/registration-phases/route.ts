@@ -101,7 +101,12 @@ export async function GET(request: NextRequest) {
       data: {
         // Simplified response - all registrations treated uniformly
         total_registrations: total,
-        is_registration_open: seasonData.is_player_registration_open || false,
+        is_registration_open: Boolean(
+          seasonData.is_player_registration_open ??
+          seasonData.registration_open ??
+          seasonData.registrationOpen ??
+          false
+        ),
         
         // Legacy fields for backward compatibility (deprecated)
         registration_phase: 'open',

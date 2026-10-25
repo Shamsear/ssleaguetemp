@@ -40,7 +40,17 @@ export default function RegistrationManagementPage() {
         const seasonRes = await fetch(`/api/seasons/${userSeasonId}`);
         const seasonJson = await seasonRes.json();
         if (seasonJson.success && seasonJson.data) {
-          setCurrentSeason(seasonJson.data);
+          const isOpen = Boolean(
+            seasonJson.data.is_player_registration_open ??
+            seasonJson.data.registration_open ??
+            seasonJson.data.registrationOpen ??
+            false
+          );
+          setCurrentSeason({
+            ...seasonJson.data,
+            is_player_registration_open: isOpen,
+            registration_open: isOpen,
+          });
         }
 
         // Fetch registration stats
@@ -85,7 +95,13 @@ export default function RegistrationManagementPage() {
   const toggleRegistration = async () => {
     if (!userSeasonId || !currentSeason || isToggling) return;
 
-    const confirmMessage = currentSeason.is_player_registration_open
+    const isPlayerRegOpen = Boolean(
+      currentSeason.is_player_registration_open ??
+      (currentSeason as any).registration_open ??
+      (currentSeason as any).registrationOpen ??
+      false
+    );
+    const confirmMessage = isPlayerRegOpen
       ? 'Close player registration?'
       : 'Open player registration?';
     
@@ -104,9 +120,16 @@ export default function RegistrationManagementPage() {
       const result = await response.json();
 
       if (result.success && currentSeason) {
+        const isOpen = Boolean(
+          result.season?.is_player_registration_open ??
+          result.season?.registration_open ??
+          result.season?.registrationOpen ??
+          !isPlayerRegOpen
+        );
         setCurrentSeason({
           ...currentSeason,
-          is_player_registration_open: result.season.is_player_registration_open
+          is_player_registration_open: isOpen,
+          registration_open: isOpen,
         });
         setSuccess(result.message);
       } else {
@@ -187,7 +210,7 @@ export default function RegistrationManagementPage() {
               <div className="mb-6 p-4 rounded-xl border-2 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700 mb-2">Current Status:</p>
                 <div className="flex items-center gap-2">
-                  {currentSeason?.is_player_registration_open ? (
+                  {(currentSeason?.is_player_registration_open ?? (currentSeason as any)?.registration_open) ? (
                     <span className="px-4 py-2 bg-green-500 text-white rounded-lg font-bold flex items-center gap-1.5 w-fit">
                       <CheckCircle className="w-4 h-4 text-white" /> Registration Open
                     </span>
@@ -205,16 +228,16 @@ export default function RegistrationManagementPage() {
                   onClick={toggleRegistration}
                   disabled={isToggling}
                   className={`px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 ${
-                    currentSeason?.is_player_registration_open
+                    (currentSeason?.is_player_registration_open ?? (currentSeason as any)?.registration_open)
                       ? 'bg-gradient-to-r from-red-500 to-red-600 text-white'
                       : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                   }`}
                 >
                   {isToggling ? 'Processing...' : 
-                   currentSeason?.is_player_registration_open ? 'Close Registration' : 'Open Registration'}
+                   (currentSeason?.is_player_registration_open ?? (currentSeason as any)?.registration_open) ? 'Close Registration' : 'Open Registration'}
                 </button>
                 <p className="text-sm text-gray-600">
-                  {currentSeason?.is_player_registration_open 
+                  {(currentSeason?.is_player_registration_open ?? (currentSeason as any)?.registration_open) 
                     ? 'Click to stop accepting new player registrations'
                     : 'Click to start accepting player registrations'}
                 </p>

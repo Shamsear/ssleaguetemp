@@ -25,6 +25,12 @@ export async function GET(request: NextRequest) {
         formattedSeasons = dbSeasons.map((s: any) => {
           const seasonNum = s.season_number ?? (s.id ? parseInt(s.id.replace(/\D/g, '')) || 0 : 0);
           const isActive = Boolean(s.is_active ?? s.isActive ?? (s.status === 'active'));
+          const isRegOpen = Boolean(
+            s.registration_open ??
+            s.registrationOpen ??
+            s.is_player_registration_open ??
+            (typeof s.raw_data === 'object' && s.raw_data ? s.raw_data.is_player_registration_open : undefined)
+          );
           return {
             id: s.id,
             season_id: s.id,
@@ -34,8 +40,10 @@ export async function GET(request: NextRequest) {
             status: s.status || (isActive ? 'active' : 'completed'),
             is_active: isActive,
             isActive: isActive,
-            registration_open: Boolean(s.registration_open ?? s.registrationOpen),
-            registrationOpen: Boolean(s.registration_open ?? s.registrationOpen),
+            registration_open: isRegOpen,
+            registrationOpen: isRegOpen,
+            is_player_registration_open: isRegOpen,
+            isPlayerRegistrationOpen: isRegOpen,
             total_teams: Number(s.total_teams ?? 0),
             totalTeams: Number(s.total_teams ?? 0),
             created_at: s.created_at,
