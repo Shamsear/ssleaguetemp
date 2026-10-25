@@ -96,13 +96,13 @@ export async function PATCH(
     let paramIdx = 1;
 
     for (const [key, value] of Object.entries(mappedBody)) {
-      setClauses.push(`${key} = ${paramIdx++}`);
+      setClauses.push(`${key} = $${paramIdx++}`);
       values.push(value);
     }
     values.push(seasonId);
 
     await sql.query(
-      `UPDATE seasons SET ${setClauses.join(', ')} WHERE id = ${paramIdx}`,
+      `UPDATE seasons SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
       values
     );
 

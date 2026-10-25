@@ -84,7 +84,9 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Could not query tournaments table, trying auction DB fallback:', e.message);
     }
 
-    // 2. If no seasons from tournaments, query auction_settings from auction DB
+    }
+
+    // 3. If no seasons from tournaments, query auction_settings from auction DB
     if (formattedSeasons.length === 0) {
       try {
         const aucSql = getAuctionDb();
