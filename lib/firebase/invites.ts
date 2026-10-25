@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import { AdminInvite, CreateInviteData, InviteUsage } from '@/types/invite';
-import { getSeasonById } from './seasons';
+
 
 // Convert Firestore timestamp to Date
 const convertTimestamp = (timestamp: any): Date => {
@@ -50,6 +50,7 @@ export const createAdminInvite = async (
 ): Promise<AdminInvite> => {
   try {
     // Get season details
+    const { getSeasonById } = await import('./seasons');
     const season = await getSeasonById(inviteData.seasonId);
     if (!season) {
       throw new Error('Season not found');
@@ -201,6 +202,24 @@ export const validateAdminInvite = async (code: string): Promise<{
   error?: string;
 }> => {
   try {
+    // In browser context, use the secure server validation API
+    if (typeof window !== 'undefined') {
+      const res = await fetch(`/api/invites/${encodeURIComponent(code)}`);
+      const data = await res.json();
+      if (!data.valid) {
+        return { valid: false, error: data.error || 'Invalid invite code' };
+      }
+      return {
+        valid: true,
+        invite: {
+          ...data.invite,
+          expiresAt: new Date(data.invite.expiresAt),
+          createdAt: new Date(data.invite.createdAt),
+        }
+      };
+    }
+
+    // Server-side context (Node.js)
     const invite = await getAdminInviteByCode(code);
 
     if (!invite) {
@@ -219,19 +238,10 @@ export const validateAdminInvite = async (code: string): Promise<{
       return { valid: false, error: 'This invite has expired' };
     }
 
-    // Check if the season still exists
-    const season = await getSeasonById(invite.seasonId);
-    if (!season) {
-      return { 
-        valid: false, 
-        error: 'The season for this invite no longer exists. Please contact admin for a new invite.' 
-      };
-    }
-
     return { valid: true, invite };
   } catch (error: any) {
     console.error('Error validating admin invite:', error);
-    return { valid: false, error: 'Failed to validate invite code' };
+    return { valid: false, error: error.message || 'Failed to validate invite code' };
   }
 };
 
@@ -255,6 +265,16 @@ export const markInviteAsUsed = async (
     }
 
     const inviteRef = doc(db, 'invites', code);
+
+    // If in browser context, use API
+    if (typeof window !== 'undefined') {
+      await fetch(`/api/invites/${encodeURIComponent(code)}/use`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, username, email }),
+      });
+      return;
+    }
 
     // Update invite usage
     await updateDoc(inviteRef, {

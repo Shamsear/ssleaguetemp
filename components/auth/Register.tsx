@@ -99,7 +99,11 @@ function RegisterContent() {
       }
       
       if (validation.invite) {
-        setInvite(validation.invite);
+        setInvite({
+          ...validation.invite,
+          expiresAt: new Date(validation.invite.expiresAt),
+          createdAt: new Date(validation.invite.createdAt),
+        });
       }
     } catch (err: any) {
       console.error('Error validating invite:', err);
