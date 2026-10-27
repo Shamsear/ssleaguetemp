@@ -11,7 +11,6 @@ import {
   Check,
   Trophy,
   Target,
-  RefreshCw,
   Award,
   ExternalLink,
   Users,
@@ -536,24 +535,13 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
 
         {/* SECTION: The Birthday Chronicle */}
         <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider font-mono">
-                {t.pressDispatch}
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-                {t.chronicleTitle}
-              </h2>
-            </div>
-
-            <button
-              onClick={() => handleRegenerateStory(lang)}
-              disabled={isGeneratingStory}
-              className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 text-[#D4AF37] ${isGeneratingStory ? 'animate-spin' : ''}`} />
-              <span>{isGeneratingStory ? t.draftingStory : t.regenerateStory}</span>
-            </button>
+          <div className="border-b border-slate-100 pb-4">
+            <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider font-mono">
+              {t.pressDispatch}
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+              {t.chronicleTitle}
+            </h2>
           </div>
 
           <article className="mt-5 space-y-4">
