@@ -28,10 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1.0 : 0.8,
   }));
 
-  // 2. Dynamic Seasons from Firestore
+  // 2. Dynamic Seasons from Neon
   let seasonUrls: any[] = [];
   try {
-    const { adminDb } = await import('@/lib/firebase/admin');
+    const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
     const seasonsSnapshot = await adminDb.collection('seasons').get();
     seasonUrls = seasonsSnapshot.docs.map((doc) => ({
       url: `${baseUrl}/seasons/${doc.id}`,
@@ -43,10 +43,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error generating seasons sitemap entries:', error);
   }
 
-  // 3. Dynamic Real Players from Firestore
+  // 3. Dynamic Real Players from Neon
   let playerUrls: any[] = [];
   try {
-    const { adminDb } = await import('@/lib/firebase/admin');
+    const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
     const playersSnapshot = await adminDb
       .collection('realplayers')
       .where('is_active', '==', true)
@@ -68,10 +68,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error generating real players sitemap entries:', error);
   }
 
-  // 4. Dynamic Teams from Firestore
+  // 4. Dynamic Teams from Neon
   let teamUrls: any[] = [];
   try {
-    const { adminDb } = await import('@/lib/firebase/admin');
+    const { adminDb } = await import('@/lib/neon/admin-db-wrapper');
     const teamsSnapshot = await adminDb.collection('teams').get();
     teamUrls = teamsSnapshot.docs.map((doc) => ({
       url: `${baseUrl}/teams/${doc.id}`,
