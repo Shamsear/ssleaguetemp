@@ -73,12 +73,12 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     const photo = player.profile_image || raw.photo_url || raw.photoURL || raw.profile_image || raw.image;
 
     const title = isMl
-      ? `🎂 ${name}ന് ഹൃദയം നിറഞ്ഞ പിറന്നാൾ ആശംസകൾ (${age ? `${age} വയസ്സ്` : ''})! 🎉 | SS League`
-      : `🎂 Happy ${age ? `${age}th ` : ''}Birthday, ${name}! 🎉 | SS Premier Super League`;
+      ? `${name}ന് ഹൃദയം നിറഞ്ഞ പിറന്നാൾ ആശംസകൾ (${age ? `${age} വയസ്സ്` : ''}) | SS League`
+      : `Happy ${age ? `${age}th ` : ''}Birthday, ${name} | SS Premier Super League`;
 
     const description = isMl
-      ? `ഇന്ന് നമ്മുടെ ${name}ന്റെ പിറന്നാളാണ്! SS Premier Super League ടൂർണമെന്റ് സ്റ്റാറ്റ്സും രസകരമായ വിശേഷങ്ങളും വായിക്കാം.`
-      : `Celebrate ${name}'s birthday with SS Premier Super League! Explore their career tournament stats, milestones, and birthday chronicle.`;
+      ? `ഇന്ന് നമ്മുടെ ${name}ന്റെ പിറന്നാളാണ്! SS Premier Super League ടൂർണമെന്റ് സ്റ്റാറ്റ്സും വിശേഷങ്ങളും വായിക്കാം.`
+      : `Celebrate ${name}'s birthday with SS Premier Super League! Explore career tournament stats, milestones, and birthday feature.`;
 
     return {
       title,
@@ -97,7 +97,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     };
   } catch (err) {
     return {
-      title: isMl ? 'ജന്മദിനാശംസകൾ! | SS Premier Super League' : 'Happy Birthday! | SS Premier Super League',
+      title: isMl ? 'ജന്മദിനാശംസകൾ | SS Premier Super League' : 'Happy Birthday | SS Premier Super League',
     };
   }
 }
