@@ -72,7 +72,11 @@ export async function POST(
       seasonsCount,
     };
 
-    const story = await generateGeminiBirthdayStory(context);
+    const { searchParams } = new URL(request.url);
+    const body = await request.json().catch(() => ({}));
+    const lang = (body.lang || searchParams.get('lang') || 'en') === 'ml' ? 'ml' : 'en';
+
+    const story = await generateGeminiBirthdayStory(context, lang);
 
     return NextResponse.json({
       success: true,

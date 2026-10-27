@@ -101,8 +101,12 @@ export async function GET(
       seasonsCount: seasons.length,
     };
 
-    // Fast initial story generator
-    const story = generateFallbackBirthdayStory(birthdayContext);
+    const { searchParams } = new URL(request.url);
+    const lang = (searchParams.get('lang') || 'en') === 'ml' ? 'ml' : 'en';
+
+    // Fast initial story generator in both languages
+    const storyEn = generateFallbackBirthdayStory(birthdayContext, 'en');
+    const storyMl = generateFallbackBirthdayStory(birthdayContext, 'ml');
 
     return NextResponse.json({
       success: true,
@@ -121,7 +125,10 @@ export async function GET(
       stats: aggregatedStats,
       seasons,
       awards,
-      story,
+      story: lang === 'ml' ? storyMl : storyEn,
+      storyEn,
+      storyMl,
+      lang,
     });
   } catch (error: any) {
     console.error('Error fetching player birthday details:', error);

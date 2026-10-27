@@ -35,15 +35,18 @@ function calculateAge(dobStr: string): number {
 
 interface PageProps {
   params: Promise<{ playerId: string }> | { playerId: string };
+  searchParams?: Promise<{ lang?: string }> | { lang?: string };
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const { playerId } = resolvedParams;
+  const isMl = resolvedSearchParams?.lang === 'ml';
 
   if (!isMainDbAvailable()) {
     return {
-      title: 'Player Birthday Celebration | SS Premier Super League',
+      title: isMl ? 'ജന്മദിനാശംസകൾ | SS Premier Super League' : 'Player Birthday Celebration | SS Premier Super League',
     };
   }
 
@@ -58,7 +61,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (rows.length === 0) {
       return {
-        title: 'Player Not Found | SS Premier Super League',
+        title: isMl ? 'പ്ലെയറെ കണ്ടെത്താനായില്ല | SS Premier Super League' : 'Player Not Found | SS Premier Super League',
       };
     }
 
@@ -69,31 +72,41 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const age = calculateAge(dob);
     const photo = player.profile_image || raw.photo_url || raw.photoURL || raw.profile_image || raw.image;
 
+    const title = isMl
+      ? `🎂 ${name}ന് ഹൃദയം നിറഞ്ഞ പിറന്നാൾ ആശംസകൾ (${age ? `${age} വയസ്സ്` : ''})! 🎉 | SS League`
+      : `🎂 Happy ${age ? `${age}th ` : ''}Birthday, ${name}! 🎉 | SS Premier Super League`;
+
+    const description = isMl
+      ? `ഇന്ന് നമ്മുടെ ${name}ന്റെ പിറന്നാളാണ്! SS Premier Super League ടൂർണമെന്റ് സ്റ്റാറ്റ്സും രസകരമായ വിശേഷങ്ങളും വായിക്കാം.`
+      : `Celebrate ${name}'s birthday with SS Premier Super League! Explore their career tournament stats, milestones, and birthday chronicle.`;
+
     return {
-      title: `🎂 Happy ${age ? `${age}th ` : ''}Birthday, ${name}! 🎉 | SS Premier Super League`,
-      description: `Celebrate ${name}'s birthday with SS Premier Super League! Explore their career tournament stats, milestones, and birthday chronicle.`,
+      title,
+      description,
       openGraph: {
-        title: `🎂 Happy Birthday, ${name}! 🎉`,
-        description: `Join the SS Premier Super League in celebrating ${name}'s birthday milestone! Check out career stats & the birthday roast.`,
+        title,
+        description,
         images: photo ? [formatPhotoUrl(photo)] : ['/logo.png'],
       },
       twitter: {
         card: 'summary_large_image',
-        title: `🎂 Happy Birthday, ${name}! 🎉 | SS League`,
-        description: `Explore ${name}'s stats and hilarious birthday roast on SS Premier Super League!`,
+        title,
+        description,
         images: photo ? [formatPhotoUrl(photo)] : ['/logo.png'],
       },
     };
   } catch (err) {
     return {
-      title: 'Happy Birthday! | SS Premier Super League',
+      title: isMl ? 'ജന്മദിനാശംസകൾ! | SS Premier Super League' : 'Happy Birthday! | SS Premier Super League',
     };
   }
 }
 
-export default async function BirthdayPage({ params }: PageProps) {
+export default async function BirthdayPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const { playerId } = resolvedParams;
+  const initialLang = (resolvedSearchParams?.lang === 'ml' ? 'ml' : 'en') as 'en' | 'ml';
 
   if (!isMainDbAvailable()) {
     notFound();
@@ -150,7 +163,8 @@ export default async function BirthdayPage({ params }: PageProps) {
     seasonsCount: seasons.length,
   };
 
-  const story = generateFallbackBirthdayStory(birthdayContext);
+  const storyEn = generateFallbackBirthdayStory(birthdayContext, 'en');
+  const storyMl = generateFallbackBirthdayStory(birthdayContext, 'ml');
 
   const initialData = {
     player: {
@@ -168,7 +182,10 @@ export default async function BirthdayPage({ params }: PageProps) {
     stats: aggregatedStats,
     seasons,
     awards,
-    story,
+    story: initialLang === 'ml' ? storyMl : storyEn,
+    storyEn,
+    storyMl,
+    initialLang,
   };
 
   return <BirthdayClient initialData={initialData} />;
