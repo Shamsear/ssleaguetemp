@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 import { isTournamentDbAvailable } from '@/lib/neon/tournament-config';
-import { getPlayerTournamentHistory } from '@/lib/birthdays/stats-helper';
+import { getPlayerTournamentHistory, normalizeTeam, normalizeCategory } from '@/lib/birthdays/stats-helper';
 
 function formatPhotoUrl(url: string | null | undefined): string {
   if (!url) return '/placeholder-player.png';
@@ -100,7 +100,9 @@ export async function GET(request: NextRequest) {
       const photo = p.profile_image || raw.photo_url || raw.photoURL || raw.profile_image || raw.image;
       const pid = p.player_id || p.id;
       const playerStats = statsMap[pid] || { matches: 0, goals: 0, wins: 0, clean_sheets: 0 };
-      const resolvedTeam = p.team || raw.team || raw.team_name || playerStats.latestTeam || 'Free Agent';
+      const resolvedTeam = normalizeTeam(p.team || raw.team || raw.team_name || playerStats.latestTeam);
+      const rawCat = p.category_id || raw.category || raw.category_name;
+      const resolvedCat = normalizeCategory(rawCat);
 
       return {
         id: p.id,
@@ -111,7 +113,7 @@ export async function GET(request: NextRequest) {
         age: calculateAge(dob, new Date(dateStr)),
         photo_url: formatPhotoUrl(photo),
         team: resolvedTeam,
-        category: p.category_id || raw.category || raw.category_name || 'PLAYER',
+        category: resolvedCat,
         stats: {
           matches: playerStats.matches,
           goals: playerStats.goals,
