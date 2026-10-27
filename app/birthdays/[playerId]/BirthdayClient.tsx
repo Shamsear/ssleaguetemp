@@ -100,6 +100,13 @@ const getCategoryColor = (category: string) => {
   }
 };
 
+function getOrdinal(n: number): string {
+  if (!n) return '';
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 const translations = {
   en: {
     backToHome: 'BACK TO HOME',
@@ -158,9 +165,13 @@ const translations = {
     viewInstagram: 'View Instagram Feature',
     returnHome: 'RETURN TO SS SUPER LEAGUE HOME',
     whatsappShareText: (name: string, age: number, url: string) =>
-      `Happy Birthday *${name}* (${age} Years)! Check out the tournament stats & birthday feature:\n${url}`,
+      age
+        ? `Wishing *${name}* a very Happy ${getOrdinal(age)} Birthday! Drop your wishes and explore his SS League stats:\n${url}`
+        : `Wishing *${name}* a very Happy Birthday! Drop your wishes and explore his SS League stats:\n${url}`,
     twitterShareText: (name: string, age: number) =>
-      `Happy Birthday ${name} (${age} Years)! Check out the tournament stats on SS League:`,
+      age
+        ? `Wishing ${name} a very Happy ${getOrdinal(age)} Birthday! Explore his SS League tournament record:`
+        : `Wishing ${name} a very Happy Birthday! Explore his SS League tournament record:`,
   },
   ml: {
     backToHome: 'ഹോമിലേക്ക് മടങ്ങുക',
@@ -219,9 +230,13 @@ const translations = {
     viewInstagram: 'ഇൻസ്റ്റാഗ്രാം പോസ്റ്റ് കാണുക',
     returnHome: 'ഹോം പേജിലേക്ക് മടങ്ങുക',
     whatsappShareText: (name: string, age: number, url: string) =>
-      `ഹാപ്പി ബർത്ത്ഡേ *${name}* (${age} വയസ്സ്)! കരിയർ സ്റ്റാറ്റ്സും ബർത്ത്ഡേ ഫീച്ചറും കാണാം:\n${url}`,
+      age
+        ? `നമ്മുടെ സ്വന്തം *${name}*ന് ഹൃദയം നിറഞ്ഞ ജന്മദിനാശംസകൾ (${age} വയസ്സ്)! ആശംസകൾ അറിയിക്കാനും SS League റെക്കോർഡുകൾ കാണാനും സന്ദർശിക്കുക:\n${url}`
+        : `നമ്മുടെ സ്വന്തം *${name}*ന് ഹൃദയം നിറഞ്ഞ ജന്മദിനാശംസകൾ! ആശംസകൾ അറിയിക്കാനും SS League റെക്കോർഡുകൾ കാണാനും സന്ദർശിക്കുക:\n${url}`,
     twitterShareText: (name: string, age: number) =>
-      `ഹാപ്പി ബർത്ത്ഡേ ${name} (${age} വയസ്സ്)! SS League ടൂർണമെന്റ് റെക്കോർഡ്:`,
+      age
+        ? `നമ്മുടെ സ്വന്തം ${name}ന് ഹൃദയം നിറഞ്ഞ ജന്മദിനാശംസകൾ (${age} വയസ്സ്)! SS League ടൂർണമെന്റ് റെക്കോർഡ്:`
+        : `നമ്മുടെ സ്വന്തം ${name}ന് ഹൃദയം നിറഞ്ഞ ജന്മദിനാശംസകൾ! SS League ടൂർണമെന്റ് റെക്കോർഡ്:`,
   },
 };
 

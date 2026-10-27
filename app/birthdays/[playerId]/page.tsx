@@ -78,7 +78,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
     const description = isMl
       ? `ഇന്ന് നമ്മുടെ ${name}ന്റെ പിറന്നാളാണ്! SS Premier Super League ടൂർണമെന്റ് സ്റ്റാറ്റ്സും വിശേഷങ്ങളും വായിക്കാം.`
-      : `Celebrate ${name}'s birthday with SS Premier Super League! Explore career tournament stats, milestones, and birthday feature.`;
+      : `Celebrate ${name}'s birthday with SS Premier Super League! Explore career tournament stats, milestones, and celebration tribute.`;
 
     return {
       title,
