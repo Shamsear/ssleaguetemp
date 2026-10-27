@@ -91,6 +91,10 @@ const getCategoryColor = (category: string) => {
       return 'bg-orange-50 text-orange-700 border-orange-200';
     case 'white':
       return 'bg-slate-100 text-slate-700 border-slate-200';
+    case 'na':
+    case 'n/a':
+    case 'a':
+      return 'bg-slate-100 text-slate-500 border-slate-200';
     default:
       return 'bg-slate-100 text-slate-700 border-slate-200';
   }
