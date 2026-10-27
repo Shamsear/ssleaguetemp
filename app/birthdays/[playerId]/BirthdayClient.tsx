@@ -4,15 +4,12 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Cake,
   Share2,
   Copy,
   Check,
   Sparkles,
   Trophy,
-  Flame,
-  Shield,
-  Star,
+  Target,
   RefreshCw,
   Heart,
   Calendar,
@@ -21,8 +18,11 @@ import {
   ChevronLeft,
   ExternalLink,
   MessageCircle,
+  ArrowRight,
+  Shield,
+  Medal,
 } from 'lucide-react';
-import ConfettiEffect from '@/components/birthday/ConfettiEffect';
+import ConfettiEffect from '../../../components/birthday/ConfettiEffect';
 
 interface BirthdayData {
   player: {
@@ -81,7 +81,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   const [hasWished, setHasWished] = useState(false);
 
   const winRate = stats.matches > 0 ? Math.round((stats.wins / stats.matches) * 100) : 0;
-  const goalsPerMatch = stats.matches > 0 ? (stats.goals / stats.matches).toFixed(1) : '0';
+  const goalsPerMatch = stats.matches > 0 ? (stats.goals / stats.matches).toFixed(2) : '0.00';
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
@@ -94,7 +94,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   const handleShareWhatsApp = () => {
     if (typeof window !== 'undefined') {
       const text = encodeURIComponent(
-        `🎂 Today is ${player.name}'s Birthday (${player.age} Years)! 🎉\nCheck out his career stats & hilarious SS League birthday roast:\n${window.location.href}`
+        `🎂 Today is ${player.name}'s Birthday (${player.age} Years)! 🎉\nCheck out career tournament stats & birthday chronicle on SS League:\n${window.location.href}`
       );
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
@@ -103,7 +103,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   const handleShareTwitter = () => {
     if (typeof window !== 'undefined') {
       const text = encodeURIComponent(
-        `🎂 Wishing a Happy Birthday to ${player.name} (${player.age})! Check out his SS League stats & birthday roast:\n`
+        `🎂 Celebrating ${player.name}'s Birthday (${player.age})! Check out career stats on SS League:\n`
       );
       window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`, '_blank');
     }
@@ -136,51 +136,49 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 pt-6 px-4 sm:px-6 lg:px-8">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-5 sm:pt-24 pb-12 px-4 sm:px-6">
       {/* Festive Confetti Burst */}
-      {showConfetti && <ConfettiEffect duration={5000} />}
+      {showConfetti && <ConfettiEffect duration={4000} />}
 
-      {/* Background Ambience */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-b from-amber-500/15 via-orange-500/10 to-transparent blur-3xl" />
-        <div className="absolute top-1/3 -left-40 h-[400px] w-[400px] rounded-full bg-amber-600/10 blur-3xl" />
-        <div className="absolute bottom-10 -right-40 h-[400px] w-[400px] rounded-full bg-yellow-500/10 blur-3xl" />
-      </div>
+      {/* Decorative eSports glowing ambient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-      <div className="relative mx-auto max-w-5xl">
-        {/* Navigation / Header */}
-        <div className="mb-6 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        {/* Navigation & Status Header */}
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-400 hover:text-amber-400 transition-colors"
+            className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
           >
-            <ChevronLeft className="h-4 w-4" />
-            Back to Home
+            <ChevronLeft className="h-3.5 w-3.5" />
+            BACK TO HOME
           </Link>
 
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-300">
-              <Cake className="h-3.5 w-3.5 text-amber-400" />
-              Official SS League Birthday Card
+          <div className="flex items-center gap-2 font-mono text-xs">
+            <span className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg font-bold">
+              PLAYER_ID: {player.player_id || player.id}
+            </span>
+            <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-amber-700 px-3 py-1 rounded-lg font-bold">
+              BIRTHDAY EDITION
             </span>
           </div>
         </div>
 
-        {/* HERO SECTION: Player Photo & Birthday Spotlight */}
-        <section className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950 p-6 sm:p-10 shadow-2xl shadow-amber-500/15">
-          {/* Subtle Festive Banner Overlay */}
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-amber-500/10 blur-2xl" />
+        {/* HERO SECTION: Player Spotlight Card */}
+        <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
+          {/* Decorative console chevron lines */}
+          <div className="absolute bottom-0 left-0 right-0 h-[4px] bg-[repeating-linear-gradient(90deg,rgba(0,0,0,0.06)_0px,rgba(0,0,0,0.06)_1px,transparent_1px,transparent_12px)] opacity-50" />
 
-          <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-10">
+          <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-10 relative z-10">
             {/* Player Avatar with Halo */}
             <div className="relative shrink-0">
-              <div className="h-40 w-40 sm:h-48 sm:w-48 overflow-hidden rounded-full border-4 border-amber-400/80 p-1.5 shadow-2xl shadow-amber-500/30 bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200">
-                <div className="relative h-full w-full overflow-hidden rounded-full bg-slate-800">
+              <div className="h-36 w-36 sm:h-44 sm:w-44 overflow-hidden rounded-full ring-4 ring-[#D4AF37]/40 p-1 bg-white shadow-md">
+                <div className="relative h-full w-full overflow-hidden rounded-full bg-slate-100">
                   <Image
                     src={player.photo_url || '/placeholder-player.png'}
                     alt={player.name}
                     fill
-                    sizes="(max-width: 640px) 160px, 192px"
+                    sizes="(max-width: 640px) 144px, 176px"
                     priority
                     className="object-cover"
                   />
@@ -188,275 +186,267 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
               </div>
 
               {/* Age Milestone Stamp */}
-              <div className="absolute -bottom-2 -right-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 shadow-xl border-4 border-slate-950">
-                <div className="text-center">
-                  <span className="block text-base font-black leading-none">{player.age}</span>
-                  <span className="block text-[9px] font-bold uppercase tracking-wider">Years</span>
+              <div className="absolute -bottom-1 -right-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-950 text-[#D4AF37] shadow-lg border-2 border-white">
+                <div className="text-center font-mono">
+                  <span className="block text-sm font-black leading-none">{player.age}</span>
+                  <span className="block text-[8px] font-bold uppercase tracking-wider">YRS</span>
                 </div>
               </div>
             </div>
 
             {/* Player Greeting & Details */}
             <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/10 border border-amber-400/20 px-3.5 py-1 text-xs font-bold text-amber-300 uppercase tracking-wider mb-2">
-                <Sparkles className="h-3 w-3 text-yellow-300" />
-                Happy Birthday, Champion!
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-800 text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
+                <Sparkles className="h-3 w-3 text-[#D4AF37]" />
+                SS SUPER LEAGUE // BIRTHDAY CELEBRATION
               </div>
 
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+              <h1 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight uppercase leading-none">
                 {player.name}
               </h1>
 
               {player.display_name && player.display_name !== player.name && (
-                <p className="text-sm font-semibold text-slate-400 mt-0.5">
-                  ({player.display_name})
+                <p className="text-xs font-mono font-bold text-slate-500 mt-1 uppercase">
+                  AKA {player.display_name}
                 </p>
               )}
 
-              <div className="mt-3 flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                <span className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs font-bold text-slate-200">
-                  Team: <strong className="text-amber-400">{player.team}</strong>
+              <div className="mt-3.5 flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-700">
+                  TEAM: <strong className="text-slate-900">{player.team}</strong>
                 </span>
-                <span className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs font-bold text-slate-200">
-                  Category: <strong className="text-emerald-400">{player.category}</strong>
+                <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-700">
+                  CAT: <strong className="text-amber-700">{player.category}</strong>
                 </span>
                 {player.dob && (
-                  <span className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs font-semibold text-slate-300">
-                    <Calendar className="h-3 w-3 text-amber-400" />
-                    Born {player.dob}
+                  <span className="flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 rounded-lg text-xs font-mono text-slate-600">
+                    <Calendar className="h-3 w-3 text-[#D4AF37]" />
+                    {player.dob}
                   </span>
                 )}
               </div>
 
-              <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-                The SS Premier Super League family congratulates you on your special day! Here’s to another year of legendary goals, tactical triumphs, and unforgettable tournament memories.
+              <p className="mt-3.5 text-xs sm:text-sm text-slate-600 font-mono leading-relaxed max-w-2xl">
+                The entire SS League family congratulates you on your birthday milestone! Wishing you many more top-corner screamers and unforgettable championship runs.
               </p>
 
               {/* Action Buttons: Wish & Share */}
-              <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-2.5">
                 <button
                   onClick={handleSendWish}
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500 hover:scale-105 transition-all"
+                  className="inline-flex items-center gap-1.5 bg-slate-950 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-mono font-bold shadow-md transition-all hover:scale-105 border border-slate-950"
                 >
-                  <Heart className={`h-4 w-4 ${hasWished ? 'fill-current text-red-200' : ''}`} />
-                  <span>{hasWished ? 'Wished!' : 'Wish Happy Birthday!'}</span>
-                  <span className="rounded-full bg-black/20 px-2 py-0.5 text-[11px]">
+                  <Heart className={`h-3.5 w-3.5 ${hasWished ? 'fill-current text-rose-400' : 'text-[#D4AF37]'}`} />
+                  <span>{hasWished ? 'Wished!' : 'Wish Happy Birthday'}</span>
+                  <span className="rounded bg-white/20 px-1.5 py-0.2 text-[10px]">
                     {wishCount}
                   </span>
                 </button>
 
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-200 hover:text-white transition-all"
+                  className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
                 >
-                  {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-slate-400" />}
-                  <span>{copied ? 'Link Copied!' : 'Copy Share Link'}</span>
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+                  <span>{copied ? 'COPIED' : 'COPY LINK'}</span>
                 </button>
 
                 <button
                   onClick={handleShareWhatsApp}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 px-4 py-2.5 text-xs sm:text-sm font-semibold text-emerald-300 transition-all"
+                  className="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
                 >
-                  <MessageCircle className="h-4 w-4 text-emerald-400" />
-                  <span>WhatsApp</span>
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>WHATSAPP</span>
                 </button>
 
                 <button
                   onClick={handleShareTwitter}
-                  className="flex items-center gap-2 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 px-4 py-2.5 text-xs sm:text-sm font-semibold text-sky-300 transition-all"
+                  className="inline-flex items-center gap-1.5 border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-800 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
                 >
-                  <Share2 className="h-4 w-4 text-sky-400" />
-                  <span>Share on X</span>
+                  <Share2 className="h-3.5 w-3.5 text-sky-600" />
+                  <span>SHARE ON X</span>
                 </button>
               </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION: The Birthday Chronicle (Funny News & Roast & Toast) */}
-        <section className="mt-8 rounded-3xl border border-amber-500/30 bg-gradient-to-b from-slate-900/90 to-slate-950 p-6 sm:p-8 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+        {/* SECTION: The Birthday Chronicle (Roast & Toast) */}
+        <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-widest">
-                <Sparkles className="h-3.5 w-3.5" />
-                SS League Special Sports Gazette
+              <div className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber-700 uppercase tracking-wider">
+                <Sparkles className="h-3 w-3 text-[#D4AF37]" />
+                SS LEAGUE // SPECIAL SPORTS GAZETTE
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                The Birthday Chronicle: Roast & Toast 📰
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight mt-0.5">
+                The Birthday Chronicle: Roast & Toast
               </h2>
             </div>
 
             <button
               onClick={handleRegenerateStory}
               disabled={isGeneratingStory}
-              className="inline-flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 px-4 py-2 text-xs font-bold text-amber-300 hover:text-white transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm disabled:opacity-50"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isGeneratingStory ? 'animate-spin' : ''}`} />
-              <span>{isGeneratingStory ? 'Drafting Story with AI...' : 'Regenerate Roast ✨'}</span>
+              <RefreshCw className={`h-3.5 w-3.5 text-[#D4AF37] ${isGeneratingStory ? 'animate-spin' : ''}`} />
+              <span>{isGeneratingStory ? 'Drafting Story...' : 'Regenerate Story'}</span>
             </button>
           </div>
 
-          {/* Newspaper Styled Article */}
-          <article className="mt-6 space-y-5">
+          <article className="mt-5 space-y-4">
             {/* Headline */}
             <div>
-              <h3 className="text-xl sm:text-3xl font-extrabold tracking-tight text-amber-300 leading-snug">
+              <h3 className="text-lg sm:text-2xl font-black text-slate-950 uppercase tracking-tight leading-snug">
                 {story.headline}
               </h3>
               {story.subtitle && (
-                <p className="mt-2 text-sm sm:text-base font-semibold text-slate-300 italic">
+                <p className="mt-1 text-xs sm:text-sm font-mono text-slate-500 italic">
                   "{story.subtitle}"
                 </p>
               )}
             </div>
 
-            {/* The Loving Roast */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-6 text-sm sm:text-base text-slate-200 leading-relaxed">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-400 mb-2">
-                <Flame className="h-4 w-4" />
-                The Birthday Roast
+            {/* Roast Box */}
+            <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1.5">
+                <Target className="h-3 w-3 text-amber-600" />
+                THE BIRTHDAY ROAST
               </div>
               <p>{story.roastParagraph}</p>
             </div>
 
-            {/* Tactical Scouting Report */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-6 text-sm sm:text-base text-slate-200 leading-relaxed">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-400 mb-2">
-                <Trophy className="h-4 w-4" />
-                Tactical Scouting & Stat Analysis
+            {/* Tactical Report */}
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                <Trophy className="h-3 w-3 text-[#D4AF37]" />
+                TACTICAL SCOUTING DISPATCH
               </div>
               <p>{story.tacticalReport}</p>
             </div>
 
             {/* Locker Room Rumor */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-6 text-sm sm:text-base text-slate-200 leading-relaxed">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">
-                <Users className="h-4 w-4" />
-                Locker-Room Dispatch
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                <Users className="h-3 w-3 text-slate-600" />
+                LOCKER-ROOM DISPATCH
               </div>
               <p>{story.lockerRoomRumor}</p>
             </div>
 
-            {/* Heartfelt Birthday Salute */}
-            <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 p-5 sm:p-6 text-sm sm:text-base text-amber-100 font-medium leading-relaxed">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300 mb-2">
-                <Cake className="h-4 w-4" />
-                Official SS League Wishes
+            {/* League Birthday Salute */}
+            <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4 text-xs sm:text-sm text-amber-950 leading-relaxed font-mono font-medium">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1.5">
+                <Sparkles className="h-3 w-3 text-[#D4AF37]" />
+                OFFICIAL SS LEAGUE WISHES
               </div>
               <p>{story.birthdayWish}</p>
             </div>
           </article>
         </section>
 
-        {/* SECTION: Career Statistics Showcase */}
-        <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 sm:p-8">
-          <div className="mb-6 flex items-center justify-between">
+        {/* SECTION: Career Stats Metrics */}
+        <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-widest">
-                <Trophy className="h-3.5 w-3.5" />
+              <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider font-mono">
                 Career Hall of Records
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                {player.name}'s Tournament Metrics
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight uppercase mt-0.5">
+                Tournament Metrics
               </h2>
             </div>
-            <span className="text-xs font-semibold text-slate-400">
-              {seasons.length} Seasons Contested
+            <span className="text-xs font-mono font-bold bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg">
+              {seasons.length} SEASONS
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {/* Matches Played */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-center">
-              <span className="block text-xs font-medium text-slate-400 uppercase">Matches</span>
-              <span className="mt-1 block text-2xl sm:text-3xl font-extrabold text-white">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-center">
+              <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">Matches</span>
+              <span className="mt-1 block text-2xl sm:text-3xl font-black text-slate-900">
                 {stats.matches}
               </span>
-              <span className="text-[11px] text-slate-500">{seasons.length} seasons</span>
+              <span className="text-[10px] font-mono text-slate-400">Total Played</span>
             </div>
 
-            {/* Goals Scored */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-center">
-              <span className="block text-xs font-medium text-slate-400 uppercase">Goals</span>
-              <span className="mt-1 block text-2xl sm:text-3xl font-extrabold text-amber-400">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-center">
+              <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">Goals</span>
+              <span className="mt-1 block text-2xl sm:text-3xl font-black text-amber-700">
                 {stats.goals}
               </span>
-              <span className="text-[11px] text-slate-500">{goalsPerMatch} / match</span>
+              <span className="text-[10px] font-mono text-slate-400">{goalsPerMatch} / match</span>
             </div>
 
-            {/* Wins */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-center">
-              <span className="block text-xs font-medium text-slate-400 uppercase">Victories</span>
-              <span className="mt-1 block text-2xl sm:text-3xl font-extrabold text-emerald-400">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-center">
+              <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">Wins</span>
+              <span className="mt-1 block text-2xl sm:text-3xl font-black text-emerald-600">
                 {stats.wins}
               </span>
-              <span className="text-[11px] text-slate-500">{winRate}% win rate</span>
+              <span className="text-[10px] font-mono text-slate-400">{winRate}% Win Rate</span>
             </div>
 
-            {/* Clean Sheets */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-center">
-              <span className="block text-xs font-medium text-slate-400 uppercase">Clean Sheets</span>
-              <span className="mt-1 block text-2xl sm:text-3xl font-extrabold text-sky-400">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-center">
+              <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">Clean Sheets</span>
+              <span className="mt-1 block text-2xl sm:text-3xl font-black text-sky-600">
                 {stats.clean_sheets}
               </span>
-              <span className="text-[11px] text-slate-500">Shutouts</span>
+              <span className="text-[10px] font-mono text-slate-400">Shutouts</span>
             </div>
 
-            {/* MOTM Awards */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-center">
-              <span className="block text-xs font-medium text-slate-400 uppercase">MOTM</span>
-              <span className="mt-1 block text-2xl sm:text-3xl font-extrabold text-yellow-300">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-center">
+              <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">MOTM</span>
+              <span className="mt-1 block text-2xl sm:text-3xl font-black text-[#D4AF37]">
                 {stats.motm_awards}
               </span>
-              <span className="text-[11px] text-slate-500">Player of Match</span>
+              <span className="text-[10px] font-mono text-slate-400">Awards</span>
             </div>
 
-            {/* Total Points */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-center">
-              <span className="block text-xs font-medium text-slate-400 uppercase">Career Pts</span>
-              <span className="mt-1 block text-2xl sm:text-3xl font-extrabold text-purple-400">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-center">
+              <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">Points</span>
+              <span className="mt-1 block text-2xl sm:text-3xl font-black text-slate-900">
                 {stats.points}
               </span>
-              <span className="text-[11px] text-slate-500">League points</span>
+              <span className="text-[10px] font-mono text-slate-400">Career Pts</span>
             </div>
           </div>
         </section>
 
         {/* SECTION: Season-by-Season Journey */}
         {seasons.length > 0 && (
-          <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-amber-400" />
+          <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[#D4AF37]" />
               Tournament History by Season
             </h2>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
+              <table className="w-full text-left text-xs font-mono">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400">
-                    <th className="pb-3 font-semibold">Season</th>
-                    <th className="pb-3 font-semibold">Team</th>
-                    <th className="pb-3 font-semibold">Cat</th>
-                    <th className="pb-3 font-semibold text-center">Matches</th>
-                    <th className="pb-3 font-semibold text-center">Goals</th>
-                    <th className="pb-3 font-semibold text-center">Wins</th>
-                    <th className="pb-3 font-semibold text-center">Points</th>
+                  <tr className="border-b border-slate-200 text-slate-500">
+                    <th className="pb-2.5 font-bold uppercase">Season</th>
+                    <th className="pb-2.5 font-bold uppercase">Team</th>
+                    <th className="pb-2.5 font-bold uppercase">Cat</th>
+                    <th className="pb-2.5 font-bold uppercase text-center">Matches</th>
+                    <th className="pb-2.5 font-bold uppercase text-center">Goals</th>
+                    <th className="pb-2.5 font-bold uppercase text-center">Wins</th>
+                    <th className="pb-2.5 font-bold uppercase text-center">Points</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {seasons.map((s, idx) => (
-                    <tr key={idx} className="hover:bg-slate-850/50 transition-colors">
-                      <td className="py-3 font-bold text-amber-400">{s.season_id}</td>
-                      <td className="py-3 font-medium text-white">{s.team}</td>
-                      <td className="py-3">
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 font-bold text-amber-700">{s.season_id}</td>
+                      <td className="py-2.5 font-semibold text-slate-900">{s.team}</td>
+                      <td className="py-2.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                           {s.category}
                         </span>
                       </td>
-                      <td className="py-3 text-center text-slate-300">{s.matches}</td>
-                      <td className="py-3 text-center font-bold text-amber-300">{s.goals}</td>
-                      <td className="py-3 text-center text-emerald-400">{s.wins}</td>
-                      <td className="py-3 text-center font-bold text-purple-400">{s.points}</td>
+                      <td className="py-2.5 text-center text-slate-600">{s.matches}</td>
+                      <td className="py-2.5 text-center font-bold text-slate-900">{s.goals}</td>
+                      <td className="py-2.5 text-center text-emerald-600 font-bold">{s.wins}</td>
+                      <td className="py-2.5 text-center font-bold text-[#D4AF37]">{s.points}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -467,34 +457,34 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
 
         {/* SECTION: Honors & Awards */}
         {awards.length > 0 && (
-          <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Award className="h-5 w-5 text-yellow-400" />
+          <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-[#D4AF37]" />
               Honors & Accolades ({awards.length})
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {awards.map((award, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3.5 rounded-2xl border border-slate-800 bg-slate-950/60 p-4"
+                  className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5"
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                    <Trophy className="h-5 w-5" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-[#D4AF37]">
+                    <Award className="h-5 w-5" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 font-mono">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-amber-400 uppercase">
+                      <span className="text-xs font-bold text-amber-800 uppercase">
                         {award.award_type === 'POTD' ? 'Player of the Day' : award.award_type === 'POTW' ? 'Player of the Week' : award.award_type}
                       </span>
-                      <span className="text-xs text-slate-500">• {award.season_id}</span>
+                      <span className="text-[10px] text-slate-400">• {award.season_id}</span>
                     </div>
-                    <p className="text-sm font-semibold text-white truncate mt-0.5">
+                    <p className="text-xs font-bold text-slate-800 truncate mt-0.5">
                       {award.team_name || player.team}
                     </p>
                     {award.performance_stats && (
-                      <p className="text-xs text-slate-400 mt-1">
-                        {award.performance_stats.goals ? `${award.performance_stats.goals} Goals scored` : ''}
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        {award.performance_stats.goals ? `${award.performance_stats.goals} Goals` : ''}
                         {award.performance_stats.matchup ? ` • ${award.performance_stats.matchup}` : ''}
                       </p>
                     )}
@@ -503,7 +493,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                         href={award.instagram_post_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-pink-400 hover:text-pink-300"
+                        className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-pink-600 hover:text-pink-500"
                       >
                         <span>View Instagram Feature</span>
                         <ExternalLink className="h-3 w-3" />
@@ -517,13 +507,13 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
         )}
 
         {/* Footer Back Button */}
-        <div className="mt-12 text-center">
+        <div className="text-center pt-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-850 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800 hover:border-amber-500/40 transition-all shadow-md"
+            className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl text-xs font-bold transition-all shadow-sm font-mono"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span>Return to SS Premier Super League Home</span>
+            <span>RETURN TO SS SUPER LEAGUE HOME</span>
           </Link>
         </div>
       </div>

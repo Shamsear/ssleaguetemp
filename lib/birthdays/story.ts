@@ -1,4 +1,4 @@
-import { generateWithFallback } from '@/lib/gemini/config';
+import { generateWithFallback } from '../gemini/config';
 
 export interface PlayerBirthdayContext {
   id: string;
@@ -33,58 +33,57 @@ export interface BirthdayStoryResult {
 }
 
 /**
- * High-quality fallback template generator (instant, humorous, safe & respectful)
+ * Clean, human-written sports chronicle generator (instant fallback)
  */
 export function generateFallbackBirthdayStory(ctx: PlayerBirthdayContext): BirthdayStoryResult {
   const { name, age, team, stats, seasonsCount } = ctx;
   const winRate = stats.matches > 0 ? Math.round((stats.wins / stats.matches) * 100) : 50;
 
-  // Tailored jokes based on stats
   let goalQuirk = '';
   if (stats.goals >= 50) {
-    goalQuirk = `With a staggering ${stats.goals} career goals under his belt, opposition goalkeepers are reportedly pitching in to buy him the biggest birthday cake in town—strictly on the condition that he takes game night off.`;
+    goalQuirk = `With ${stats.goals} career goals on record, rival goalkeepers reportedly offered to sponsor his birthday cake under the sole condition that he takes match night off.`;
   } else if (stats.goals > 15) {
-    goalQuirk = `Having rattled the net ${stats.goals} times in SS League history, opposition defenses are currently drafting emergency petitions to make birthdays an official league rest day.`;
+    goalQuirk = `Having found the net ${stats.goals} times in league history, opposition backlines are currently lobbying the committee to make birthdays an automatic suspension.`;
   } else {
-    goalQuirk = `While other players count goals, ${name} counts pure tactical brilliance, game-management, and sheer intimidation factor every time he steps onto the pitch.`;
+    goalQuirk = `While other players obsess over goal tallies, ${name} focuses on orchestrating play, winning duels, and commanding the pitch.`;
   }
 
   let defenseQuirk = '';
-  if (stats.clean_sheets >= 3) {
-    defenseQuirk = `Locker-room insiders confirm his ${stats.clean_sheets} clean sheets were achieved through a revolutionary combination of tactical genius and shouting 'STAY BACK!' louder than anyone else in the voice chat.`;
+  if (stats.clean_sheets >= 5) {
+    defenseQuirk = `His ${stats.clean_sheets} clean sheets prove that when he locks in defensively, breaking through is harder than negotiating an unassigned transfer window.`;
   } else {
-    defenseQuirk = `He believes that the best defense is simply scoring more than the other guy—a philosophy that has provided fans with maximum entertainment and guaranteed heart-rate spikes.`;
+    defenseQuirk = `His philosophy remains straightforward: when in doubt, attack with full intensity and let the scoreboard sort out the rest.`;
   }
 
-  let controllerQuirk = '';
+  let matchQuirk = '';
   if (stats.matches > 30) {
-    controllerQuirk = `After ${stats.matches} grueling matches across ${seasonsCount} seasons, sources close to the player reveal his controller's sprint trigger has officially filed for union protection.`;
+    matchQuirk = `Across ${stats.matches} battles spanning ${seasonsCount} tournament campaigns, his game controller has officially logged more flight hours than a regional airline pilot.`;
   } else {
-    controllerQuirk = `With a ${winRate}% win rate across ${stats.matches} battles, every point earned was celebrated with the intensity of a Champions League final whistle.`;
+    matchQuirk = `Holding a ${winRate}% win rate across ${stats.matches} matches, every single three points on his record was fought for until the final second.`;
   }
 
   const headlines = [
-    `OFFICIAL SCOUTING ALERT: ${name} Turns ${age} — Opposing Defenders Advised to Bring Birthday Cake, Not Tackles!`,
-    `BREAKING NEWS: SS League Sensation ${name} Celebrates Birthday Milestone with ${stats.goals} Career Goals and Zero Apologies!`,
-    `SPECIAL BULLETIN: ${name} Levels Up to ${age} Years Old — Controller Battery Reportedly at 100%!`,
+    `Scouting Bulletin: ${name} Turns ${age} as SS League Celebrates a Pillar of the Franchise`,
+    `Milestone Day: ${name} Marks Year ${age} with ${stats.goals} Goals and Unmatched Dedication`,
+    `Matchday Dispatch: ${name} Celebrates Birthday Milestone Amid Career Tournament Run`,
   ];
 
   const subtitles = [
-    `The ${team} star marks another trip around the sun while continuing to leave his mark on the SS League turf.`,
-    `Teammates, rivals, and tournament spectators unite to salute one of the league's most dedicated gladiators.`,
-    `From dramatic late winners to clutch defensive stops, celebrating a true SS League stalwart.`,
+    `The ${team} stalwart celebrates another year of competitive consistency and locker-room leadership.`,
+    `Teammates and rivals across the circuit unite to salute one of the league's most respected competitors.`,
+    `From late-game winners to clutch defensive stops, revisiting a remarkable tournament journey.`,
   ];
 
   const headline = headlines[Math.floor(Math.random() * headlines.length)];
   const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
 
-  const roastParagraph = `Today, the entire SS Premier Super League family halts play, turns down the stadium music, and sounds the vuvuzelas for ${name}, who officially turns ${age}! ${goalQuirk} ${controllerQuirk}`;
+  const roastParagraph = `Today the SS Premier Super League family marks a special occasion as ${name} officially turns ${age}. ${goalQuirk} ${matchQuirk}`;
 
-  const tacticalReport = `According to our advanced scouting analytics, ${name}'s stats speak for themselves: ${stats.matches} career appearances, ${stats.goals} goals converted, and ${stats.wins} victories etched into tournament folklore. ${defenseQuirk}`;
+  const tacticalReport = `Tournament analytics confirm the numbers behind the competitor: ${stats.matches} career appearances, ${stats.goals} goals converted, and ${stats.wins} victories etched into franchise records. ${defenseQuirk}`;
 
-  const lockerRoomRumor = `Inside reports from the ${team} camp allege that today's training session has been replaced with tactical cake-eating drills, though teammates insist ${name} will still try to claim Man of the Match honors for blowing out all the candles in a single breath.`;
+  const lockerRoomRumor = `Inside reports from the ${team} camp allege that today's training drills have been replaced with cake cutting, although teammates maintain ${name} will still try to contest Man of the Match honors for extinguishing the candles in record time.`;
 
-  const birthdayWish = `Jokes aside, huge congratulations and warmest birthday wishes from the entire SS League committee, teammates, and competitive community! May your year ahead be packed with top-corner screamers, clean sheets, clutch victories, and endless happiness both on and off the virtual pitch. Happy Birthday, ${name}! 🎉👑⚽`;
+  const birthdayWish = `Warmest congratulations and best wishes from the SS League management, team captains, and player roster. May the year ahead bring continued success, clinical finishing, and memorable victories both on and off the field. Happy Birthday, ${name}.`;
 
   return {
     headline,
@@ -98,48 +97,47 @@ export function generateFallbackBirthdayStory(ctx: PlayerBirthdayContext): Birth
 }
 
 /**
- * Generate a dynamic, personalized funny birthday chronicle using Gemini Flash
+ * Dynamic sports chronicle generation via Gemini 2.5 Flash
  */
 export async function generateGeminiBirthdayStory(ctx: PlayerBirthdayContext): Promise<BirthdayStoryResult> {
   const { name, age, team, category, stats, seasonsCount } = ctx;
 
   const prompt = `
-You are the witty, entertaining, and humorous head journalist for "SS League Sports Gazette", the premier eSports soccer tournament community news.
-Write a funny, affectionate, and entertaining birthday toast and lighthearted roast for SS League player: ${name}.
+You are a senior sports editor for the SS Premier Super League, an eFootball console tournament community in Kerala/India.
+Write an authentic, witty, and warm birthday news feature for player: ${name}.
 
-PLAYER PROFILE & CAREER STATS:
+PLAYER DATA:
 - Name: ${name}
-- Age: ${age} years old today
-- Current Team: ${team}
+- Age: ${age}
+- Team: ${team}
 - Category: ${category}
-- Career Matches Played: ${stats.matches}
-- Goals Scored: ${stats.goals}
-- Goals Conceded: ${stats.goals_conceded}
-- Matches Won: ${stats.wins} (Draws: ${stats.draws}, Losses: ${stats.losses})
+- Matches: ${stats.matches}
+- Goals: ${stats.goals}
+- Conceded: ${stats.goals_conceded}
+- Wins: ${stats.wins} (Draws: ${stats.draws}, Losses: ${stats.losses})
 - Clean Sheets: ${stats.clean_sheets}
-- Man of the Match (MOTM) Awards: ${stats.motm_awards}
-- Seasons Played: ${seasonsCount}
+- MOTM Awards: ${stats.motm_awards}
+- Seasons: ${seasonsCount}
 
-STRICT TONE & SAFETY GUIDELINES:
-1. "DO NOT make comments which will make a bad impression or hurt them."
-2. The tone MUST be warm, respectful, wholesome, humorous, and affectionate—like funny locker-room banter among best friends and gaming buddies.
-3. Make clever, playful jokes about their stats, controller sprint triggers, celebrations, team tactics, and cake.
-4. Conclude with heartfelt, energetic congratulations and birthday wishes from the SS League.
+EDITORIAL GUIDELINES:
+1. Write like a real, witty human sports journalist—NOT an AI bot. Avoid clichés like "In the thrilling realm of", "As another year dawns", "A force to be reckoned with".
+2. ZERO emojis anywhere in the text.
+3. ABSOLUTELY NO insulting, hurtful, demeaning, or body-shaming comments. Keep banter affectionate, witty, and locker-room friendly (e.g. controller sprint buttons, cake drills, goal celebrations).
+4. Integrate their real statistics naturally.
 
-Please respond with ONLY a valid JSON object matching this structure (no markdown fences, just pure JSON):
+Return ONLY pure valid JSON (no markdown fences, no backticks):
 {
-  "headline": "Punchy, exciting, funny sports news headline",
-  "subtitle": "Entertaining 1-sentence sub-headline",
-  "roastParagraph": "2-3 funny sentences lovingly roasting them about their birthday milestone and stats",
-  "tacticalReport": "2-3 humorous sentences analyzing their stats (goals, wins, clean sheets) in an esports commentary style",
-  "lockerRoomRumor": "1-2 funny sentences about rumors from their team camp celebrating their birthday",
-  "birthdayWish": "2-3 sentences of genuine, enthusiastic birthday wishes and congratulations from SS League"
+  "headline": "Authentic sports headline in title case",
+  "subtitle": "Professional 1-sentence sub-headline",
+  "roastParagraph": "2-3 sentences of clever, affectionate banter about their age and gaming habits",
+  "tacticalReport": "2-3 sentences analyzing their actual tournament metrics with humor",
+  "lockerRoomRumor": "1-2 sentences of fun team camp humor",
+  "birthdayWish": "2 sentences of sincere congratulations from the SS League management and community"
 }
 `;
 
   try {
     const rawResponse = await generateWithFallback(prompt);
-    // Clean up potential markdown formatting (```json ... ```)
     const cleaned = rawResponse
       .replace(/```json\s*/gi, '')
       .replace(/```\s*$/gi, '')
@@ -148,16 +146,16 @@ Please respond with ONLY a valid JSON object matching this structure (no markdow
     const parsed = JSON.parse(cleaned);
 
     return {
-      headline: parsed.headline || `${name} Turns ${age} in Grand SS League Style!`,
-      subtitle: parsed.subtitle || `Celebrating another legendary year on the SS League turf.`,
+      headline: parsed.headline || `${name} Marks Year ${age} in SS League Style`,
+      subtitle: parsed.subtitle || `Celebrating another competitive campaign on the tournament circuit.`,
       roastParagraph: parsed.roastParagraph || '',
       tacticalReport: parsed.tacticalReport || '',
       lockerRoomRumor: parsed.lockerRoomRumor || '',
-      birthdayWish: parsed.birthdayWish || `Happy Birthday to ${name} from all of us at SS League!`,
+      birthdayWish: parsed.birthdayWish || `Happy Birthday to ${name} from the entire SS League community.`,
       isAiGenerated: true,
     };
   } catch (error) {
-    console.warn('Gemini birthday story generation failed or timed out, using fallback:', error);
+    console.warn('Gemini story fallback triggered:', error);
     return generateFallbackBirthdayStory(ctx);
   }
 }
