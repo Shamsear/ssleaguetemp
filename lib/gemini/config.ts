@@ -52,11 +52,9 @@ const getGeminiClient = () => {
 };
 
 // Get the Gemini model for news generation with automatic fallback
-export const getGeminiModel = () => {
+export const getGeminiModel = (modelName: string = 'gemini-2.5-flash') => {
   const genAI = getGeminiClient();
-  
-  // Using gemini-2.0-flash which is available in the current API
-  return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  return genAI.getGenerativeModel({ model: modelName });
 };
 
 // Wrapper function that handles rate limit errors and retries with different keys
@@ -95,6 +93,73 @@ export const generateWithFallback = async (prompt: string, retries = 3): Promise
   }
   
   throw lastError || new Error('Failed to generate content with all available API keys');
+};
+
+/**
+ * Generate an image using Gemini native image generation (gemini-2.5-flash-image / gemini-3-pro-image)
+ * Rotates across configured GEMINI keys on rate limits.
+ */
+export const generateGeminiImage = async (
+  prompt: string,
+  modelName: 'gemini-2.5-flash-image' | 'gemini-3-pro-image' = 'gemini-2.5-flash-image',
+  retries = 3
+): Promise<{ buffer: Buffer; mimeType: string }> => {
+  const keys = getApiKeys();
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < Math.min(retries, keys.length); attempt++) {
+    const apiKey = getCurrentApiKey();
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            responseModalities: ['IMAGE']
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      const imagePart = parts.find((p: any) => p.inlineData?.data);
+
+      if (!imagePart || !imagePart.inlineData?.data) {
+        throw new Error('No image inlineData returned by Gemini Image API');
+      }
+
+      return {
+        buffer: Buffer.from(imagePart.inlineData.data, 'base64'),
+        mimeType: imagePart.inlineData.mimeType || 'image/png'
+      };
+    } catch (error: any) {
+      lastError = error;
+      const isRateLimit =
+        error.message?.includes('429') ||
+        error.message?.includes('rate limit') ||
+        error.message?.includes('quota') ||
+        error.message?.includes('RESOURCE_EXHAUSTED');
+
+      if (isRateLimit && keys.length > 1 && attempt < keys.length - 1) {
+        console.warn(`⚠️ Rate limit hit on API key #${currentKeyIndex + 1}, rotating key...`);
+        rotateApiKey();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError || new Error('Failed to generate image with available API keys');
 };
 
 // Test connection to Gemini API

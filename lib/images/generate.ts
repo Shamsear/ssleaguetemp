@@ -399,12 +399,39 @@ export function generateImageWithPollinations(
 /**
  * Generate and upload news image in one go
  */
+/**
+ * Generate an image using Google Gemini native image models (gemini-2.5-flash-image / gemini-3-pro-image)
+ */
+export async function generateImageWithGemini(
+  prompt: string,
+  modelName: 'gemini-2.5-flash-image' | 'gemini-3-pro-image' = 'gemini-2.5-flash-image'
+): Promise<Buffer> {
+  const { generateGeminiImage } = await import('../gemini/config');
+  const result = await generateGeminiImage(prompt, modelName);
+  return result.buffer;
+}
+
 export async function generateNewsImage(
   eventType: string,
   metadata: Record<string, any>,
   newsId: string
 ): Promise<string | null> {
   const prompt = generateSDXLPrompt(eventType, metadata);
+
+  // 1. Try Gemini Image Generation first
+  if (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2) {
+    try {
+      console.log('🎨 Generating image with Gemini Image model...');
+      const { generateGeminiImage } = await import('../gemini/config');
+      const { buffer, mimeType } = await generateGeminiImage(prompt, 'gemini-2.5-flash-image');
+      const base64 = buffer.toString('base64');
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+      console.log('✅ Image generated with Gemini Image API!');
+      return dataUrl;
+    } catch (geminiError) {
+      console.warn('⚠️ Gemini image generation failed, falling back...', geminiError);
+    }
+  }
   try {
     console.log('🎨 Generating image with Pollinations.ai (free alternative)...');
     

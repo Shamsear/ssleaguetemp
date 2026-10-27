@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import HeroSection from './components/HeroSection';
 import HallOfFameSelector from '././components/HallOfFameSelector';
+import DailyBirthdayModal, { TodayBirthdaysBanner } from '@/components/birthday/DailyBirthdayModal';
 import { useEffect, useState } from 'react';
 import { useResolvedTeamData } from '@/hooks/useResolveTeamNames';
 import { Activity, ArrowRight, Award, Crown, Flame, Medal, RotateCcw, Shield, Star, Target, TrendingUp, Trophy, Zap } from 'lucide-react';
@@ -248,7 +249,14 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto relative z-10 space-y-10">
         {/* Hero Section */}
+        {/* Daily Birthday Modal (once per day) */}
+        <DailyBirthdayModal />
+
+        {/* Hero Section */}
         <HeroSection />
+
+        {/* Today's Birthday Spotlight Banner */}
+        <TodayBirthdaysBanner />
 
 
         {/* Dashboard Panels */}
