@@ -423,9 +423,13 @@ async function neonWhereGet(
     }
     if (filter.op === 'in' && Array.isArray(filter.value)) {
       const col = mapFieldName(collection, filter.field);
-      const placeholders = filter.value.map(() => `$${paramIndex++}`).join(', ');
-      query += hasWhere ? ` AND ${col} IN (${placeholders})` : ` WHERE ${col} IN (${placeholders})`;
-      params.push(...filter.value);
+      if (filter.value.length === 0) {
+        query += hasWhere ? ' AND 1 = 0' : ' WHERE 1 = 0';
+      } else {
+        const placeholders = filter.value.map(() => "$" + (paramIndex++)).join(', ');
+        query += hasWhere ? ` AND ${col} IN (${placeholders})` : ` WHERE ${col} IN (${placeholders})`;
+        params.push(...filter.value);
+      }
       hasWhere = true;
     }
     if (filter.op === 'array-contains') {
@@ -471,8 +475,14 @@ async function neonWhereGet(
 }
 
 // Map Firestore field names to Neon column names
-function mapFieldName(collection: string, field: string): string {
+function mapFieldName(collection: string, field: any): string {
+  const fieldStr = typeof field === 'string'
+    ? field
+    : (field && typeof field === 'object' && field.isEqual ? '__name__' : String(field || ''));
+
   const COMMON_MAP: Record<string, string> = {
+    __name__: 'id',
+    id: 'id',
     isActive: 'is_active',
     season_id: 'season_id',
     seasonId: 'season_id',
@@ -497,7 +507,7 @@ function mapFieldName(collection: string, field: string): string {
       purseAmount: 'purse_amount', maxPlayersPerTeam: 'max_players_per_team',
       season_number: 'season_number',
     };
-    return map[field] || field;
+    return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
   if (collection === 'teams') {
     const map: Record<string, string> = {
@@ -505,21 +515,21 @@ function mapFieldName(collection: string, field: string): string {
       team_name: 'team_name', team_code: 'team_code',
       owner_uid: 'owner_uid',
     };
-    return map[field] || field;
+    return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
   if (collection === 'team_seasons') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
       user_id: 'user_id', userId: 'user_id', status: 'status', team_code: 'team_code',
     };
-    return map[field] || field;
+    return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
   if (collection === 'realplayers' || collection === 'realplayer') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
       display_name: 'display_name', is_available: 'is_available',
     };
-    return map[field] || field;
+    return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
   if (collection === 'transactions') {
     const map: Record<string, string> = {
@@ -534,9 +544,9 @@ function mapFieldName(collection: string, field: string): string {
       player_id: 'player_id', playerId: 'player_id',
       player_name: 'player_name', playerName: 'player_name',
     };
-    return map[field] || field;
+    return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
-  return field;
+  return COMMON_MAP[fieldStr] || fieldStr;
 }
 
 // Known columns for Neon tables to prevent inserting invalid column names

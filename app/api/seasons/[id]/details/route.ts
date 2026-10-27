@@ -128,6 +128,33 @@ export async function GET(
         hasPlayedThisSeason: playersWithStats.has(player.player_id),
       }));
 
+    let totalTeams = teams.length;
+    let totalPlayers = players.filter(p => p.hasPlayedThisSeason).length;
+
+    // Fallback for historical seasons where team_seasons isn't populated
+    if (totalTeams === 0) {
+      try {
+        const teamCountRes = await sql`SELECT COUNT(DISTINCT team_id) as count FROM teamstats WHERE LOWER(season_id) = LOWER(${seasonId})`;
+        totalTeams = parseInt(teamCountRes[0]?.count) || seasonData?.total_teams || seasonData?.totalTeams || 0;
+      } catch (e) {
+        totalTeams = seasonData?.total_teams || seasonData?.totalTeams || 0;
+      }
+    }
+
+    if (totalPlayers === 0) {
+      try {
+        if (isModern) {
+          const playerCountRes = await sql`SELECT COUNT(DISTINCT player_id) as count FROM player_seasons WHERE LOWER(season_id) = LOWER(${seasonId})`;
+          totalPlayers = parseInt(playerCountRes[0]?.count) || 0;
+        } else {
+          const playerCountRes = await sql`SELECT COUNT(DISTINCT player_id) as count FROM realplayerstats WHERE LOWER(season_id) = LOWER(${seasonId})`;
+          totalPlayers = parseInt(playerCountRes[0]?.count) || 0;
+        }
+      } catch (e) {
+        totalPlayers = 0;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -141,8 +168,8 @@ export async function GET(
         season_end: seasonData?.season_end,
         champion_team_name: seasonData?.champion_team_name,
         runner_up_team_name: seasonData?.runner_up_team_name,
-        total_teams: teams.length,
-        total_players: players.filter(p => p.hasPlayedThisSeason).length,
+        total_teams: totalTeams,
+        total_players: totalPlayers,
         teams: teams,
         players: players,
       },

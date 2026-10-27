@@ -47,7 +47,7 @@ export async function GET(
         batches.push(
           adminDb
             .collection('teams')
-            .where('__name__', 'in', batch)
+            .where('id', 'in', batch)
             .get()
         );
       }
