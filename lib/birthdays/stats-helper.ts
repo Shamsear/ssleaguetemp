@@ -29,10 +29,32 @@ export interface PlayerAggregatedStats {
   points: number;
 }
 
+export function normalizeTeam(team: string | null | undefined): string {
+  if (!team || !team.trim() || team.trim().toLowerCase() === 'unknown') {
+    return 'FREE AGENT';
+  }
+  return team.trim();
+}
+
+export function normalizeCategory(category: string | null | undefined, isS16orS17 = false): string {
+  if (isS16orS17) {
+    return 'NA';
+  }
+  if (!category || !category.trim()) {
+    return 'NA';
+  }
+  const clean = category.trim();
+  const upper = clean.toUpperCase();
+  if (upper === 'A' || upper === 'NA' || upper === 'N/A' || upper === 'NONE') {
+    return 'NA';
+  }
+  return clean;
+}
+
 /**
  * Fetches and resolves player season stats across tournament DB:
- * - Seasons 16 & 17: Retrieved from player_seasons table with base_points decreased (raw_points - base_points)
- * - All other seasons: Retrieved from realplayerstats table
+ * - Seasons 16 & 17: Retrieved from player_seasons table with base_points decreased (raw_points - base_points) and category = NA
+ * - All other seasons: Retrieved from realplayerstats table, team defaults to FREE AGENT (never Unknown), category 'A' interpreted as 'NA'
  */
 export async function getPlayerTournamentHistory(playerId: string): Promise<{
   seasons: PlayerSeasonRecord[];
@@ -93,7 +115,7 @@ export async function getPlayerTournamentHistory(playerId: string): Promise<{
         const ps = psMap.get(sId);
         const rps = rpsRows.find((r: any) => (r.season_id || '').toUpperCase() === sId);
 
-        // 16 and 17 is in player_seasons with base points decreased
+        // 16 and 17 is in player_seasons with base points decreased and has NO category (NA)
         if (isS16orS17 && ps) {
           const basePoints = parseInt(ps.base_points, 10) || 0;
           const rawPoints = parseInt(ps.points, 10) || 0;
@@ -101,8 +123,8 @@ export async function getPlayerTournamentHistory(playerId: string): Promise<{
 
           return {
             season_id: sId,
-            team: ps.team || (rps && rps.team) || 'Unknown',
-            category: ps.category || (rps && rps.category) || 'Red',
+            team: normalizeTeam(ps.team || (rps && rps.team)),
+            category: 'NA',
             matches: Number(ps.matches_played || 0),
             goals: Number(ps.goals_scored || 0),
             goals_conceded: Number(ps.goals_conceded || 0),
@@ -119,11 +141,10 @@ export async function getPlayerTournamentHistory(playerId: string): Promise<{
 
         // All other seasons are in realplayerstats
         if (rps) {
-          // If for some reason S16/S17 was not in player_seasons, but in realplayerstats, still handle gracefully
           return {
             season_id: sId,
-            team: rps.team || 'Unknown',
-            category: rps.category || 'Red',
+            team: normalizeTeam(rps.team),
+            category: normalizeCategory(rps.category, isS16orS17),
             matches: Number(rps.matches_played || 0),
             goals: Number(rps.goals_scored || 0),
             goals_conceded: Number(rps.goals_conceded || 0),

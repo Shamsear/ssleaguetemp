@@ -4,7 +4,7 @@ import BirthdayClient from './BirthdayClient';
 import { getMainDb, isMainDbAvailable } from '../../../lib/neon/main-config';
 import { getTournamentDb, isTournamentDbAvailable } from '../../../lib/neon/tournament-config';
 import { generateFallbackBirthdayStory, PlayerBirthdayContext } from '../../../lib/birthdays/story';
-import { getPlayerTournamentHistory } from '../../../lib/birthdays/stats-helper';
+import { getPlayerTournamentHistory, normalizeTeam, normalizeCategory } from '../../../lib/birthdays/stats-helper';
 
 function formatPhotoUrl(url: string | null | undefined): string {
   if (!url) return '/placeholder-player.png';
@@ -148,8 +148,10 @@ export default async function BirthdayPage({ params, searchParams }: PageProps) 
     }
   }
 
-  const resolvedTeam = player.team || raw.team || raw.team_name || (seasons.length > 0 ? seasons[seasons.length - 1].team : 'Free Agent');
-  const resolvedCategory = player.category_id || raw.category || raw.category_name || (seasons.length > 0 ? seasons[seasons.length - 1].category : 'PLAYER');
+  const resolvedTeam = normalizeTeam(player.team || raw.team || raw.team_name || (seasons.length > 0 ? seasons[seasons.length - 1].team : 'FREE AGENT'));
+  const rawCat = player.category_id || raw.category || raw.category_name;
+  const fallbackCat = seasons.slice().reverse().find((s) => s.category && s.category !== 'NA')?.category || 'NA';
+  const resolvedCategory = normalizeCategory(rawCat || fallbackCat);
 
   const birthdayContext: PlayerBirthdayContext = {
     id: pid,
