@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
-import { getTournamentDb, isTournamentDbAvailable } from '@/lib/neon/tournament-config';
 import { generateGeminiBirthdayStory, PlayerBirthdayContext } from '@/lib/birthdays/story';
+import { getPlayerTournamentHistory } from '@/lib/birthdays/stats-helper';
 
 function calculateAge(dobStr: string): number {
   if (!dobStr) return 0;
@@ -56,50 +56,18 @@ export async function POST(
     const dob = raw.date_of_birth || raw.dob || '';
     const age = calculateAge(dob);
 
-    let seasonsCount = 0;
-    let aggregatedStats = {
-      matches: 0,
-      goals: 0,
-      goals_conceded: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      clean_sheets: 0,
-      motm_awards: 0,
-      points: 0,
-    };
-
-    if (isTournamentDbAvailable()) {
-      try {
-        const tSql = getTournamentDb();
-        const statsRows = await tSql`
-          SELECT * FROM realplayerstats
-          WHERE player_id = ${pid}
-        `;
-        seasonsCount = statsRows.length;
-        for (const s of statsRows) {
-          aggregatedStats.matches += Number(s.matches_played || 0);
-          aggregatedStats.goals += Number(s.goals_scored || 0);
-          aggregatedStats.goals_conceded += Number(s.goals_conceded || 0);
-          aggregatedStats.wins += Number(s.wins || s.matches_won || 0);
-          aggregatedStats.draws += Number(s.draws || s.matches_drawn || 0);
-          aggregatedStats.losses += Number(s.losses || s.matches_lost || 0);
-          aggregatedStats.clean_sheets += Number(s.clean_sheets || 0);
-          aggregatedStats.motm_awards += Number(s.motm_awards || 0);
-          aggregatedStats.points += Number(s.points || 0);
-        }
-      } catch (err) {
-        console.warn('Failed to aggregate stats for AI story:', err);
-      }
-    }
+    const { seasons, aggregatedStats } = await getPlayerTournamentHistory(pid);
+    const seasonsCount = seasons.length;
+    const resolvedTeam = player.team || raw.team || raw.team_name || (seasons.length > 0 ? seasons[seasons.length - 1].team : 'Free Agent');
+    const resolvedCategory = player.category_id || raw.category || raw.category_name || (seasons.length > 0 ? seasons[seasons.length - 1].category : 'RED');
 
     const context: PlayerBirthdayContext = {
       id: pid,
       name: player.name || player.display_name || raw.name || 'SS League Player',
       dob,
       age,
-      team: player.team || raw.team || raw.team_name || 'Free Agent',
-      category: player.category_id || raw.category || raw.category_name || 'RED',
+      team: resolvedTeam,
+      category: resolvedCategory,
       stats: aggregatedStats,
       seasonsCount,
     };

@@ -7,7 +7,6 @@ import {
   Share2,
   Copy,
   Check,
-  Sparkles,
   Trophy,
   Target,
   RefreshCw,
@@ -20,7 +19,8 @@ import {
   MessageCircle,
   ArrowRight,
   Shield,
-  Medal,
+  CircleDot,
+  Swords,
 } from 'lucide-react';
 import ConfettiEffect from '../../../components/birthday/ConfettiEffect';
 
@@ -71,6 +71,24 @@ interface BirthdayData {
   };
 }
 
+const getCategoryColor = (category: string) => {
+  const cat = (category || '').toLowerCase();
+  switch (cat) {
+    case 'red':
+      return 'bg-red-50 text-red-700 border-red-200';
+    case 'black':
+      return 'bg-slate-900 text-white border-slate-800';
+    case 'blue':
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    case 'orange':
+      return 'bg-orange-50 text-orange-700 border-orange-200';
+    case 'white':
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+    default:
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+  }
+};
+
 export default function BirthdayClient({ initialData }: { initialData: BirthdayData }) {
   const { player, stats, seasons, awards } = initialData;
   const [story, setStory] = useState(initialData.story);
@@ -94,7 +112,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   const handleShareWhatsApp = () => {
     if (typeof window !== 'undefined') {
       const text = encodeURIComponent(
-        `🎂 Today is ${player.name}'s Birthday (${player.age} Years)! 🎉\nCheck out career tournament stats & birthday chronicle on SS League:\n${window.location.href}`
+        `Today is ${player.name}'s Birthday (${player.age} Years)!\nCheck out his SS League tournament record and birthday feature:\n${window.location.href}`
       );
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
@@ -103,7 +121,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   const handleShareTwitter = () => {
     if (typeof window !== 'undefined') {
       const text = encodeURIComponent(
-        `🎂 Celebrating ${player.name}'s Birthday (${player.age})! Check out career stats on SS League:\n`
+        `Celebrating ${player.name}'s Birthday (${player.age} Years)! SS League tournament record:\n`
       );
       window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`, '_blank');
     }
@@ -136,14 +154,14 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
   };
 
   return (
-    <div className="console-bg min-h-screen text-slate-800 relative pt-5 sm:pt-24 pb-12 px-4 sm:px-6">
-      {/* Festive Confetti Burst */}
-      {showConfetti && <ConfettiEffect duration={4000} />}
+    <div className="console-bg min-h-screen text-slate-800 relative pt-24 sm:pt-32 lg:pt-36 pb-12 px-4 sm:px-6">
+      {/* Gentle celebratory particle effect */}
+      {showConfetti && <ConfettiEffect duration={3500} />}
 
-      {/* Decorative eSports glowing ambient overlay */}
+      {/* Decorative ambient gold glow overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+      <div className="max-w-5xl mx-auto relative z-10 space-y-6">
         {/* Navigation & Status Header */}
         <div className="bg-white border border-slate-200/60 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Link
@@ -155,10 +173,10 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
           </Link>
 
           <div className="flex items-center gap-2 font-mono text-xs">
-            <span className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg font-bold">
+            <span className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-xl font-bold">
               PLAYER_ID: {player.player_id || player.id}
             </span>
-            <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-amber-700 px-3 py-1 rounded-lg font-bold">
+            <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-amber-700 px-3 py-1 rounded-xl font-bold">
               BIRTHDAY EDITION
             </span>
           </div>
@@ -166,39 +184,38 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
 
         {/* HERO SECTION: Player Spotlight Card */}
         <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
-          {/* Decorative console chevron lines */}
-          <div className="absolute bottom-0 left-0 right-0 h-[4px] bg-[repeating-linear-gradient(90deg,rgba(0,0,0,0.06)_0px,rgba(0,0,0,0.06)_1px,transparent_1px,transparent_12px)] opacity-50" />
+          {/* Subtle console corner metadata */}
+          <div className="absolute top-0 right-0 p-4 font-mono text-[9px] text-slate-300 pointer-events-none select-none hidden sm:block">
+            LEAGUE_EVENT: [BIRTHDAY_CELEBRATION]
+          </div>
 
           <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-10 relative z-10">
-            {/* Player Avatar with Halo */}
+            {/* Player Avatar */}
             <div className="relative shrink-0">
-              <div className="h-36 w-36 sm:h-44 sm:w-44 overflow-hidden rounded-full ring-4 ring-[#D4AF37]/40 p-1 bg-white shadow-md">
-                <div className="relative h-full w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-32 w-32 sm:h-40 sm:w-40 rounded-2xl border-2 border-slate-200/90 ring-2 ring-[#D4AF37]/30 p-1 bg-white shadow-md overflow-hidden">
+                <div className="relative h-full w-full rounded-xl overflow-hidden bg-slate-100">
                   <Image
                     src={player.photo_url || '/placeholder-player.png'}
                     alt={player.name}
                     fill
-                    sizes="(max-width: 640px) 144px, 176px"
+                    sizes="(max-width: 640px) 128px, 160px"
                     priority
                     className="object-cover"
                   />
                 </div>
               </div>
 
-              {/* Age Milestone Stamp */}
-              <div className="absolute -bottom-1 -right-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-950 text-[#D4AF37] shadow-lg border-2 border-white">
-                <div className="text-center font-mono">
-                  <span className="block text-sm font-black leading-none">{player.age}</span>
-                  <span className="block text-[8px] font-bold uppercase tracking-wider">YRS</span>
-                </div>
+              {/* Age Milestone Badge */}
+              <div className="absolute -bottom-2 -right-2 flex h-8 px-2.5 items-center justify-center rounded-lg bg-slate-950 text-[#D4AF37] font-mono text-xs font-bold border border-slate-800 shadow-md">
+                {player.age ? `${player.age} YEARS` : 'PLAYER'}
               </div>
             </div>
 
             {/* Player Greeting & Details */}
             <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-800 text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="h-3 w-3 text-[#D4AF37]" />
-                SS SUPER LEAGUE // BIRTHDAY CELEBRATION
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-800 text-[10px] font-mono font-bold uppercase tracking-wider mb-2.5">
+                <CircleDot className="w-2.5 h-2.5 text-[#D4AF37] animate-pulse" />
+                SS SUPER LEAGUE // BIRTHDAY SPOTLIGHT
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight uppercase leading-none">
@@ -212,14 +229,14 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
               )}
 
               <div className="mt-3.5 flex flex-wrap items-center justify-center md:justify-start gap-2">
-                <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-700">
+                <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700">
                   TEAM: <strong className="text-slate-900">{player.team}</strong>
                 </span>
-                <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-700">
-                  CAT: <strong className="text-amber-700">{player.category}</strong>
+                <span className={`border px-3 py-1 rounded-xl text-xs font-mono font-bold ${getCategoryColor(player.category)}`}>
+                  CAT: {player.category}
                 </span>
                 {player.dob && (
-                  <span className="flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 rounded-lg text-xs font-mono text-slate-600">
+                  <span className="flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono text-slate-600">
                     <Calendar className="h-3 w-3 text-[#D4AF37]" />
                     {player.dob}
                   </span>
@@ -227,14 +244,14 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
               </div>
 
               <p className="mt-3.5 text-xs sm:text-sm text-slate-600 font-mono leading-relaxed max-w-2xl">
-                The entire SS League family congratulates you on your birthday milestone! Wishing you many more top-corner screamers and unforgettable championship runs.
+                The SS Premier Super League family congratulates you on your special day. Celebrating your dedication, tournament consistency, and tournament highlights.
               </p>
 
               {/* Action Buttons: Wish & Share */}
               <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-2.5">
                 <button
                   onClick={handleSendWish}
-                  className="inline-flex items-center gap-1.5 bg-slate-950 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-mono font-bold shadow-md transition-all hover:scale-105 border border-slate-950"
+                  className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-mono font-bold shadow-md transition-all hover:scale-105 border border-slate-950"
                 >
                   <Heart className={`h-3.5 w-3.5 ${hasWished ? 'fill-current text-rose-400' : 'text-[#D4AF37]'}`} />
                   <span>{hasWished ? 'Wished!' : 'Wish Happy Birthday'}</span>
@@ -253,7 +270,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
 
                 <button
                   onClick={handleShareWhatsApp}
-                  className="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
                 >
                   <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
                   <span>WHATSAPP</span>
@@ -261,24 +278,26 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
 
                 <button
                   onClick={handleShareTwitter}
-                  className="inline-flex items-center gap-1.5 border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-800 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
                 >
-                  <Share2 className="h-3.5 w-3.5 text-sky-600" />
+                  <Share2 className="h-3.5 w-3.5 text-slate-600" />
                   <span>SHARE ON X</span>
                 </button>
               </div>
             </div>
           </div>
+
+          {/* Decorative console chevron line */}
+          <div className="absolute bottom-0 left-0 right-0 h-[4px] bg-[repeating-linear-gradient(90deg,rgba(0,0,0,0.06)_0px,rgba(0,0,0,0.06)_1px,transparent_1px,transparent_12px)] opacity-50" />
         </section>
 
-        {/* SECTION: The Birthday Chronicle (Roast & Toast) */}
+        {/* SECTION: The Birthday Chronicle */}
         <section className="bg-white border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <div className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber-700 uppercase tracking-wider">
-                <Sparkles className="h-3 w-3 text-[#D4AF37]" />
-                SS LEAGUE // SPECIAL SPORTS GAZETTE
-              </div>
+              <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider font-mono">
+                Tournament Press Dispatch // Special Feature
+              </span>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight mt-0.5">
                 The Birthday Chronicle: Roast & Toast
               </h2>
@@ -290,7 +309,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
               className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-[#D4AF37] ${isGeneratingStory ? 'animate-spin' : ''}`} />
-              <span>{isGeneratingStory ? 'Drafting Story...' : 'Regenerate Story'}</span>
+              <span>{isGeneratingStory ? 'Drafting Feature...' : 'Regenerate Feature'}</span>
             </button>
           </div>
 
@@ -308,10 +327,10 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
             </div>
 
             {/* Roast Box */}
-            <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono">
+            <div className="rounded-xl border border-amber-200/70 bg-amber-50/40 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono">
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1.5">
                 <Target className="h-3 w-3 text-amber-600" />
-                THE BIRTHDAY ROAST
+                COMMUNITY ROAST & OBSERVATION
               </div>
               <p>{story.roastParagraph}</p>
             </div>
@@ -329,7 +348,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
             <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono">
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                 <Users className="h-3 w-3 text-slate-600" />
-                LOCKER-ROOM DISPATCH
+                FRANCHISE & TEAMMATE NOTES
               </div>
               <p>{story.lockerRoomRumor}</p>
             </div>
@@ -337,8 +356,8 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
             {/* League Birthday Salute */}
             <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 p-4 text-xs sm:text-sm text-amber-950 leading-relaxed font-mono font-medium">
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1.5">
-                <Sparkles className="h-3 w-3 text-[#D4AF37]" />
-                OFFICIAL SS LEAGUE WISHES
+                <Swords className="h-3 w-3 text-[#D4AF37]" />
+                OFFICIAL LEAGUE SALUTE
               </div>
               <p>{story.birthdayWish}</p>
             </div>
@@ -356,7 +375,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                 Tournament Metrics
               </h2>
             </div>
-            <span className="text-xs font-mono font-bold bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg">
+            <span className="text-xs font-mono font-bold bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-xl">
               {seasons.length} SEASONS
             </span>
           </div>
@@ -439,7 +458,7 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                       <td className="py-2.5 font-bold text-amber-700">{s.season_id}</td>
                       <td className="py-2.5 font-semibold text-slate-900">{s.team}</td>
                       <td className="py-2.5">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getCategoryColor(s.category)}`}>
                           {s.category}
                         </span>
                       </td>

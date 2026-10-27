@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
-import { getTournamentDb, isTournamentDbAvailable } from '@/lib/neon/tournament-config';
+import { isTournamentDbAvailable } from '@/lib/neon/tournament-config';
+import { getPlayerTournamentHistory } from '@/lib/birthdays/stats-helper';
 
 function formatPhotoUrl(url: string | null | undefined): string {
   if (!url) return '/placeholder-player.png';
@@ -66,29 +67,26 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fetch career quick stats if tournament DB is available
-    let statsMap: Record<string, { matches: number; goals: number; wins: number; clean_sheets: number }> = {};
+    // Fetch career quick stats if tournament DB is available (using player_seasons for S16 & S17)
+    let statsMap: Record<string, { matches: number; goals: number; wins: number; clean_sheets: number; latestTeam?: string }> = {};
     if (isTournamentDbAvailable()) {
       try {
-        const tSql = getTournamentDb();
-        const playerIds = players.map((p: any) => p.player_id || p.id);
-        const statsRows = await tSql`
-          SELECT player_id,
-                 COALESCE(SUM(matches_played), 0) as total_matches,
-                 COALESCE(SUM(goals_scored), 0) as total_goals,
-                 COALESCE(SUM(matches_won), 0) as total_wins,
-                 COALESCE(SUM(clean_sheets), 0) as total_clean_sheets
-          FROM realplayerstats
-          WHERE player_id = ANY(${playerIds})
-          GROUP BY player_id
-        `;
+        const results = await Promise.all(
+          players.map(async (p: any) => {
+            const pid = p.player_id || p.id;
+            const { seasons, aggregatedStats } = await getPlayerTournamentHistory(pid);
+            const latestTeam = seasons.length > 0 ? seasons[seasons.length - 1].team : undefined;
+            return { pid, aggregatedStats, latestTeam };
+          })
+        );
 
-        for (const row of statsRows) {
-          statsMap[row.player_id] = {
-            matches: Number(row.total_matches),
-            goals: Number(row.total_goals),
-            wins: Number(row.total_wins),
-            clean_sheets: Number(row.total_clean_sheets),
+        for (const item of results) {
+          statsMap[item.pid] = {
+            matches: item.aggregatedStats.matches,
+            goals: item.aggregatedStats.goals,
+            wins: item.aggregatedStats.wins,
+            clean_sheets: item.aggregatedStats.clean_sheets,
+            latestTeam: item.latestTeam,
           };
         }
       } catch (statsErr) {
@@ -102,6 +100,7 @@ export async function GET(request: NextRequest) {
       const photo = p.profile_image || raw.photo_url || raw.photoURL || raw.profile_image || raw.image;
       const pid = p.player_id || p.id;
       const playerStats = statsMap[pid] || { matches: 0, goals: 0, wins: 0, clean_sheets: 0 };
+      const resolvedTeam = p.team || raw.team || raw.team_name || playerStats.latestTeam || 'Free Agent';
 
       return {
         id: p.id,
@@ -111,9 +110,14 @@ export async function GET(request: NextRequest) {
         dob,
         age: calculateAge(dob, new Date(dateStr)),
         photo_url: formatPhotoUrl(photo),
-        team: p.team || raw.team || raw.team_name || 'Free Agent',
+        team: resolvedTeam,
         category: p.category_id || raw.category || raw.category_name || 'PLAYER',
-        stats: playerStats,
+        stats: {
+          matches: playerStats.matches,
+          goals: playerStats.goals,
+          wins: playerStats.wins,
+          clean_sheets: playerStats.clean_sheets,
+        },
       };
     });
 

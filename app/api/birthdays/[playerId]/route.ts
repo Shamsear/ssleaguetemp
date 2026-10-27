@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 import { getTournamentDb, isTournamentDbAvailable } from '@/lib/neon/tournament-config';
 import { generateFallbackBirthdayStory, PlayerBirthdayContext } from '@/lib/birthdays/story';
+import { getPlayerTournamentHistory } from '@/lib/birthdays/stats-helper';
 
 function formatPhotoUrl(url: string | null | undefined): string {
   if (!url) return '/placeholder-player.png';
@@ -67,80 +68,34 @@ export async function GET(
     const age = calculateAge(dob);
     const photo = player.profile_image || raw.photo_url || raw.photoURL || raw.profile_image || raw.image;
 
-    // 2. Fetch stats and seasons from tournament DB
-    let seasons: any[] = [];
-    let awards: any[] = [];
-    let aggregatedStats = {
-      matches: 0,
-      goals: 0,
-      goals_conceded: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      clean_sheets: 0,
-      motm_awards: 0,
-      points: 0,
-    };
+    // 2. Fetch stats and seasons from tournament DB (S16 & S17 from player_seasons with base points decreased)
+    const { seasons, aggregatedStats } = await getPlayerTournamentHistory(pid);
 
+    let awards: any[] = [];
     if (isTournamentDbAvailable()) {
       try {
         const tSql = getTournamentDb();
-
-        const [statsRows, awardRows] = await Promise.all([
-          tSql`
-            SELECT * FROM realplayerstats
-            WHERE player_id = ${pid}
-            ORDER BY season_id ASC
-          `,
-          tSql`
-            SELECT id, award_type, season_id, round_number, week_number, team_name, performance_stats, created_at
-            FROM awards
-            WHERE player_id = ${pid}
-            ORDER BY created_at DESC
-          `
-        ]);
-
-        seasons = statsRows.map((s: any) => ({
-          season_id: s.season_id,
-          team: s.team || 'Unknown',
-          category: s.category || 'PLAYER',
-          matches: Number(s.matches_played || 0),
-          goals: Number(s.goals_scored || 0),
-          goals_conceded: Number(s.goals_conceded || 0),
-          wins: Number(s.wins || s.matches_won || 0),
-          draws: Number(s.draws || s.matches_drawn || 0),
-          losses: Number(s.losses || s.matches_lost || 0),
-          clean_sheets: Number(s.clean_sheets || 0),
-          motm_awards: Number(s.motm_awards || 0),
-          points: Number(s.points || 0),
-        }));
-
-        awards = awardRows;
-
-        // Aggregate career stats
-        for (const s of seasons) {
-          aggregatedStats.matches += s.matches;
-          aggregatedStats.goals += s.goals;
-          aggregatedStats.goals_conceded += s.goals_conceded;
-          aggregatedStats.wins += s.wins;
-          aggregatedStats.draws += s.draws;
-          aggregatedStats.losses += s.losses;
-          aggregatedStats.clean_sheets += s.clean_sheets;
-          aggregatedStats.motm_awards += s.motm_awards;
-          aggregatedStats.points += s.points;
-        }
+        awards = await tSql`
+          SELECT id, award_type, season_id, round_number, week_number, team_name, performance_stats, created_at
+          FROM awards
+          WHERE player_id = ${pid}
+          ORDER BY created_at DESC
+        `;
       } catch (err) {
-        console.warn('Failed to load player stats or awards:', err);
+        console.warn('Failed to load awards:', err);
       }
     }
+
+    const resolvedTeam = player.team || raw.team || raw.team_name || (seasons.length > 0 ? seasons[seasons.length - 1].team : 'Free Agent');
+    const resolvedCategory = player.category_id || raw.category || raw.category_name || (seasons.length > 0 ? seasons[seasons.length - 1].category : 'PLAYER');
 
     const birthdayContext: PlayerBirthdayContext = {
       id: pid,
       name: player.name || player.display_name || raw.name || 'SS League Player',
       dob,
       age,
-      team: player.team || raw.team || raw.team_name || 'Free Agent',
-      category: player.category_id || raw.category || raw.category_name || 'RED',
+      team: resolvedTeam,
+      category: resolvedCategory,
       stats: aggregatedStats,
       awards,
       seasonsCount: seasons.length,
@@ -159,8 +114,8 @@ export async function GET(
         dob,
         age,
         photo_url: formatPhotoUrl(photo),
-        team: player.team || raw.team || raw.team_name || 'Free Agent',
-        category: player.category_id || raw.category || raw.category_name || 'PLAYER',
+        team: resolvedTeam,
+        category: resolvedCategory,
         place: raw.place || '',
       },
       stats: aggregatedStats,
