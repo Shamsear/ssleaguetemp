@@ -446,10 +446,10 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
 
               <div className="mt-3.5 flex flex-wrap items-center justify-center md:justify-start gap-2">
                 <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700">
-                  {t.team}: <strong className="text-slate-900">{player.team}</strong>
+                  {t.team}: <strong className="text-slate-900">{player.team === 'Unknown' || !player.team ? 'FREE AGENT' : player.team}</strong>
                 </span>
                 <span className={`border px-3 py-1 rounded-xl text-xs font-mono font-bold ${getCategoryColor(player.category)}`}>
-                  {t.cat}: {player.category}
+                  {t.cat}: {player.category === 'A' ? 'NA' : (player.category || 'NA')}
                 </span>
                 {player.dob && (
                   <span className="flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono text-slate-600">
