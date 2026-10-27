@@ -15,6 +15,7 @@ export interface PlayerSeasonRecord {
   points: number;
   base_points?: number;
   raw_points?: number;
+  star_rating?: number;
 }
 
 export interface PlayerAggregatedStats {
@@ -115,16 +116,17 @@ export async function getPlayerTournamentHistory(playerId: string): Promise<{
         const ps = psMap.get(sId);
         const rps = rpsRows.find((r: any) => (r.season_id || '').toUpperCase() === sId);
 
-        // 16 and 17 is in player_seasons with base points decreased and has NO category (NA)
+        // 16 and 17 is in player_seasons with base points decreased and has NO category (used star_rating instead)
         if (isS16orS17 && ps) {
           const basePoints = parseInt(ps.base_points, 10) || 0;
           const rawPoints = parseInt(ps.points, 10) || 0;
           const adjustedPoints = rawPoints - basePoints;
+          const starRating = ps.star_rating != null ? Number(ps.star_rating) : undefined;
 
           return {
             season_id: sId,
             team: normalizeTeam(ps.team || (rps && rps.team)),
-            category: 'NA',
+            category: starRating ? `${starRating}★` : 'NA',
             matches: Number(ps.matches_played || 0),
             goals: Number(ps.goals_scored || 0),
             goals_conceded: Number(ps.goals_conceded || 0),
@@ -136,6 +138,7 @@ export async function getPlayerTournamentHistory(playerId: string): Promise<{
             points: adjustedPoints,
             base_points: basePoints,
             raw_points: rawPoints,
+            star_rating: starRating,
           };
         }
 

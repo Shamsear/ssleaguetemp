@@ -21,6 +21,7 @@ import {
   CircleDot,
   Swords,
   Languages,
+  Star,
 } from 'lucide-react';
 import ConfettiEffect from '../../../components/birthday/ConfettiEffect';
 
@@ -70,6 +71,7 @@ interface BirthdayData {
     points: number;
     base_points?: number;
     raw_points?: number;
+    star_rating?: number;
   }>;
   awards: any[];
   story: StoryContent;
@@ -80,6 +82,9 @@ interface BirthdayData {
 
 const getCategoryColor = (category: string) => {
   const cat = (category || '').toLowerCase();
+  if (cat.includes('★') || cat.includes('star')) {
+    return 'bg-amber-50 text-amber-800 border-amber-200';
+  }
   switch (cat) {
     case 'red':
       return 'bg-red-50 text-red-700 border-red-200';
@@ -154,7 +159,7 @@ const translations = {
     historyBySeason: 'Tournament History by Season',
     colSeason: 'Season',
     colTeam: 'Team',
-    colCat: 'Cat',
+    colCat: 'Cat / Star',
     colMatches: 'Matches',
     colGoals: 'Goals',
     colWins: 'Wins',
@@ -219,7 +224,7 @@ const translations = {
     historyBySeason: 'സീസൺ തിരിച്ചുള്ള ടൂർണമെന്റ് ചരിത്രം',
     colSeason: 'സീസൺ',
     colTeam: 'ടീം',
-    colCat: 'കാറ്റഗറി',
+    colCat: 'കാറ്റഗറി / സ്റ്റാർ',
     colMatches: 'മത്സരങ്ങൾ',
     colGoals: 'ഗോളുകൾ',
     colWins: 'വിജയങ്ങൾ',
@@ -463,9 +468,16 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                 <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700">
                   {t.team}: <strong className="text-slate-900">{player.team === 'Unknown' || !player.team ? 'FREE AGENT' : player.team}</strong>
                 </span>
-                <span className={`border px-3 py-1 rounded-xl text-xs font-mono font-bold ${getCategoryColor(player.category)}`}>
-                  {t.cat}: {player.category === 'A' ? 'NA' : (player.category || 'NA')}
-                </span>
+                {player.category && player.category.includes('★') ? (
+                  <span className="inline-flex items-center gap-1 border border-amber-200 bg-amber-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-amber-800">
+                    <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    <span>STAR: {player.category}</span>
+                  </span>
+                ) : (
+                  <span className={`border px-3 py-1 rounded-xl text-xs font-mono font-bold ${getCategoryColor(player.category)}`}>
+                    {t.cat}: {player.category === 'A' ? 'NA' : (player.category || 'NA')}
+                  </span>
+                )}
                 {player.dob && (
                   <span className="flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono text-slate-600">
                     <Calendar className="h-3 w-3 text-[#D4AF37]" />
@@ -692,9 +704,23 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                         {s.team === 'Unknown' || !s.team ? 'FREE AGENT' : s.team}
                       </td>
                       <td className="py-2.5">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getCategoryColor(s.category)}`}>
-                          {s.category === 'A' ? 'NA' : (s.category || 'NA')}
-                        </span>
+                        {s.star_rating ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border bg-amber-50 text-amber-800 border-amber-200 shadow-2xs font-mono">
+                              <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                              <span>{s.star_rating}★</span>
+                            </span>
+                            <span className="hidden xl:inline-flex items-center gap-0.5">
+                              {[...Array(Math.min(s.star_rating, 10))].map((_, i) => (
+                                <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />
+                              ))}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getCategoryColor(s.category)}`}>
+                            {s.category === 'A' ? 'NA' : (s.category || 'NA')}
+                          </span>
+                        )}
                       </td>
                       <td className="py-2.5 text-center text-slate-600">{s.matches}</td>
                       <td className="py-2.5 text-center font-bold text-slate-900">{s.goals}</td>
@@ -723,9 +749,16 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                         {s.team === 'Unknown' || !s.team ? 'FREE AGENT' : s.team}
                       </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${getCategoryColor(s.category)}`}>
-                      {s.category === 'A' ? 'NA' : (s.category || 'NA')}
-                    </span>
+                    {s.star_rating ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border bg-amber-50 text-amber-800 border-amber-200 shrink-0 font-mono">
+                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        <span>{s.star_rating}★</span>
+                      </span>
+                    ) : (
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${getCategoryColor(s.category)}`}>
+                        {s.category === 'A' ? 'NA' : (s.category || 'NA')}
+                      </span>
+                    )}
                   </div>
 
                   {/* Bottom Row: 4 Metric Badges */}
