@@ -154,9 +154,9 @@ const translations = {
     viewInstagram: 'View Instagram Feature',
     returnHome: 'RETURN TO SS SUPER LEAGUE HOME',
     whatsappShareText: (name: string, age: number, url: string) =>
-      `Today is ${name}'s Birthday (${age} Years)!\nCheck out their SS League tournament record and birthday feature:\n${url}`,
+      `Happy Birthday *${name}* (${age} Years)! Check out the tournament stats & birthday feature:\n${url}`,
     twitterShareText: (name: string, age: number) =>
-      `Celebrating ${name}'s Birthday (${age} Years)! SS League tournament record:`,
+      `Happy Birthday ${name} (${age} Years)! Check out the tournament stats on SS League:`,
   },
   ml: {
     backToHome: 'ഹോമിലേക്ക് മടങ്ങുക',
@@ -215,9 +215,9 @@ const translations = {
     viewInstagram: 'ഇൻസ്റ്റാഗ്രാം പോസ്റ്റ് കാണുക',
     returnHome: 'ഹോം പേജിലേക്ക് മടങ്ങുക',
     whatsappShareText: (name: string, age: number, url: string) =>
-      `ഇന്ന് നമ്മുടെ ${name}ന്റെ പിറന്നാളാണ് (${age} വയസ്സ്)!\nSS League കരിയർ സ്റ്റാറ്റ്സും രസകരമായ ബർത്ത്ഡേ ഫീച്ചറും ഇവിടെ വായിക്കാം:\n${url}`,
+      `ഹാപ്പി ബർത്ത്ഡേ *${name}* (${age} വയസ്സ്)! കരിയർ സ്റ്റാറ്റ്സും ബർത്ത്ഡേ ഫീച്ചറും കാണാം:\n${url}`,
     twitterShareText: (name: string, age: number) =>
-      `ഇന്ന് ${name}ന്റെ പിറന്നാളാണ് (${age} വയസ്സ്)! SS League ടൂർണമെന്റ് റെക്കോർഡ്:`,
+      `ഹാപ്പി ബർത്ത്ഡേ ${name} (${age} വയസ്സ്)! SS League ടൂർണമെന്റ് റെക്കോർഡ്:`,
   },
 };
 
