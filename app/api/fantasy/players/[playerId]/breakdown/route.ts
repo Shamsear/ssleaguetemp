@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { neonGetActiveSeason } from '@/lib/neon/seasons';
 
 /**
  * GET /api/fantasy/players/[playerId]/breakdown?league_id=xxx
@@ -23,7 +24,7 @@ export async function GET(
     }
 
     let targetLeagueId = league_id;
-    let targetSeasonId = 'SSPSLS18';
+    let targetSeasonId = '';
 
     if (targetLeagueId) {
       const leagues = await fantasySql`
@@ -45,8 +46,9 @@ export async function GET(
         targetLeagueId = activeLeagues[0].league_id;
         targetSeasonId = activeLeagues[0].season_id;
       } else {
-        targetLeagueId = 'SSPSLFLS18';
-        targetSeasonId = 'SSPSLS18';
+        const activeSeason = await neonGetActiveSeason();
+        targetSeasonId = activeSeason?.id || 'SSPSLS19';
+        targetLeagueId = `SSPSLFLS${targetSeasonId.replace(/\D/g, '') || '19'}`;
       }
     }
 

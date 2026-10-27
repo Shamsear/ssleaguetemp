@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!seasonId) {
-      seasonId = 'SSPSLS18';
+      seasonId = 'SSPSLS19';
     }
 
     // 3. Fetch Team Season Data directly from Neon PostgreSQL

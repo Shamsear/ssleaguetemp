@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
+import { neonGetActiveSeason } from '@/lib/neon/seasons';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 
 export async function GET(
@@ -70,9 +71,13 @@ export async function GET(
 
     // Get fantasy league season_id to scope match logs to the correct season
     const leagues = await fantasyDb`
-      SELECT season_id FROM fantasy_leagues WHERE league_id = ${leagueId} OR league_id = 'SSPSLFLS18' LIMIT 1
+      SELECT season_id FROM fantasy_leagues WHERE league_id = ${leagueId} OR is_active = true ORDER BY created_at DESC LIMIT 1
     `;
-    const seasonId = leagues[0]?.season_id || 'SSPSLS18';
+    let seasonId = leagues[0]?.season_id;
+    if (!seasonId) {
+      const activeSeason = await neonGetActiveSeason();
+      seasonId = activeSeason?.id || 'SSPSLS19';
+    }
 
     // Get all completed matchups for this player in the active season (filtered by window if specified)
     const matchups = (startRound !== null && endRound !== null)

@@ -37,7 +37,17 @@ export default function BalanceAuditPage() {
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncingTeamId, setSyncingTeamId] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<TeamAudit[]>([]);
-  const [seasonId] = useState('SSPSLS18');
+  const [seasonId, setSeasonId] = useState('SSPSLS19');
+
+  useEffect(() => {
+    fetch('/api/seasons/current')
+      .then((r) => r.json())
+      .then((d) => {
+        const id = d.season?.season_id || d.season?.id;
+        if (id) setSeasonId(id);
+      })
+      .catch(() => {});
+  }, []);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
 
   // Authenticate user

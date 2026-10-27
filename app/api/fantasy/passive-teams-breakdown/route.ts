@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { neonGetActiveSeason } from '@/lib/neon/seasons';
 
 /**
  * GET /api/fantasy/passive-teams-breakdown
@@ -19,8 +20,13 @@ export async function GET(request: NextRequest) {
       LIMIT 1
     `;
 
-    const leagueId = leagues[0]?.league_id || 'SSPSLFLS18';
-    const seasonId = leagues[0]?.season_id || 'SSPSLS18';
+    let leagueId = leagues[0]?.league_id;
+    let seasonId = leagues[0]?.season_id;
+    if (!seasonId) {
+      const activeSeason = await neonGetActiveSeason();
+      seasonId = activeSeason?.id || 'SSPSLS19';
+      leagueId = leagueId || `SSPSLFLS${seasonId.replace(/\D/g, '') || '19'}`;
+    }
 
     // Fetch all real tournament teams
     const realTeams = await tournamentSql`

@@ -206,14 +206,14 @@ export default function AuctionSettingsPage() {
         s.is_active === true || s.isActive === true || s.status === 'active'
       ) || seasonsList[0];
 
-      const seasonId = activeSeason?.id || activeSeason?.season_id || 'SSPSLS18';
+      const seasonId = activeSeason?.id || activeSeason?.season_id || 'SSPSLS19';
       console.log('✅ [Auction Settings] Active season resolved:', seasonId);
       setCurrentSeasonId(seasonId);
       fetchSettings(seasonId);
     } catch (error: any) {
-      console.warn('⚠️ Error fetching active season, falling back to SSPSLS18:', error);
-      setCurrentSeasonId('SSPSLS18');
-      fetchSettings('SSPSLS18');
+      console.warn('⚠️ Error fetching active season, falling back to SSPSLS19:', error);
+      setCurrentSeasonId('SSPSLS19');
+      fetchSettings('SSPSLS19');
     }
   };
 

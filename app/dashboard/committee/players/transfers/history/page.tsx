@@ -108,7 +108,7 @@ export default function TransferHistoryPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
-  const activeSeasonId = selectedSeason || userSeasonId || 'SSPSLS18';
+  const activeSeasonId = selectedSeason || userSeasonId || 'SSPSLS19';
 
   useEffect(() => {
     if (user && user.role === 'committee_admin') {

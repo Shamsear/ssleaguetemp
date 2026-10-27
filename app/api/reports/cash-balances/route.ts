@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
 
       if (isUpfrontType && !hasUpfrontPayment) {
         // Find the earliest season they registered or became upfront
-        const upfrontSeasonId = joinedSeasons[0] || seasonId || 'SSPSLS18';
+        const upfrontSeasonId = joinedSeasons[0] || (seasonId && seasonId !== 'all' ? seasonId : 'SSPSLS19');
         const synthesizedPayment = {
           payment_id: `auto_upfront_${ts.team_id}_${upfrontSeasonId}`,
           amount: 500,

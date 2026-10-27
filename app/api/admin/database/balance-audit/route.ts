@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { verifyAuth } from '@/lib/auth-helper';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { neonGetActiveSeason } from '@/lib/neon/seasons';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
@@ -19,9 +20,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Default to season SSPSLS18 if not specified
+    // Default to active season if not specified
     const url = new URL(request.url);
-    const seasonId = url.searchParams.get('season_id') || 'SSPSLS18';
+    let seasonId = url.searchParams.get('season_id');
+    if (!seasonId) {
+      const activeSeason = await neonGetActiveSeason();
+      seasonId = activeSeason?.id || 'SSPSLS19';
+    }
 
     // 1. Fetch Postgres teams
     const pgTeams = await sql`
@@ -113,7 +118,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const seasonId = body.season_id || 'SSPSLS18';
+    let seasonId = body.season_id;
+    if (!seasonId) {
+      const activeSeason = await neonGetActiveSeason();
+      seasonId = activeSeason?.id || 'SSPSLS19';
+    }
     const targetTeamId = body.team_id; // Optional: target single team
 
     // Fetch Season Info to check if it has transitioned to mid-season
