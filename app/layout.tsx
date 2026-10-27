@@ -10,6 +10,7 @@ import { TournamentProvider } from "@/contexts/TournamentContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Analytics } from "@vercel/analytics/next";
 import RegisterServiceWorker from "./register-sw";
+import DailyBirthdayModal from "@/components/birthday/DailyBirthdayModal";
 import ScrollAnimationProvider from "@/components/common/ScrollAnimationProvider";
 
 import { Suspense } from "react";
@@ -101,6 +102,7 @@ export default function RootLayout({
                 <LanguageProvider>
                   <RegisterServiceWorker />
                   <ScrollAnimationProvider />
+                  <DailyBirthdayModal />
                   <Suspense fallback={<div className="h-16 bg-white/40 backdrop-blur-md border-b border-slate-200/50" />}>
                     <Navbar />
                   </Suspense>
