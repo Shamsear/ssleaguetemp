@@ -88,7 +88,7 @@ export async function getPlayerTournamentHistory(playerId: string): Promise<{
     ).filter(Boolean);
 
     const seasons: PlayerSeasonRecord[] = allSeasonIds
-      .map((sId: string) => {
+      .map((sId: string): PlayerSeasonRecord | null => {
         const isS16orS17 = sId === 'SSPSLS16' || sId === 'SSPSLS17';
         const ps = psMap.get(sId);
         const rps = rpsRows.find((r: any) => (r.season_id || '').toUpperCase() === sId);
