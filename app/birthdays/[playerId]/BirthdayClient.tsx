@@ -672,10 +672,12 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                   {seasons.map((s, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-2.5 font-bold text-amber-700">{s.season_id}</td>
-                      <td className="py-2.5 font-semibold text-slate-900">{s.team}</td>
+                      <td className="py-2.5 font-semibold text-slate-900">
+                        {s.team === 'Unknown' || !s.team ? 'FREE AGENT' : s.team}
+                      </td>
                       <td className="py-2.5">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getCategoryColor(s.category)}`}>
-                          {s.category}
+                          {s.category === 'A' ? 'NA' : (s.category || 'NA')}
                         </span>
                       </td>
                       <td className="py-2.5 text-center text-slate-600">{s.matches}</td>
