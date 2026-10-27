@@ -1,105 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { neonGetActiveSeason, neonGetAllSeasons } from '@/lib/neon/seasons';
 import { verifyAuth } from '@/lib/auth-helper';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/seasons/current
- * Returns the currently active season
- * For committee admins, returns their assigned season
+ * Returns the currently active season from Neon Main DB
+ * For committee admins with assigned seasonId claim, returns their assigned season
  */
 export async function GET(request: NextRequest) {
   try {
-    const sql = getTournamentDb();
-
-    // Try to get auth, but don't fail if not authenticated (allow public access)
+    // Try to get auth for committee admin overrides
     try {
-      const auth = await verifyAuth(['admin', 'committee_admin', 'committee_admin'], request);
-      
-      console.log('[Current Season API] Auth result:', {
-        authenticated: auth.authenticated,
-        role: auth.claims?.role,
-        seasonId: auth.claims?.seasonId,
-        uid: auth.uid
-      });
-      
-      // If committee admin, return their assigned season
+      const auth = await verifyAuth(['admin', 'committee_admin'], request);
       if (auth.authenticated && auth.claims?.role === 'committee_admin' && auth.claims?.seasonId) {
         const seasonId = auth.claims.seasonId;
-        console.log('[Current Season API] Committee admin detected, using their season:', seasonId);
-        
         return NextResponse.json({
           season: {
             id: seasonId,
             season_id: seasonId,
             name: seasonId.replace('SSPSLS', 'Season '),
             status: 'active',
-          }
+          },
         });
       }
-    } catch (authError) {
-      console.log('[Current Season API] Auth check failed or not authenticated:', authError);
+    } catch {
       // Continue to default logic
     }
 
-    // For other users, get the most recent active season
-    const result = await sql`
-      SELECT 
-        season_id,
-        MAX(created_at) as created_at,
-        MAX(status) as status
-      FROM tournaments
-      WHERE status = 'active'
-      GROUP BY season_id
-      ORDER BY season_id DESC
-      LIMIT 1
-    `;
+    // 1. Get active season from Neon Main DB
+    const activeSeason = await neonGetActiveSeason();
 
-    if (result.length === 0) {
-      // If no active season, get the most recent season
-      const latestResult = await sql`
-        SELECT 
-          season_id,
-          MAX(created_at) as created_at,
-          MAX(status) as status
-        FROM tournaments
-        GROUP BY season_id
-        ORDER BY season_id DESC
-        LIMIT 1
-      `;
+    if (activeSeason) {
+      const seasonNum =
+        activeSeason.season_number ||
+        parseInt(activeSeason.id.replace(/\D/g, '')) ||
+        0;
 
-      if (latestResult.length === 0) {
-        return NextResponse.json(
-          { error: 'No seasons found' },
-          { status: 404 }
-        );
-      }
-
-      const season = latestResult[0];
       return NextResponse.json({
         season: {
-          id: season.season_id,
-          season_id: season.season_id,
-          name: season.season_id.replace('SSPSLS', 'Season '),
-          status: season.status || 'completed',
-          created_at: season.created_at,
-        }
+          id: activeSeason.id,
+          season_id: activeSeason.id,
+          name:
+            activeSeason.name ||
+            (seasonNum ? `Season ${seasonNum}` : activeSeason.id),
+          status: activeSeason.status || 'active',
+          is_active: true,
+          isActive: true,
+          created_at: activeSeason.created_at,
+        },
       });
     }
 
-    const season = result[0];
-    return NextResponse.json({
-      season: {
-        id: season.season_id,
-        season_id: season.season_id,
-        name: season.season_id.replace('SSPSLS', 'Season '),
-        status: season.status,
-        created_at: season.created_at,
-      }
-    });
+    // 2. Fallback: most recent season from Neon Main DB
+    const allSeasons = await neonGetAllSeasons();
+    if (allSeasons.length > 0) {
+      const latest = allSeasons[0];
+      const seasonNum =
+        latest.season_number ||
+        parseInt(latest.id.replace(/\D/g, '')) ||
+        0;
+
+      return NextResponse.json({
+        season: {
+          id: latest.id,
+          season_id: latest.id,
+          name: latest.name || (seasonNum ? `Season ${seasonNum}` : latest.id),
+          status: latest.status || 'completed',
+          is_active: Boolean(latest.is_active),
+          isActive: Boolean(latest.is_active),
+          created_at: latest.created_at,
+        },
+      });
+    }
+
+    return NextResponse.json(
+      { error: 'No seasons found in database' },
+      { status: 404 }
+    );
   } catch (error: any) {
     console.error('Error fetching current season:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch current season' },
+      { error: 'Failed to fetch current season', details: error.message },
       { status: 500 }
     );
   }

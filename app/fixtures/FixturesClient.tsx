@@ -30,6 +30,12 @@ interface FixturesClientProps {
   isTeamView?: boolean;
 }
 
+interface SeasonOption {
+  id: string;
+  name: string;
+  is_active?: boolean;
+}
+
 function TeamLogo({ logoUrl, teamName, size = 40 }: { logoUrl?: string; teamName: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
   const cleanName = (teamName || '').toUpperCase();
@@ -65,15 +71,18 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tabParam = searchParams.get('tab') || searchParams.get('filter');
+  const seasonParam = searchParams.get('season');
   
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [seasonName, setSeasonName] = useState('');
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
+  const [seasons, setSeasons] = useState<SeasonOption[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'live' | 'results'>('all');
 
   useEffect(() => {
-    fetchFixtures();
-  }, []);
+    fetchSeasonsAndFixtures();
+  }, [seasonParam]);
 
   useEffect(() => {
     if (tabParam === 'upcoming' || tabParam === 'live' || tabParam === 'results' || tabParam === 'all') {
@@ -81,35 +90,71 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
     }
   }, [tabParam]);
 
-  const fetchFixtures = async () => {
+  const fetchSeasonsAndFixtures = async () => {
     try {
       setIsLoading(true);
 
-      const seasonRes = await fetch('/api/seasons/current');
-      let seasonId = '';
-      let sName = '';
-
-      if (seasonRes.ok) {
-        const seasonData = await seasonRes.json();
-        seasonId = seasonData.season?.season_id || seasonData.season?.id || '';
-        sName = seasonData.season?.name || (seasonId ? seasonId.replace('SSPSLS', 'Season ') : '');
+      // 1. Fetch all seasons from /api/seasons
+      const seasonsRes = await fetch('/api/seasons').catch(() => null);
+      let seasonsList: SeasonOption[] = [];
+      if (seasonsRes && seasonsRes.ok) {
+        const sData = await seasonsRes.json();
+        const raw = sData.seasons || sData.data || (Array.isArray(sData) ? sData : []);
+        seasonsList = raw.map((s: any) => ({
+          id: s.season_id || s.id,
+          name: s.name || (s.season_id ? s.season_id.replace('SSPSLS', 'Season ') : 'Season'),
+          is_active: Boolean(s.is_active || s.status === 'active'),
+        }));
+        // Sort descending by season number
+        seasonsList.sort((a, b) => {
+          const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+          const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+          return numB - numA;
+        });
+        setSeasons(seasonsList);
       }
 
-      if (!seasonId) {
-        seasonId = 'SSPSLS18';
-        sName = 'Season 18';
+      // 2. Determine target season
+      let targetSeasonId = seasonParam || '';
+      let targetSeasonName = '';
+
+      if (!targetSeasonId) {
+        const currentRes = await fetch('/api/seasons/current').catch(() => null);
+        if (currentRes && currentRes.ok) {
+          const cData = await currentRes.json();
+          targetSeasonId = cData.season?.season_id || cData.season?.id || '';
+          targetSeasonName = cData.season?.name || (targetSeasonId ? targetSeasonId.replace('SSPSLS', 'Season ') : '');
+        }
       }
 
-      setSeasonName(sName);
+      if (!targetSeasonId && seasonsList.length > 0) {
+        const active = seasonsList.find(s => s.is_active);
+        targetSeasonId = active ? active.id : seasonsList[0].id;
+        targetSeasonName = active ? active.name : seasonsList[0].name;
+      }
 
+      if (!targetSeasonId) {
+        targetSeasonId = 'SSPSLS19';
+        targetSeasonName = 'Season 19';
+      }
+
+      if (!targetSeasonName) {
+        const match = seasonsList.find(s => s.id === targetSeasonId);
+        targetSeasonName = match ? match.name : targetSeasonId.replace('SSPSLS', 'Season ');
+      }
+
+      setSelectedSeasonId(targetSeasonId);
+      setSeasonName(targetSeasonName);
+
+      // 3. Fetch fixtures and logos for targetSeasonId
       const [fixturesRes, teamSeasonsRes] = await Promise.all([
-        fetch(`/api/fixtures/season?season_id=${seasonId}`),
-        fetch(`/api/cached/firebase/team-seasons?seasonId=${seasonId}`).catch(() => null)
+        fetch(`/api/fixtures/season?season_id=${targetSeasonId}`),
+        fetch(`/api/cached/firebase/team-seasons?seasonId=${targetSeasonId}`).catch(() => null)
       ]);
 
       if (!fixturesRes.ok) {
         console.error('Failed to fetch fixtures');
-        setIsLoading(false);
+        setFixtures([]);
         return;
       }
 
@@ -143,9 +188,30 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
       setFixtures(fixturesList);
     } catch (error: any) {
       console.error('Error fetching fixtures:', error);
+      setFixtures([]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSeasonChange = (newSeasonId: string) => {
+    setSelectedSeasonId(newSeasonId);
+    const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
+    const params = new URLSearchParams();
+    if (newSeasonId) params.set('season', newSeasonId);
+    if (filter !== 'all') params.set('tab', filter);
+    const qs = params.toString();
+    router.push(`${basePath}${qs ? `?${qs}` : ''}`);
+  };
+
+  const handleFilterChange = (newFilter: 'all' | 'upcoming' | 'live' | 'results') => {
+    setFilter(newFilter);
+    const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
+    const params = new URLSearchParams();
+    if (selectedSeasonId) params.set('season', selectedSeasonId);
+    if (newFilter !== 'all') params.set('tab', newFilter);
+    const qs = params.toString();
+    router.push(`${basePath}${qs ? `?${qs}` : ''}`);
   };
 
   const isFixtureCompleted = (f: Fixture) => {
@@ -242,9 +308,25 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                 <Zap className="w-3 h-3 text-amber-600 fill-amber-500" />
                 <span>LEAGUE MATCH SCHEDULE</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                {seasonName ? seasonName.toUpperCase() : 'SEASON 18'} FIXTURES
-              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                  {seasonName ? seasonName.toUpperCase() : 'SEASON 19'} FIXTURES
+                </h1>
+                {seasons.length > 0 && (
+                  <select
+                    value={selectedSeasonId}
+                    onChange={(e) => handleSeasonChange(e.target.value)}
+                    aria-label="Select Season"
+                    className="bg-slate-50 border-2 border-slate-200 hover:border-amber-400 text-slate-800 text-xs font-bold font-mono rounded-xl px-3 py-1.5 focus:outline-hidden focus:border-amber-500 cursor-pointer transition-colors shadow-2xs"
+                  >
+                    {seasons.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} {s.is_active ? '(ACTIVE)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">
                 Official Season Match Schedule & Live Results
               </p>
@@ -276,11 +358,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button
-                onClick={() => {
-                  setFilter('all');
-                  const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
-                  router.push(`${basePath}?tab=all`);
-                }}
+                onClick={() => handleFilterChange('all')}
                 className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-2xs ${
                   filter === 'all'
                     ? 'bg-slate-900 text-white border border-slate-900'
@@ -290,11 +368,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                 ALL ({fixtures.length})
               </button>
               <button
-                onClick={() => {
-                  setFilter('live');
-                  const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
-                  router.push(`${basePath}?tab=live`);
-                }}
+                onClick={() => handleFilterChange('live')}
                 className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-2xs ${
                   filter === 'live'
                     ? 'bg-rose-600 text-white border border-rose-600 shadow-md shadow-rose-600/20'
@@ -304,11 +378,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                 LIVE ({liveCount})
               </button>
               <button
-                onClick={() => {
-                  setFilter('upcoming');
-                  const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
-                  router.push(`${basePath}?tab=upcoming`);
-                }}
+                onClick={() => handleFilterChange('upcoming')}
                 className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-2xs ${
                   filter === 'upcoming'
                     ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-600/20'
@@ -318,11 +388,7 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
                 UPCOMING ({upcomingCount})
               </button>
               <button
-                onClick={() => {
-                  setFilter('results');
-                  const basePath = isTeamView ? '/dashboard/team/fixtures' : '/fixtures';
-                  router.push(`${basePath}?tab=results`);
-                }}
+                onClick={() => handleFilterChange('results')}
                 className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-2xs ${
                   filter === 'results'
                     ? 'bg-emerald-600 text-white border border-emerald-600 shadow-md shadow-emerald-600/20'
@@ -345,15 +411,36 @@ function FixturesContent({ isTeamView = false }: FixturesClientProps) {
             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Loading Schedule...</p>
           </div>
         ) : filteredFixtures.length === 0 ? (
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm space-y-3">
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm space-y-4">
             <Shield className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-lg font-extrabold text-slate-900">No Matches Found</h3>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-              {filter === 'upcoming' ? 'No upcoming matches at the moment.' : 
-               filter === 'live' ? 'No live matches right now.' : 
-               filter === 'results' ? 'No completed match results recorded.' :
-               'No matches available for this season.'}
+            <h3 className="text-lg font-extrabold text-slate-900">
+              {fixtures.length === 0 
+                ? `No Matches Scheduled Yet For ${seasonName || 'This Season'}`
+                : 'No Matches Found'}
+            </h3>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider max-w-md mx-auto">
+              {fixtures.length === 0
+                ? `The match schedule for ${seasonName || 'this season'} has not been created yet.`
+                : filter === 'upcoming' ? 'No upcoming matches at the moment.' : 
+                  filter === 'live' ? 'No live matches right now.' : 
+                  filter === 'results' ? 'No completed match results recorded.' :
+                  'No matches available for this season.'}
             </p>
+            {fixtures.length === 0 && (
+              <div className="pt-2 flex flex-wrap justify-center gap-2">
+                {seasons
+                  .filter(s => s.id !== selectedSeasonId && ['SSPSLS18', 'SSPSLS17', 'SSPSLS16'].includes(s.id))
+                  .map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleSeasonChange(s.id)}
+                      className="px-4 py-2 bg-slate-900 hover:bg-amber-600 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-xs"
+                    >
+                      View {s.name} Fixtures
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6 sm:space-y-8">

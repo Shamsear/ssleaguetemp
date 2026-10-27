@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/neon/config';
 import { cookies } from 'next/headers';
 import { getFirebaseUidFromToken } from '@/lib/jwt-decode';
+import { neonGetActiveSeason } from '@/lib/neon/seasons';
 
 // Simple in-memory cache for team_id lookups (expires after 5 minutes)
 const teamIdCache = new Map<string, { teamId: string; expiresAt: number }>();
@@ -36,6 +37,20 @@ export async function GET(request: Request) {
     const starredOnly = searchParams.get('starred_only') === 'true';
     const assignedOnly = searchParams.get('assigned_only') === 'true';
     const seasonId = searchParams.get('season_id') || '';
+
+    // Determine current active season number from Neon Main DB
+    let activeSeasonNum = 19;
+    try {
+      const activeSeason = await neonGetActiveSeason();
+      if (activeSeason) {
+        activeSeasonNum =
+          activeSeason.season_number ||
+          parseInt(activeSeason.id.replace(/\D/g, '')) ||
+          19;
+      }
+    } catch {
+      // default 19
+    }
 
     // Get Neon team_id from Firebase token (if authenticated)
     let teamId: string | null = null;
@@ -99,16 +114,36 @@ export async function GET(request: Request) {
 
     if (teamIdFilter) {
       if (teamIdFilter === 'free_agent') {
-        whereParts.push('fp.team_id IS NULL');
+        if (!seasonId) {
+          // In active season, Free Agent means team_id IS NULL OR contract has expired
+          whereParts.push(
+            `(fp.team_id IS NULL OR COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int < ${activeSeasonNum})`
+          );
+        } else {
+          whereParts.push('fp.team_id IS NULL');
+        }
       } else {
-        whereParts.push(`fp.team_id = $${paramIndex++}`);
-        queryParams.push(teamIdFilter);
+        if (!seasonId) {
+          whereParts.push(
+            `(fp.team_id = $${paramIndex++} AND COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum})`
+          );
+          queryParams.push(teamIdFilter);
+        } else {
+          whereParts.push(`fp.team_id = $${paramIndex++}`);
+          queryParams.push(teamIdFilter);
+        }
       }
     }
 
-    // Filter for only assigned players (have team_id)
+    // Filter for only assigned players (have active team_id)
     if (assignedOnly) {
-      whereParts.push('fp.team_id IS NOT NULL');
+      if (!seasonId) {
+        whereParts.push(
+          `(fp.team_id IS NOT NULL AND COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum})`
+        );
+      } else {
+        whereParts.push('fp.team_id IS NOT NULL');
+      }
     }
 
     if (seasonId) {
@@ -148,13 +183,23 @@ export async function GET(request: Request) {
 
     players = await sql.query(queryText, queryParams);
 
-    // Fetch team names from auction DB for players that have team_id
-    const uniqueTeamIds = [...new Set(players.map((p: any) => p.team_id).filter(Boolean))];
+    // Fetch team names from auction DB for players that have an active team_id
+    const activeTeamIds = players
+      .filter((p: any) => {
+        if (!p.team_id) return false;
+        if (seasonId) return true;
+        const endNum = p.contract_end_season
+          ? parseInt(p.contract_end_season.replace(/\D/g, '')) || 0
+          : 0;
+        return endNum >= activeSeasonNum;
+      })
+      .map((p: any) => p.team_id);
+
+    const uniqueTeamIds = [...new Set(activeTeamIds)];
     const teamNamesMap = new Map<string, string>();
 
     if (uniqueTeamIds.length > 0) {
       try {
-        // Fetch team names from Neon auction DB
         const teamsResult = await sql`
           SELECT id, name
           FROM teams
@@ -169,11 +214,25 @@ export async function GET(request: Request) {
       }
     }
 
-    // Add team_name to each player
-    players = players.map((player: any) => ({
-      ...player,
-      team_name: player.team_id ? teamNamesMap.get(player.team_id) || null : null
-    }));
+    // Add team_name and normalize expired contracts to free agent for current active season
+    players = players.map((player: any) => {
+      let effectiveTeamId = player.team_id;
+
+      if (!seasonId && player.team_id) {
+        const endNum = player.contract_end_season
+          ? parseInt(player.contract_end_season.replace(/\D/g, '')) || 0
+          : 0;
+        if (endNum < activeSeasonNum) {
+          effectiveTeamId = null;
+        }
+      }
+
+      return {
+        ...player,
+        team_id: effectiveTeamId,
+        team_name: effectiveTeamId ? teamNamesMap.get(effectiveTeamId) || null : null,
+      };
+    });
 
     // Count query (reuse params without limit/offset)
     const countParams = queryParams.slice(0, -2);

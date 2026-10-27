@@ -12,7 +12,15 @@ const PUBLIC_PATHS = [
   '/api/image-proxy',
   '/news',
   '/players',
+  '/footballplayers',
+  '/teams',
   '/fixtures',
+  '/seasons',
+  '/season',
+  '/birthdays',
+  '/polls',
+  '/awards',
+  '/hall-of-fame',
   '/registered-players',
   '/sw.js',
   '/manifest.json',
@@ -20,7 +28,7 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
 ];
 
-// Paths that always require auth
+// Paths that always require auth (must match full path segment)
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/team',
@@ -41,14 +49,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public paths
+  // Allow public paths (exact or prefix match with trailing slash)
   const isPublicPath = PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
   if (isPublicPath) {
     return NextResponse.next();
   }
 
-  // Check if this is a protected path
-  const isProtectedPath = PROTECTED_PREFIXES.some(p => pathname.startsWith(p));
+  // Check if this is a protected path (must match full path segment, e.g. /team or /team/*, not /teams)
+  const isProtectedPath = PROTECTED_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
   
   if (isProtectedPath) {
     // Check for auth token cookie

@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
       if (tournaments && tournaments.length > 0) {
         formattedSeasons = tournaments.map((season: any) => {
-          const isActive = season.status === 'active' || season.season_id === 'SSPSLS18';
+          const isActive = season.status === 'active';
           return {
             id: season.season_id,
             season_id: season.season_id,
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
 
         if (distinctSeasons && distinctSeasons.length > 0) {
           formattedSeasons = distinctSeasons.map((season: any, index: number) => {
-            const isActive = season.season_id === 'SSPSLS18' || index === 0;
+            const isActive = index === 0;
             return {
               id: season.season_id,
               season_id: season.season_id,
@@ -125,12 +125,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 3. Fallback active season: SSPSLS18
+    // 3. Fallback active season: SSPSLS19
     if (formattedSeasons.length === 0) {
       formattedSeasons = [{
-        id: 'SSPSLS18',
-        season_id: 'SSPSLS18',
-        name: 'Season 18',
+        id: 'SSPSLS19',
+        season_id: 'SSPSLS19',
+        name: 'Season 19',
         status: 'active',
         is_active: true,
         isActive: true,
@@ -151,9 +151,9 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching seasons:', error);
     // Even on error, return the active season so the UI never breaks
     const fallback = [{
-      id: 'SSPSLS18',
-      season_id: 'SSPSLS18',
-      name: 'Season 18',
+      id: 'SSPSLS19',
+      season_id: 'SSPSLS19',
+      name: 'Season 19',
       status: 'active',
       is_active: true,
       isActive: true,
