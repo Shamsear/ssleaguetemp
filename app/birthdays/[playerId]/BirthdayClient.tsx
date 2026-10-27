@@ -655,7 +655,8 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
               {t.historyBySeason}
             </h2>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View (hidden on mobile) */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-500">
@@ -688,6 +689,51 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View (shown only on small devices) */}
+            <div className="sm:hidden space-y-2.5">
+              {seasons.map((s, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-2.5 font-mono"
+                >
+                  {/* Top Row: Season Badge, Team Name, and Category */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[11px] font-black text-amber-800 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 shrink-0">
+                        {s.season_id}
+                      </span>
+                      <span className="text-xs font-bold text-slate-900 truncate">
+                        {s.team === 'Unknown' || !s.team ? 'FREE AGENT' : s.team}
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${getCategoryColor(s.category)}`}>
+                      {s.category === 'A' ? 'NA' : (s.category || 'NA')}
+                    </span>
+                  </div>
+
+                  {/* Bottom Row: 4 Metric Badges */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-200/60 text-center">
+                    <div className="bg-white rounded-lg p-1.5 border border-slate-200/70 shadow-2xs">
+                      <span className="block text-[8px] uppercase text-slate-400 font-bold tracking-tight">{t.colMatches}</span>
+                      <span className="text-xs font-bold text-slate-800">{s.matches}</span>
+                    </div>
+                    <div className="bg-white rounded-lg p-1.5 border border-slate-200/70 shadow-2xs">
+                      <span className="block text-[8px] uppercase text-slate-400 font-bold tracking-tight">{t.colGoals}</span>
+                      <span className="text-xs font-black text-amber-700">{s.goals}</span>
+                    </div>
+                    <div className="bg-white rounded-lg p-1.5 border border-slate-200/70 shadow-2xs">
+                      <span className="block text-[8px] uppercase text-slate-400 font-bold tracking-tight">{t.colWins}</span>
+                      <span className="text-xs font-black text-emerald-600">{s.wins}</span>
+                    </div>
+                    <div className="bg-white rounded-lg p-1.5 border border-slate-200/70 shadow-2xs">
+                      <span className="block text-[8px] uppercase text-slate-400 font-bold tracking-tight">{t.colPoints}</span>
+                      <span className="text-xs font-black text-[#D4AF37]">{s.points}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
