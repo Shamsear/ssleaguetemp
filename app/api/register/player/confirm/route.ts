@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         )
         VALUES (
           ${registrationId}, ${player_id}, ${season_id}, ${player_data?.name || ''},
-          ${player_data?.category || player_data?.previous_season_category || 'A'},
+          ${player_data?.category || null},
           0,
           0, 0, 0,
           0, 0, 0, 0, 0, 0,
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
 
       if (fantasyLeagues.length > 0) {
         const league = fantasyLeagues[0];
-        const category = player_data?.category || player_data?.previous_season_category || 'A'; // Default category
+        const category = player_data?.category || null;
         
         // Get price from category pricing
         let draftPrice = 10; // Default price

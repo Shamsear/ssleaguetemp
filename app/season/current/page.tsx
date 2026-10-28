@@ -876,7 +876,7 @@ export default function CurrentSeasonPage() {
                             </Link>
                           </td>
                           <td className="py-4 px-4 text-left text-slate-600 text-xs">
-                            {player.team_name}
+                            {player.team_name || <span className="text-slate-400 font-mono text-[11px]">Unassigned</span>}
                           </td>
                           <td className="py-4 px-2 text-center">
                             {(seasonNum === 16 || seasonNum === 17) ? (
@@ -887,16 +887,24 @@ export default function CurrentSeasonPage() {
                               ) : (
                                 <span className="text-slate-400 font-mono">-</span>
                               )
+                            ) : player.category ? (
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
+                                player.category.toLowerCase() === 'legend'
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200/20'
+                                  : player.category.toLowerCase() === 'red'
+                                  ? 'bg-red-100 text-red-800 border border-red-200/20'
+                                  : player.category.toLowerCase() === 'black'
+                                  ? 'bg-slate-900 text-white border border-slate-700'
+                                  : player.category.toLowerCase() === 'blue'
+                                  ? 'bg-blue-100 text-blue-800 border border-blue-200/20'
+                                  : player.category.toLowerCase() === 'white'
+                                  ? 'bg-slate-100 text-slate-800 border border-slate-300'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200/20'
+                              }`}>
+                                {player.category}
+                              </span>
                             ) : (
-                              player.category && (
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                                  player.category.toLowerCase() === 'legend'
-                                    ? 'bg-amber-100 text-amber-800 border border-amber-200/20'
-                                    : 'bg-blue-100 text-blue-800 border border-blue-200/20'
-                                }`}>
-                                  {player.category}
-                                </span>
-                              )
+                              <span className="text-slate-400 font-mono text-[10px]">Unassigned</span>
                             )}
                           </td>
                           <td className="py-4 px-2 font-mono text-xs text-slate-500">{player.matches_played}</td>
@@ -930,7 +938,7 @@ export default function CurrentSeasonPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-bold text-slate-900 text-sm truncate">{player.player_name}</div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">{player.team_name}</div>
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">{player.team_name || 'Unassigned'}</div>
                         </div>
                         <div className="text-right">
                           <span className="text-sm font-black text-amber-600 font-mono">{player.points} PTS</span>

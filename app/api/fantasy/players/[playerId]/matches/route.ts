@@ -80,6 +80,7 @@ export async function GET(
     }
 
     // Get all completed matchups for this player in the active season (filtered by window if specified)
+    const seasonPattern = `${seasonId}%`;
     const matchups = (startRound !== null && endRound !== null)
       ? await tournamentDb`
           SELECT 
@@ -99,7 +100,7 @@ export async function GET(
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
           WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
-            AND (f.season_id = ${seasonId} OR f.season_id LIKE 'SSPSLS18%')
+            AND (f.season_id = ${seasonId} OR f.season_id LIKE ${seasonPattern})
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
@@ -124,7 +125,7 @@ export async function GET(
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
           WHERE (m.home_player_id = ${playerId} OR m.away_player_id = ${playerId})
-            AND (f.season_id = ${seasonId} OR f.season_id LIKE 'SSPSLS18%')
+            AND (f.season_id = ${seasonId} OR f.season_id LIKE ${seasonPattern})
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL

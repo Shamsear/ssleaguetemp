@@ -667,6 +667,12 @@ export default function PlayerDetailPage() {
                         return 'bg-amber-100 text-amber-800 border-amber-200';
                       case 'classic':
                         return 'bg-blue-100 text-blue-800 border-blue-200';
+                      case 'a':
+                      case 'category a':
+                        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                      case 'b':
+                      case 'category b':
+                        return 'bg-violet-100 text-violet-800 border-violet-200';
                       default:
                         return 'bg-gray-100 text-gray-700 border-gray-200';
                     }
@@ -689,6 +695,14 @@ export default function PlayerDetailPage() {
                       <div className="mt-2">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider border ${getCategoryStyles(currentSeasonData.category)}`}>
                           {currentSeasonData.category}
+                        </span>
+                      </div>
+                    );
+                  } else if (selectedView === 'season') {
+                    return (
+                      <div className="mt-2">
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider border bg-slate-50 text-slate-400 border-slate-200">
+                          Unassigned
                         </span>
                       </div>
                     );

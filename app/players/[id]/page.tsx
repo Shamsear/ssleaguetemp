@@ -25,6 +25,11 @@ async function getPlayerData(id: string) {
       SELECT player_id, player_name as name, category
       FROM realplayerstats
       WHERE player_id = ${id}
+      ORDER BY 
+        CASE 
+          WHEN season_id LIKE 'SSPSLS%' THEN CAST(SUBSTRING(season_id FROM 7) AS INT)
+          ELSE 0 
+        END DESC
       LIMIT 1
     `;
     if (rows.length > 0) {
