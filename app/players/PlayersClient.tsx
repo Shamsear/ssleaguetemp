@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import PlayerPhoto from '@/components/PlayerPhoto';
 import {
@@ -16,6 +16,7 @@ import {
   ChevronRight,
   TrendingUp,
   Activity,
+  Calendar,
   Award as AwardIcon
 } from 'lucide-react';
 
@@ -47,7 +48,14 @@ interface Player {
   };
 }
 
+interface SeasonOption {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
 function PlayersContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const seasonId = searchParams.get('season');
   
@@ -60,6 +68,38 @@ function PlayersContent() {
   const [sortBy, setSortBy] = useState<string>('points'); // Default sort by points now, fits leaderboards better
   const [teams, setTeams] = useState<string[]>([]);
   const [seasonName, setSeasonName] = useState<string>('');
+  const [seasons, setSeasons] = useState<SeasonOption[]>([]);
+  const [activeSeasonId, setActiveSeasonId] = useState<string>('SSPSLS19');
+
+  // Load seasons list
+  useEffect(() => {
+    const fetchSeasonsList = async () => {
+      try {
+        const response = await fetch('/api/seasons');
+        const data = await response.json();
+        const raw = data.seasons || data.data || (Array.isArray(data) ? data : []);
+        if (raw.length > 0) {
+          const sorted = [...raw].map((s: any) => ({
+            id: s.id || s.season_id,
+            name: s.name || `Season ${s.id?.replace(/\D/g, '') || ''}`,
+            is_active: Boolean(s.is_active || s.status === 'active'),
+          })).sort((a: any, b: any) => {
+            const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
+            return numB - numA;
+          });
+          setSeasons(sorted);
+          const active = sorted.find((s: any) => s.is_active);
+          if (active) {
+            setActiveSeasonId(active.id);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching seasons list:', error);
+      }
+    };
+    fetchSeasonsList();
+  }, []);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -112,19 +152,26 @@ function PlayersContent() {
       
       // If season filter is provided, fetch season-specific stats
       if (seasonId) {
-        const seasonRes = await fetch(`/api/seasons/${seasonId}/stats`);
+        const [seasonRes, detailsRes] = await Promise.all([
+          fetch(`/api/seasons/${seasonId}/stats`),
+          fetch(`/api/seasons/${seasonId}/details`).catch(() => null)
+        ]);
         const seasonData = await seasonRes.json();
         
         if (seasonData.success && seasonData.data) {
           // Fetch season details for name
-          try {
-            const detailsRes = await fetch(`/api/seasons/${seasonId}/details`);
-            const detailsData = await detailsRes.json();
-            if (detailsData.success) {
-              setSeasonName(detailsData.data.name || '');
+          if (detailsRes && detailsRes.ok) {
+            try {
+              const detailsData = await detailsRes.json();
+              if (detailsData.success) {
+                setSeasonName(detailsData.data.name || `Season ${seasonId.replace('SSPSLS', '')}`);
+              }
+            } catch (err: any) {
+              console.error('Error fetching season name:', err);
             }
-          } catch (err: any) {
-            console.error('Error fetching season name:', err);
+          }
+          if (!seasonName) {
+            setSeasonName(`Season ${seasonId.replace('SSPSLS', '')}`);
           }
           
           // Get players from the API response
@@ -133,7 +180,7 @@ function PlayersContent() {
           // Fetch player photos from the overall players API which includes photo_url
           let photoMap = new Map<string, any>();
           try {
-            const allPlayersRes = await fetch('/api/players/with-stats', { cache: 'no-store' });
+            const allPlayersRes = await fetch(`/api/players/with-stats?season=${seasonId}`, { cache: 'no-store' });
             const allPlayersData = await allPlayersRes.json();
             if (allPlayersData.success && allPlayersData.players) {
               allPlayersData.players.forEach((p: any) => {
@@ -151,7 +198,7 @@ function PlayersContent() {
               player_id: player.player_id,
               name: player.player_name,
               display_name: player.player_name,
-              category: player.category,
+              category: player.category || extra.category,
               team: player.team_name,
               team_name: player.team_name,
               photo_url: extra.photo_url || null,
@@ -174,7 +221,8 @@ function PlayersContent() {
           }) as Player[];
         }
       } else {
-        // Fetch all players with overall stats
+        // Fetch all players with overall stats (defaults to active season for squad/category)
+        setSeasonName('');
         const response = await fetch('/api/players/with-stats', { cache: 'no-store' });
         const data = await response.json();
         
@@ -292,7 +340,13 @@ function PlayersContent() {
               {seasonName ? `${seasonName} Players` : 'All Players'}
             </h1>
             <p className="text-xs text-slate-500 font-mono mt-1">
-              {seasonName ? `PLAYERS IN ${seasonName.toUpperCase()}:` : 'REGISTERED PLAYERS:'} <span className="text-amber-600 font-bold">{filteredPlayers.length}</span>
+              {seasonName ? `PLAYERS IN ${seasonName.toUpperCase()}:` : 'REGISTERED PLAYERS:'}{' '}
+              <span className="text-amber-600 font-bold">{filteredPlayers.length}</span>
+              {!seasonId && activeSeasonId && (
+                <span className="ml-2 text-emerald-600 font-bold font-mono">
+                  &bull; ACTIVE SEASON: {activeSeasonId.replace('SSPSLS', 'SEASON ')}
+                </span>
+              )}
             </p>
           </div>
           
@@ -304,7 +358,7 @@ function PlayersContent() {
 
         {/* Filters */}
         <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div>
               <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
@@ -319,6 +373,38 @@ function PlayersContent() {
                   className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold text-slate-700 bg-slate-50 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            {/* Season Filter */}
+            <div>
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
+                Season
+              </label>
+              <div className="relative">
+                <select
+                  value={seasonId || 'all'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'all') {
+                      router.push('/players');
+                    } else {
+                      router.push(`/players?season=${val}`);
+                    }
+                  }}
+                  aria-label="Filter by season"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold text-slate-700 bg-slate-50 focus:ring-1 focus:ring-amber-500 focus:outline-none appearance-none cursor-pointer"
+                >
+                  <option value="all">
+                    All Players {activeSeasonId ? `(Active: ${activeSeasonId.replace('SSPSLS', 'S')})` : ''}
+                  </option>
+                  {seasons.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {s.is_active ? '(ACTIVE)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <Calendar className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
@@ -340,6 +426,8 @@ function PlayersContent() {
                   <option value="White">White</option>
                   <option value="Legend">Legend</option>
                   <option value="Classic">Classic</option>
+                  <option value="A">Category A</option>
+                  <option value="B">Category B</option>
                 </select>
                 <Filter className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -389,15 +477,16 @@ function PlayersContent() {
           {/* Results Count */}
           <div className="mt-4 text-[10px] font-mono text-slate-400 uppercase flex justify-between items-center">
             <span>Showing {filteredPlayers.length} of {players.length} players</span>
-            {searchTerm || categoryFilter !== 'all' || teamFilter !== 'all' ? (
+            {searchTerm || categoryFilter !== 'all' || teamFilter !== 'all' || seasonId ? (
               <button
                 onClick={() => {
                   setSearchTerm('');
                   setCategoryFilter('all');
                   setTeamFilter('all');
                   setSortBy('points');
+                  if (seasonId) router.push('/players');
                 }}
-                className="text-amber-600 hover:text-amber-700 font-bold hover:underline"
+                className="text-amber-600 hover:text-amber-700 font-bold hover:underline cursor-pointer"
               >
                 Clear Filters
               </button>
