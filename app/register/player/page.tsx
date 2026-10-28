@@ -1,11 +1,19 @@
 'use client'
 
-import { Crown, Lock, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Crown, Lock, Medal, Star, TrendingUp, Trophy } from 'lucide-react';
 import { Suspense, useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { db, auth } from '@/lib/firebase/config'
 import { collection, doc, getDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth'
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signOut,
+  User,
+} from 'firebase/auth'
 
 interface Season {
   id: string
@@ -79,42 +87,134 @@ function PlayerSearchContent() {
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [fatalError, setFatalError] = useState<string | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [signingIn, setSigningIn] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
 
-  // Check auth state
+  // Detect in-app browsers (WhatsApp, Instagram, etc.) where popups fail or are disallowed
   useEffect(() => {
+    if (typeof window !== 'undefined' && navigator?.userAgent) {
+      const ua = navigator.userAgent || ''
+      const inApp = /FBAN|FBAV|Instagram|WhatsApp|Line|Twitter|Snapchat|MicroMessenger|musical_ly|BytedanceWebview/i.test(ua)
+      setIsInAppBrowser(inApp)
+    }
+  }, [])
+
+  const handleCopyPageUrl = async () => {
+    try {
+      if (typeof window !== 'undefined') {
+        await navigator.clipboard.writeText(window.location.href)
+        setCopiedLink(true)
+        setTimeout(() => setCopiedLink(false), 2500)
+      }
+    } catch (err) {
+      console.error('Failed to copy URL:', err)
+    }
+  }
+
+  // Handle redirect result and auth state listener
+  useEffect(() => {
+    let isMounted = true
+
+    // Check if user just returned from Google redirect sign-in
+    getRedirectResult(auth)
+      .then((result) => {
+        if (!isMounted) return
+        if (result && result.user) {
+          setUser(result.user)
+          setSuccess('[SUCCESS] Signed in successfully!')
+          setAuthError(null)
+          result.user.getIdToken().then(token => {
+            fetch('/api/auth/set-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token }),
+            }).catch(() => {})
+          }).catch(() => {})
+        }
+      })
+      .catch((err: any) => {
+        console.error('Redirect sign-in error:', err)
+        if (!isMounted) return
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          setAuthError('An account already exists with this email address.')
+        } else if (err.code !== 'auth/popup-closed-by-user') {
+          setAuthError(err.message || 'Redirect sign-in failed. Please try again.')
+        }
+      })
+
+    // Safety timeout: Never leave authLoading hanging indefinitely
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setAuthLoading(false)
+    }, 4000)
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!isMounted) return
       setUser(currentUser)
       setAuthLoading(false)
+      clearTimeout(safetyTimer)
+
+      if (currentUser) {
+        currentUser.getIdToken().then(token => {
+          fetch('/api/auth/set-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          }).catch(() => {})
+        }).catch(() => {})
+      }
     })
-    return () => unsubscribe()
+
+    return () => {
+      isMounted = false
+      clearTimeout(safetyTimer)
+      unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
     const fetchSeason = async () => {
       if (!seasonId) {
-        setError('No season specified')
+        setFatalError('No season specified')
         setLoading(false)
         return
       }
 
       try {
-        // Fetch season info
-        const seasonDoc = await fetch(`/api/cached/firebase/seasons?seasonId=${seasonId}`, {
-          cache: 'default'
-        }).then(r => r.json())
+        let seasonData: Season | null = null
 
-        if (!seasonDoc.success || !seasonDoc.data) {
-          setError('Season not found')
+        // Try primary /api/seasons/[id] first (direct Neon SQL)
+        try {
+          const res = await fetch(`/api/seasons/${seasonId}`, { cache: 'no-store' })
+          const json = await res.json()
+          if (json.success && json.data) {
+            seasonData = json.data as Season
+          }
+        } catch (e) {
+          console.warn('Direct season query failed, trying cached route:', e)
+        }
+
+        // Fallback to /api/cached/firebase/seasons
+        if (!seasonData) {
+          const seasonDoc = await fetch(`/api/cached/firebase/seasons?seasonId=${seasonId}`, {
+            cache: 'default'
+          }).then(r => r.json())
+          if (seasonDoc.success && seasonDoc.data) {
+            seasonData = seasonDoc.data as Season
+          }
+        }
+
+        if (!seasonData) {
+          setFatalError('Season not found')
           setLoading(false)
           return
         }
-
-        const seasonData = seasonDoc.data as Season
 
         // Check registration status
         const isRegOpen = Boolean(
@@ -124,7 +224,7 @@ function PlayerSearchContent() {
           false
         )
         if (!isRegOpen) {
-          setError('Player registration is currently closed for this season')
+          setFatalError('Player registration is currently closed for this season')
           setLoading(false)
           return
         }
@@ -136,7 +236,7 @@ function PlayerSearchContent() {
         setLoading(false)
       } catch (err: any) {
         console.error('Error fetching season:', err)
-        setError('Failed to load registration')
+        setFatalError('Failed to load registration')
         setLoading(false)
       }
     }
@@ -152,11 +252,16 @@ function PlayerSearchContent() {
       try {
         const apiRes = await fetch(`/api/realplayers?season_id=${seasonId}`)
         const { data: apiRows } = await apiRes.json()
-        const emailCheckSnapshot = { empty: !(apiRows || []).some((r: any) => r.email === user.email && r.is_registered) }
+        const userEmail = user.email.trim().toLowerCase()
+        const alreadyRegistered = (apiRows || []).some(
+          (r: any) => (r.email || '').trim().toLowerCase() === userEmail && r.is_registered
+        )
 
-        if (!emailCheckSnapshot.empty) {
-          setError(`This email (${user.email}) has already been used to register for this season`)
+        if (alreadyRegistered) {
+          setAuthError(`This email (${user.email}) has already been used to register for this season. Please sign in with a different Google account.`)
           await signOut(auth)
+          await fetch('/api/auth/clear-token', { method: 'POST' }).catch(() => {})
+          setUser(null)
         }
       } catch (err: any) {
         console.error('Error checking email:', err)
@@ -172,10 +277,12 @@ function PlayerSearchContent() {
     // Only search if term has at least 2 characters
     if (term.trim().length < 2) {
       setPlayers([])
+      setSearchError(null)
       return
     }
 
     setSearching(true)
+    setSearchError(null)
     try {
       // Use API endpoint for optimized search with no caching to ensure fresh data
       const response = await fetch(
@@ -193,7 +300,7 @@ function PlayerSearchContent() {
       setPlayers(searchResults || [])
     } catch (err: any) {
       console.error('Error searching players:', err)
-      setError('Failed to search players')
+      setSearchError('Failed to search players. Please try again.')
       setPlayers([])
     } finally {
       setSearching(false)
@@ -222,23 +329,63 @@ function PlayerSearchContent() {
     router.push(`/register/player/verify?season=${seasonId}&player=${playerId}`)
   }, [router, seasonId])
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (useRedirect = false) => {
     setSigningIn(true)
-    setError(null)
+    setAuthError(null)
 
     try {
       const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
-      setSuccess('[SUCCESS] Signed in successfully!')
+      provider.setCustomParameters({ prompt: 'select_account' })
+
+      if (useRedirect) {
+        await signInWithRedirect(auth, provider)
+        return
+      }
+
+      try {
+        const result = await signInWithPopup(auth, provider)
+        if (result.user) {
+          setUser(result.user)
+          setSuccess('[SUCCESS] Signed in successfully!')
+          result.user.getIdToken().then(token => {
+            fetch('/api/auth/set-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token }),
+            }).catch(() => {})
+          }).catch(() => {})
+        }
+      } catch (popupErr: any) {
+        console.warn('Popup sign in error:', popupErr)
+        if (
+          popupErr.code === 'auth/popup-blocked' ||
+          popupErr.code === 'auth/operation-not-supported-in-this-environment'
+        ) {
+          console.log('Popup blocked; falling back to redirect...')
+          await signInWithRedirect(auth, provider)
+          return
+        }
+
+        if (popupErr.code === 'auth/popup-closed-by-user') {
+          setAuthError('Sign-in cancelled. Please click below to try again.')
+        } else if (popupErr.code === 'auth/cancelled-popup-request') {
+          setAuthError('Another sign-in attempt was in progress. Please try again.')
+        } else if (
+          popupErr.code === 'auth/disallowed-user-agent' ||
+          popupErr.message?.includes('disallowed_useragent')
+        ) {
+          setAuthError(
+            'Google blocks sign-in inside in-app browsers. Please tap the menu (...) and choose "Open in Chrome" or "Open in Safari".'
+          )
+        } else {
+          setAuthError(
+            popupErr.message || 'Failed to sign in with Google. If the popup was blank, please try "Sign in via Redirect" below.'
+          )
+        }
+      }
     } catch (err: any) {
       console.error('Sign in error:', err)
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in cancelled. Please try again.')
-      } else if (err.code === 'auth/popup-blocked') {
-        setError('Pop-up blocked. Please allow pop-ups and try again.')
-      } else {
-        setError('Failed to sign in with Google. Please try again.')
-      }
+      setAuthError('Failed to sign in. Please try again.')
     } finally {
       setSigningIn(false)
     }
@@ -247,7 +394,10 @@ function PlayerSearchContent() {
   const handleSignOut = async () => {
     try {
       await signOut(auth)
+      await fetch('/api/auth/clear-token', { method: 'POST' }).catch(() => {})
+      setUser(null)
       setSuccess(null)
+      setAuthError(null)
       setSearchTerm('')
       setPlayers([])
     } catch (err: any) {
@@ -266,7 +416,7 @@ function PlayerSearchContent() {
     )
   }
 
-  if (error) {
+  if (fatalError) {
     return (
       <div className="console-bg min-h-screen flex items-center justify-center relative px-4">
         <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
@@ -277,7 +427,7 @@ function PlayerSearchContent() {
             </svg>
           </div>
           <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider mb-2">Registration Unavailable</h2>
-          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{error}</p>
+          <p className="text-xs text-slate-500 uppercase font-semibold mb-6">{fatalError}</p>
           <button
             onClick={() => router.push('/')}
             className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl text-xs uppercase tracking-wider font-bold transition-all shadow-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
@@ -344,9 +494,44 @@ function PlayerSearchContent() {
                   Sign in with your Gmail account to begin registration.
                 </p>
               </div>
+
+              {/* In-App Browser Detected Alert */}
+              {isInAppBrowser && (
+                <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-900 text-xs mb-4">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-2 flex-1">
+                      <p className="font-bold uppercase tracking-wider text-[11px]">
+                        In-App Browser Detected (WhatsApp / Instagram)
+                      </p>
+                      <p className="text-[10px] text-amber-800 uppercase font-semibold leading-relaxed">
+                        Google may block sign-in popups inside app browsers. For best results, open in Chrome or Safari, or click &quot;Sign in via Redirect&quot; below.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleCopyPageUrl}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-amber-300 text-amber-800 hover:bg-amber-50 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-xs cursor-pointer"
+                      >
+                        {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedLink ? 'Link Copied!' : 'Copy Page Link'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Authentication error banner */}
+              {authError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200/60 text-rose-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-start gap-2.5 mb-4 font-mono">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-[11px] leading-relaxed">{authError}</p>
+                  </div>
+                </div>
+              )}
               
               <button
-                onClick={handleGoogleSignIn}
+                onClick={() => handleGoogleSignIn(false)}
                 disabled={signingIn}
                 className="w-full py-3 px-4 bg-white border border-slate-200 hover:border-amber-400/40 hover:text-amber-600 text-slate-700 font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -367,6 +552,17 @@ function PlayerSearchContent() {
                   </>
                 )}
               </button>
+
+              <div className="mt-3 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => handleGoogleSignIn(true)}
+                  disabled={signingIn}
+                  className="text-[11px] text-slate-500 hover:text-slate-800 font-bold uppercase tracking-wider underline underline-offset-4 decoration-slate-300 hover:decoration-slate-600 transition-colors cursor-pointer py-1"
+                >
+                  Having trouble? Sign in via Redirect &rarr;
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -619,13 +815,13 @@ function PlayerSearchContent() {
             <span>{success}</span>
           </div>
         )}
-        
-        {error && (
+
+        {searchError && (
           <div className="mt-4 p-4 bg-rose-50 border border-rose-200/40 text-rose-800 rounded-xl text-xs uppercase font-bold tracking-wider flex items-center gap-2 font-mono">
             <svg className="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span>{error}</span>
+            <span>{searchError}</span>
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { X, ArrowRight, Sparkles, Calendar, Trophy, Target } from 'lucide-react';
 import ConfettiEffect from './ConfettiEffect';
 
@@ -26,6 +27,7 @@ export interface BirthdayPlayer {
 }
 
 export default function DailyBirthdayModal() {
+  const pathname = usePathname();
   const [players, setPlayers] = useState<BirthdayPlayer[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -33,6 +35,11 @@ export default function DailyBirthdayModal() {
 
   useEffect(() => {
     setMounted(true);
+    // Don't show modal on auth/registration paths
+    if (pathname?.startsWith('/register') || pathname?.startsWith('/login')) {
+      return;
+    }
+
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-CA');
     const storageKey = `ssleague_bday_seen_${dateStr}`;
@@ -56,7 +63,7 @@ export default function DailyBirthdayModal() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [pathname]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -67,7 +74,7 @@ export default function DailyBirthdayModal() {
     setShowConfetti(true);
   };
 
-  if (!mounted || players.length === 0) return null;
+  if (!mounted || players.length === 0 || pathname?.startsWith('/register') || pathname?.startsWith('/login')) return null;
 
   const modalContent = isOpen ? (
     <div
