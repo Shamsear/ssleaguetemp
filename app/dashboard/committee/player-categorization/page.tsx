@@ -307,6 +307,7 @@ export default function PlayerCategorizationPage() {
       // Match-volume weighted performance: sum(points * weight) / sum(matches * weight)
       let weightedPointsSum = 0;
       let weightedMatchesSum = 0;
+      let mostRecentAppliedWeight = 0;
       const seasonPointsMap = new Map<string, { points: number; matches: number; ppm: number; appliedWeight: number }>();
 
       // Group historical stats by base season ID (e.g. S16.5 and S16.0 merge into S16)
@@ -369,6 +370,9 @@ export default function PlayerCategorizationPage() {
           if (matches >= minMatches) {
             weightedPointsSum += points * weight;
             weightedMatchesSum += matches * weight;
+            if (mostRecentAppliedWeight === 0) {
+              mostRecentAppliedWeight = weight;
+            }
           }
         }
       });
@@ -390,6 +394,7 @@ export default function PlayerCategorizationPage() {
       // Calculate hypothetical score including all seasons (ignoring checklist and distance limits)
       let hypotheticalWeightedPoints = 0;
       let hypotheticalWeightedMatches = 0;
+      let hypotheticalRecentWeight = 0;
       baseSeasonsSorted.forEach(baseId => {
         const seasonNum = parseInt(baseId.replace(/\D/g, '')) || 0;
         if (seasonNum > 0 && seasonNum < currentSeasonNum) {
@@ -404,21 +409,38 @@ export default function PlayerCategorizationPage() {
           if (matches >= minMatches) {
             hypotheticalWeightedPoints += points * weight;
             hypotheticalWeightedMatches += matches * weight;
+            if (hypotheticalRecentWeight === 0) {
+              hypotheticalRecentWeight = weight;
+            }
           }
         }
       });
-      const hypotheticalScore = hypotheticalWeightedMatches > 0
-        ? parseFloat((hypotheticalWeightedPoints / hypotheticalWeightedMatches).toFixed(2))
+      const baseHypoPPM = hypotheticalWeightedMatches > 0
+        ? (hypotheticalWeightedPoints / hypotheticalWeightedMatches)
+        : null;
+      const hypotheticalScore = baseHypoPPM !== null
+        ? parseFloat((baseHypoPPM > 0 ? baseHypoPPM * (hypotheticalRecentWeight || 1.0) : baseHypoPPM).toFixed(2))
         : null;
 
-      // AI Score is the match-volume weighted PPM
-      const weightedScore = weightedMatchesSum > 0
-        ? parseFloat((weightedPointsSum / weightedMatchesSum).toFixed(2))
+      // Base PPM is the match-volume weighted performance
+      const baseWeightedPPM = weightedMatchesSum > 0
+        ? (weightedPointsSum / weightedMatchesSum)
+        : null;
+
+      // Recency Factor: Weight of the player's most recent active season (e.g. S18 = 1.0, S14 = 0.24).
+      // Scales positive ratings down according to inactivity so returning players who missed
+      // years are appropriately discounted according to that season's weight.
+      const recencyFactor = mostRecentAppliedWeight > 0 ? mostRecentAppliedWeight : 1.0;
+
+      const weightedScore = baseWeightedPPM !== null
+        ? parseFloat((baseWeightedPPM > 0 ? baseWeightedPPM * recencyFactor : baseWeightedPPM).toFixed(2))
         : null;
 
       return {
         ...player,
         weightedScore,
+        baseWeightedPPM: baseWeightedPPM !== null ? parseFloat(baseWeightedPPM.toFixed(2)) : null,
+        recencyFactor,
         hypotheticalScore,
         seasonPointsMap,
         isNewPlayer: weightedScore === null,
@@ -1496,28 +1518,50 @@ export default function PlayerCategorizationPage() {
                                   </div>
 
                                   {/* Formula representation */}
-                                  <div className="space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-150">
-                                    <div className="text-slate-500 uppercase text-[9px] font-bold">Calculation Formula (Match-Volume Weighted):</div>
-                                    <div className="text-slate-800 text-xs font-bold py-0.5">
-                                      Weighted Score = &Sigma;(Season_Points &times; Weight) / &Sigma;(Season_Matches &times; Weight)
+                                  <div className="space-y-2 bg-slate-50 p-3.5 rounded-lg border border-slate-150">
+                                    <div className="text-slate-500 uppercase text-[9px] font-bold tracking-wider">Calculation Formula:</div>
+                                    <div className="text-slate-800 text-xs font-bold">
+                                      Final AI Score = Base Weighted PPM &times; Recency Factor
                                     </div>
-                                    <div className="text-slate-600 text-[10px] pt-1 leading-relaxed">
-                                      {"Weighted Score = ("}
-                                      {
-                                        Array.from(player.seasonPointsMap.entries())
-                                          .filter(([_, data]) => data.matches >= minMatches && data.appliedWeight > 0)
-                                          .map(([seasonId, data]) => `${data.points}pts [${seasonId}] * ${data.appliedWeight}`)
-                                          .join(' + ') || 'No qualifying seasons'
-                                      }
-                                      {") / ("}
-                                      {
-                                        Array.from(player.seasonPointsMap.entries())
-                                          .filter(([_, data]) => data.matches >= minMatches && data.appliedWeight > 0)
-                                          .map(([seasonId, data]) => `${data.matches}m [${seasonId}] * ${data.appliedWeight}`)
-                                          .join(' + ') || '0'
-                                      }
-                                      {") = "}
-                                      <strong className="text-amber-600 text-sm ml-1">{player.weightedScore ?? 'N/A'} PPM</strong>
+                                    <div className="text-slate-600 text-[10px] pt-1 leading-relaxed border-t border-slate-200/60">
+                                      <span className="font-bold text-slate-700">1. Base Weighted PPM:</span>
+                                      <div className="pl-3 py-1 font-mono text-[10px]">
+                                        {"("}
+                                        {
+                                          Array.from(player.seasonPointsMap.entries())
+                                            .filter(([_, data]) => data.matches >= minMatches && data.appliedWeight > 0)
+                                            .map(([seasonId, data]) => `${data.points}pts [${seasonId}] * ${data.appliedWeight}`)
+                                            .join(' + ') || 'No qualifying seasons'
+                                        }
+                                        {") / ("}
+                                        {
+                                          Array.from(player.seasonPointsMap.entries())
+                                            .filter(([_, data]) => data.matches >= minMatches && data.appliedWeight > 0)
+                                            .map(([seasonId, data]) => `${data.matches}m [${seasonId}] * ${data.appliedWeight}`)
+                                            .join(' + ') || '0'
+                                        }
+                                        {") = "}
+                                        <span className="font-bold text-slate-900">{player.baseWeightedPPM ?? 'N/A'} PPM</span>
+                                      </div>
+                                    </div>
+                                    <div className="text-slate-600 text-[10px] leading-relaxed border-t border-slate-200/60 pt-1.5 flex flex-wrap items-center gap-1.5">
+                                      <span className="font-bold text-slate-700">2. Recency Factor:</span>
+                                      <span className="font-mono font-extrabold text-slate-800">
+                                        {Math.round((player.recencyFactor ?? 1) * 100)}%
+                                      </span>
+                                      {player.recencyFactor && player.recencyFactor < 1 ? (
+                                        <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded font-sans">
+                                          Inactivity discount applied ({Math.round(player.recencyFactor * 100)}% retention for most recent played season)
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded font-sans">
+                                          100% active recency
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-slate-800 text-xs font-bold pt-1 border-t border-slate-200/60 flex items-center gap-2">
+                                      <span>Final AI Score:</span>
+                                      <strong className="text-amber-600 text-sm">{player.weightedScore ?? 'N/A'} PPM</strong>
                                     </div>
                                   </div>
 
