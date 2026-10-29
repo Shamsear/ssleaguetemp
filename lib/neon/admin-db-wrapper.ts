@@ -527,7 +527,11 @@ function mapFieldName(collection: string, field: any): string {
   if (collection === 'realplayers' || collection === 'realplayer') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
-      display_name: 'display_name', is_available: 'is_available',
+      display_name: 'display_name',
+      is_available: 'is_available',
+      photo_url: 'profile_image',
+      current_season_id: 'season_id',
+      category: 'category_id',
     };
     return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }

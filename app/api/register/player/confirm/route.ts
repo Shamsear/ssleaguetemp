@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { FieldValue } from 'firebase-admin/firestore';
+import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { fantasySql } from '@/lib/neon/fantasy-config';
 import { triggerNewsGeneration, isPlayerMilestone } from '@/lib/news/trigger';
@@ -46,29 +47,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if registration is open (simplified - no phase system)
-    const seasonRef = adminDb.collection('seasons').doc(season_id);
-    let seasonData: any;
-    
+    // Check if registration is open (direct Neon query with fallback)
+    let isRegOpen = false;
+    let seasonFound = false;
+
     try {
-      const seasonDoc = await seasonRef.get();
-      
-      if (!seasonDoc.exists) {
-        return NextResponse.json(
-          { success: false, error: 'Season not found' },
-          { status: 404 }
+      if (isMainDbAvailable()) {
+        try {
+          const mainDb = getMainDb();
+          const seasonRows = await mainDb`
+            SELECT id, registration_open, is_active, raw_data
+            FROM seasons
+            WHERE id = ${season_id}
+            LIMIT 1
+          `;
+          if (seasonRows.length > 0) {
+            seasonFound = true;
+            const sRow = seasonRows[0];
+            const raw = typeof sRow.raw_data === 'object' && sRow.raw_data !== null ? sRow.raw_data : {};
+            isRegOpen = Boolean(
+              raw.is_player_registration_open ??
+              sRow.registration_open ??
+              raw.registration_open ??
+              raw.registrationOpen ??
+              false
+            );
+          }
+        } catch (dbErr: any) {
+          console.warn('Direct Neon season check warning:', dbErr.message);
+        }
+      }
+
+      if (!seasonFound) {
+        const seasonRef = adminDb.collection('seasons').doc(season_id);
+        const seasonDoc = await seasonRef.get();
+        if (!seasonDoc.exists) {
+          return NextResponse.json(
+            { success: false, error: 'Season not found' },
+            { status: 404 }
+          );
+        }
+        const seasonData = seasonDoc.data();
+        isRegOpen = Boolean(
+          seasonData?.is_player_registration_open ??
+          seasonData?.registration_open ??
+          seasonData?.registrationOpen ??
+          false
         );
       }
 
-      seasonData = seasonDoc.data();
-      
-      // Simple check: is player registration open?
-      const isRegOpen = Boolean(
-        seasonData?.is_player_registration_open ??
-        seasonData?.registration_open ??
-        seasonData?.registrationOpen ??
-        false
-      );
       if (!is_admin_registration && !isRegOpen) {
         return NextResponse.json(
           { success: false, error: 'Registration is closed for this season' },
@@ -280,6 +307,52 @@ export async function POST(request: NextRequest) {
         created_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
       });
+    }
+
+    // Ensure master realplayers record in Neon Main DB is updated/inserted directly
+    if (isMainDbAvailable()) {
+      try {
+        const mainSql = getMainDb();
+        const updateResult = await mainSql`
+          UPDATE realplayers SET
+            is_registered = true,
+            season_id = ${season_id},
+            category_id = COALESCE(${player_data?.category || null}, category_id),
+            email = COALESCE(${player_data?.email || null}, email),
+            phone = COALESCE(${player_data?.phone || null}, phone),
+            profile_image = COALESCE(${player_data?.photo_url || null}, profile_image),
+            updated_at = NOW()
+          WHERE player_id = ${player_id} OR id = ${player_id}
+          RETURNING id
+        `;
+
+        if (updateResult.length === 0) {
+          await mainSql`
+            INSERT INTO realplayers (
+              id, player_id, name, display_name, email, phone,
+              season_id, category_id, profile_image,
+              is_registered, is_active, is_available, role,
+              registered_at, updated_at
+            ) VALUES (
+              ${player_id}, ${player_id}, ${player_data?.name || player_id}, ${player_data?.name || player_id}, ${player_data?.email || null}, ${player_data?.phone || null},
+              ${season_id}, ${player_data?.category || 'A'}, ${player_data?.photo_url || null},
+              true, true, true, 'player',
+              NOW(), NOW()
+            )
+            ON CONFLICT (id) DO UPDATE SET
+              name = COALESCE(EXCLUDED.name, realplayers.name),
+              email = COALESCE(EXCLUDED.email, realplayers.email),
+              phone = COALESCE(EXCLUDED.phone, realplayers.phone),
+              season_id = EXCLUDED.season_id,
+              category_id = COALESCE(EXCLUDED.category_id, realplayers.category_id),
+              profile_image = COALESCE(EXCLUDED.profile_image, realplayers.profile_image),
+              is_registered = true,
+              updated_at = NOW()
+          `;
+        }
+      } catch (mainErr: any) {
+        console.warn('Warning: Could not sync to Neon realplayers table directly:', mainErr.message);
+      }
     }
 
       return NextResponse.json(

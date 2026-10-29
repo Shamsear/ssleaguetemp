@@ -557,25 +557,14 @@ function PlayerVerifyContent() {
       let finalPlayerId = player?.player_id
       
       if (isNewPlayer && !finalPlayerId) {
-        // Generate new player ID by finding the max ID
-        const rpRes = await fetch('/api/realplayers')
-        const rpJson = await rpRes.json()
-        const playersSnapshot = { docs: (rpJson.data || []).map((r: any) => ({ data: () => r })) }
-        const maxId = playersSnapshot.docs.reduce((max: any, doc: any) => {
-          const id = (doc.data() as any).player_id as string
-          if (id && id.startsWith('sspslpsl')) {
-            const numStr = id.replace('sspslpsl', '')
-            const num = parseInt(numStr, 10)
-            if (!isNaN(num)) {
-              return num > max ? num : max
-            }
-          }
-          return max
-        }, 0)
-        const nextId = maxId + 1
-        // Pad with leading zeros to 4 digits to match existing format (0001-9999)
-        const paddedId = String(nextId).padStart(4, '0')
-        finalPlayerId = `sspslpsl${paddedId}`
+        // Fetch safe next player ID from server
+        const nextIdRes = await fetch('/api/realplayers/next-id')
+        const nextIdJson = await nextIdRes.json()
+        if (nextIdJson.success && nextIdJson.nextPlayerId) {
+          finalPlayerId = nextIdJson.nextPlayerId
+        } else {
+          throw new Error(nextIdJson.error || 'Failed to generate player ID')
+        }
       }
 
       // Upload photo to ImageKit
@@ -643,6 +632,7 @@ function PlayerVerifyContent() {
         body: JSON.stringify({
           player_id: finalPlayerId,
           season_id: seasonId,
+          is_new_player: isNewPlayer,
           user_email: user.email,
           user_uid: user.uid,
           player_data: playerData,

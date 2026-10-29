@@ -11,6 +11,7 @@ import {
   UpdateRealPlayerStatsData,
 } from '@/types/realPlayer';
 import { getMainDb } from '../neon/main-config';
+import { getTournamentDb, isTournamentDbAvailable } from '../neon/tournament-config';
 
 // Initialize empty stats
 const initializeStats = (): RealPlayerStats => ({
@@ -132,11 +133,32 @@ export const getRealPlayerStatistics = async (): Promise<{
 const generatePlayerId = async (): Promise<string> => {
   const prefix = 'sspslpsl';
   try {
+    let maxId = 0;
     const sql = getMainDb();
-    const result = await sql`SELECT player_id FROM realplayers WHERE player_id LIKE ${prefix + '%'} ORDER BY player_id DESC LIMIT 1`;
-    if (result.length === 0) return `${prefix}0001`;
-    const lastNum = parseInt(result[0].player_id?.substring(prefix.length) || '0');
-    return `${prefix}${(lastNum + 1).toString().padStart(4, '0')}`;
+    const result = await sql`SELECT player_id FROM realplayers WHERE player_id LIKE ${prefix + '%'}`;
+    for (const r of result) {
+      if (r.player_id && r.player_id.startsWith(prefix)) {
+        const num = parseInt(r.player_id.slice(prefix.length), 10);
+        if (!isNaN(num) && num > maxId) maxId = num;
+      }
+    }
+
+    if (isTournamentDbAvailable()) {
+      try {
+        const tSql = getTournamentDb();
+        const tResult = await tSql`SELECT player_id FROM realplayerstats WHERE player_id LIKE ${prefix + '%'}`;
+        for (const r of tResult) {
+          if (r.player_id && r.player_id.startsWith(prefix)) {
+            const num = parseInt(r.player_id.slice(prefix.length), 10);
+            if (!isNaN(num) && num > maxId) maxId = num;
+          }
+        }
+      } catch (tErr: any) {
+        console.warn('Could not query tournament db for maxId in generatePlayerId:', tErr.message);
+      }
+    }
+
+    return `${prefix}${String(maxId + 1).padStart(4, '0')}`;
   } catch {
     return `${prefix}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
   }
