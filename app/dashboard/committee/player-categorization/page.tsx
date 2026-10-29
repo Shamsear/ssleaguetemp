@@ -94,7 +94,10 @@ export default function PlayerCategorizationPage() {
   const [maxSeasons, setMaxSeasons] = useState<number | 'all'>('all');
   const [minMatches, setMinMatches] = useState<number>(3);
   const [weightPreset, setWeightPreset] = useState<'decay' | 'equal' | 'linear' | 'custom'>('decay');
-  const [seasonWeights, setSeasonWeights] = useState<number[]>([1.0, 0.5, 0.25, 0.12, 0.06]); // Corresponds to 1, 2, 3, 4, 5 seasons ago
+  // Corresponds to 1 to 13 seasons ago (S18 through S6)
+  const DEFAULT_WEIGHTS = [1.0, 0.7, 0.49, 0.34, 0.24, 0.17, 0.12, 0.08, 0.06, 0.04, 0.03, 0.02, 0.02];
+  const [seasonWeights, setSeasonWeights] = useState<number[]>(DEFAULT_WEIGHTS);
+  const [allocationMode, setAllocationMode] = useState<'rated' | 'all'>('rated');
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
 
   // Table Filter states
@@ -142,17 +145,17 @@ export default function PlayerCategorizationPage() {
     );
   };
 
-  // Redirect if unauthorized
+  // Recalculate season weights when preset or maxSeasons changes
   useEffect(() => {
     if (weightPreset === 'custom') return;
 
-    const count = 5; // We always show 5 weight slots in UI for seasons 1-5 ago
+    const count = 13;
     let newWeights = Array(count).fill(1.0);
 
     if (weightPreset === 'decay') {
-      newWeights = newWeights.map((_, i) => parseFloat(Math.pow(0.5, i).toFixed(2)));
+      newWeights = newWeights.map((_, i) => parseFloat(Math.max(0.02, Math.pow(0.7, i)).toFixed(2)));
     } else if (weightPreset === 'linear') {
-      newWeights = newWeights.map((_, i) => parseFloat(Math.max(0, 1.0 - i * 0.2).toFixed(2)));
+      newWeights = newWeights.map((_, i) => parseFloat(Math.max(0.05, 1.0 - i * 0.08).toFixed(2)));
     } else if (weightPreset === 'equal') {
       newWeights = Array(count).fill(1.0);
     }
@@ -301,9 +304,9 @@ export default function PlayerCategorizationPage() {
     return activePlayers.map(player => {
       const stats = historicalByPlayer.get(player.player_id) || [];
       
-      // Calculate weighted score using decay weightage and PPM (points per match)
-      let weightedSum = 0;
-      let weightSum = 0;
+      // Match-volume weighted performance: sum(points * weight) / sum(matches * weight)
+      let weightedPointsSum = 0;
+      let weightedMatchesSum = 0;
       const seasonPointsMap = new Map<string, { points: number; matches: number; ppm: number; appliedWeight: number }>();
 
       // Group historical stats by base season ID (e.g. S16.5 and S16.0 merge into S16)
@@ -343,35 +346,30 @@ export default function PlayerCategorizationPage() {
 
           // Check if distance is within maxSeasons constraint
           if (maxSeasons !== 'all' && distance > maxSeasons) {
-            return; // Ignore older seasons
+            return;
           }
 
           // Get weight from seasonWeights array (index = distance - 1)
           const weight = (distance - 1 < seasonWeights.length) ? seasonWeights[distance - 1] : 0.0;
-          
+          if (weight <= 0) return;
+
           const data = baseSeasonStats.get(baseId)!;
           const matches = data.matchesSum;
           const points = data.pointsSum;
+          const ppmVal = matches > 0 ? parseFloat((points / matches).toFixed(2)) : 0;
 
-          if (matches >= minMatches) {
-            const ppm = points / matches;
-            weightedSum += ppm * weight;
-          }
-
-          // Always add weight to denominator if the player has a record for this season
-          // (even if matches < minMatches). This treats "registered but didn't play"
-          // seasons as 0 PPM, preventing score inflation for players who skip seasons.
-          // Without this, a player with great S16 stats but 0 S17 matches would get
-          // their S16 PPM weighted more heavily than someone who actually played S17.
-          weightSum += weight;
-          
-          const ppmVal = matches > 0 ? parseFloat((points / matches).toFixed(1)) : 0;
           seasonPointsMap.set(baseId, {
             points: points,
             matches: matches,
             ppm: ppmVal,
             appliedWeight: weight
           });
+
+          // Only qualify seasons where player met minMatches
+          if (matches >= minMatches) {
+            weightedPointsSum += points * weight;
+            weightedMatchesSum += matches * weight;
+          }
         }
       });
 
@@ -390,29 +388,33 @@ export default function PlayerCategorizationPage() {
       });
 
       // Calculate hypothetical score including all seasons (ignoring checklist and distance limits)
-      let hypotheticalWeightedSum = 0;
-      let hypotheticalWeightSum = 0;
+      let hypotheticalWeightedPoints = 0;
+      let hypotheticalWeightedMatches = 0;
       baseSeasonsSorted.forEach(baseId => {
         const seasonNum = parseInt(baseId.replace(/\D/g, '')) || 0;
         if (seasonNum > 0 && seasonNum < currentSeasonNum) {
           const distance = currentSeasonNum - seasonNum;
           const weight = (distance - 1 < seasonWeights.length) ? seasonWeights[distance - 1] : 0.0;
+          if (weight <= 0) return;
           
           const data = baseSeasonStats.get(baseId)!;
           const matches = data.matchesSum;
           const points = data.pointsSum;
 
           if (matches >= minMatches) {
-            const ppm = points / matches;
-            hypotheticalWeightedSum += ppm * weight;
-            hypotheticalWeightSum += weight;
+            hypotheticalWeightedPoints += points * weight;
+            hypotheticalWeightedMatches += matches * weight;
           }
         }
       });
-      const hypotheticalScore = hypotheticalWeightSum > 0 ? parseFloat((hypotheticalWeightedSum / hypotheticalWeightSum).toFixed(2)) : null;
+      const hypotheticalScore = hypotheticalWeightedMatches > 0
+        ? parseFloat((hypotheticalWeightedPoints / hypotheticalWeightedMatches).toFixed(2))
+        : null;
 
-      // AI Score is the weighted PPM (rounded to 2 decimal places for sorting precision)
-      const weightedScore = weightSum > 0 ? parseFloat((weightedSum / weightSum).toFixed(2)) : null;
+      // AI Score is the match-volume weighted PPM
+      const weightedScore = weightedMatchesSum > 0
+        ? parseFloat((weightedPointsSum / weightedMatchesSum).toFixed(2))
+        : null;
 
       return {
         ...player,
@@ -435,66 +437,92 @@ export default function PlayerCategorizationPage() {
     });
   }, [playersWithScores]);
 
-  // Initialize target category distribution inputs once categories are loaded
+  // Count of rated vs new players
+  const ratedPlayersCount = useMemo(() => {
+    return sortedPlayers.filter(p => !p.isNewPlayer).length;
+  }, [sortedPlayers]);
+
+  const newPlayersCount = useMemo(() => {
+    return sortedPlayers.filter(p => p.isNewPlayer).length;
+  }, [sortedPlayers]);
+
+  const poolToAllocate = useMemo(() => {
+    return allocationMode === 'rated' ? ratedPlayersCount : activePlayers.length;
+  }, [allocationMode, ratedPlayersCount, activePlayers.length]);
+
+  // Initialize target category distribution inputs
   useEffect(() => {
-    if (categories.length > 0 && activePlayers.length > 0 && Object.keys(categoryTargets).length === 0) {
-      const equalShare = Math.floor(activePlayers.length / categories.length);
+    if (categories.length > 0 && poolToAllocate > 0 && Object.keys(categoryTargets).length === 0) {
+      const equalShare = Math.floor(poolToAllocate / categories.length);
       const initialTargets: { [key: string]: number } = {};
       categories.forEach((cat, index) => {
-        // Distribute remaining players to the first category
         initialTargets[cat.id] = index === 0 
-          ? equalShare + (activePlayers.length % categories.length)
+          ? equalShare + (poolToAllocate % categories.length)
           : equalShare;
       });
       setCategoryTargets(initialTargets);
     }
-  }, [categories, activePlayers, categoryTargets]);
+  }, [categories, poolToAllocate, categoryTargets]);
+
+  // Rebalance targets when allocationMode changes
+  const handleAllocationModeChange = (mode: 'rated' | 'all') => {
+    setAllocationMode(mode);
+    const targetPool = mode === 'rated' ? ratedPlayersCount : activePlayers.length;
+    if (categories.length > 0 && targetPool > 0) {
+      const equalShare = Math.floor(targetPool / categories.length);
+      const newTargets: { [key: string]: number } = {};
+      categories.forEach((cat, index) => {
+        newTargets[cat.id] = index === 0 
+          ? equalShare + (targetPool % categories.length)
+          : equalShare;
+      });
+      setCategoryTargets(newTargets);
+    }
+  };
 
   // Run the AI partition assignment algorithm
   const handleCalculateProposals = () => {
     setError(null);
-    // NOTE: We intentionally keep existing manual overrides — they persist across proposals
 
-    // 1. Validate target inputs
+    // 1. Validate target inputs against pool
     const totalTarget = Object.values(categoryTargets).reduce((a, b) => a + b, 0);
-    if (totalTarget !== activePlayers.length) {
-      setError(`Warning: The total target counts (${totalTarget}) must equal the number of registered players (${activePlayers.length}).`);
+    if (totalTarget !== poolToAllocate) {
+      setError(`Warning: The total target counts (${totalTarget}) must equal ${allocationMode === 'rated' ? `rated players (${ratedPlayersCount})` : `all registered players (${activePlayers.length})`}.`);
       return;
     }
 
-    // 2. Partition sorted players based on targets (excluding new players)
+    // 2. Partition players based on targets
     const proposals = new Map<string, string>();
     const ratedPlayersOnly = sortedPlayers.filter(p => !p.isNewPlayer);
+    const newPlayersOnly = sortedPlayers.filter(p => p.isNewPlayer);
     let currentIndex = 0;
 
     // Categories are sorted by priority (e.g. Red, Black, Blue, White)
     categories.forEach(cat => {
       const count = categoryTargets[cat.id] || 0;
       for (let i = 0; i < count; i++) {
-        const player = ratedPlayersOnly[currentIndex];
-        if (player) {
+        if (currentIndex < ratedPlayersOnly.length) {
+          const player = ratedPlayersOnly[currentIndex];
           proposals.set(player.id, cat.name);
           currentIndex++;
+        } else if (allocationMode === 'all') {
+          // If rated players run out and allocationMode is 'all', seed new players into lowest tiers
+          const newPlayerIdx = currentIndex - ratedPlayersOnly.length;
+          if (newPlayerIdx < newPlayersOnly.length) {
+            proposals.set(newPlayersOnly[newPlayerIdx].id, cat.name);
+            currentIndex++;
+          }
         }
       }
     });
 
-    // Handle any leftover rated players just in case
-    while (currentIndex < ratedPlayersOnly.length) {
-      const player = ratedPlayersOnly[currentIndex];
-      const lowestCat = categories[categories.length - 1];
-      if (player && lowestCat) {
-        proposals.set(player.id, lowestCat.name);
-      }
-      currentIndex++;
-    }
-
-    // For new players, default their proposed category to 'N/A' (Unrated)
-    sortedPlayers.forEach(player => {
-      if (player.isNewPlayer) {
+    // Handle any remaining players
+    if (allocationMode === 'rated') {
+      // In rated mode, unallocated new players stay N/A (Unrated) for committee evaluation
+      newPlayersOnly.forEach(player => {
         proposals.set(player.id, 'N/A');
-      }
-    });
+      });
+    }
 
     setProposedCategories(proposals);
     setHasCalculated(true);
@@ -541,8 +569,8 @@ export default function PlayerCategorizationPage() {
   }, [categoryTargets]);
 
   const unallocatedCount = useMemo(() => {
-    return activePlayers.length - totalQuotasSelected;
-  }, [activePlayers, totalQuotasSelected]);
+    return poolToAllocate - totalQuotasSelected;
+  }, [poolToAllocate, totalQuotasSelected]);
 
   // Bulk Save and Apply updates
   const handleSaveCategories = async () => {
@@ -853,9 +881,49 @@ export default function PlayerCategorizationPage() {
                 <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Category Quotas</h3>
               </div>
 
-              <div className="p-3 mb-4 rounded-xl border border-slate-150 bg-slate-50 flex items-center justify-between text-xs font-mono font-bold uppercase">
-                <span className="text-slate-500">Total Players:</span>
-                <span className="text-slate-800">{activePlayers.length}</span>
+              <div className="p-3 mb-4 rounded-xl border border-slate-150 bg-slate-50 space-y-1.5 text-xs font-mono font-bold uppercase">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Rated Players:</span>
+                  <span className="text-slate-800 font-extrabold">{ratedPlayersCount}</span>
+                </div>
+                {newPlayersCount > 0 && (
+                  <div className="flex items-center justify-between text-[11px] text-amber-700">
+                    <span>New / Unrated:</span>
+                    <span>{newPlayersCount}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-200/60 pt-1">
+                  <span>Total Registered:</span>
+                  <span>{activePlayers.length}</span>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Quota Pool Mode</label>
+                <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg text-[10px] font-mono font-bold">
+                  <button
+                    type="button"
+                    onClick={() => handleAllocationModeChange('rated')}
+                    className={`py-1 px-2 rounded-md transition-all cursor-pointer ${
+                      allocationMode === 'rated'
+                        ? 'bg-white text-slate-800 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Rated Only ({ratedPlayersCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAllocationModeChange('all')}
+                    className={`py-1 px-2 rounded-md transition-all cursor-pointer ${
+                      allocationMode === 'all'
+                        ? 'bg-white text-slate-800 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    All Players ({activePlayers.length})
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -932,6 +1000,11 @@ export default function PlayerCategorizationPage() {
                       <option value="3">Last 3 Seasons</option>
                       <option value="4">Last 4 Seasons</option>
                       <option value="5">Last 5 Seasons</option>
+                      <option value="6">Last 6 Seasons</option>
+                      <option value="7">Last 7 Seasons</option>
+                      <option value="8">Last 8 Seasons</option>
+                      <option value="10">Last 10 Seasons</option>
+                      <option value="12">Last 12 Seasons</option>
                     </select>
                   </div>
 
@@ -989,37 +1062,47 @@ export default function PlayerCategorizationPage() {
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-50">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Season Weights / Intensity</span>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Season Weights / Recency Curves</span>
+                    <span className="text-[9px] text-slate-400 font-mono">{seasonWeights.length} Seasons</span>
+                  </div>
                   
-                  {seasonWeights.map((w, idx) => {
-                    const disabled = maxSeasons !== 'all' && idx >= maxSeasons;
-                    return (
-                      <div key={idx} className={`flex flex-col gap-1 p-2 rounded-xl border border-slate-100 bg-slate-50/50 ${disabled ? 'opacity-40' : ''}`}>
-                        <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase">
-                          <span>{idx + 1} Season{idx > 0 ? 's' : ''} Ago</span>
-                          <span className="text-slate-800 font-mono font-black">{disabled ? 'Ignored' : `${Math.round(w * 100)}%`}</span>
+                  <div className="max-h-60 overflow-y-auto pr-1 space-y-2">
+                    {seasonWeights.map((w, idx) => {
+                      const disabled = maxSeasons !== 'all' && idx >= maxSeasons;
+                      const targetSeasonNum = currentSeasonNum > 0 ? currentSeasonNum - 1 - idx : 0;
+                      const seasonName = targetSeasonNum > 0 ? `SSPSLS${targetSeasonNum}` : '';
+                      return (
+                        <div key={idx} className={`flex flex-col gap-1 p-2 rounded-xl border border-slate-150 bg-slate-50/50 ${disabled ? 'opacity-40' : ''}`}>
+                          <div className="flex justify-between items-center text-[9px] font-bold text-slate-600 uppercase">
+                            <span>
+                              {idx + 1} Season{idx > 0 ? 's' : ''} Ago
+                              {seasonName ? <span className="ml-1 text-slate-800 font-extrabold">({seasonName})</span> : ''}
+                            </span>
+                            <span className="text-slate-800 font-mono font-black">{disabled ? 'Ignored' : `${Math.round(w * 100)}%`}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            disabled={disabled}
+                            value={disabled ? 0 : w}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              setWeightPreset('custom');
+                              setSeasonWeights(prev => {
+                                const copy = [...prev];
+                                copy[idx] = val;
+                                return copy;
+                              });
+                            }}
+                            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                          />
                         </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.05"
-                          disabled={disabled}
-                          value={disabled ? 0 : w}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            setWeightPreset('custom');
-                            setSeasonWeights(prev => {
-                              const copy = [...prev];
-                              copy[idx] = val;
-                              return copy;
-                            });
-                          }}
-                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                        />
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1182,7 +1265,7 @@ export default function PlayerCategorizationPage() {
             </div>
 
             {/* Target vs Live Counts Tracker */}
-            <div className="px-6 py-2 bg-slate-50/50 border-b border-slate-100 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-wider">
+            <div className="px-6 py-2 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-wider">
               {categories.map(cat => {
                 const target = categoryTargets[cat.id] || 0;
                 const live = categoryCounts[cat.name] || 0;
@@ -1193,6 +1276,11 @@ export default function PlayerCategorizationPage() {
                   </div>
                 );
               })}
+              {categoryCounts['N/A'] !== undefined && categoryCounts['N/A'] > 0 && (
+                <div className="px-2 py-1 border rounded bg-slate-100 border-slate-250 text-slate-600 font-mono">
+                  Unrated (N/A): {categoryCounts['N/A']}
+                </div>
+              )}
             </div>
 
             {/* Recommendations Table */}
@@ -1409,27 +1497,27 @@ export default function PlayerCategorizationPage() {
 
                                   {/* Formula representation */}
                                   <div className="space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-150">
-                                    <div className="text-slate-500 uppercase text-[9px] font-bold">Calculation Formula:</div>
+                                    <div className="text-slate-500 uppercase text-[9px] font-bold">Calculation Formula (Match-Volume Weighted):</div>
                                     <div className="text-slate-800 text-xs font-bold py-0.5">
-                                      Weighted Score = &Sigma;(Season_PPM &times; Weight) / &Sigma;(Weights)
+                                      Weighted Score = &Sigma;(Season_Points &times; Weight) / &Sigma;(Season_Matches &times; Weight)
                                     </div>
                                     <div className="text-slate-600 text-[10px] pt-1 leading-relaxed">
                                       {"Weighted Score = ("}
                                       {
                                         Array.from(player.seasonPointsMap.entries())
-                                          .filter(([_, data]) => data.matches >= minMatches)
-                                          .map(([seasonId, data]) => `${data.ppm} [${seasonId}] * ${data.appliedWeight}`)
+                                          .filter(([_, data]) => data.matches >= minMatches && data.appliedWeight > 0)
+                                          .map(([seasonId, data]) => `${data.points}pts [${seasonId}] * ${data.appliedWeight}`)
                                           .join(' + ') || 'No qualifying seasons'
                                       }
                                       {") / ("}
                                       {
                                         Array.from(player.seasonPointsMap.entries())
-                                          .filter(([_, data]) => data.matches >= minMatches)
-                                          .map(([_, data]) => data.appliedWeight)
+                                          .filter(([_, data]) => data.matches >= minMatches && data.appliedWeight > 0)
+                                          .map(([seasonId, data]) => `${data.matches}m [${seasonId}] * ${data.appliedWeight}`)
                                           .join(' + ') || '0'
                                       }
                                       {") = "}
-                                      <strong className="text-amber-600 text-sm ml-1">{player.weightedScore ?? 'N/A'}</strong>
+                                      <strong className="text-amber-600 text-sm ml-1">{player.weightedScore ?? 'N/A'} PPM</strong>
                                     </div>
                                   </div>
 
