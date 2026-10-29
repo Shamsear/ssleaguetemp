@@ -21,7 +21,8 @@ import {
   ChevronUp,
   Sliders,
   Search,
-  Check
+  Check,
+  ArrowUpDown
 } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -101,6 +102,45 @@ export default function PlayerCategorizationPage() {
   const [filterOverrideStatus, setFilterOverrideStatus] = useState<string>('all'); // 'all', 'overridden', 'proposed'
   const [filterPlayerStatus, setFilterPlayerStatus] = useState<string>('all'); // 'all', 'new', 'rated'
   const [selectedHistoricalSeasons, setSelectedHistoricalSeasons] = useState<string[]>([]);
+
+  // Table Sorting state
+  const [sortField, setSortField] = useState<string>('default');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: string) => {
+    const isNumericOrScore = field === 'ai_score' || field === 'base_price' || field.startsWith('season_');
+    if (sortField === field) {
+      if (isNumericOrScore) {
+        if (sortDirection === 'desc') {
+          setSortDirection('asc');
+        } else {
+          setSortField('default');
+          setSortDirection('asc');
+        }
+      } else {
+        if (sortDirection === 'asc') {
+          setSortDirection('desc');
+        } else {
+          setSortField('default');
+          setSortDirection('asc');
+        }
+      }
+    } else {
+      setSortField(field);
+      setSortDirection(isNumericOrScore ? 'desc' : 'asc');
+    }
+  };
+
+  const renderSortIndicator = (field: string) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity ml-1 inline-block shrink-0" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="w-3.5 h-3.5 text-amber-600 ml-1 inline-block shrink-0 stroke-[2.5]" />
+    ) : (
+      <ChevronDown className="w-3.5 h-3.5 text-amber-600 ml-1 inline-block shrink-0 stroke-[2.5]" />
+    );
+  };
 
   // Redirect if unauthorized
   useEffect(() => {
@@ -593,18 +633,8 @@ export default function PlayerCategorizationPage() {
       const finalCatObj = categories.find(c => c.name === finalCategory);
       const basePriceVal = finalCatObj?.base_price ?? 0;
 
-      const smartAssistLabel = (val: string | null | undefined) => {
-        const v = (val || '').toLowerCase();
-        if (v === 'yes') return 'Yes';
-        if (v === 'partially') return 'Partially';
-        if (v === 'no') return 'No';
-        if (v === 'didnt_play') return "Didn't Play";
-        return 'N/A';
-      };
-
       const row: { [key: string]: any } = {
         'Player Name': p.player_name,
-        'Smart Assist?': smartAssistLabel((p as any).used_smart_assist),
         'Final Category': finalCategory,
         'Base Price': basePriceVal > 0 ? `${basePriceVal} COINS` : '—',
         'AI Proposed': proposed || 'N/A',
@@ -669,26 +699,87 @@ export default function PlayerCategorizationPage() {
     });
   }, [sortedPlayers, searchTerm, proposedCategories, filterProposedCategory, filterOverrideStatus, filterPlayerStatus, manualOverrides, hasCalculated]);
 
-  // Display order: sorted by FINAL category (respecting manual overrides), then by AI score
+  // Display order: sorted by sortField & sortDirection, or default (FINAL category, then AI score)
   const displayPlayers = useMemo(() => {
     const catPriority = (catName: string) => {
       const c = categories.find(c => c.name === catName);
       return c ? c.priority : 999;
     };
+
+    const getBasePrice = (playerId: string) => {
+      const prop = proposedCategories.get(playerId) || '';
+      const finalCat = getPlayerCategory(playerId, prop);
+      const catObj = categories.find(c => c.name === finalCat);
+      return catObj?.base_price ?? 0;
+    };
+
     return [...filteredPlayers].sort((a, b) => {
-      const propA = proposedCategories.get(a.id) || '';
-      const propB = proposedCategories.get(b.id) || '';
-      const catA = getPlayerCategory(a.id, propA);
-      const catB = getPlayerCategory(b.id, propB);
-      const prioA = catPriority(catA);
-      const prioB = catPriority(catB);
-      if (prioA !== prioB) return prioA - prioB;
-      // Within same category: AI score desc, new players last
-      if (a.isNewPlayer && !b.isNewPlayer) return 1;
-      if (!a.isNewPlayer && b.isNewPlayer) return -1;
-      return (b.weightedScore || 0) - (a.weightedScore || 0);
+      let comparison = 0;
+
+      if (sortField === 'name') {
+        comparison = a.player_name.localeCompare(b.player_name);
+      } else if (sortField === 'current_category') {
+        const pA = catPriority(a.category);
+        const pB = catPriority(b.category);
+        comparison = pA - pB;
+        if (comparison === 0) {
+          comparison = a.player_name.localeCompare(b.player_name);
+        }
+      } else if (sortField === 'proposed_category') {
+        const propA = proposedCategories.get(a.id) || '';
+        const propB = proposedCategories.get(b.id) || '';
+        const pA = catPriority(propA);
+        const pB = catPriority(propB);
+        comparison = pA - pB;
+        if (comparison === 0) {
+          comparison = (b.weightedScore || 0) - (a.weightedScore || 0);
+        }
+      } else if (sortField === 'base_price') {
+        const priceA = getBasePrice(a.id);
+        const priceB = getBasePrice(b.id);
+        comparison = priceA - priceB;
+        if (comparison === 0) {
+          comparison = (b.weightedScore || 0) - (a.weightedScore || 0);
+        }
+      } else if (sortField === 'ai_score') {
+        if (a.isNewPlayer && !b.isNewPlayer) return 1;
+        if (!a.isNewPlayer && b.isNewPlayer) return -1;
+        comparison = (a.weightedScore || 0) - (b.weightedScore || 0);
+      } else if (sortField.startsWith('season_')) {
+        const sId = sortField.replace('season_', '');
+        const dataA = a.seasonPointsMap.get(sId);
+        const dataB = b.seasonPointsMap.get(sId);
+        const ptsA = dataA !== undefined ? dataA.points : -999999;
+        const ptsB = dataB !== undefined ? dataB.points : -999999;
+        comparison = ptsA - ptsB;
+      } else if (sortField === 'final_category') {
+        const propA = proposedCategories.get(a.id) || '';
+        const propB = proposedCategories.get(b.id) || '';
+        const catA = getPlayerCategory(a.id, propA);
+        const catB = getPlayerCategory(b.id, propB);
+        const pA = catPriority(catA);
+        const pB = catPriority(catB);
+        comparison = pA - pB;
+        if (comparison === 0) {
+          comparison = (b.weightedScore || 0) - (a.weightedScore || 0);
+        }
+      } else {
+        // Default ranking: sorted by FINAL category, then AI score desc, new players last
+        const propA = proposedCategories.get(a.id) || '';
+        const propB = proposedCategories.get(b.id) || '';
+        const catA = getPlayerCategory(a.id, propA);
+        const catB = getPlayerCategory(b.id, propB);
+        const prioA = catPriority(catA);
+        const prioB = catPriority(catB);
+        if (prioA !== prioB) return prioA - prioB;
+        if (a.isNewPlayer && !b.isNewPlayer) return 1;
+        if (!a.isNewPlayer && b.isNewPlayer) return -1;
+        return (b.weightedScore || 0) - (a.weightedScore || 0);
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [filteredPlayers, proposedCategories, manualOverrides, categories]);
+  }, [filteredPlayers, sortField, sortDirection, proposedCategories, manualOverrides, categories]);
 
   // Loading skeleton UI
   if (authLoading || loading) {
@@ -1074,6 +1165,19 @@ export default function PlayerCategorizationPage() {
                   <option value="new">New Players Only</option>
                   <option value="rated">Rated Only</option>
                 </select>
+
+                {sortField !== 'default' && (
+                  <button
+                    onClick={() => {
+                      setSortField('default');
+                      setSortDirection('asc');
+                    }}
+                    className="px-2.5 py-1.5 border border-amber-200 bg-amber-50/60 rounded-lg text-xs font-mono font-bold text-amber-800 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                    title="Reset to default category ranking order"
+                  >
+                    Reset Sort
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1096,16 +1200,79 @@ export default function PlayerCategorizationPage() {
               <table className="min-w-full divide-y divide-slate-200/60">
                 <thead className="bg-slate-50/50">
                   <tr className="font-mono text-left text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-6 py-3.5">Player</th>
-                    <th className="px-6 py-3.5">Current Category</th>
-                    <th className="px-6 py-3.5 text-center">AI Rating Suggestion</th>
-                    <th className="px-6 py-3.5 text-center">Base Price</th>
-                    <th className="px-6 py-3.5 text-center">AI Score (PPM)</th>
-                    <th className="px-6 py-3.5 text-center">Smart Assist</th>
+                    <th
+                      onClick={() => handleSort('name')}
+                      className="px-6 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors"
+                      title="Click to sort by Player Name"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className={sortField === 'name' ? 'text-amber-600 font-extrabold' : ''}>Player</span>
+                        {renderSortIndicator('name')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('current_category')}
+                      className="px-6 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors"
+                      title="Click to sort by Current Category"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className={sortField === 'current_category' ? 'text-amber-600 font-extrabold' : ''}>Current Category</span>
+                        {renderSortIndicator('current_category')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('proposed_category')}
+                      className="px-6 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors text-center"
+                      title="Click to sort by AI Rating Suggestion"
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span className={sortField === 'proposed_category' ? 'text-amber-600 font-extrabold' : ''}>AI Rating Suggestion</span>
+                        {renderSortIndicator('proposed_category')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('base_price')}
+                      className="px-6 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors text-center"
+                      title="Click to sort by Base Price"
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span className={sortField === 'base_price' ? 'text-amber-600 font-extrabold' : ''}>Base Price</span>
+                        {renderSortIndicator('base_price')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('ai_score')}
+                      className="px-6 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors text-center"
+                      title="Click to sort by AI Score (PPM)"
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span className={sortField === 'ai_score' ? 'text-amber-600 font-extrabold' : ''}>AI Score (PPM)</span>
+                        {renderSortIndicator('ai_score')}
+                      </div>
+                    </th>
                     {historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).map(seasonId => (
-                      <th key={seasonId} className="px-4 py-3.5 text-center font-mono">{seasonId}</th>
+                      <th
+                        key={seasonId}
+                        onClick={() => handleSort(`season_${seasonId}`)}
+                        className="px-4 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors text-center font-mono"
+                        title={`Click to sort by ${seasonId} Points`}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          <span className={sortField === `season_${seasonId}` ? 'text-amber-600 font-extrabold' : ''}>{seasonId}</span>
+                          {renderSortIndicator(`season_${seasonId}`)}
+                        </div>
+                      </th>
                     ))}
-                    <th className="px-6 py-3.5 text-right">Manual Override</th>
+                    <th
+                      onClick={() => handleSort('final_category')}
+                      className="px-6 py-3.5 cursor-pointer select-none group hover:bg-slate-100/70 transition-colors text-right"
+                      title="Click to sort by Final Category / Manual Override"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span className={sortField === 'final_category' ? 'text-amber-600 font-extrabold' : ''}>Manual Override</span>
+                        {renderSortIndicator('final_category')}
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/60 text-xs text-slate-700">
@@ -1184,26 +1351,6 @@ export default function PlayerCategorizationPage() {
                             {player.weightedScore !== null ? player.weightedScore : '—'}
                           </td>
 
-                          {/* Smart Assist */}
-                          <td className="px-6 py-4 text-center">
-                            {(() => {
-                              const v = ((player as any).used_smart_assist || '').toLowerCase();
-                              if (v === 'yes') return (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-50 border border-violet-200 text-violet-800 font-mono">✓ Yes</span>
-                              );
-                              if (v === 'partially') return (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-50 border border-amber-200 text-amber-800 font-mono">∼ Partial</span>
-                              );
-                              if (v === 'no') return (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 border border-slate-200 text-slate-500 font-mono">No</span>
-                              );
-                              if (v === 'didnt_play') return (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-rose-50 border border-rose-200 text-rose-600 font-mono">Didn't Play</span>
-                              );
-                              return <span className="text-slate-300 font-mono text-[10px]">—</span>;
-                            })()}
-                          </td>
-
                           {/* Historical Season Stats */}
                           {historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).map(seasonId => {
                             const data = player.seasonPointsMap.get(seasonId);
@@ -1242,7 +1389,7 @@ export default function PlayerCategorizationPage() {
                         {/* Calculation Breakdown expanded view */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={7 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
+                            <td colSpan={6 + historicalSeasonsList.filter(s => selectedHistoricalSeasons.includes(s)).length} className="px-6 py-4 bg-slate-50/50 border-t border-b border-slate-200">
                               {player.isNewPlayer ? (
                                 <div className="p-4 bg-amber-50/40 border border-amber-200/80 rounded-xl space-y-2 font-mono text-slate-700">
                                   <div className="font-bold text-amber-800 text-[10px] uppercase tracking-wider">AI Calculation Breakdown</div>
