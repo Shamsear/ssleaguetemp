@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 import { generateGeminiBirthdayStory, PlayerBirthdayContext } from '@/lib/birthdays/story';
-import { getPlayerTournamentHistory } from '@/lib/birthdays/stats-helper';
+import { getPlayerTournamentHistory, getPlayerActiveSeasonInfo } from '@/lib/birthdays/stats-helper';
 
 function calculateAge(dobStr: string): number {
   if (!dobStr) return 0;
@@ -58,8 +58,11 @@ export async function POST(
 
     const { seasons, aggregatedStats } = await getPlayerTournamentHistory(pid);
     const seasonsCount = seasons.length;
-    const resolvedTeam = player.team || raw.team || raw.team_name || (seasons.length > 0 ? seasons[seasons.length - 1].team : 'Free Agent');
-    const resolvedCategory = player.category_id || raw.category || raw.category_name || (seasons.length > 0 ? seasons[seasons.length - 1].category : 'RED');
+
+    // Resolve active season team & category (if unassigned in active season, leave null)
+    const activeInfo = await getPlayerActiveSeasonInfo(pid);
+    const resolvedTeam = activeInfo.team || '';
+    const resolvedCategory = activeInfo.category || '';
 
     const context: PlayerBirthdayContext = {
       id: pid,

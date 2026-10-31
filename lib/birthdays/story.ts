@@ -39,6 +39,9 @@ export function generateFallbackBirthdayStory(ctx: PlayerBirthdayContext, lang: 
   const { name, age, team, stats, seasonsCount } = ctx;
   const winRate = stats.matches > 0 ? Math.round((stats.wins / stats.matches) * 100) : 50;
 
+  const hasTeam = Boolean(team && team.trim() && !['unknown', 'free agent', 'none', 'n/a', 'na'].includes(team.trim().toLowerCase()));
+  const teamLabel = hasTeam ? team.trim() : '';
+
   if (lang === 'ml') {
     let goalQuirk = '';
     if (stats.goals >= 50) {
@@ -65,10 +68,14 @@ export function generateFallbackBirthdayStory(ctx: PlayerBirthdayContext, lang: 
 
     return {
       headline: `ഹാപ്പി ബർത്ത്ഡേ ${name}! എസ്എസ് ലീഗിന്റെ കരുത്തനായ പോരാളിക്ക് ഇന്ന് ജന്മദിനം`,
-      subtitle: `${team} ടീമിന്റെ വിശ്വസ്ത താരത്തിന് ${age}-ാം പിറന്നാൾ ആശംസകളുമായി ടൂർണമെന്റ് കുടുംബം.`,
+      subtitle: hasTeam
+        ? `${teamLabel} ടീമിന്റെ വിശ്വസ്ത താരത്തിന് ${age}-ാം പിറന്നാൾ ആശംസകളുമായി ടൂർണമെന്റ് കുടുംബം.`
+        : `എസ്എസ് ലീഗിന്റെ കരുത്തനായ പോരാളിക്ക് ${age}-ാം പിറന്നാൾ ആശംസകളുമായി ടൂർണമെന്റ് കുടുംബം.`,
       roastParagraph: `ഇന്ന് എസ്എസ് പ്രീമിയർ സൂപ്പർ ലീഗ് കുടുംബം ആഘോഷമാക്കുകയാണ്; നമ്മുടെ പ്രിയ താരം ${name} ഔദ്യോഗികമായി ${age}-ാം വയസ്സിലേക്ക് കടക്കുന്നു. ${goalQuirk} ${matchQuirk}`,
       tacticalReport: `ടൂർണമെന്റ് കണക്കുകൾ പരിശോധിച്ചാൽ: ${stats.matches} കരിയർ മത്സരങ്ങൾ, ${stats.goals} കണ്ണഞ്ചിപ്പിക്കുന്ന ഗോളുകൾ, ഒപ്പം ${stats.wins} നിർണ്ണായക വിജയങ്ങൾ. ${defenseQuirk}`,
-      lockerRoomRumor: `${team} ക്യാമ്പിൽ നിന്നുള്ള റിപ്പോർട്ട് പ്രകാരം ഇന്നത്തെ പ്രാക്ടീസ് സെഷൻ കേക്ക് മുറിക്കലായി മാറിയിട്ടുണ്ട്. എങ്കിലും മെഴുകുതിരി കെടുത്തുന്നതിലും മാൻ ഓഫ് ദി മാച്ച് നേടാനാണ് ${name} നോക്കുന്നതെന്നാണ് സഹതാരങ്ങൾ പറയുന്നത്.`,
+      lockerRoomRumor: hasTeam
+        ? `${teamLabel} ക്യാമ്പിൽ നിന്നുള്ള റിപ്പോർട്ട് പ്രകാരം ഇന്നത്തെ പ്രാക്ടീസ് സെഷൻ കേക്ക് മുറിക്കലായി മാറിയിട്ടുണ്ട്. എങ്കിലും മെഴുകുതിരി കെടുത്തുന്നതിലും മാൻ ഓഫ് ദി മാച്ച് നേടാനാണ് ${name} നോക്കുന്നതെന്നാണ് സഹതാരങ്ങൾ പറയുന്നത്.`
+        : `ടൂർണമെന്റ് ക്യാമ്പിൽ നിന്നുള്ള റിപ്പോർട്ട് പ്രകാരം ഇന്നത്തെ പ്രാക്ടീസ് സെഷൻ കേക്ക് മുറിക്കലായി മാറിയിട്ടുണ്ട്. എങ്കിലും മെഴുകുതിരി കെടുത്തുന്നതിലും മാൻ ഓഫ് ദി മാച്ച് നേടാനാണ് ${name} നോക്കുന്നതെന്നാണ് സഹതാരങ്ങൾ പറയുന്നത്.`,
       birthdayWish: `എസ്എസ് ലീഗ് മാനേജ്‌മെന്റിന്റെയും സഹതാരങ്ങളുടെയും മുഴുവൻ ആരാധകരുടെയും പേരിൽ ${name}ന് ഹൃദയം നിറഞ്ഞ ജന്മദിനാശംസകൾ. വരും മത്സരങ്ങളിലും വമ്പൻ വിജയങ്ങളും മാന്ത്രിക ഗോളുകളും നേടാൻ കഴിയട്ടെ!`,
       isAiGenerated: false,
     };
@@ -98,13 +105,15 @@ export function generateFallbackBirthdayStory(ctx: PlayerBirthdayContext, lang: 
   }
 
   const headlines = [
-    `Scouting Bulletin: ${name} Turns ${age} as SS League Celebrates a Pillar of the Franchise`,
+    `Scouting Bulletin: ${name} Turns ${age} as SS League Celebrates a Pillar of the Circuit`,
     `Milestone Day: ${name} Marks Year ${age} with ${stats.goals} Goals and Unmatched Dedication`,
     `Matchday Dispatch: ${name} Celebrates Birthday Milestone Amid Career Tournament Run`,
   ];
 
   const subtitles = [
-    `The ${team} stalwart celebrates another year of competitive consistency and locker-room leadership.`,
+    hasTeam
+      ? `The ${teamLabel} stalwart celebrates another year of competitive consistency and leadership.`
+      : `The esteemed tournament competitor celebrates another year of competitive consistency and leadership.`,
     `Teammates and rivals across the circuit unite to salute one of the league's most respected competitors.`,
     `From late-game winners to clutch defensive stops, revisiting a remarkable tournament journey.`,
   ];
@@ -116,7 +125,9 @@ export function generateFallbackBirthdayStory(ctx: PlayerBirthdayContext, lang: 
 
   const tacticalReport = `Tournament analytics confirm the numbers behind the competitor: ${stats.matches} career appearances, ${stats.goals} goals converted, and ${stats.wins} victories etched into franchise records. ${defenseQuirk}`;
 
-  const lockerRoomRumor = `Inside reports from the ${team} camp allege that today's training drills have been replaced with cake cutting, although teammates maintain ${name} will still try to contest Man of the Match honors for extinguishing the candles in record time.`;
+  const lockerRoomRumor = hasTeam
+    ? `Inside reports from the ${teamLabel} camp allege that today's training drills have been replaced with cake cutting, although teammates maintain ${name} will still try to contest Man of the Match honors for extinguishing the candles in record time.`
+    : `Inside reports from around the league allege that today's training drills have been replaced with cake cutting, although friends maintain ${name} will still try to contest Man of the Match honors for extinguishing the candles in record time.`;
 
   const birthdayWish = `Warmest congratulations and best wishes from the SS League management, team captains, and player roster. May the year ahead bring continued success, clinical finishing, and memorable victories both on and off the field. Happy Birthday, ${name}.`;
 
@@ -178,8 +189,8 @@ Write an authentic, witty, and warm birthday news feature for player: ${name}.
 PLAYER DATA:
 - Name: ${name}
 - Age: ${age}
-- Team: ${team}
-- Category: ${category}
+- Team: ${team || 'None (Currently unassigned in active campaign)'}
+- Category: ${category || 'None (Unrated)'}
 - Matches: ${stats.matches}
 - Goals: ${stats.goals}
 - Conceded: ${stats.goals_conceded}
@@ -193,6 +204,7 @@ EDITORIAL GUIDELINES:
 2. ZERO emojis anywhere in the text.
 3. ABSOLUTELY NO insulting, hurtful, demeaning, or body-shaming comments. Keep banter affectionate, witty, and locker-room friendly (e.g. controller sprint buttons, cake drills, goal celebrations).
 4. Integrate their real statistics naturally.
+5. If Team is None/unassigned, do NOT invent or attribute any franchise to the player. Refer to them as an esteemed league player or tournament competitor.
 
 Return ONLY pure valid JSON (no markdown fences, no backticks):
 {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 import { isTournamentDbAvailable } from '@/lib/neon/tournament-config';
-import { getPlayerTournamentHistory, normalizeTeam, normalizeCategory } from '@/lib/birthdays/stats-helper';
+import { getPlayerTournamentHistory, getActiveSeasonPlayersMap } from '@/lib/birthdays/stats-helper';
 
 function formatPhotoUrl(url: string | null | undefined): string {
   if (!url) return '/placeholder-player.png';
@@ -94,15 +94,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Query active season team & category assignments (null if unassigned in active season)
+    const pids = players.map((p: any) => p.player_id || p.id);
+    const activeMap = await getActiveSeasonPlayersMap(pids);
+
     const formattedPlayers = players.map((p: any) => {
       const raw = p.raw_data || {};
       const dob = raw.date_of_birth || raw.dob || '';
       const photo = p.profile_image || raw.photo_url || raw.photoURL || raw.profile_image || raw.image;
       const pid = p.player_id || p.id;
       const playerStats = statsMap[pid] || { matches: 0, goals: 0, wins: 0, clean_sheets: 0 };
-      const resolvedTeam = normalizeTeam(p.team || raw.team || raw.team_name || playerStats.latestTeam);
-      const rawCat = p.category_id || raw.category || raw.category_name;
-      const resolvedCat = normalizeCategory(rawCat);
+      const activeInfo = activeMap.get(pid);
+      const resolvedTeam = activeInfo?.team || null;
+      const resolvedCat = activeInfo?.category || null;
 
       return {
         id: p.id,

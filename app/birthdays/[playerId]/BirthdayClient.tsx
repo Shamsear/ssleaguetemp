@@ -43,8 +43,8 @@ interface BirthdayData {
     dob: string;
     age: number;
     photo_url: string;
-    team: string;
-    category: string;
+    team: string | null;
+    category: string | null;
     place?: string;
   };
   stats: {
@@ -60,8 +60,8 @@ interface BirthdayData {
   };
   seasons: Array<{
     season_id: string;
-    team: string;
-    category: string;
+    team: string | null;
+    category: string | null;
     matches: number;
     goals: number;
     wins: number;
@@ -464,18 +464,22 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
               )}
 
               <div className="mt-3.5 flex flex-wrap items-center justify-center md:justify-start gap-2">
-                <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700">
-                  {t.team}: <strong className="text-slate-900">{player.team === 'Unknown' || !player.team ? 'FREE AGENT' : player.team}</strong>
-                </span>
-                {player.category && player.category.includes('★') ? (
-                  <span className="inline-flex items-center gap-1 border border-amber-200 bg-amber-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-amber-800">
-                    <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                    <span>STAR: {player.category}</span>
+                {player.team && player.team !== 'FREE AGENT' && player.team.toLowerCase() !== 'unknown' && (
+                  <span className="border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700">
+                    {t.team}: <strong className="text-slate-900">{player.team}</strong>
                   </span>
-                ) : (
-                  <span className={`border px-3 py-1 rounded-xl text-xs font-mono font-bold ${getCategoryColor(player.category)}`}>
-                    {t.cat}: {player.category === 'A' ? 'NA' : (player.category || 'NA')}
-                  </span>
+                )}
+                {player.category && player.category !== 'NA' && player.category !== 'A' && (
+                  player.category.includes('★') ? (
+                    <span className="inline-flex items-center gap-1 border border-amber-200 bg-amber-50 px-3 py-1 rounded-xl text-xs font-mono font-bold text-amber-800">
+                      <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                      <span>STAR: {player.category}</span>
+                    </span>
+                  ) : (
+                    <span className={`border px-3 py-1 rounded-xl text-xs font-mono font-bold ${getCategoryColor(player.category)}`}>
+                      {t.cat}: {player.category}
+                    </span>
+                  )
                 )}
                 {player.dob && (
                   <span className="flex items-center gap-1 border border-slate-200 bg-slate-50 px-3 py-1 rounded-xl text-xs font-mono text-slate-600">
@@ -798,9 +802,11 @@ export default function BirthdayClient({ initialData }: { initialData: BirthdayD
                       </span>
                       <span className="text-[10px] text-slate-400">• {award.season_id}</span>
                     </div>
-                    <p className="text-xs font-bold text-slate-800 truncate mt-0.5">
-                      {award.team_name || player.team}
-                    </p>
+                    {(award.team_name || player.team) && (
+                      <p className="text-xs font-bold text-slate-800 truncate mt-0.5">
+                        {award.team_name || player.team}
+                      </p>
+                    )}
                     {award.performance_stats && (
                       <p className="text-[11px] text-slate-500 mt-1">
                         {award.performance_stats.goals ? `${award.performance_stats.goals} ${t.goals}` : ''}

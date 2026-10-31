@@ -1,4 +1,131 @@
 import { getTournamentDb, isTournamentDbAvailable } from '../neon/tournament-config';
+import { getMainDb, isMainDbAvailable } from '../neon/main-config';
+
+export interface ActiveSeasonPlayerInfo {
+  team: string | null;
+  category: string | null;
+}
+
+/**
+ * Fetches the active season assignment (team and category/star) for a list of players.
+ * If a player does not have a team or category in the active season, returns null.
+ */
+export async function getActiveSeasonPlayersMap(
+  playerIds: string[]
+): Promise<Map<string, ActiveSeasonPlayerInfo>> {
+  const result = new Map<string, ActiveSeasonPlayerInfo>();
+  if (!playerIds || playerIds.length === 0 || !isMainDbAvailable()) return result;
+
+  try {
+    const mainSql = getMainDb();
+    const activeSeasons = await mainSql`
+      SELECT id 
+      FROM seasons 
+      WHERE is_active = true OR status = 'active' 
+      ORDER BY season_number DESC 
+      LIMIT 1
+    `;
+    const activeSeasonId = activeSeasons[0]?.id;
+    if (!activeSeasonId) return result;
+
+    const tSql = isTournamentDbAvailable() ? getTournamentDb() : null;
+
+    const [rpsRows, psRows, rpRows] = await Promise.all([
+      tSql
+        ? tSql`
+            SELECT player_id, team, category 
+            FROM realplayerstats 
+            WHERE (player_id = ANY(${playerIds}) OR id = ANY(${playerIds})) 
+              AND season_id = ${activeSeasonId}
+          `.catch(() => [])
+        : [],
+      tSql
+        ? tSql`
+            SELECT player_id, team, category, star_rating 
+            FROM player_seasons 
+            WHERE (player_id = ANY(${playerIds}) OR id = ANY(${playerIds})) 
+              AND season_id = ${activeSeasonId}
+          `.catch(() => [])
+        : [],
+      mainSql`
+        SELECT player_id, id, team, category_id, season_id 
+        FROM realplayers 
+        WHERE (player_id = ANY(${playerIds}) OR id = ANY(${playerIds})) 
+          AND season_id = ${activeSeasonId}
+      `.catch(() => []),
+    ]);
+
+    for (const pid of playerIds) {
+      let rawTeam: string | null = null;
+      let rawCat: string | null = null;
+      let starRating: number | null = null;
+
+      const rps = rpsRows.find((r: any) => r.player_id === pid || r.id === pid);
+      if (rps) {
+        if (rps.team) rawTeam = rps.team;
+        if (rps.category) rawCat = rps.category;
+      }
+
+      const ps = psRows.find((r: any) => r.player_id === pid || r.id === pid);
+      if (ps) {
+        if (ps.team && !rawTeam) rawTeam = ps.team;
+        if (ps.category && !rawCat) rawCat = ps.category;
+        if (ps.star_rating) starRating = Number(ps.star_rating);
+      }
+
+      const rp = rpRows.find((r: any) => r.player_id === pid || r.id === pid);
+      if (rp) {
+        if (rp.team && !rawTeam) rawTeam = rp.team;
+        if (rp.category_id && !rawCat) rawCat = rp.category_id;
+      }
+
+      let team: string | null = null;
+      if (rawTeam && typeof rawTeam === 'string') {
+        const cleanT = rawTeam.trim();
+        const upperT = cleanT.toUpperCase();
+        if (
+          cleanT &&
+          upperT !== 'UNKNOWN' &&
+          upperT !== 'FREE AGENT' &&
+          upperT !== 'NONE' &&
+          upperT !== 'N/A' &&
+          upperT !== 'NA'
+        ) {
+          team = cleanT;
+        }
+      }
+
+      let category: string | null = null;
+      if (starRating && starRating > 0) {
+        category = `${starRating}★`;
+      } else if (rawCat && typeof rawCat === 'string') {
+        const cleanC = rawCat.trim();
+        const upperC = cleanC.toUpperCase();
+        if (
+          cleanC &&
+          upperC !== 'A' &&
+          upperC !== 'NA' &&
+          upperC !== 'N/A' &&
+          upperC !== 'NONE' &&
+          upperC !== 'UNKNOWN'
+        ) {
+          category = cleanC;
+        }
+      }
+
+      result.set(pid, { team, category });
+    }
+  } catch (err) {
+    console.error('Error in getActiveSeasonPlayersMap:', err);
+  }
+
+  return result;
+}
+
+export async function getPlayerActiveSeasonInfo(playerId: string): Promise<ActiveSeasonPlayerInfo> {
+  const map = await getActiveSeasonPlayersMap([playerId]);
+  return map.get(playerId) || { team: null, category: null };
+}
 
 export interface PlayerSeasonRecord {
   season_id: string;

@@ -16,8 +16,8 @@ export interface BirthdayPlayer {
   dob: string;
   age: number;
   photo_url: string;
-  team: string;
-  category: string;
+  team?: string | null;
+  category?: string | null;
   stats?: {
     matches: number;
     goals: number;
@@ -151,9 +151,11 @@ export default function DailyBirthdayModal() {
               </h3>
 
               <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
-                <span className="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">
-                  {player.team}
-                </span>
+                {player.team && player.team !== 'FREE AGENT' && player.team.toLowerCase() !== 'unknown' && (
+                  <span className="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">
+                    {player.team}
+                  </span>
+                )}
                 <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                   TURNING {player.age}
                 </span>
