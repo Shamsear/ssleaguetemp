@@ -80,7 +80,7 @@ const Badge = ({ className, children, variant, ...props }: React.HTMLAttributes<
 export default function CommitteeRequestsPage() {
   const { seasonId: contextSeason } = useTournamentContext();
   const { user, userSeasonId } = usePermissions();
-  const selectedSeason = contextSeason || userSeasonId;
+  const selectedSeason = userSeasonId || contextSeason;
   
   const [releaseRequests, setReleaseRequests] = useState<any[]>([]);
   const [swapRequests, setSwapRequests] = useState<any[]>([]);

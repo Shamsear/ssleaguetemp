@@ -73,7 +73,7 @@ const Badge = ({ className, children, variant, ...props }: React.HTMLAttributes<
 export default function WindowsManagementPage() {
   const { seasonId: contextSeason } = useTournamentContext();
   const { isCommitteeAdmin, userSeasonId } = usePermissions();
-  const selectedSeason = contextSeason || userSeasonId;
+  const selectedSeason = userSeasonId || contextSeason;
   
   const [windows, setWindows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

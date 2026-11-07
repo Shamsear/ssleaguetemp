@@ -47,10 +47,18 @@ const getCatStyle = (cat?: string) =>
 
 export default function EditCategoriesPage() {
   const { user, loading } = useAuth();
-  const { seasonId: contextSeason } = useTournamentContext();
+  const { seasonId: contextSeason, setSeasonId } = useTournamentContext();
   const { userSeasonId: permSeasonId } = usePermissions();
-  const userSeasonId = contextSeason || permSeasonId;
+  // Committee admin's assigned season takes precedence over stale localStorage
+  const userSeasonId = permSeasonId || contextSeason;
   const router = useRouter();
+
+  // Keep TournamentContext and localStorage in sync with the committee admin's assigned season
+  useEffect(() => {
+    if (permSeasonId && contextSeason !== permSeasonId) {
+      setSeasonId(permSeasonId);
+    }
+  }, [permSeasonId, contextSeason, setSeasonId]);
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -78,7 +86,7 @@ export default function EditCategoriesPage() {
       }
     };
 
-    if (user?.role === 'committee_admin') {
+    if (user?.role === 'committee_admin' || user?.role === 'super_admin') {
       fetchCategories();
     }
   }, [user]);
@@ -230,10 +238,10 @@ export default function EditCategoriesPage() {
     );
   }
 
-  if (!user || user.role !== 'committee_admin') return null;
+  if (!user || (user.role !== 'committee_admin' && user.role !== 'super_admin')) return null;
 
   return (
-    <AuthGuard requiredRole="committee_admin">
+    <AuthGuard requiredRole={['committee_admin', 'super_admin']}>
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-10 px-4 sm:px-6">
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
