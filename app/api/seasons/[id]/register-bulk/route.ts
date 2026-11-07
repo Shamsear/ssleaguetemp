@@ -146,7 +146,7 @@ export async function POST(
         const updatedSeasons = Array.from(new Set([...seasonsList, seasonId]));
         await mainSql`
           UPDATE teams SET
-            current_season_id = ${seasonId},
+            season_id = ${seasonId},
             raw_data = COALESCE(raw_data, '{}'::jsonb) || ${JSON.stringify({ current_season_id: seasonId, seasons: updatedSeasons })}::jsonb,
             updated_at = NOW()
           WHERE id = ${teamId}
