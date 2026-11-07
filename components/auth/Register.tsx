@@ -57,6 +57,7 @@ function RegisterContent() {
   const [invite, setInvite] = useState<AdminInvite | null>(null);
   const [validatingInvite, setValidatingInvite] = useState(false);
   const [isAdminInvite, setIsAdminInvite] = useState(false);
+  const isCommitteeAdminInvite = isAdminInvite && (!invite?.type || invite.type === 'committee_admin');
 
   // Guard 1: Redirect logged-in users to their dashboard
   useEffect(() => {
@@ -165,6 +166,8 @@ function RegisterContent() {
             ownerName,
             managerName: '',
             players: [],
+            seasonId: invite?.seasonId || '',
+            seasonName: invite?.seasonName || '',
           };
       
       // Sign up the user
@@ -189,6 +192,7 @@ function RegisterContent() {
             teamName: teamName || finalUsername,
             ownerName,
             managerName: '',
+            seasonId: invite?.seasonId || '',
           }),
         }).catch((teamError) => {
           console.error('Failed to create team document:', teamError);
@@ -198,6 +202,13 @@ function RegisterContent() {
         if (teamLogo) {
           await uploadTeamLogo(firebaseUser.uid, teamLogo).catch((logoError) => {
             console.error('Logo upload failed:', logoError);
+          });
+        }
+        
+        // Mark invite as used before signing out
+        if (inviteCode) {
+          await markInviteAsUsed(inviteCode, firebaseUser.uid, finalUsername, email).catch((inviteError) => {
+            console.error('Failed to mark invite as used:', inviteError);
           });
         }
         
@@ -492,44 +503,50 @@ function RegisterContent() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4">
               {/* Username Field */}
-              {(!isAdminInvite || (isAdminInvite && invite?.type !== 'team')) && (
-                <div>
-                  <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                    Username
-                  </label>
-                  <div style={{ position: "relative" }} className="relative group">
-                    <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+              <div>
+                <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                  Username {invite?.type === 'team' && <span className="text-slate-400 font-normal lowercase">(used to log in)</span>}
+                </label>
+                <div style={{ position: "relative" }} className="relative group">
+                  <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    autoComplete="username"
+                    value={username}
+                    onChange={handleUsernameChange}
+                    className={`${isCommitteeAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
+                    placeholder={invite?.type === 'team' ? "Your login username" : "Choose a unique username"}
+                  />
+                  {isCommitteeAdminInvite && invite && (
+                    <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
+                      {getSeasonSuffix(invite)}
                     </span>
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      required
-                      autoComplete="username"
-                      value={username}
-                      onChange={handleUsernameChange}
-                      className={`${isAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
-                      placeholder="Choose a unique username"
-                    />
-                    {isAdminInvite && invite && (
-                      <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
-                        {getSeasonSuffix(invite)}
-                      </span>
-                    )}
-                  </div>
-                  {isAdminInvite && invite && username.trim() && (
-                    <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
-                      Your username will be saved as:{' '}
-                      <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
-                        {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
-                      </span>
-                    </p>
                   )}
                 </div>
-              )}
+                {isCommitteeAdminInvite && invite && username.trim() && (
+                  <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
+                    Your username will be saved as:{' '}
+                    <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
+                      {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
+                    </span>
+                  </p>
+                )}
+                {invite?.type === 'team' && username.trim() && (
+                  <p className="mt-1.5 text-[10px] font-mono text-slate-500">
+                    Your login username will be:{' '}
+                    <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded font-mono">
+                      {username.trim().toLowerCase()}
+                    </span>
+                  </p>
+                )}
+              </div>
               
               {/* Password Field */}
               <div>
@@ -707,6 +724,8 @@ function RegisterContent() {
                 <span>
                   {authLoading 
                     ? 'Creating Account...' 
+                    : invite?.type === 'team'
+                    ? 'Register Team'
                     : isAdminInvite 
                     ? 'Join as Admin' 
                     : 'Create Account'

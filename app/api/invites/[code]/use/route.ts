@@ -26,11 +26,16 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'Invite not found' }, { status: 404 });
     }
 
+    const inviteData = inviteDoc.data() || {};
+    const newUsedCount = (inviteData.usedCount || 0) + 1;
     const updates: any = {
       usedCount: FieldValue.increment(1),
     };
     if (userId) {
       updates.usedBy = FieldValue.arrayUnion(userId);
+    }
+    if (inviteData.maxUses && newUsedCount >= inviteData.maxUses) {
+      updates.isActive = false;
     }
 
     await inviteRef.update(updates);
@@ -42,6 +47,8 @@ export async function POST(
         userId,
         username: username || '',
         email: email || '',
+        seasonId: inviteData.seasonId || '',
+        seasonName: inviteData.seasonName || '',
         usedAt: FieldValue.serverTimestamp(),
       }).catch((e: any) => console.warn('Could not add to inviteUsages:', e.message));
     }

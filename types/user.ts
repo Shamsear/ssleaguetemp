@@ -34,8 +34,12 @@ export interface Team extends BaseUser {
   role: 'team';
   teamName: string;
   teamLogo?: string;
+  ownerName?: string;
+  seasonId?: string;
+  seasonName?: string;
   players: string[];
   committeeId?: string;
+  teamId?: string;
 }
 
 export type User = SuperAdmin | CommitteeAdmin | Team;

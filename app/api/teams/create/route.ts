@@ -9,7 +9,7 @@ import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { uid, email, username, teamName, ownerName, managerName } = await request.json();
+    const { uid, email, username, teamName, ownerName, managerName, seasonId } = await request.json();
 
     if (!uid || !email || !username) {
       return NextResponse.json(
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
     // no-overwrite guarantee at the database level (throws ALREADY_EXISTS).
     await teamRef.create({
       id: teamId,
+      team_id: teamId,
       team_name: teamName || username,
       owner_name: ownerName || username,
       uid: uid,
@@ -74,10 +75,14 @@ export async function POST(request: NextRequest) {
       owner_uid: uid,
       userEmail: email,
       email: email,
+      owner_email: email,
+      username: username,
       role: 'team',
       is_active: true,
-      seasons: [],
-      current_season_id: '',
+      is_approved: false,
+      seasons: seasonId ? [seasonId] : [],
+      current_season_id: seasonId || '',
+      season_id: seasonId || null,
       performance_history: {},
       hasUserAccount: true,
       is_historical: false,

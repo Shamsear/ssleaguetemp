@@ -75,9 +75,12 @@ export const createUserDocument = async (
       userData.canManageTeams = additionalData?.canManageTeams ?? true;
       userData.canManageAuctions = additionalData?.canManageAuctions ?? true;
       break;
-    case 'team':
+        case 'team':
       userData.teamName = additionalData?.teamName || '';
       userData.teamLogo = additionalData?.teamLogo || '';
+      userData.ownerName = additionalData?.ownerName || '';
+      userData.seasonId = additionalData?.seasonId || '';
+      userData.seasonName = additionalData?.seasonName || '';
       userData.players = additionalData?.players || [];
       userData.committeeId = additionalData?.committeeId || '';
       break;

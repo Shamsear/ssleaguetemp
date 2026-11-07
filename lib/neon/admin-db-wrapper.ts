@@ -509,11 +509,16 @@ function mapFieldName(collection: string, field: any): string {
     };
     return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
-  if (collection === 'teams') {
+    if (collection === 'teams') {
     const map: Record<string, string> = {
       ...COMMON_MAP,
-      team_name: 'team_name', team_code: 'team_code',
-      owner_uid: 'owner_uid',
+      team_name: 'team_name', teamName: 'team_name',
+      team_code: 'team_code', teamCode: 'team_code',
+      owner_uid: 'owner_uid', ownerUid: 'owner_uid', uid: 'owner_uid',
+      owner_name: 'owner_name', ownerName: 'owner_name',
+      owner_email: 'owner_email', ownerEmail: 'owner_email', email: 'owner_email', userEmail: 'owner_email',
+      team_id: 'team_id', teamId: 'team_id',
+      season_id: 'season_id', seasonId: 'season_id',
     };
     return map[fieldStr] || COMMON_MAP[fieldStr] || fieldStr;
   }
@@ -797,6 +802,30 @@ function wrapDocRef(ref: any, collection: string): any {
             return await neonDocGet(collection, target.id);
           }
           throw new Error(`Neon DB not available for doc.get(${collection}/${target.id})`);
+        };
+      }
+      
+      if (prop === 'create') {
+        return async (data: any) => {
+          if (isMainDbAvailable()) {
+            const existing = await neonDocGet(collection, target.id);
+            if (existing.exists) {
+              const error: any = new Error('Document already exists: ' + collection + '/' + target.id);
+              error.code = 6;
+              throw error;
+            }
+          }
+          if (typeof target.create === 'function') {
+            try {
+              await target.create(data);
+            } catch (e: any) {
+              if (e.code === 6 || e.message?.includes('already exists')) {
+                throw e;
+              }
+            }
+          }
+          await syncToNeon(collection, target.id, data, 'set');
+          return { id: target.id };
         };
       }
       
