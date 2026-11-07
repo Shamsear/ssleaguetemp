@@ -45,37 +45,27 @@ export async function POST(
 
     const seasonData = seasonDoc.data()!;
 
-    // Check if team/user exists
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      return NextResponse.json({
-        success: false,
-        message: 'Team not found',
-      }, { status: 404 });
-    }
-
-    const userData = userDoc.data()!;
-
-    // Get team name and team ID from user data
-    const teamName = userData.teamName || userData.username || 'Team';
-    const teamId = userData.teamId; // User document should have teamId field
-
-    // Check if team document exists
-    let teamDocId: string = '';
+    // Support team lookup by teamId or userId
+    let teamDocId: string = body.teamId || '';
     let existingTeamQuery: any = { empty: true };
 
-    if (teamId) {
-      // Try to get team document by teamId from user data
-      const teamDoc = await adminDb.collection('teams').doc(teamId).get();
+    if (teamDocId) {
+      const teamDoc = await adminDb.collection('teams').doc(teamDocId).get();
       if (teamDoc.exists) {
-        teamDocId = teamId;
         existingTeamQuery = { empty: false, docs: [teamDoc] };
-        console.log(`✅ Found existing team: ${teamDocId} for user ${userId}`);
-        console.log(`📋 Will create team_season document: ${teamDocId}_${seasonId}`);
       }
     }
 
-    if (!teamId || existingTeamQuery.empty) {
+    if (existingTeamQuery.empty && userId) {
+      // Check if userId is actually a team ID
+      const teamDoc = await adminDb.collection('teams').doc(userId).get();
+      if (teamDoc.exists) {
+        teamDocId = userId;
+        existingTeamQuery = { empty: false, docs: [teamDoc] };
+      }
+    }
+
+    if (existingTeamQuery.empty && userId) {
       // Fallback: Try to find team by owner_uid
       const teamQuery = await adminDb.collection('teams')
         .where('owner_uid', '==', userId)
@@ -85,17 +75,46 @@ export async function POST(
       if (!teamQuery.empty) {
         teamDocId = teamQuery.docs[0].id;
         existingTeamQuery = teamQuery;
-        console.log(`✅ Found existing team by owner_uid: ${teamDocId} for user ${userId}`);
-        console.log(`📋 Will create team_season document: ${teamDocId}_${seasonId}`);
-      } else {
-        // No team document exists - this should NOT happen during season registration
-        // Teams must be created during initial signup, not during season registration
-        console.error(`❌ No team document found for user ${userId}`);
-        return NextResponse.json({
-          success: false,
-          message: 'Team not found. Please complete team registration first.',
-        }, { status: 404 });
       }
+    }
+
+    if (existingTeamQuery.empty) {
+      console.error(`❌ No team document found for teamId: ${body.teamId}, userId: ${userId}`);
+      return NextResponse.json({
+        success: false,
+        message: 'Team not found. Please complete team registration first.',
+      }, { status: 404 });
+    }
+
+    const existingTeamDoc = existingTeamQuery.docs[0];
+    const existingTeamData = existingTeamDoc.data();
+
+    // Try to load user data if available, but fallback gracefully to team data
+    let userData: any = null;
+    const lookupUserId = userId || existingTeamData.owner_uid || existingTeamData.userId;
+    if (lookupUserId) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(lookupUserId).get();
+        if (userDoc.exists) {
+          userData = userDoc.data();
+        }
+      } catch (uErr) {
+        console.warn('Optional user doc fetch warning:', uErr);
+      }
+    }
+
+    if (!userData) {
+      userData = {
+        teamName: existingTeamData.team_name || existingTeamData.name || 'Team',
+        username: existingTeamData.owner_name || 'Owner',
+        email: existingTeamData.owner_email || existingTeamData.userEmail || '',
+        logoUrl: existingTeamData.logo_url || existingTeamData.logo || null,
+      };
+    }
+
+    const teamName = userData.teamName || existingTeamData.team_name || existingTeamData.name || 'Team';
+    if (!userId) {
+      userId = lookupUserId || teamDocId;
     }
 
     // Check if team has already made a decision for this season
@@ -130,8 +149,7 @@ export async function POST(
 
       // Team must exist at this point (we returned error above if not)
       // Update team with current season only
-      const existingTeamDoc = existingTeamQuery.docs[0];
-      const existingData = existingTeamDoc.data();
+      const existingData = existingTeamData;
       const updatedSeasons = existingData.seasons
         ? [...existingData.seasons, seasonId]
         : [seasonId];
@@ -255,13 +273,29 @@ export async function POST(
 
           console.log(`🎮 Creating fantasy team for ${teamName} in league ${leagueId}`);
 
-          // Get league budget
+          // Ensure fantasy league exists for this season
           const leagueResult = await fantasySql`
             SELECT budget_per_team FROM fantasy_leagues 
             WHERE league_id = ${leagueId}
             LIMIT 1
           `;
-          const budgetPerTeam = leagueResult[0]?.budget_per_team || 100.00;
+          let budgetPerTeam = 100.00;
+          if (leagueResult.length === 0) {
+            await fantasySql`
+              INSERT INTO fantasy_leagues (
+                league_id, season_id, season_name, league_name,
+                budget_per_team, max_squad_size, max_transfers_per_window,
+                points_cost_per_transfer, is_active, created_at, updated_at
+              ) VALUES (
+                ${leagueId}, ${seasonId}, ${seasonData.name || `Season ${seasonNumber}`},
+                ${`${seasonData.name || `Season ${seasonNumber}`} Fantasy League`},
+                100.00, 15, 2, 4, true, NOW(), NOW()
+              )
+              ON CONFLICT (league_id) DO NOTHING
+            `;
+          } else {
+            budgetPerTeam = leagueResult[0]?.budget_per_team || 100.00;
+          }
 
           // Create fantasy team entry with proper fields
           await fantasySql`
@@ -307,66 +341,56 @@ export async function POST(
         }
       }
 
-      // Trigger news for team registration
-      try {
-        // Get updated participant count
-        const updatedSeasonDoc = await adminDb.collection('seasons').doc(seasonId).get();
-        const updatedSeasonData = updatedSeasonDoc.data();
-        const totalTeams = updatedSeasonData?.participant_count || 1;
+      // Background news trigger (non-blocking)
+      (async () => {
+        try {
+          const totalTeams = seasonData?.participant_count || 1;
+          const isReturning = existingTeamData?.seasons && existingTeamData.seasons.length > 1;
+          const teamLogo = userData?.logoUrl || existingTeamData?.logo_url || null;
+          await triggerNews('team_registered' as any, {
+            season_id: seasonId,
+            team_name: teamName,
+            total_teams: totalTeams,
+            is_returning: isReturning,
+            team_logo: teamLogo,
+          });
+        } catch (newsError) {
+          console.error('Failed to generate team registration news:', newsError);
+        }
+      })().catch(() => {});
 
-        // Check if team is returning (has played before)
-        const teamDoc = await adminDb.collection('teams').doc(teamDocId).get();
-        const teamData = teamDoc.data();
-        const isReturning = teamData?.seasons && teamData.seasons.length > 1; // Has previous season history
-        const teamLogo = userData.logoUrl || teamData?.team_logo || null;
+      // Background notifications (non-blocking)
+      (async () => {
+        try {
+          await (sendNotification as any)(
+            {
+              title: '✅ Registration Complete!',
+              body: `Welcome to ${seasonData.name}! Start building your team!`,
+              url: `/dashboard/team`,
+              icon: '/logo.png',
+              data: {
+                type: 'season_registration',
+                season_id: seasonId,
+                currency_system: 'dual',
+                football_budget: footballBudget.toString(),
+                real_player_budget: realPlayerBudget.toString(),
+              }
+            },
+            teamDocId
+          );
 
-        await triggerNews('team_registered' as any, {
-          season_id: seasonId,
-          team_name: teamName,
-          total_teams: totalTeams,
-          is_returning: isReturning,
-          team_logo: teamLogo,
-        });
-      } catch (newsError) {
-        console.error('Failed to generate team registration news:', newsError);
-      }
-
-      // Send FCM notification to the registered team
-      try {
-        await (sendNotification as any)(
-          {
-            title: '✅ Registration Complete!',
-            body: `Welcome to ${seasonData.name}! Start building your team!`,
-            url: `/dashboard/team`,
-            icon: '/logo.png',
-            data: {
-              type: 'season_registration',
-              season_id: seasonId,
-              currency_system: 'dual',
-              football_budget: footballBudget.toString(),
-              real_player_budget: realPlayerBudget.toString(),
-            }
-          },
-          teamDocId
-        );
-      } catch (notifError) {
-        console.error('Failed to send registration notification:', notifError);
-        // Don't fail the request
-      }
-
-      // Notify committee admins
-      try {
-        await sendNotification(
-          {
-            title: `📝 New Season Sign-up: ${teamName}`,
-            body: `${teamName} has registered to participate in ${seasonData.name || seasonId}.`,
-            url: `/dashboard/committee/registration`
-          },
-          { isCommittee: true }
-        );
-      } catch (adminNotifError) {
-        console.error('Failed to notify admins of team registration:', adminNotifError);
-      }
+          await sendNotification(
+            {
+              title: `📝 New Season Sign-up: ${teamName}`,
+              body: `${teamName} has registered to participate in ${seasonData.name || seasonId}.`,
+              url: `/dashboard/committee/registration`
+            },
+            { isCommittee: true }
+          );
+        } catch (notifError) {
+          console.error('Notification error:', notifError);
+        }
+      })().catch(() => {});
 
       return NextResponse.json({
         success: true,

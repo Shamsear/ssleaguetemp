@@ -10,22 +10,25 @@ async function main() {
   const req = {
     json: async () => ({
       action: 'join',
-      userId: '2Nzm6mnAvUZzlR4hM1b3EX9jqUM2', // Raees (Red Hawks FC)
+      teamId: 'SSPSLT0005',
+      userId: 'rQ9mevM02USBOYvwxwNsgvtnflq2',
       joinFantasy: true
     })
   };
   const params = Promise.resolve({ id: 'SSPSLS19' });
   
-  console.log('Testing POST /api/seasons/SSPSLS19/register with SSPSLT0004 ...');
+  console.log('Testing fast POST /api/seasons/SSPSLS19/register with SSPSLT0005 ...');
+  const t0 = Date.now();
   const res = await POST(req, { params });
+  console.log('Finished in', Date.now() - t0, 'ms');
   console.log('Status:', res.status);
   const data = await res.json();
   console.log('Response body:', data);
 
   const { neon } = require('@neondatabase/serverless');
   const sql = neon(process.env.NEON_MAIN_DB_URL);
-  const row = await sql`SELECT * FROM team_seasons WHERE id = 'SSPSLT0004_SSPSLS19'`;
-  console.log('Red Hawks in Neon team_seasons:', row.length > 0 ? 'YES! Found:' : 'NO!', row[0]?.team_name, row[0]?.status);
+  const row = await sql`SELECT * FROM team_seasons WHERE id = 'SSPSLT0005_SSPSLS19'`;
+  console.log('TM Asgardians in Neon team_seasons:', row.length > 0 ? 'YES! Found:' : 'NO!', row[0]?.team_name, row[0]?.status);
 }
 
 main().catch(console.error);
