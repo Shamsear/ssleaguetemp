@@ -44,7 +44,6 @@ function RegisterContent() {
   const [password, setPassword] = useState('');
   const [teamName, setTeamName] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [isUsernameManuallyEdited, setIsUsernameManuallyEdited] = useState(false);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
@@ -518,52 +517,135 @@ function RegisterContent() {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4">
-              {/* Username Field */}
-              <div>
-                <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                  Username {invite?.type === 'team' && <span className="text-slate-400 font-normal lowercase">(used to log in)</span>}
-                </label>
-                <div style={{ position: "relative" }} className="relative group">
-                  <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    required
-                    autoComplete="username"
-                    value={username}
-                    onChange={handleUsernameChange}
-                    className={`${isCommitteeAdminInvite ? 'pr-16' : ''} pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450`}
-                    placeholder={invite?.type === 'team' ? "Your login username" : "Choose a unique username"}
-                  />
-                  {isCommitteeAdminInvite && invite && (
-                    <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
-                      {getSeasonSuffix(invite)}
+              {isCommitteeAdminInvite ? (
+                /* Committee Admin Registration Fields */
+                <div>
+                  <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                    Username
+                  </label>
+                  <div style={{ position: "relative" }} className="relative group">
+                    <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </span>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      required
+                      autoComplete="username"
+                      value={username}
+                      onChange={handleUsernameChange}
+                      className="pr-16 pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                      placeholder="Choose a unique username"
+                    />
+                    {invite && (
+                      <span style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", display: "flex", alignItems: "center", paddingRight: "1rem", pointerEvents: "none" }} className="text-amber-600 font-mono text-sm font-bold select-none">
+                        {getSeasonSuffix(invite)}
+                      </span>
+                    )}
+                  </div>
+                  {invite && username.trim() && (
+                    <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
+                      Your username will be saved as:{' '}
+                      <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
+                        {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
+                      </span>
+                    </p>
                   )}
                 </div>
-                {isCommitteeAdminInvite && invite && username.trim() && (
-                  <p className="mt-1.5 text-[10px] font-mono text-amber-600 font-bold uppercase tracking-wider">
-                    Your username will be saved as:{' '}
-                    <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded">
-                      {username.trim().toLowerCase()}{getSeasonSuffix(invite)}
-                    </span>
-                  </p>
-                )}
-                {invite?.type === 'team' && username.trim() && (
-                  <p className="mt-1.5 text-[10px] font-mono text-slate-500">
-                    Your login username will be:{' '}
-                    <span className="text-slate-900 underline font-extrabold bg-amber-50 px-1.5 py-0.5 rounded font-mono">
-                      {username.trim().toLowerCase()}
-                    </span>
-                  </p>
-                )}
-              </div>
-              
+              ) : (
+                /* Team Registration Fields */
+                <>
+                  {/* Team Name Field */}
+                  <div>
+                    <label htmlFor="team_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                      Team Name
+                    </label>
+                    <div style={{ position: "relative" }} className="relative group">
+                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        id="team_name"
+                        name="team_name"
+                        required
+                        value={teamName}
+                        onChange={handleTeamNameChange}
+                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                        placeholder="Enter your team name (e.g. Titans FC)"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Username Field: strictly read-only and equals Team Name */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="username" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider">
+                        Username (Login ID)
+                      </label>
+                      <span className="text-[10px] font-mono text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+                        <svg className="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Team Name
+                      </span>
+                    </div>
+                    <div style={{ position: "relative" }} className="relative group">
+                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-slate-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        readOnly
+                        disabled
+                        value={teamName}
+                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl bg-slate-100/90 text-slate-600 cursor-not-allowed font-mono text-sm shadow-none select-none"
+                        placeholder="Automatically set to your team name"
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[10px] font-mono text-slate-500">
+                      Your login username is your team name:{' '}
+                      <span className="text-slate-900 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/50">
+                        {teamName.trim() || 'Enter team name above'}
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Owner Name Field */}
+                  <div>
+                    <label htmlFor="owner_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                      Owner Name
+                    </label>
+                    <div style={{ position: "relative" }} className="relative group">
+                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        id="owner_name"
+                        name="owner_name"
+                        required
+                        value={ownerName}
+                        onChange={(e) => setOwnerName(e.target.value)}
+                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
+                        placeholder="Enter owner's name"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
               {/* Password Field */}
               <div>
                 <label htmlFor="password" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
@@ -628,102 +710,49 @@ function RegisterContent() {
                 )}
               </div>
               
-              {/* Team Fields */}
-              {(!isAdminInvite || (isAdminInvite && invite?.type === 'team')) && (
-                <>
-                  {/* Team Name Field */}
-                  <div>
-                    <label htmlFor="team_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                      Team Name
-                    </label>
-                    <div style={{ position: "relative" }} className="relative group">
-                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                        </svg>
-                      </span>
-                      <input
-                        type="text"
-                        id="team_name"
-                        name="team_name"
-                        required
-                        value={teamName}
-                        onChange={handleTeamNameChange}
-                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
-                        placeholder="Enter your team name"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Owner Name Field */}
-                  <div>
-                    <label htmlFor="owner_name" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                      Owner Name
-                    </label>
-                    <div style={{ position: "relative" }} className="relative group">
-                      <span style={{ position: "absolute", top: 0, bottom: 0, left: 0, height: "100%", display: "flex", alignItems: "center", paddingLeft: "0.875rem", pointerEvents: "none" }} className="text-gray-400 group-focus-within:text-amber-600 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </span>
-                      <input
-                        type="text"
-                        id="owner_name"
-                        name="owner_name"
-                        required
-                        value={ownerName}
-                        onChange={(e) => setOwnerName(e.target.value)}
-                        className="pl-10 w-full py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-amber-500 focus:outline-none bg-slate-50 focus:bg-white transition-all duration-200 shadow-sm text-sm font-mono text-slate-700 placeholder:text-slate-450"
-                        placeholder="Enter owner's name"
-                      />
-                    </div>
-                  </div>
-
-
-
-                  {/* Team Logo Upload */}
-                  <div>
-                    <label htmlFor="team_logo" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
-                      Team Logo
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="relative flex-shrink-0">
-                        <div className={`w-16 h-16 rounded-xl bg-slate-50 border ${
-                          logoPreview ? 'border-solid border-amber-500' : 'border-dashed border-slate-300'
-                        } flex items-center justify-center overflow-hidden transition-all duration-300`}>
-                          {logoPreview ? (
-                            <div className="relative w-full h-full">
-                              <Image 
-                                src={logoPreview} 
-                                alt="Logo preview" 
-                                fill
-                                className="object-contain p-1.5"
-                              />
-                            </div>
-                          ) : (
-                            <svg className="w-6 h-6 text-slate-350" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-grow">
-                        <label htmlFor="team_logo" className="w-full flex flex-col items-center px-4 py-2 bg-slate-50 text-amber-600 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition-colors duration-300 relative">
-                          <span className="text-xs font-mono font-bold uppercase">Choose Logo File</span>
-                          <span className="text-[9px] text-slate-400 font-mono uppercase mt-0.5">PNG, JPG (MAX 2MB)</span>
-                          <input 
-                            type="file" 
-                            id="team_logo" 
-                            name="team_logo" 
-                            accept="image/*" 
-                            className="hidden"
-                            onChange={handleLogoChange}
-                          />
-                        </label>
+              {/* Team Logo Upload (only for team registrations) */}
+              {!isCommitteeAdminInvite && (
+                <div>
+                  <label htmlFor="team_logo" className="block text-[10px] font-mono font-bold text-slate-450 uppercase tracking-wider mb-1.5">
+                    Team Logo
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <div className="relative flex-shrink-0">
+                      <div className={`w-16 h-16 rounded-xl bg-slate-50 border ${
+                        logoPreview ? 'border-solid border-amber-500' : 'border-dashed border-slate-300'
+                      } flex items-center justify-center overflow-hidden transition-all duration-300`}>
+                        {logoPreview ? (
+                          <div className="relative w-full h-full">
+                            <Image 
+                              src={logoPreview} 
+                              alt="Logo preview" 
+                              fill
+                              className="object-contain p-1.5"
+                            />
+                          </div>
+                        ) : (
+                          <svg className="w-6 h-6 text-slate-350" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </div>
                     </div>
+                    <div className="flex-grow">
+                      <label htmlFor="team_logo" className="w-full flex flex-col items-center px-4 py-2 bg-slate-50 text-amber-600 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition-colors duration-300 relative">
+                        <span className="text-xs font-mono font-bold uppercase">Choose Logo File</span>
+                        <span className="text-[9px] text-slate-400 font-mono uppercase mt-0.5">PNG, JPG (MAX 2MB)</span>
+                        <input 
+                          type="file" 
+                          id="team_logo" 
+                          name="team_logo" 
+                          accept="image/*" 
+                          className="hidden"
+                          onChange={handleLogoChange}
+                        />
+                      </label>
+                    </div>
                   </div>
-                </>
+                </div>
               )}
             </div>
             
