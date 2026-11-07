@@ -81,9 +81,11 @@ export async function GET(request: NextRequest) {
 
     const enrichedPlayers = players.map((p: any) => {
       const firebaseData = firebasePlayersMap.get(String(p.player_id)) || {};
+      const rawCategory = p.category || firebaseData.category_name || firebaseData.category || 'WHITE';
+      const cleanCategory = String(rawCategory).replace(/^cat_/i, '').trim().toUpperCase();
       return {
         ...p,
-        category: firebaseData.category || firebaseData.category_name || p.category || 'BRONZE',
+        category: cleanCategory || 'WHITE',
         photo_url: firebaseData.photo_url || firebaseData.photoUrl || null,
         photo_position_x_circle: firebaseData.photo_position_x_circle ?? null,
         photo_position_y_circle: firebaseData.photo_position_y_circle ?? null,

@@ -52,7 +52,7 @@ interface PlayerAward {
 }
 
 const getCategoryColor = (category: string) => {
-  const cat = (category || '').trim().toUpperCase();
+  const cat = (category || '').replace(/^cat_/i, '').trim().toUpperCase();
   if (cat === 'RED') return 'bg-rose-50 text-rose-700 border-rose-200/50';
   if (cat === 'BLUE') return 'bg-blue-50 text-blue-700 border-blue-200/50';
   if (cat === 'GOLD') return 'bg-amber-50 text-amber-700 border-amber-200/50';
@@ -966,7 +966,7 @@ export default function PlayerStatsByRoundPage() {
                             <span className="text-xs font-black text-slate-800">{player.player_name}</span>
                             {(player as any).category && (
                               <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-lg border uppercase tracking-wider ${getCategoryColor((player as any).category)}`}>
-                                {(player as any).category}
+                                {String((player as any).category).replace(/^cat_/i, '').trim()}
                               </span>
                             )}
                           </div>
@@ -1098,7 +1098,7 @@ export default function PlayerStatsByRoundPage() {
                           <h3 className="text-xs font-black text-slate-800">{player.player_name}</h3>
                           {player.category && (
                             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-lg border uppercase tracking-wider ${getCategoryColor(player.category)}`}>
-                              {player.category}
+                              {String(player.category).replace(/^cat_/i, '').trim()}
                             </span>
                           )}
                         </div>

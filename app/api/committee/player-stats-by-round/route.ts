@@ -575,7 +575,8 @@ export async function GET(request: NextRequest) {
         }
         
         const playerDetails = firebasePlayersMap.get(String(player.player_id));
-        player.category = player.category || playerDetails?.category || playerDetails?.category_name || 'RED';
+        const rawPlayerCat = player.category || playerDetails?.category || playerDetails?.category_name || 'RED';
+        player.category = String(rawPlayerCat).replace(/^cat_/i, '').trim().toUpperCase();
         if (playerDetails) {
           player.photo_position_x_circle = playerDetails.photo_position_x_circle ?? null;
           player.photo_position_y_circle = playerDetails.photo_position_y_circle ?? null;

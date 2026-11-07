@@ -239,7 +239,8 @@ export async function GET(request: NextRequest) {
       };
 
       matchdayStats = rawMatchdayStats.map((match: any) => {
-        const oppCat = (match.player_side === 'home' ? match.away_category : match.home_category) || 'Red';
+        const rawOppCat = (match.player_side === 'home' ? match.away_category : match.home_category) || 'Red';
+        const oppCat = String(rawOppCat).replace(/^cat_/i, '').trim();
         if (match.is_null) {
           return {
             ...match,
