@@ -611,6 +611,45 @@ const TABLE_COLUMNS: Record<string, Set<string>> = {
 // NEON WRITE SYNC
 // =====================================================
 
+function normalizeValueForNeon(col: string, value: any): any {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'function') return undefined;
+
+  const isTimeCol = col.endsWith('_at') || col.endsWith('_date') || col === 'start_date' || col === 'end_date';
+
+  if (value && typeof value === 'object') {
+    const cName = value.constructor?.name || '';
+    if (
+      cName === 'ServerTimestampTransform' ||
+      cName === 'FieldValue' ||
+      cName === 'ServerTimestamp' ||
+      value._methodName === 'serverTimestamp' ||
+      (typeof value.isEqual === 'function' && value._seconds === undefined)
+    ) {
+      return new Date().toISOString();
+    }
+    if (typeof value.toDate === 'function') {
+      return value.toDate().toISOString();
+    }
+    if (value._seconds !== undefined) {
+      return new Date(value._seconds * 1000).toISOString();
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (isTimeCol) {
+      return new Date().toISOString();
+    }
+    return JSON.stringify(value);
+  }
+
+  if (isTimeCol && typeof value === 'string' && value.trim() === '') {
+    return null;
+  }
+
+  return value;
+}
+
 async function syncToNeon(collection: string, docId: string, data: any, operation: string) {
   if (!isMainDbAvailable()) return;
   try {
@@ -648,23 +687,15 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
       let uIdx = 1;
 
       for (const [key, value] of Object.entries(enrichedData)) {
-        if (value === undefined) continue;
-        if (typeof value === 'function') continue;
+        if (value === undefined || typeof value === 'function') continue;
         const col = mapFieldName(collection, key);
         if (col === 'updated_at' || col === 'id') continue;
         if (validCols && !validCols.has(col)) continue;
         if (setClauses.some(s => s.startsWith(`${col} =`))) continue;
 
-        let valToUpdate = value;
-        if (value && typeof value === 'object') {
-          if ((value as any)._methodName === 'serverTimestamp' || (value as any).constructor?.name === 'FieldValue') {
-            valToUpdate = new Date().toISOString();
-          } else if (value instanceof Date) {
-            valToUpdate = value.toISOString();
-          } else {
-            valToUpdate = JSON.stringify(value);
-          }
-        }
+        const valToUpdate = normalizeValueForNeon(col, value);
+        if (valToUpdate === undefined) continue;
+
         setClauses.push(`${col} = $${uIdx}`);
         updateValues.push(valToUpdate);
         uIdx++;
@@ -680,10 +711,10 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
       setClauses.push(`updated_at = NOW()`);
       updateValues.push(docId);
 
-      const updateQuery = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE id = $${uIdx}`;
+      const updateQuery = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE id = $${uIdx} RETURNING id`;
       const updateResult: any = await sql.query(updateQuery, updateValues);
 
-      const rowsAffected = updateResult?.rowCount ?? (Array.isArray(updateResult) ? updateResult.length : 0);
+      const rowsAffected = Array.isArray(updateResult) ? updateResult.length : (updateResult?.rowCount ?? 0);
       if (rowsAffected > 0) {
         return;
       }
@@ -691,34 +722,23 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
     }
 
     // Generic upsert: store all fields + raw_data, use COALESCE on conflict
-    // Collect non-null columns from data + id + raw_data + timestamps
     const columns: string[] = ['id'];
     const placeholders: string[] = ['$1'];
     const values: any[] = [docId];
     let idx = 2;
     
     for (const [key, value] of Object.entries(enrichedData)) {
-      if (value === undefined) continue;
-      // Skip functions and complex objects that aren't JSON-serializable
-      if (typeof value === 'function') continue;
+      if (value === undefined || typeof value === 'function') continue;
       const col = mapFieldName(collection, key);
       if (col === 'updated_at') continue;
-      // Only include column if it exists in the table schema
       if (validCols && !validCols.has(col)) continue;
-      // Skip if column already added
       if (columns.includes(col)) continue;
+
+      const valToInsert = normalizeValueForNeon(col, value);
+      if (valToInsert === undefined) continue;
+
       columns.push(col);
       placeholders.push(`$${idx}`);
-      let valToInsert = value;
-      if (value && typeof value === 'object') {
-        if ((value as any)._methodName === 'serverTimestamp' || (value as any).constructor?.name === 'FieldValue') {
-          valToInsert = new Date().toISOString();
-        } else if (value instanceof Date) {
-          valToInsert = value.toISOString();
-        } else {
-          valToInsert = JSON.stringify(value);
-        }
-      }
       values.push(valToInsert);
       idx++;
     }
