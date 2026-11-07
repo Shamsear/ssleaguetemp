@@ -901,12 +901,85 @@ function wrapCollectionRef(ref: any, collection: string): any {
   });
 }
 
+function extractCollectionAndId(docRef: any): { collection: string; docId: string } | null {
+  if (!docRef) return null;
+  const path = docRef.path || '';
+  if (path) {
+    const parts = path.split('/');
+    if (parts.length >= 2) {
+      return { collection: parts[0], docId: parts.slice(1).join('/') };
+    }
+  }
+  if (docRef.id && docRef.parent?.id) {
+    return { collection: docRef.parent.id, docId: docRef.id };
+  }
+  return null;
+}
+
+function wrapBatch(batch: any): any {
+  const operations: Array<{ type: 'set' | 'update' | 'delete'; collection: string; docId: string; data?: any }> = [];
+
+  return new Proxy(batch, {
+    get(target, prop) {
+      if (prop === 'set') {
+        return (docRef: any, data: any, options?: any) => {
+          target.set(docRef, data, options);
+          const info = extractCollectionAndId(docRef);
+          if (info && NEON_COLLECTIONS.has(info.collection)) {
+            operations.push({ type: 'set', collection: info.collection, docId: info.docId, data });
+          }
+          return this;
+        };
+      }
+      if (prop === 'update') {
+        return (docRef: any, dataOrField: any, ...moreArgs: any[]) => {
+          target.update(docRef, dataOrField, ...moreArgs);
+          const info = extractCollectionAndId(docRef);
+          if (info && NEON_COLLECTIONS.has(info.collection)) {
+            const updateData = typeof dataOrField === 'string' ? { [dataOrField]: moreArgs[0] } : dataOrField;
+            operations.push({ type: 'update', collection: info.collection, docId: info.docId, data: updateData });
+          }
+          return this;
+        };
+      }
+      if (prop === 'delete') {
+        return (docRef: any) => {
+          target.delete(docRef);
+          const info = extractCollectionAndId(docRef);
+          if (info && NEON_COLLECTIONS.has(info.collection)) {
+            operations.push({ type: 'delete', collection: info.collection, docId: info.docId });
+          }
+          return this;
+        };
+      }
+      if (prop === 'commit') {
+        return async () => {
+          let fbResult = null;
+          try {
+            fbResult = await target.commit();
+          } catch (fbErr: any) {
+            console.warn('⚠️ Firebase batch.commit warning:', fbErr.message);
+          }
+          for (const op of operations) {
+            await syncToNeon(op.collection, op.docId, op.data, op.type);
+          }
+          return fbResult;
+        };
+      }
+      return (target as any)[prop];
+    }
+  });
+}
+
 // =====================================================
 // THE WRAPPED adminDb EXPORT
 // =====================================================
 
 export const adminDb = new Proxy(firebaseAdminDb, {
   get(target, prop) {
+    if (prop === 'batch') {
+      return () => wrapBatch((target as any).batch());
+    }
     if (prop === 'collection') {
       return (name: string) => {
         const ref = (target as any).collection(name);
