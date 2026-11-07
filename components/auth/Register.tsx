@@ -137,8 +137,13 @@ function RegisterContent() {
     const inviteType = invite.type || 'committee_admin';
     const isCommitteeAdminInvite = inviteType === 'committee_admin';
 
-    // Determine final username: append season suffix only for admin registrations
-    let finalUsername = username.trim();
+    // Username is team name itself for team registrations, or username + suffix for committee admins
+    let finalUsername = isCommitteeAdminInvite ? username.trim() : teamName.trim();
+    if (!finalUsername) {
+      setError(isCommitteeAdminInvite ? 'Username is required' : 'Team name is required');
+      return;
+    }
+
     if (isCommitteeAdminInvite) {
       const suffix = getSeasonSuffix(invite);
       if (!finalUsername.toLowerCase().endsWith(suffix.toLowerCase())) {
@@ -146,8 +151,15 @@ function RegisterContent() {
       }
     }
 
-    // Create email from username
-    const email = finalUsername.includes('@') ? finalUsername : `${finalUsername}@ssleague.com`;
+    // Sanitize email: Firebase Auth strictly requires a valid email format without spaces.
+    // When finalUsername contains spaces (e.g. "Titans FC"), sanitize it for the auth email address.
+    let email: string;
+    if (finalUsername.includes('@')) {
+      email = finalUsername.trim().toLowerCase();
+    } else {
+      const emailPrefix = finalUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
+      email = `${emailPrefix || ('team' + Date.now())}@ssleague.com`;
+    }
 
     try {
       // Determine role and additional data based on invite type
@@ -305,7 +317,15 @@ function RegisterContent() {
 
     } catch (error: any) {
       console.error('Registration failed:', error);
-      setError(error.message || 'Registration failed. Please try again.');
+      let msg = error.message || 'Registration failed. Please try again.';
+      if (error.code === 'auth/invalid-email' || msg.includes('auth/invalid-email')) {
+        msg = 'Invalid email address generated. Please verify your team name contains valid characters.';
+      } else if (error.code === 'auth/email-already-in-use' || msg.includes('auth/email-already-in-use')) {
+        msg = 'A team account with this name already exists. Please choose a different team name.';
+      } else if (error.code === 'auth/weak-password' || msg.includes('auth/weak-password')) {
+        msg = 'Password is too weak. Please use at least 6 characters.';
+      }
+      setError(msg);
     }
   };
 
@@ -352,16 +372,12 @@ function RegisterContent() {
 
   const handleUsernameChange = (e: ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
-    setIsUsernameManuallyEdited(true);
   };
 
   const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setTeamName(val);
-    if (!isUsernameManuallyEdited) {
-      const generatedUsername = val.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-      setUsername(generatedUsername);
-    }
+    setUsername(val);
   };
 
   // Guard 2: No invite code → show registrations-closed wall
