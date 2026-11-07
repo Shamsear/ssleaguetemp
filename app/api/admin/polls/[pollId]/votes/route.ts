@@ -107,10 +107,10 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { pollId: string } }
+  { params }: { params: Promise<{ pollId: string }> }
 ) {
   try {
-    const { pollId } = params;
+    const { pollId } = await params;
     const { vote_id } = await request.json();
 
     if (!vote_id) {

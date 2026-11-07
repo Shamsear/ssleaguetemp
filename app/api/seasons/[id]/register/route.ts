@@ -16,9 +16,9 @@ export async function POST(
   try {
     // Get userId from request body (sent by client after authentication)
     const body = await request.json();
-    const { action, userId, managerName, joinFantasy } = body; // NEW: Added managerName and joinFantasy
+    let { action, userId, managerName, joinFantasy } = body; // NEW: Added managerName and joinFantasy
 
-    if (!userId) {
+    if (!userId && !body.teamId && !body.team_id) {
       return NextResponse.json({
         success: false,
         message: 'Unauthorized - No user ID provided',
