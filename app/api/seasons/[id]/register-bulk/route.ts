@@ -46,7 +46,7 @@ export async function POST(
     // Budgets
     const footballBudget = seasonData.euro_budget || seasonData.purseAmount || 10000;
     const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-    const realPlayerBudget = seasonNum >= 18 ? 500 : (seasonData.dollar_budget || 1000);
+    const realPlayerBudget = seasonData.dollar_budget ? Number(seasonData.dollar_budget) : (seasonNum >= 18 ? 400 : 1000);
 
     // League ID for fantasy
     const leagueId = `SSPSLFLS${seasonNum}`;

@@ -185,9 +185,9 @@ export async function POST(
       // Determine budgets based on season configuration (always dual currency now)
       const footballBudget = seasonData.euro_budget || seasonData.purseAmount || 10000;
       
-      // S18+ uses 500 SSCoins, earlier seasons use 1000
+      // Determine real player budget from season settings, falling back to 400 for S18+ or 1000
       const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-      const realPlayerBudget = seasonNum >= 18 ? 500 : (seasonData.dollar_budget || 1000);
+      const realPlayerBudget = seasonData.dollar_budget ? Number(seasonData.dollar_budget) : (seasonNum >= 18 ? 400 : 1000);
       
       const teamSeasonData = prepareTeamSeasonData({
         teamId: teamDocId,

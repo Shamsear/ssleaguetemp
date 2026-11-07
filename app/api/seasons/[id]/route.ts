@@ -63,6 +63,7 @@ export async function GET(
       euro_budget: seasonData.euro_budget,
       required_real_players: seasonData.required_real_players,
       max_football_players: seasonData.max_football_players,
+      raw_data: seasonData.raw_data,
       created_at: seasonData.created_at,
       updated_at: seasonData.updated_at,
     };

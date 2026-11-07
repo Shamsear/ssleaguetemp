@@ -248,7 +248,8 @@ export default function RealPlayersPage() {
               teamSeason.initial_real_player_budget ||
               teamSeason.real_player_budget_initial ||
               teamSeason.real_player_starting_balance ||
-              1000
+              (Number(teamSeason.real_player_budget || 0) + Number(teamSeason.real_player_spent || 0)) ||
+              400
             );
             const currentBudget = Number(teamSeason.real_player_budget ?? originalBudget);
             const currentSpent = Number(teamSeason.real_player_spent || 0);
