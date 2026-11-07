@@ -80,6 +80,9 @@ export const createUserDocument = async (
       userData.teamLogo = additionalData?.teamLogo || '';
       userData.players = additionalData?.players || [];
       userData.committeeId = additionalData?.committeeId || '';
+      userData.ownerName = additionalData?.ownerName || '';
+      userData.seasonId = additionalData?.seasonId || '';
+      userData.seasonName = additionalData?.seasonName || '';
       break;
   }
 
@@ -185,7 +188,9 @@ export const signUp = async (
     };
   } catch (error: any) {
     console.error('Error signing up:', error);
-    throw new Error(error.message || 'Failed to sign up');
+    const err: any = new Error(error.message || 'Failed to sign up');
+    if (error.code) err.code = error.code;
+    throw err;
   }
 };
 
@@ -383,11 +388,18 @@ export const getEmailFromUsername = async (username: string): Promise<string | n
 // Check if username is available
 export const isUsernameAvailable = async (username: string): Promise<boolean> => {
   try {
-    // This is a simple check - in production, you might want to use a more efficient method
-    // like maintaining a separate collection of usernames or using Cloud Functions
-    const usersRef = doc(db, 'usernames', username.toLowerCase());
-    const docSnap = await getDoc(usersRef);
-    return !docSnap.exists();
+    const cleanLower = username.toLowerCase().trim();
+    const strippedLower = cleanLower.replace(/[^a-z0-9]/g, '');
+
+    const docSnap = await getDoc(doc(db, 'usernames', cleanLower));
+    if (docSnap.exists()) return false;
+
+    if (strippedLower && strippedLower !== cleanLower) {
+      const strippedSnap = await getDoc(doc(db, 'usernames', strippedLower));
+      if (strippedSnap.exists()) return false;
+    }
+
+    return true;
   } catch (error) {
     console.error('Error checking username availability:', error);
     return false;
@@ -397,10 +409,22 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 // Reserve username
 export const reserveUsername = async (username: string, uid: string): Promise<void> => {
   try {
-    await setDoc(doc(db, 'usernames', username.toLowerCase()), {
+    const cleanLower = username.toLowerCase().trim();
+    const strippedLower = cleanLower.replace(/[^a-z0-9]/g, '');
+
+    await setDoc(doc(db, 'usernames', cleanLower), {
       uid,
+      userId: uid,
       createdAt: serverTimestamp(),
     });
+
+    if (strippedLower && strippedLower !== cleanLower) {
+      await setDoc(doc(db, 'usernames', strippedLower), {
+        uid,
+        userId: uid,
+        createdAt: serverTimestamp(),
+      });
+    }
   } catch (error: any) {
     console.error('Error reserving username:', error);
     throw new Error(error.message || 'Failed to reserve username');
@@ -469,7 +493,12 @@ export const deleteUser = async (uid: string): Promise<void> => {
       
       // Delete username reservation
       if (username) {
-        await deleteDoc(doc(db, 'usernames', username.toLowerCase()));
+        const cleanLower = username.toLowerCase().trim();
+        const strippedLower = cleanLower.replace(/[^a-z0-9]/g, '');
+        await deleteDoc(doc(db, 'usernames', cleanLower));
+        if (strippedLower && strippedLower !== cleanLower) {
+          await deleteDoc(doc(db, 'usernames', strippedLower));
+        }
       }
     }
   } catch (error: any) {
