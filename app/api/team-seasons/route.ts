@@ -2,6 +2,15 @@ import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 /**
  * GET /api/team-seasons
  * Fetch team_season data for a user and/or season
@@ -35,7 +44,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      return NextResponse.json({ success: true, data: rows, teamSeasons: rows });
+      return NextResponse.json(
+        { success: true, data: rows, teamSeasons: rows },
+        { headers: NO_CACHE_HEADERS }
+      );
     }
 
     // 2. If only user_id is provided, return ALL team seasons for that user
@@ -61,7 +73,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      return NextResponse.json({ success: true, data: rows, teamSeasons: rows });
+      return NextResponse.json(
+        { success: true, data: rows, teamSeasons: rows },
+        { headers: NO_CACHE_HEADERS }
+      );
     }
 
     // 3. If BOTH user_id and season_id are provided
@@ -116,16 +131,19 @@ export async function GET(request: NextRequest) {
       if (!teamSeasonData) {
         return NextResponse.json(
           { success: false, error: 'No team registration found for this user' },
-          { status: 404 }
+          { status: 404, headers: NO_CACHE_HEADERS }
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        team_season: teamSeasonData,
-        data: [teamSeasonData],
-        teamSeasons: [teamSeasonData],
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          team_season: teamSeasonData,
+          data: [teamSeasonData],
+          teamSeasons: [teamSeasonData],
+        },
+        { headers: NO_CACHE_HEADERS }
+      );
     }
 
     // 4. If no parameters provided: return recent team_seasons
@@ -139,7 +157,10 @@ export async function GET(request: NextRequest) {
       rows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
-    return NextResponse.json({ success: true, data: rows, teamSeasons: rows });
+    return NextResponse.json(
+      { success: true, data: rows, teamSeasons: rows },
+      { headers: NO_CACHE_HEADERS }
+    );
   } catch (error: any) {
     console.error('Error fetching team_season:', error);
     return NextResponse.json(

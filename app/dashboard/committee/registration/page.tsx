@@ -9,12 +9,13 @@ import {
   CheckSquare, 
   Square, 
   Filter,
-  Check
+  Check,
+  Radio
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Season } from '@/types/season';
@@ -43,11 +44,28 @@ export default function TeamRegistrationPage() {
   const [bulkStatusMessage, setBulkStatusMessage] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<'all' | 'pending' | 'registered'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [bannerNotice, setBannerNotice] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-  // Fetch team registration statuses for a specific season
-  const fetchTeamStatuses = async (seasonId: string) => {
+  const noticeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const showNotice = useCallback((text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    setBannerNotice({ text, type });
+    noticeTimerRef.current = setTimeout(() => {
+      setBannerNotice(null);
+    }, 6000);
+  }, []);
+
+  // Fetch team registration statuses for a specific season (always bypass cache)
+  const fetchTeamStatuses = useCallback(async (seasonId: string, silent = false) => {
     try {
-      const res = await fetch(`/api/team-seasons?season_id=${seasonId}`);
+      if (!silent) setIsRefreshing(true);
+      const res = await fetch(`/api/team-seasons?season_id=${seasonId}&_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      });
       const json = await res.json();
       const teamSeasons = json.data || json.teamSeasons || [];
       const statuses: Record<string, string> = {};
@@ -65,10 +83,12 @@ export default function TeamRegistrationPage() {
     } catch (err: any) {
       console.error('[Registration] Error fetching team statuses:', err);
       return { statuses: {}, regCount: 0 };
+    } finally {
+      if (!silent) setIsRefreshing(false);
     }
-  };
+  }, []);
 
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     try {
       setLoadingData(true);
 
@@ -76,7 +96,10 @@ export default function TeamRegistrationPage() {
       let targetSeasonId = userSeasonId;
       if (!targetSeasonId) {
         try {
-          const curRes = await fetch('/api/seasons/current');
+          const curRes = await fetch(`/api/seasons/current?_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
           if (curRes.ok) {
             const curJson = await curRes.json();
             targetSeasonId = curJson.season?.id || curJson.season?.season_id;
@@ -95,13 +118,19 @@ export default function TeamRegistrationPage() {
       console.log('[Registration] Loading data for season:', targetSeasonId);
 
       // 2. Fetch full season details
-      const seasonRes = await fetch(`/api/seasons/${targetSeasonId}`);
+      const seasonRes = await fetch(`/api/seasons/${targetSeasonId}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       const seasonJson = await seasonRes.json();
       const season = seasonJson.data || seasonJson;
       setCurrentSeason(season);
 
       // 3. Fetch all league teams
-      const teamsRes = await fetch('/api/teams');
+      const teamsRes = await fetch(`/api/teams?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       const teamsJson = await teamsRes.json();
       const teamsList = (teamsJson.teams || teamsJson.data || []).map((t: any) => ({
         id: t.id,
@@ -119,13 +148,13 @@ export default function TeamRegistrationPage() {
       setTotalTeamsCount(teamsList.length);
 
       // 4. Fetch team registration statuses
-      await fetchTeamStatuses(targetSeasonId);
+      await fetchTeamStatuses(targetSeasonId, true);
     } catch (error: any) {
       console.error('[Registration] Error loading registration data:', error);
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [userSeasonId, fetchTeamStatuses]);
 
   useEffect(() => {
     if (!loading && (isCommitteeAdmin || isSuperAdmin)) {
@@ -133,13 +162,74 @@ export default function TeamRegistrationPage() {
     } else if (!loading && !isCommitteeAdmin && !isSuperAdmin) {
       setLoadingData(false);
     }
-  }, [loading, isCommitteeAdmin, isSuperAdmin, userSeasonId]);
+  }, [loading, isCommitteeAdmin, isSuperAdmin, loadAllData]);
+
+  // LIVE AUTO-SYNC: Poll every 3.5 seconds + on window focus/tab visibility change
+  useEffect(() => {
+    if (!currentSeason?.id) return;
+
+    let isMounted = true;
+    const seasonId = currentSeason.id;
+
+    const silentPoll = async () => {
+      // Don't poll if page is hidden, or if an action is currently executing
+      if (document.visibilityState !== 'visible' || isBulkRegistering || registeringTeamId) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/team-seasons?season_id=${seasonId}&_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        });
+        if (!res.ok) return;
+
+        const json = await res.json();
+        const teamSeasons = json.data || json.teamSeasons || [];
+        const statuses: Record<string, string> = {};
+        let regCount = 0;
+        teamSeasons.forEach((ts: any) => {
+          const teamId = ts.team_id || (ts.id && ts.id.includes('_') ? ts.id.split('_')[0] : ts.id);
+          if (teamId) {
+            statuses[teamId] = ts.status;
+            if (ts.status === 'registered') regCount++;
+          }
+        });
+
+        if (isMounted) {
+          setTeamRegistrationStatuses(statuses);
+          setRegisteredTeamsCount(regCount);
+        }
+      } catch {
+        // silent background poll failure
+      }
+    };
+
+    const intervalId = setInterval(silentPoll, 3500);
+
+    const onFocus = () => silentPoll();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') silentPoll();
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [currentSeason?.id, isBulkRegistering, registeringTeamId]);
 
   const handleRefresh = async () => {
     if (!currentSeason || isRefreshing) return;
-    setIsRefreshing(true);
-    await fetchTeamStatuses(currentSeason.id);
-    setIsRefreshing(false);
+    await fetchTeamStatuses(currentSeason.id, false);
+    showNotice('Registration statuses refreshed from server.', 'info');
   };
 
   const toggleTeamRegistration = async () => {
@@ -155,7 +245,7 @@ export default function TeamRegistrationPage() {
       setIsToggling(true);
       const newValue = !currentSeason.is_team_registration_open;
       
-      await fetch(`/api/seasons/${currentSeason.id}`, {
+      await fetch(`/api/seasons/${currentSeason.id}?_t=${Date.now()}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_team_registration_open: newValue }),
@@ -166,14 +256,15 @@ export default function TeamRegistrationPage() {
         is_team_registration_open: newValue
       });
 
-      alert(
+      showNotice(
         newValue 
-          ? 'Team registration opened successfully!' 
-          : 'Team registration closed successfully!'
+          ? 'Team registration is now OPEN!' 
+          : 'Team registration is now CLOSED!',
+        'success'
       );
     } catch (error: any) {
       console.error('Error toggling team registration:', error);
-      alert('Failed to toggle team registration');
+      showNotice('Failed to toggle team registration', 'error');
     } finally {
       setIsToggling(false);
     }
@@ -184,7 +275,7 @@ export default function TeamRegistrationPage() {
       setCopiedUrl(true);
       setTimeout(() => setCopiedUrl(false), 2000);
     }).catch(() => {
-      alert('Failed to copy link');
+      showNotice('Failed to copy link', 'error');
     });
   };
 
@@ -194,7 +285,7 @@ export default function TeamRegistrationPage() {
     
     const ownerUid = team.owner_uid || team.userId || team.uid || team.id;
 
-    if (!confirm(`Are you sure you want to register ${team.team_name || team.name} for ${currentSeason.name}?`)) {
+    if (!confirm(`Register "${team.team_name || team.name}" for ${currentSeason.name}?`)) {
       return;
     }
 
@@ -217,7 +308,7 @@ export default function TeamRegistrationPage() {
       const result = await response.json();
 
       if (result.success) {
-        // Optimistically and immediately update local state
+        // 1. Instantly update local UI state
         setTeamRegistrationStatuses(prev => ({
           ...prev,
           [team.id]: 'registered',
@@ -229,16 +320,16 @@ export default function TeamRegistrationPage() {
           return next;
         });
 
-        // Background sync
-        fetchTeamStatuses(currentSeason.id);
+        // 2. Immediate fresh background fetch with cache-busting
+        fetchTeamStatuses(currentSeason.id, true);
 
-        alert(`Successfully registered ${team.team_name || team.name} for ${currentSeason.name}!`);
+        showNotice(`Successfully registered ${team.team_name || team.name} for ${currentSeason.name}!`, 'success');
       } else {
-        alert(`Failed to register team: ${result.message || 'Unknown error'}`);
+        showNotice(`Failed to register team: ${result.message || 'Unknown error'}`, 'error');
       }
     } catch (error: any) {
       console.error('Error registering team:', error);
-      alert('An error occurred while registering the team.');
+      showNotice('An error occurred while registering the team.', 'error');
     } finally {
       setRegisteringTeamId(null);
     }
@@ -255,7 +346,7 @@ export default function TeamRegistrationPage() {
 
     try {
       setIsBulkRegistering(true);
-      setBulkStatusMessage(`Registering ${count} teams...`);
+      setBulkStatusMessage(`Registering ${count} teams in progress...`);
 
       const response = await fetch(`/api/seasons/${currentSeason.id}/register-bulk`, {
         method: 'POST',
@@ -282,21 +373,19 @@ export default function TeamRegistrationPage() {
         setTeamRegistrationStatuses(newStatuses);
         setSelectedTeamIds(new Set());
         
-        // Sync fresh statuses
-        await fetchTeamStatuses(currentSeason.id);
+        // Sync fresh statuses from server
+        await fetchTeamStatuses(currentSeason.id, true);
 
-        alert(
-          `Bulk registration complete!\n\n` +
-          `• Newly registered: ${result.registeredCount || newlyRegistered.length}\n` +
-          `• Already registered: ${result.alreadyRegisteredCount || 0}\n` +
-          (result.errorCount > 0 ? `• Errors: ${result.errorCount}\n` : '')
+        showNotice(
+          `Bulk registration complete! Registered: ${result.registeredCount || newlyRegistered.length} team(s).`,
+          'success'
         );
       } else {
-        alert(`Bulk registration failed: ${result.message || 'Unknown error'}`);
+        showNotice(`Bulk registration failed: ${result.message || 'Unknown error'}`, 'error');
       }
     } catch (error: any) {
       console.error('Error during bulk registration:', error);
-      alert('An error occurred during bulk registration.');
+      showNotice('An error occurred during bulk registration.', 'error');
     } finally {
       setIsBulkRegistering(false);
       setBulkStatusMessage(null);
@@ -309,20 +398,20 @@ export default function TeamRegistrationPage() {
 
     const pendingTeams = teams.filter(t => teamRegistrationStatuses[t.id] !== 'registered');
     if (pendingTeams.length === 0) {
-      alert('All teams in the league are already registered for this season!');
+      showNotice('All teams in the league are already registered for this season!', 'info');
       return;
     }
 
     if (!confirm(
       `⚡ Register ALL ${pendingTeams.length} pending teams for ${currentSeason.name}?\n\n` +
-      `This will automatically enroll every pending team, assign their budget, and join fantasy.`
+      `This will automatically enroll every pending team, assign dual budgets, and join fantasy.`
     )) {
       return;
     }
 
     try {
       setIsBulkRegistering(true);
-      setBulkStatusMessage(`Registering all ${pendingTeams.length} pending teams...`);
+      setBulkStatusMessage(`Registering all ${pendingTeams.length} pending teams in progress...`);
 
       const response = await fetch(`/api/seasons/${currentSeason.id}/register-bulk`, {
         method: 'POST',
@@ -337,20 +426,18 @@ export default function TeamRegistrationPage() {
 
       if (result.success) {
         setSelectedTeamIds(new Set());
-        await fetchTeamStatuses(currentSeason.id);
+        await fetchTeamStatuses(currentSeason.id, true);
 
-        alert(
-          `All pending teams registered successfully!\n\n` +
-          `• Newly Registered: ${result.registeredCount}\n` +
-          `• Previously Registered: ${result.alreadyRegisteredCount}\n` +
-          (result.errorCount > 0 ? `• Errors: ${result.errorCount}` : '')
+        showNotice(
+          `All pending teams registered successfully (${result.registeredCount} enrolled)!`,
+          'success'
         );
       } else {
-        alert(`Failed to register all teams: ${result.message || 'Unknown error'}`);
+        showNotice(`Failed to register all teams: ${result.message || 'Unknown error'}`, 'error');
       }
     } catch (error: any) {
       console.error('Error registering all pending teams:', error);
-      alert('An error occurred during bulk registration.');
+      showNotice('An error occurred during bulk registration.', 'error');
     } finally {
       setIsBulkRegistering(false);
       setBulkStatusMessage(null);
@@ -470,24 +557,63 @@ export default function TeamRegistrationPage() {
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        {/* Banner Notification (Non-blocking) */}
+        {bannerNotice && (
+          <div 
+            className={`p-4 rounded-2xl border flex items-center justify-between gap-3 font-mono text-xs uppercase font-bold tracking-wider shadow-sm transition-all animate-in fade-in slide-in-from-top-2 ${
+              bannerNotice.type === 'success' 
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
+                : bannerNotice.type === 'error'
+                ? 'bg-rose-50 border-rose-300 text-rose-800'
+                : 'bg-blue-50 border-blue-300 text-blue-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {bannerNotice.type === 'success' ? (
+                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              ) : bannerNotice.type === 'error' ? (
+                <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              ) : (
+                <RefreshCw className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              )}
+              <span>{bannerNotice.text}</span>
+            </div>
+            <button 
+              onClick={() => setBannerNotice(null)}
+              className="text-slate-400 hover:text-slate-600 cursor-pointer text-xs"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-slate-800">Team Registration</h1>
-            <p className="text-xs text-slate-500 uppercase font-semibold mt-1">
+            <p className="text-xs text-slate-550 uppercase font-semibold mt-1">
               Active Season: <span className="font-extrabold text-amber-500">{currentSeason.name}</span>
             </p>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Live Auto-Sync Status Badge */}
+            <div 
+              title="Page auto-syncs live every few seconds without manual reload" 
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200/60 rounded-xl text-[10px] font-black uppercase tracking-wider text-emerald-700 shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Auto-Sync</span>
+            </div>
+
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              title="Refresh registration statuses"
+              title="Force re-fetch statuses from database"
               className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-amber-400/40 hover:text-amber-600 transition-all text-xs uppercase tracking-wider font-bold cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-500' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span className="hidden sm:inline">{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
             </button>
 
             <Link 
@@ -510,7 +636,7 @@ export default function TeamRegistrationPage() {
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
-            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Total Teams</div>
+            <div className="text-[10px] uppercase font-bold text-slate-450 tracking-wider mb-1">Total Teams</div>
             <div className="text-2xl font-black text-slate-800">{totalTeamsCount}</div>
           </div>
 
@@ -520,7 +646,7 @@ export default function TeamRegistrationPage() {
                 <CheckCircle className="w-6 h-6 text-green-600" />
               </div>
             </div>
-            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Registered</div>
+            <div className="text-[10px] uppercase font-bold text-slate-450 tracking-wider mb-1">Registered</div>
             <div className="text-2xl font-black text-green-600">{registeredTeamsCount}</div>
           </div>
 
@@ -532,7 +658,7 @@ export default function TeamRegistrationPage() {
                 </svg>
               </div>
             </div>
-            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Pending</div>
+            <div className="text-[10px] uppercase font-bold text-slate-450 tracking-wider mb-1">Pending</div>
             <div className="text-2xl font-black text-amber-600">{availableTeams}</div>
           </div>
         </div>
@@ -541,7 +667,7 @@ export default function TeamRegistrationPage() {
         <div className="console-card bg-white rounded-3xl p-6 shadow-sm border border-slate-200/60 font-mono">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Registration Status:</span>
+              <span className="text-xs uppercase font-bold text-slate-550 tracking-wider">Registration Status:</span>
               {currentSeason.is_team_registration_open ? (
                 <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200/40 uppercase tracking-wider">
                   <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-700" />
@@ -602,7 +728,7 @@ export default function TeamRegistrationPage() {
               </div>
               
               <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Registration Link</label>
+                <label className="block text-[10px] uppercase font-bold text-slate-550 tracking-wider mb-2">Registration Link</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
@@ -703,7 +829,7 @@ export default function TeamRegistrationPage() {
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   filterTab === 'all'
                     ? 'bg-white text-slate-800 shadow-sm font-black'
-                    : 'text-slate-500 hover:text-slate-800'
+                    : 'text-slate-550 hover:text-slate-800'
                 }`}
               >
                 All ({teams.length})
@@ -713,7 +839,7 @@ export default function TeamRegistrationPage() {
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   filterTab === 'pending'
                     ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
-                    : 'text-slate-500 hover:text-slate-800'
+                    : 'text-slate-550 hover:text-slate-800'
                 }`}
               >
                 Pending ({pendingTeamsCount})
@@ -723,7 +849,7 @@ export default function TeamRegistrationPage() {
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   filterTab === 'registered'
                     ? 'bg-green-600 text-white shadow-sm font-black'
-                    : 'text-slate-500 hover:text-slate-800'
+                    : 'text-slate-550 hover:text-slate-800'
                 }`}
               >
                 Registered ({registeredTeamsCount})
@@ -753,7 +879,7 @@ export default function TeamRegistrationPage() {
                       onClick={toggleSelectAllVisiblePending}
                       disabled={pendingVisibleTeams.length === 0}
                       title={allVisiblePendingSelected ? 'Deselect all pending' : 'Select all pending'}
-                      className="cursor-pointer text-slate-500 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="cursor-pointer text-slate-550 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {allVisiblePendingSelected ? (
                         <CheckSquare className="w-4 h-4 text-amber-500" />
@@ -762,17 +888,17 @@ export default function TeamRegistrationPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Logo</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Team Name</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Manager / Owner</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-wider text-right">Action</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-550 tracking-wider">Logo</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-550 tracking-wider">Team Name</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-550 tracking-wider">Manager / Owner</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-550 tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-550 tracking-wider text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredTeams.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-xs font-bold uppercase text-slate-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-xs font-bold uppercase text-slate-450">
                       {searchQuery ? "No matching teams found" : "No teams in this category"}
                     </td>
                   </tr>
@@ -911,15 +1037,18 @@ export default function TeamRegistrationPage() {
             </svg>
             Registration Information
           </h3>
-          <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-550">
             <p>
-              <span className="text-slate-700">1. Single &amp; Bulk Registration:</span> Committee admins can register teams individually with the &quot;Register Team&quot; button, select multiple teams with checkboxes, or use &quot;Register All Pending&quot; to enroll everyone at once.
+              <span className="text-slate-700">1. Real-Time Auto-Sync:</span> This dashboard automatically checks for new registrations every 3.5 seconds and immediately upon focusing this browser tab. No manual page reload required.
             </p>
             <p>
-              <span className="text-slate-700">2. Budgets &amp; Fantasy:</span> Registration automatically assigns the dual-currency budgets (Euro football budget &amp; Real Player USD budget) and registers each team into the season&apos;s Fantasy League.
+              <span className="text-slate-700">2. Single &amp; Bulk Registration:</span> Committee admins can register teams individually with the &quot;Register Team&quot; button, select multiple teams with checkboxes, or use &quot;Register All Pending&quot; to enroll everyone at once.
             </p>
             <p>
-              <span className="text-slate-700">3. Registration Link:</span> If team registration is open, teams can also register themselves using the public registration link above.
+              <span className="text-slate-700">3. Budgets &amp; Fantasy:</span> Registration automatically assigns the dual-currency budgets (Euro football budget &amp; Real Player USD budget) and registers each team into the season&apos;s Fantasy League.
+            </p>
+            <p>
+              <span className="text-slate-700">4. Registration Link:</span> If team registration is open, teams can also register themselves using the public registration link above.
             </p>
           </div>
         </div>
