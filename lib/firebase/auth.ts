@@ -75,12 +75,9 @@ export const createUserDocument = async (
       userData.canManageTeams = additionalData?.canManageTeams ?? true;
       userData.canManageAuctions = additionalData?.canManageAuctions ?? true;
       break;
-        case 'team':
+    case 'team':
       userData.teamName = additionalData?.teamName || '';
       userData.teamLogo = additionalData?.teamLogo || '';
-      userData.ownerName = additionalData?.ownerName || '';
-      userData.seasonId = additionalData?.seasonId || '';
-      userData.seasonName = additionalData?.seasonName || '';
       userData.players = additionalData?.players || [];
       userData.committeeId = additionalData?.committeeId || '';
       break;
@@ -154,22 +151,243 @@ export const signUp = async (
 ): Promise<{ user: User; firebaseUser: FirebaseUser }> => {
   try {
     // Check if username is available
-export const isUsernameAvailable = async (username: string): Promise<boolean> => {
-  try {
-    const cleanLower = username.toLowerCase().trim();
-    const strippedLower = cleanLower.replace(/[^a-z0-9]/g, '');
-
-    const usersRef = doc(db, 'usernames', cleanLower);
-    const docSnap = await getDoc(usersRef);
-    if (docSnap.exists()) return false;
-
-    if (strippedLower && strippedLower !== cleanLower) {
-      const strippedRef = doc(db, 'usernames', strippedLower);
-      const strippedSnap = await getDoc(strippedRef);
-      if (strippedSnap.exists()) return false;
+    const usernameAvailable = await isUsernameAvailable(username);
+    if (!usernameAvailable) {
+      throw new Error('Username is already taken. Please choose another.');
     }
 
-    return true;
+    // Create Firebase auth user
+    const userCredential: UserCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    // Reserve username
+    await reserveUsername(username, userCredential.user.uid);
+
+    // Create user document in Firestore
+    const user = await createUserDocument(
+      userCredential.user.uid,
+      email,
+      username,
+      role,
+      additionalData
+    );
+
+    // Note: Team document creation in teams collection is handled by
+    // /api/teams/create endpoint called from Register component
+    // This ensures proper server-side execution and prevents race conditions
+
+    return {
+      user,
+      firebaseUser: userCredential.user,
+    };
+  } catch (error: any) {
+    console.error('Error signing up:', error);
+    throw new Error(error.message || 'Failed to sign up');
+  }
+};
+
+// Sign in an existing user
+export const signIn = async (
+  email: string,
+  password: string,
+  rememberMe: boolean = false
+): Promise<{ user: User; firebaseUser: FirebaseUser }> => {
+  try {
+    // Set persistence before signing in
+    const { setPersistence, browserLocalPersistence } = await import('firebase/auth');
+    await setPersistence(auth, browserLocalPersistence);
+    
+    // Sign in to Firebase
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    
+    // Get user document
+    const user = await getUserDocument(userCredential.user.uid);
+
+    if (!user) {
+      await firebaseSignOut(auth);
+      throw new Error('User document not found');
+    }
+
+    if (!user.isActive) {
+      await firebaseSignOut(auth);
+      throw new Error('Account is deactivated. Please contact support.');
+    }
+
+    // Check approval status (only teams need approval)
+    // Note: AuthContext will also check this and sign out if needed
+    if (user.role === 'team' && !user.isApproved) {
+      await firebaseSignOut(auth);
+      throw new Error('Your account is pending approval from the super admin. Please wait for approval before logging in.');
+    }
+
+    // Update last login (non-blocking for faster login)
+    updateDoc(doc(db, 'users', user.uid), {
+      lastLogin: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }).catch(err => console.error('Error updating last login:', err));
+
+    return {
+      user,
+      firebaseUser: userCredential.user,
+    };
+  } catch (error: any) {
+    console.error('Error signing in:', error);
+    throw new Error(error.message || 'Failed to sign in');
+  }
+};
+
+// Sign out
+export const signOut = async (): Promise<void> => {
+  try {
+    await firebaseSignOut(auth);
+  } catch (error: any) {
+    console.error('Error signing out:', error);
+    throw new Error(error.message || 'Failed to sign out');
+  }
+};
+
+// Send password reset email
+export const resetPassword = async (email: string): Promise<void> => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error: any) {
+    console.error('Error sending password reset email:', error);
+    throw new Error(error.message || 'Failed to send password reset email');
+  }
+};
+
+// Update user password
+export const changePassword = async (newPassword: string): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('No user logged in');
+    }
+    await updatePassword(user, newPassword);
+  } catch (error: any) {
+    console.error('Error updating password:', error);
+    throw new Error(error.message || 'Failed to update password');
+  }
+};
+
+// Convert file to Base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
+// Upload team logo as Base64
+export const uploadTeamLogo = async (
+  uid: string,
+  file: File
+): Promise<string> => {
+  try {
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      throw new Error('File size must be less than 2MB');
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      throw new Error('File must be an image');
+    }
+
+    // Convert to Base64
+    const base64String = await fileToBase64(file);
+    
+    // Update user document with Base64 string
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
+      teamLogo: base64String,
+      logoUrl: base64String, // Compatibility
+      updatedAt: serverTimestamp(),
+    });
+
+    // Also update team document in teams collection if teamId exists on user doc
+    try {
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.teamId) {
+          // Update team via Neon API
+          await fetch(`/api/teams/${userData.teamId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              logo_url: base64String,
+              teamLogo: base64String,
+              logoUrl: base64String,
+            }),
+          });
+          console.log(`✅ Updated team logo via API for team ID: ${userData.teamId}`);
+        }
+      }
+    } catch (teamLogoError) {
+      console.error('Error updating team document logo:', teamLogoError);
+    }
+
+    return base64String;
+  } catch (error: any) {
+    console.error('Error uploading team logo:', error);
+    throw new Error(error.message || 'Failed to upload team logo');
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (
+  uid: string,
+  data: Partial<User>
+): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error: any) {
+    console.error('Error updating user profile:', error);
+    throw new Error(error.message || 'Failed to update user profile');
+  }
+};
+
+// Get email from username
+export const getEmailFromUsername = async (username: string): Promise<string | null> => {
+  try {
+    const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()));
+    if (!usernameDoc.exists()) {
+      return null;
+    }
+    
+    // Get the UID from username document
+    const uid = usernameDoc.data().uid;
+    
+    // Get user document to get email
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (!userDoc.exists()) {
+      return null;
+    }
+    
+    return userDoc.data().email;
+  } catch (error) {
+    console.error('Error getting email from username:', error);
+    return null;
+  }
+};
+
+// Check if username is available
+export const isUsernameAvailable = async (username: string): Promise<boolean> => {
+  try {
+    // This is a simple check - in production, you might want to use a more efficient method
+    // like maintaining a separate collection of usernames or using Cloud Functions
+    const usersRef = doc(db, 'usernames', username.toLowerCase());
+    const docSnap = await getDoc(usersRef);
+    return !docSnap.exists();
   } catch (error) {
     console.error('Error checking username availability:', error);
     return false;
@@ -179,24 +397,10 @@ export const isUsernameAvailable = async (username: string): Promise<boolean> =>
 // Reserve username
 export const reserveUsername = async (username: string, uid: string): Promise<void> => {
   try {
-    const cleanLower = username.toLowerCase().trim();
-    const strippedLower = cleanLower.replace(/[^a-z0-9]/g, '');
-
-    await setDoc(doc(db, 'usernames', cleanLower), {
+    await setDoc(doc(db, 'usernames', username.toLowerCase()), {
       uid,
-      userId: uid,
-      username: username.trim(),
       createdAt: serverTimestamp(),
     });
-
-    if (strippedLower && strippedLower !== cleanLower) {
-      await setDoc(doc(db, 'usernames', strippedLower), {
-        uid,
-        userId: uid,
-        username: username.trim(),
-        createdAt: serverTimestamp(),
-      });
-    }
   } catch (error: any) {
     console.error('Error reserving username:', error);
     throw new Error(error.message || 'Failed to reserve username');
@@ -265,12 +469,7 @@ export const deleteUser = async (uid: string): Promise<void> => {
       
       // Delete username reservation
       if (username) {
-        const cleanLower = username.toLowerCase().trim();
-        const strippedLower = cleanLower.replace(/[^a-z0-9]/g, '');
-        await deleteDoc(doc(db, 'usernames', cleanLower)).catch(() => {});
-        if (strippedLower && strippedLower !== cleanLower) {
-          await deleteDoc(doc(db, 'usernames', strippedLower)).catch(() => {});
-        }
+        await deleteDoc(doc(db, 'usernames', username.toLowerCase()));
       }
     }
   } catch (error: any) {
