@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       teamBudgetChanges.set(player.teamId, currentChange + player.auctionValue);
     });
 
-    // Update team budgets in Neon Main DB
+    // Update team budgets in Neon Main DB atomically
     try {
       const { getMainDb } = await import('@/lib/neon/main-config');
       const mainSql = getMainDb();
@@ -199,8 +199,17 @@ export async function POST(request: NextRequest) {
         const teamSeasonId = `${teamId}_${seasonId}`;
         await mainSql`
           UPDATE team_seasons
-          SET real_player_budget = COALESCE(real_player_budget, 1000) - ${totalSpent},
-              real_player_spent = COALESCE(real_player_spent, 0) + ${totalSpent},
+          SET real_player_budget = COALESCE(real_player_budget, 400) - ${Number(totalSpent)},
+              real_player_spent = COALESCE(real_player_spent, 0) + ${Number(totalSpent)},
+              raw_data = jsonb_set(
+                jsonb_set(
+                  COALESCE(raw_data, '{}'::jsonb),
+                  '{real_player_budget}',
+                  to_jsonb(COALESCE((raw_data->>'real_player_budget')::numeric, 400) - ${Number(totalSpent)})
+                ),
+                '{real_player_spent}',
+                to_jsonb(COALESCE((raw_data->>'real_player_spent')::numeric, 0) + ${Number(totalSpent)})
+              ),
               updated_at = NOW()
           WHERE (team_id = ${teamId} OR id = ${teamSeasonId}) AND season_id = ${seasonId}
         `;
@@ -209,41 +218,9 @@ export async function POST(request: NextRequest) {
       console.error('Error updating team budget in Neon:', neonBudgetErr);
     }
 
-    // Prepare all Firestore operations
-    // We need to read team budgets first (unavoidable for accuracy)
-    const teamBudgetReads = Array.from(teamBudgetChanges.keys()).map(async (teamId) => {
-      const teamSeasonId = `${teamId}_${seasonId}`;
-      const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
-      try {
-        const doc = await teamSeasonRef.get();
-        return { teamId, teamSeasonRef, data: doc.exists ? doc.data() : null };
-      } catch (error: any) {
-        console.error(`Error reading team ${teamId} budget:`, error);
-        return { teamId, teamSeasonRef, data: null };
-      }
-    });
-
-    // Execute all team budget reads in parallel
-    const teamBudgetData = await Promise.all(teamBudgetReads);
-
-    // Now create batch with all operations
+    // Now create batch for transactions and notifications
     const batch = adminDb.batch();
     const timestamp = new Date();
-
-    // Add team budget updates to batch
-    teamBudgetData.forEach(({ teamId, teamSeasonRef, data }) => {
-      if (data) {
-        const totalSpent = teamBudgetChanges.get(teamId) || 0;
-        const currentBudget = data.real_player_budget || 1000;
-        const currentSpent = data.real_player_spent || 0;
-
-        batch.update(teamSeasonRef, {
-          real_player_budget: currentBudget - totalSpent,
-          real_player_spent: currentSpent + totalSpent,
-          updated_at: timestamp,
-        });
-      }
-    });
 
     // Add transactions and notifications to batch
     players.forEach(player => {
