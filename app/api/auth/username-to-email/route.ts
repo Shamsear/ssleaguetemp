@@ -29,10 +29,23 @@ export async function POST(request: NextRequest) {
 
     // Look up username in usernames collection (server-side has full access)
     console.log('[username-to-email API] Looking up username in Firestore');
-    const usernameDoc = await adminDb
+    const cleanUsername = username.toLowerCase().trim();
+    let usernameDoc = await adminDb
       .collection('usernames')
-      .doc(username.toLowerCase())
+      .doc(cleanUsername)
       .get();
+    
+    if (!usernameDoc.exists) {
+      // Also check normalized without spaces/special chars
+      const stripped = cleanUsername.replace(/[^a-z0-9]/g, '');
+      if (stripped && stripped !== cleanUsername) {
+        console.log('[username-to-email API] Trying fallback stripped username:', stripped);
+        usernameDoc = await adminDb
+          .collection('usernames')
+          .doc(stripped)
+          .get();
+      }
+    }
     
     console.log('[username-to-email API] Username doc exists:', usernameDoc.exists);
 
