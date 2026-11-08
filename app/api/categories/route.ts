@@ -10,9 +10,22 @@ export async function GET() {
     if (isMainDbAvailable()) {
       try {
         const sql = getMainDb();
-        const result = await sql`SELECT * FROM categories ORDER BY priority ASC, name ASC`;
+        const result = await sql`SELECT * FROM categories ORDER BY sort_order ASC, name ASC`;
         if (Array.isArray(result) && result.length > 0) {
-          return NextResponse.json({ success: true, data: result });
+          const mapped = result.map((c: any) => {
+            const raw = typeof c.raw_data === 'object' && c.raw_data !== null ? c.raw_data : {};
+            const effectiveMax = (c.max_players && Number(c.max_players) > 0)
+              ? Number(c.max_players)
+              : (raw.max_players && Number(raw.max_players) > 0)
+                ? Number(raw.max_players)
+                : (c.priority === 1 || c.sort_order === 1 || String(c.id || '').includes('red') || String(c.name || '').toLowerCase() === 'red' ? 2 : 1);
+            return {
+              ...c,
+              ...raw,
+              max_players: effectiveMax,
+            };
+          });
+          return NextResponse.json({ success: true, data: mapped });
         }
       } catch (dbErr: any) {
         console.warn('Neon categories query error, falling back to Firestore:', dbErr.message);
@@ -21,10 +34,17 @@ export async function GET() {
 
     // Fallback to Firestore if Neon fails or returns empty
     const snapshot = await adminDb.collection('categories').orderBy('priority', 'asc').get();
-    const categories = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const categories = snapshot.docs.map(doc => {
+      const data = doc.data();
+      const effectiveMax = (data.max_players && Number(data.max_players) > 0)
+        ? Number(data.max_players)
+        : (data.priority === 1 || String(doc.id).includes('red') || String(data.name || '').toLowerCase() === 'red' ? 2 : 1);
+      return {
+        id: doc.id,
+        ...data,
+        max_players: effectiveMax,
+      };
+    });
 
     return NextResponse.json({ success: true, data: categories });
   } catch (error: any) {

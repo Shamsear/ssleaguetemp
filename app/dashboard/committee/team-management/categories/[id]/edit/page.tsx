@@ -97,7 +97,7 @@ export default function EditCategoryPage() {
           color: category.color,
           base_price: String(category.base_price || 0),
           priority: String(category.priority),
-          max_players: String(category.max_players !== undefined ? category.max_players : (category.priority === 1 ? 2 : 1)),
+          max_players: String((category.max_players && Number(category.max_players) > 0) ? category.max_players : (category.priority === 1 || String(category.name || '').toLowerCase() === 'red' ? 2 : 1)),
           points_same_category: String(category.points_same_category),
           points_one_level_diff: String(category.points_one_level_diff),
           points_two_level_diff: String(category.points_two_level_diff),

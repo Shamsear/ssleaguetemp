@@ -212,13 +212,22 @@ function mapRealPlayerRow(row: any): Record<string, any> {
 }
 
 function mapCategoryRow(row: any): Record<string, any> {
+  const raw = typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {};
+  const rawMax = raw.max_players;
+  const rowMax = row.max_players;
+  const effectiveMax = (rowMax && Number(rowMax) > 0)
+    ? Number(rowMax)
+    : (rawMax && Number(rawMax) > 0)
+      ? Number(rawMax)
+      : (row.priority === 1 || row.sort_order === 1 || String(row.id || '').includes('red') || String(row.name || '').toLowerCase() === 'red' ? 2 : 1);
+
   return {
     ...row,
     name: row.name,
     description: row.description,
     color: row.color,
     icon: row.icon,
-    priority: row.priority ?? 1,
+    priority: row.priority ?? raw.priority ?? 1,
     points_same_category: row.points_same_category,
     points_one_level_diff: row.points_one_level_diff,
     points_two_level_diff: row.points_two_level_diff,
@@ -232,14 +241,14 @@ function mapCategoryRow(row: any): Record<string, any> {
     loss_two_level_diff: row.loss_two_level_diff,
     loss_three_level_diff: row.loss_three_level_diff,
     min_players: row.min_players,
-    max_players: row.max_players,
     min_salary: row.min_salary,
     max_salary: row.max_salary,
     fine_amount: row.fine_amount,
     season_id: row.season_id,
     is_active: row.is_active !== false,
     sort_order: row.sort_order || 0,
-    ...(typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {}),
+    ...raw,
+    max_players: effectiveMax,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

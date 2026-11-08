@@ -721,11 +721,11 @@ export default function RealPlayersPage() {
   const getCategoryLimit = (catName: string) => {
     if (categories.length === 0) return 1;
     const cat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
-    if (cat && cat.max_players !== undefined) {
-      return cat.max_players;
+    if (cat && cat.max_players !== undefined && Number(cat.max_players) > 0) {
+      return Number(cat.max_players);
     }
     const idx = categories.findIndex(c => c.name.toLowerCase() === catName.toLowerCase());
-    if (idx === 0) return 2;
+    if (idx === 0 || catName.toLowerCase() === 'red') return 2;
     return 1;
   };
 
@@ -741,7 +741,9 @@ export default function RealPlayersPage() {
     for (let i = 0; i < categories.length; i++) {
       const cat = categories[i];
       const current = counts.get(cat.name.toLowerCase()) || 0;
-      const target = cat.max_players !== undefined ? cat.max_players : (i === 0 ? 2 : 1);
+      const target = (cat.max_players !== undefined && Number(cat.max_players) > 0)
+        ? Number(cat.max_players)
+        : (i === 0 || cat.name.toLowerCase() === 'red' ? 2 : 1);
       if (current !== target) {
         return { 
           valid: false, 
@@ -793,7 +795,9 @@ export default function RealPlayersPage() {
     let totalReserve = 0;
     categories.forEach((c, idx) => {
       const catName = c.name.toLowerCase();
-      const target = c.max_players !== undefined ? c.max_players : (idx === 0 ? 2 : 1);
+      const target = (c.max_players !== undefined && Number(c.max_players) > 0)
+        ? Number(c.max_players)
+        : (idx === 0 || catName === 'red' ? 2 : 1);
       const current = simulatedCounts.get(catName) || 0;
       const needed = Math.max(0, target - current);
       
@@ -1460,7 +1464,9 @@ export default function RealPlayersPage() {
                                 <span className="text-slate-600 font-extrabold uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                   {categories.map((c, idx) => {
                                     const count = team.assignedPlayers.filter(p => (p.category || '').toLowerCase() === c.name.toLowerCase()).length;
-                                    const limit = c.max_players !== undefined ? c.max_players : (idx === 0 ? 2 : 1);
+                                    const limit = (c.max_players !== undefined && Number(c.max_players) > 0)
+                                      ? Number(c.max_players)
+                                      : (idx === 0 || c.name.toLowerCase() === 'red' ? 2 : 1);
                                     return `${c.name}: ${count}/${limit}`;
                                   }).join(' | ')}
                                 </span>
@@ -1515,7 +1521,9 @@ export default function RealPlayersPage() {
                           <div className="flex flex-wrap gap-2.5">
                             {categories.map((c, idx) => {
                               const current = team.assignedPlayers.filter(p => (p.category || '').toLowerCase() === c.name.toLowerCase()).length;
-                              const target = c.max_players !== undefined ? c.max_players : (idx === 0 ? 2 : 1);
+                              const target = (c.max_players !== undefined && Number(c.max_players) > 0)
+                                ? Number(c.max_players)
+                                : (idx === 0 || c.name.toLowerCase() === 'red' ? 2 : 1);
                               const isFilled = current === target;
                               const isOver = current > target;
                               return (

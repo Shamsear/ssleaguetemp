@@ -64,10 +64,12 @@ export async function POST(request: NextRequest) {
         try {
           const { getMainDb } = await import('@/lib/neon/main-config');
           const mainSql = getMainDb();
-          const catRows = await mainSql`SELECT name, max_players FROM categories ORDER BY priority ASC, name ASC`;
+          const catRows = await mainSql`SELECT name, max_players FROM categories ORDER BY sort_order ASC, name ASC`;
           categories = catRows.map((cat: any, idx: number) => ({
             name: cat.name,
-            max_players: cat.max_players !== undefined ? Number(cat.max_players) : (idx === 0 ? 2 : 1)
+            max_players: (cat.max_players !== undefined && Number(cat.max_players) > 0)
+              ? Number(cat.max_players)
+              : (idx === 0 || String(cat.name || '').toLowerCase() === 'red' ? 2 : 1)
           }));
         } catch (catErr) {
           const categoriesSnapshot = await adminDb.collection('categories').orderBy('priority', 'asc').get();
@@ -75,7 +77,9 @@ export async function POST(request: NextRequest) {
             const data = doc.data();
             return {
               name: data.name,
-              max_players: data.max_players !== undefined ? Number(data.max_players) : (idx === 0 ? 2 : 1)
+              max_players: (data.max_players !== undefined && Number(data.max_players) > 0)
+                ? Number(data.max_players)
+                : (idx === 0 || String(data.name || '').toLowerCase() === 'red' ? 2 : 1)
             };
           });
         }
