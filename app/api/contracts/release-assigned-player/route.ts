@@ -50,26 +50,69 @@ export async function POST(request: NextRequest) {
       `;
     }
 
-    // 2. Update team budget in Neon Main DB atomically
+    // 2. Update team budget in Neon Main DB and Firestore based on actual assigned roster
     try {
       const { getMainDb } = await import('@/lib/neon/main-config');
       const mainSql = getMainDb();
+      const teamSeasonId = `${teamId}_${seasonId}`;
+
+      let actualSpent = 0;
+      if (isModern) {
+        const res = await sql`
+          SELECT COALESCE(SUM(auction_value::numeric), 0) as total
+          FROM player_seasons
+          WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        `;
+        actualSpent = Number(res[0]?.total || 0);
+      } else {
+        const res = await sql`
+          SELECT COALESCE(SUM(price::numeric), 0) as total
+          FROM realplayerstats
+          WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        `;
+        actualSpent = Number(res[0]?.total || 0);
+      }
+
+      const tsRow = await mainSql`
+        SELECT initial_budget, raw_data
+        FROM team_seasons
+        WHERE (team_id = ${teamId} OR id = ${teamSeasonId}) AND season_id = ${seasonId}
+        LIMIT 1
+      `;
+      const initialBudget = Number(
+        tsRow[0]?.raw_data?.initial_real_player_budget ||
+        tsRow[0]?.raw_data?.real_player_starting_balance ||
+        tsRow[0]?.initial_budget ||
+        400
+      );
+      const actualBudget = initialBudget - actualSpent;
+
       await mainSql`
         UPDATE team_seasons
-        SET real_player_budget = COALESCE(real_player_budget, 400) + ${Number(refundAmount)},
-            real_player_spent = GREATEST(0, COALESCE(real_player_spent, 0) - ${Number(refundAmount)}),
+        SET real_player_budget = ${actualBudget},
+            real_player_spent = ${actualSpent},
             raw_data = jsonb_set(
               jsonb_set(
                 COALESCE(raw_data, '{}'::jsonb),
                 '{real_player_budget}',
-                to_jsonb(COALESCE((raw_data->>'real_player_budget')::numeric, 400) + ${Number(refundAmount)})
+                to_jsonb(${actualBudget}::numeric)
               ),
               '{real_player_spent}',
-              to_jsonb(GREATEST(0, COALESCE((raw_data->>'real_player_spent')::numeric, 0) - ${Number(refundAmount)}))
+              to_jsonb(${actualSpent}::numeric)
             ),
             updated_at = NOW()
-        WHERE (team_id = ${teamId} OR id = ${`${teamId}_${seasonId}`}) AND season_id = ${seasonId}
+        WHERE (team_id = ${teamId} OR id = ${teamSeasonId}) AND season_id = ${seasonId}
       `;
+
+      try {
+        await adminDb.collection('team_seasons').doc(teamSeasonId).set({
+          real_player_budget: actualBudget,
+          real_player_spent: actualSpent,
+          updated_at: new Date(),
+        }, { merge: true });
+      } catch (fsErr) {
+        console.warn('Error syncing budget to Firestore team_seasons:', fsErr);
+      }
     } catch (neonBudgetErr) {
       console.error('[release-assigned-player] Error updating team budget in Neon:', neonBudgetErr);
     }

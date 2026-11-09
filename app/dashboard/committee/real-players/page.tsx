@@ -311,7 +311,14 @@ export default function RealPlayersPage() {
     // Add to team (single-season model)
     setTeams(prevTeams => prevTeams.map(t => {
       if (t.id === teamId) {
-        const updated = { ...t, assignedPlayers: [...t.assignedPlayers, player] };
+        const updatedPlayers = [...t.assignedPlayers, player];
+        const totalCost = updatedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
+        const updated = { 
+          ...t, 
+          assignedPlayers: updatedPlayers,
+          currentBudget: t.originalBudget - totalCost,
+          currentSpent: totalCost,
+        };
         console.log(`Player added to team ${t.name}. Team now has ${updated.assignedPlayers.length} players`);
         return updated;
       }
@@ -391,20 +398,19 @@ export default function RealPlayersPage() {
   const updatePlayerAuctionValue = (teamId: string, playerId: string, value: number) => {
     setTeams(teams.map(t => {
       if (t.id === teamId) {
-        const player = t.assignedPlayers.find(p => p.id === playerId);
-        const oldValue = player?.auctionValue || 0;
-        const difference = value - oldValue;
+        const updatedPlayers = t.assignedPlayers.map(p => {
+          if (p.id === playerId) {
+            return { ...p, auctionValue: value };
+          }
+          return p;
+        });
+        const totalCost = updatedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
 
         return {
           ...t,
-          currentBudget: t.currentBudget - difference,
-          currentSpent: t.currentSpent + difference,
-          assignedPlayers: t.assignedPlayers.map(p => {
-            if (p.id === playerId) {
-              return { ...p, auctionValue: value };
-            }
-            return p;
-          })
+          assignedPlayers: updatedPlayers,
+          currentBudget: t.originalBudget - totalCost,
+          currentSpent: totalCost,
         };
       }
       return t;
@@ -591,6 +597,9 @@ export default function RealPlayersPage() {
       }
 
       setSuccess(`Successfully saved ${team.name} with ${team.assignedPlayers.length} players!`);
+
+      // Refresh data so client state is fully synced with server
+      setUpdateCounter(prev => prev + 1);
 
       setTimeout(() => {
         setSuccess(null);
@@ -1414,11 +1423,11 @@ export default function RealPlayersPage() {
               </button>
             </div>
             {teams.map(team => {
-              const totalCost = team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0);
+              const totalCost = team.assignedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
 
-              const displayBudget = showActualBudget ? team.currentBudget : (team.originalBudget - totalCost);
-              const displaySpent = showActualBudget ? team.currentSpent : totalCost;
-              const displayTotal = showActualBudget ? (team.currentBudget + team.currentSpent) : team.originalBudget;
+              const displayBudget = team.originalBudget - totalCost;
+              const displaySpent = totalCost;
+              const displayTotal = team.originalBudget;
 
               const isOverBudget = displayBudget < 0;
               const playerCount = team.assignedPlayers.length;
@@ -1600,10 +1609,10 @@ export default function RealPlayersPage() {
                                       type="number"
                                       value={player.auctionValue}
                                       onChange={(e) => updatePlayerAuctionValue(team.id, player.id, parseInt(e.target.value) || 0)}
-                                      min={250}
-                                      step="10"
+                                      min={isModernSeason ? 250 : 0}
+                                      step={isModernSeason ? "10" : "1"}
                                       className="w-20 pl-5 pr-2 py-1 text-[11px] font-bold text-right border border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none"
-                                      title="Minimum: $250"
+                                      title={isModernSeason ? "Minimum: $250" : "Auction Bid"}
                                     />
                                   </div>
                                 </div>
