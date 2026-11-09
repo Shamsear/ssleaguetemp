@@ -166,6 +166,19 @@ export default function SuperAdminCashBalances() {
   const toggleSubscriptionPlan = async (team: TeamCashBalance, currentPlan: 'upfront' | 'seasonal') => {
     const nextType = currentPlan === 'upfront' ? 'seasonal' : 'upfront';
 
+    // Optimistically update UI immediately
+    setBalances(prev => prev.map(b => {
+      if (b.team_id === team.team_id) {
+        const updatedPlans = { ...(b.season_plans || {}), [selectedSeasonId]: nextType };
+        return {
+          ...b,
+          payment_type: nextType,
+          season_plans: updatedPlans,
+        };
+      }
+      return b;
+    }));
+
     try {
       setSubmittingAction(true);
       const res = await fetchWithTokenRefresh('/api/reports/cash-balances', {

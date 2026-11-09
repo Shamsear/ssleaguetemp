@@ -171,8 +171,11 @@ export async function GET(request: NextRequest) {
 
       let payments: any[] = balance.payments || [];
       // Prefer cash-balance doc's payment_type, fall back to teams.raw_data.payment_type
-      const paymentType = balance.payment_type || teamData?.payment_type || 'seasonal';
       const seasonPlans = balance.season_plans || {};
+      const planForSeason = (seasonId && seasonId !== 'all')
+        ? (seasonPlans[seasonId] || balance.payment_type || teamData?.payment_type || 'seasonal')
+        : (balance.payment_type || teamData?.payment_type || 'seasonal');
+      const paymentType = planForSeason;
 
       let hasNewPaymentsToPersist = false;
 
@@ -192,6 +195,9 @@ export async function GET(request: NextRequest) {
           recorded_by: 'system_auto_heal'
         };
         payments = [synthesizedPayment, ...payments];
+        hasNewPaymentsToPersist = true;
+      } else if (!isUpfrontType && payments.some((p: any) => p.payment_id?.startsWith(`auto_upfront_${ts.team_id}`) && p.recorded_by === 'system_auto_heal')) {
+        payments = payments.filter((p: any) => !(p.payment_id?.startsWith(`auto_upfront_${ts.team_id}`) && p.recorded_by === 'system_auto_heal'));
         hasNewPaymentsToPersist = true;
       }
 
@@ -576,15 +582,33 @@ export async function POST(request: NextRequest) {
 
       // Update the plan for all teams in the season
       const updatePromises = teamsList.map(async (t) => {
-        // Initialize/retrieve the balance document to ensure it exists in Firestore
-        await getOrCreateTeamCashBalance(t.team_id, t.team_name);
+        // Initialize/retrieve the balance document to ensure it exists
+        const balance = await getOrCreateTeamCashBalance(t.team_id, t.team_name);
+
+        const currentSeasonPlans = { ...(balance.season_plans || {}) };
+        currentSeasonPlans[seasonId] = paymentType;
 
         const docRef = adminDb.collection('team_cash_balances').doc(t.team_id);
-        const updateKey = `season_plans.${seasonId}`;
         await docRef.update({
-          [updateKey]: paymentType,
+          season_plans: currentSeasonPlans,
+          payment_type: paymentType,
           updated_at: new Date()
         });
+
+        // Also clean up any legacy dotted keys and sync to Neon SQL directly
+        try {
+          const { getMainDb } = await import('@/lib/neon/main-config');
+          const sql = getMainDb();
+          await sql`
+            UPDATE team_cash_balances
+            SET raw_data = (COALESCE(raw_data, '{}'::jsonb) - ${`season_plans.${seasonId}`})
+                           || jsonb_build_object('season_plans', ${JSON.stringify(currentSeasonPlans)}::jsonb, 'payment_type', ${paymentType}::text),
+                updated_at = NOW()
+            WHERE id = ${t.team_id}
+          `;
+        } catch (sqlErr) {
+          console.error('Failed to update season_plans in Neon directly:', sqlErr);
+        }
 
         // Sync to main teams collection doc
         try {
@@ -708,7 +732,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize/retrieve the balance document
-    await getOrCreateTeamCashBalance(teamId, teamName);
+    const balance = await getOrCreateTeamCashBalance(teamId, teamName);
 
     if (action === 'update_type') {
       if (!paymentType || !['upfront', 'seasonal'].includes(paymentType)) {
@@ -724,12 +748,31 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+
+      const currentSeasonPlans = { ...(balance.season_plans || {}) };
+      currentSeasonPlans[seasonId] = paymentType;
+
       const docRef = adminDb.collection('team_cash_balances').doc(teamId);
-      const updateKey = `season_plans.${seasonId}`;
       await docRef.update({
-        [updateKey]: paymentType,
+        season_plans: currentSeasonPlans,
+        payment_type: paymentType,
         updated_at: new Date()
       });
+
+      // Also clean up any legacy dotted keys and sync to Neon SQL directly
+      try {
+        const { getMainDb } = await import('@/lib/neon/main-config');
+        const sql = getMainDb();
+        await sql`
+          UPDATE team_cash_balances
+          SET raw_data = (COALESCE(raw_data, '{}'::jsonb) - ${`season_plans.${seasonId}`})
+                         || jsonb_build_object('season_plans', ${JSON.stringify(currentSeasonPlans)}::jsonb, 'payment_type', ${paymentType}::text),
+              updated_at = NOW()
+          WHERE id = ${teamId}
+        `;
+      } catch (sqlErr) {
+        console.error('Failed to update season_plans in Neon directly:', sqlErr);
+      }
 
       // Sync default payment_type in the main teams collection doc
       try {

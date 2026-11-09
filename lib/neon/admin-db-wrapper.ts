@@ -325,6 +325,16 @@ function mapPlayerSeasonStatsRow(row: any): Record<string, any> {
 
 function mapTeamCashBalanceRow(row: any): Record<string, any> {
   const raw = typeof row.raw_data === 'string' ? JSON.parse(row.raw_data) : (row.raw_data || {});
+
+  // Reconstruct season_plans from both raw.season_plans and any dotted keys (e.g. 'season_plans.SSPSLS19')
+  const seasonPlans: Record<string, string> = { ...(raw.season_plans || {}) };
+  for (const [k, v] of Object.entries(raw)) {
+    if (k.startsWith('season_plans.') && typeof v === 'string') {
+      const sId = k.replace('season_plans.', '');
+      if (sId) seasonPlans[sId] = v;
+    }
+  }
+
   return {
     team_id: row.team_id,
     team_name: raw.team_name || '',
@@ -333,11 +343,11 @@ function mapTeamCashBalanceRow(row: any): Record<string, any> {
     seasons_played: raw.seasons_played || [],
     payments: raw.payments || [],
     deductions: raw.deductions || [],
-    season_plans: raw.season_plans || {},
     created_at: row.created_at,
     updated_at: row.updated_at,
-    // spread raw_data last so any extra fields are accessible
+    // spread raw_data, but ensure reconstructed season_plans takes precedence
     ...raw,
+    season_plans: seasonPlans,
   };
 }
 
@@ -734,8 +744,22 @@ async function syncToNeon(collection: string, docId: string, data: any, operatio
 
       // Merge updated fields into raw_data JSON if table has raw_data
       if (!validCols || validCols.has('raw_data')) {
+        const rawToMerge: Record<string, any> = { ...data };
+        for (const [k, v] of Object.entries(data)) {
+          if (k.includes('.')) {
+            const parts = k.split('.');
+            let curr = rawToMerge;
+            for (let i = 0; i < parts.length - 1; i++) {
+              if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') {
+                curr[parts[i]] = {};
+              }
+              curr = curr[parts[i]];
+            }
+            curr[parts[parts.length - 1]] = v;
+          }
+        }
         setClauses.push(`raw_data = COALESCE(raw_data, '{}'::jsonb) || $${uIdx}::jsonb`);
-        updateValues.push(JSON.stringify(data));
+        updateValues.push(JSON.stringify(rawToMerge));
         uIdx++;
       }
 
