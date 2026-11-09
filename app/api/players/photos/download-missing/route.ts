@@ -58,7 +58,6 @@ export async function GET(request: NextRequest) {
     if (existingPhotoIds.size === 0) {
       try {
         const dirPath = path.join(process.cwd(), 'public', 'images', 'players');
-        await fs.mkdir(dirPath, { recursive: true });
         const files = await fs.readdir(dirPath);
         files.forEach(file => {
           if (file.endsWith('.webp')) {
@@ -71,8 +70,30 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 3. Filter missing players
-    const missing = activePlayers.filter((p: any) => !existingPhotoIds.has(p.player_id.toString()));
+    // 3. Filter missing players, and if any appear missing, check ImageKit before concluding
+    let missing = activePlayers.filter((p: any) => !existingPhotoIds.has(p.player_id.toString()));
+
+    if (missing.length > 0 && process.env.IMAGEKIT_PRIVATE_KEY && process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY) {
+      try {
+        const ImageKit = (await import('imagekit')).default;
+        const ik = new ImageKit({
+          publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+          privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+          urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+        });
+        const ikFiles = await ik.listFiles({ path: '/player-photos', limit: 1000 });
+        if (Array.isArray(ikFiles)) {
+          ikFiles.forEach((file: any) => {
+            const name = file.name || '';
+            const id = name.split('.')[0];
+            if (id) existingPhotoIds.add(id);
+          });
+          missing = activePlayers.filter((p: any) => !existingPhotoIds.has(p.player_id.toString()));
+        }
+      } catch (ikError) {
+        console.error('Error fetching image list from ImageKit:', ikError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -256,9 +277,34 @@ export async function POST(request: NextRequest) {
         });
       } catch (fsErr: any) {
         if (fsErr.code === 'EROFS' || fsErr.message?.includes('read-only')) {
+          // In production read-only filesystem (e.g. Vercel), upload directly to ImageKit CDN
+          if (process.env.IMAGEKIT_PRIVATE_KEY && process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY) {
+            try {
+              const { uploadImageServer } = await import('@/lib/imagekit/server');
+              const ikResult = await uploadImageServer({
+                file: faceBuffer,
+                fileName: `${playerId}.webp`,
+                folder: '/player-photos',
+                useUniqueFileName: false,
+              });
+              return NextResponse.json({
+                success: true,
+                method: 'imagekit',
+                url: ikResult.url,
+                message: `Player photo for ID ${playerId} successfully uploaded to ImageKit.`
+              });
+            } catch (ikErr: any) {
+              console.error('ImageKit upload fallback failed:', ikErr);
+              return NextResponse.json({
+                success: false,
+                error: `Serverless filesystem is read-only and ImageKit upload failed: ${ikErr.message}`
+              }, { status: 500 });
+            }
+          }
+
           return NextResponse.json({
             success: false,
-            error: 'GitHub credentials (GITHUB_TOKEN and GITHUB_REPO) are not configured. Cannot save player photo to read-only serverless production filesystem.'
+            error: 'GitHub credentials (GITHUB_TOKEN and GITHUB_REPO) or ImageKit credentials are not configured. Cannot save player photo to read-only serverless production filesystem.'
           }, { status: 400 });
         }
         throw fsErr;

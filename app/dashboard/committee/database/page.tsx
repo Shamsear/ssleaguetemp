@@ -327,7 +327,8 @@ export default function DatabaseManagementPage() {
           if (syncResult.success) {
             success++
             setPhotosSuccessCount(success)
-            setPhotosLog(prev => [...prev, `✅ Saved WebP for ${player.name} (${syncResult.method === 'github' ? 'Committed to GitHub' : 'Saved locally'})`].slice(-100))
+            const methodLabel = syncResult.method === 'github' ? 'Committed to GitHub' : syncResult.method === 'imagekit' ? 'Uploaded to ImageKit' : 'Saved locally'
+            setPhotosLog(prev => [...prev, `✅ Saved WebP for ${player.name} (${methodLabel})`].slice(-100))
           } else {
             failed++
             setPhotosFailedCount(failed)

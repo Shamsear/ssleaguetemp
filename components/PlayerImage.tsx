@@ -20,11 +20,30 @@ export default function PlayerImage({
   fallbackInitial,
   priority = false,
 }: PlayerImageProps) {
+  const [currentSrc, setCurrentSrc] = useState<string>(`/images/players/${playerId}.webp`);
+  const [failedLocal, setFailedLocal] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Since all images are .webp, start with that directly
-  const imageSrc = `/images/players/${playerId}.webp`;
+
+  // Reset when playerId changes
+  useEffect(() => {
+    setCurrentSrc(`/images/players/${playerId}.webp`);
+    setFailedLocal(false);
+    setImageError(false);
+    setIsLoading(true);
+  }, [playerId]);
+
+  const handleImageError = () => {
+    if (!failedLocal) {
+      // Try ImageKit CDN fallback before showing initials
+      setFailedLocal(true);
+      setCurrentSrc(`https://ik.imagekit.io/ssleague/player-photos/${playerId}.webp`);
+    } else {
+      // Both local and ImageKit failed, fall back to initial
+      setImageError(true);
+      setIsLoading(false);
+    }
+  };
 
   const getInitial = () => {
     if (fallbackInitial) return fallbackInitial;
@@ -51,11 +70,11 @@ export default function PlayerImage({
       )}
       
       <Image
-        src={imageSrc}
+        src={currentSrc}
         alt={playerName}
         fill
         className="object-cover"
-        onError={() => setImageError(true)}
+        onError={handleImageError}
         onLoad={() => setIsLoading(false)}
         priority={priority}
         sizes={`${size}px`}
