@@ -176,7 +176,7 @@ export default function RealPlayersPage() {
     if (isCommitteeAdmin && userSeasonId) {
       fetchData();
     }
-  }, [isCommitteeAdmin, userSeasonId]);
+  }, [isCommitteeAdmin, userSeasonId, updateCounter]);
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -248,11 +248,15 @@ export default function RealPlayersPage() {
               teamSeason.initial_real_player_budget ||
               teamSeason.real_player_budget_initial ||
               teamSeason.real_player_starting_balance ||
+              teamSeason.raw_data?.initial_real_player_budget ||
+              teamSeason.raw_data?.real_player_starting_balance ||
               (Number(teamSeason.real_player_budget || 0) + Number(teamSeason.real_player_spent || 0)) ||
               400
-            );
-            const currentBudget = Number(teamSeason.real_player_budget ?? originalBudget);
-            const currentSpent = Number(teamSeason.real_player_spent || 0);
+            ) || 400;
+
+            const totalAssignedCost = assignedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
+            const currentSpent = totalAssignedCost;
+            const currentBudget = originalBudget - currentSpent;
 
             console.log(`Team ${teamSeason.team_name || teamSeason.team_code}: originalBudget=${originalBudget}, currentBudget=${currentBudget}, currentSpent=${currentSpent}`);
 
@@ -368,11 +372,13 @@ export default function RealPlayersPage() {
       // Remove from team and restore budget
       setTeams(prevTeams => prevTeams.map(t => {
         if (t.id === teamId) {
+          const updatedPlayers = t.assignedPlayers.filter(p => p.id !== playerId);
+          const totalCost = updatedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
           return { 
             ...t, 
-            currentBudget: t.currentBudget + (removedPlayer.auctionValue || 0),
-            currentSpent: t.currentSpent - (removedPlayer.auctionValue || 0),
-            assignedPlayers: t.assignedPlayers.filter(p => p.id !== playerId) 
+            assignedPlayers: updatedPlayers,
+            currentBudget: t.originalBudget - totalCost,
+            currentSpent: totalCost,
           };
         }
         return t;
@@ -488,14 +494,16 @@ export default function RealPlayersPage() {
           if (playerExists) {
             return t; // Don't add duplicate
           }
+          const updatedPlayers = [...t.assignedPlayers, {
+            ...quickAssignPlayer,
+            auctionValue: auctionValue,
+          }];
+          const totalCost = updatedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
           return {
             ...t,
-            currentBudget: t.currentBudget - auctionValue,
-            currentSpent: t.currentSpent + auctionValue,
-            assignedPlayers: [...t.assignedPlayers, {
-              ...quickAssignPlayer,
-              auctionValue: auctionValue,
-            }]
+            assignedPlayers: updatedPlayers,
+            currentBudget: t.originalBudget - totalCost,
+            currentSpent: totalCost,
           };
         }
         return t;
@@ -820,8 +828,8 @@ export default function RealPlayersPage() {
   const handleCopyBudgets = () => {
     const lines: string[] = [];
     teams.forEach((team, idx) => {
-      const totalCost = team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0);
-      const displayBudget = showActualBudget ? team.currentBudget : (team.originalBudget - totalCost);
+      const totalCost = team.assignedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
+      const displayBudget = team.originalBudget - totalCost;
       const playerCount = team.assignedPlayers.length;
       lines.push(`${idx + 1}. *${team.name}*: $${displayBudget.toLocaleString()} left (${playerCount}/${minPlayers})`);
     });
@@ -872,6 +880,16 @@ export default function RealPlayersPage() {
           </div>
           
           <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setUpdateCounter(prev => prev + 1)}
+              disabled={isRefreshing}
+              className="inline-flex items-center px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all border border-amber-500 disabled:opacity-60 cursor-pointer"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-4 h-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
             <Link
               href="/dashboard/committee/real-players/swap"
               className="inline-flex items-center px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all border border-purple-600"
@@ -1200,9 +1218,7 @@ export default function RealPlayersPage() {
                     {(() => {
                       const team = teams.find(t => t.id === quickAssignTeam);
                       if (!team) return null;
-                      const remaining = showActualBudget
-                        ? team.currentBudget
-                        : (team.originalBudget - team.assignedPlayers.reduce((sum, p) => sum + p.auctionValue, 0));
+                      const remaining = team.originalBudget - team.assignedPlayers.reduce((sum, p) => sum + (p.auctionValue || 0), 0);
                       const maxBid = calculateMaxBidForTeam(team, quickAssignPlayer);
                       return (
                         <>
@@ -1751,16 +1767,6 @@ export default function RealPlayersPage() {
           </div>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => setUpdateCounter(prev => prev + 1)}
-        disabled={isRefreshing}
-        className="fixed right-6 bottom-24 z-[1002] w-12 h-12 flex items-center justify-center bg-amber-600 text-white rounded-full shadow-lg hover:bg-amber-500 active:scale-95 transition-all disabled:opacity-80 cursor-pointer border border-amber-500/20 shadow-amber-600/20"
-        title="Refresh Data"
-      >
-        <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-      </button>
     </div>
   
     </AuthGuard>

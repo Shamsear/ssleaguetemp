@@ -225,7 +225,6 @@ export async function POST(request: NextRequest) {
         const initialBudget = Number(
           tsRow[0]?.raw_data?.initial_real_player_budget ||
           tsRow[0]?.raw_data?.real_player_starting_balance ||
-          tsRow[0]?.initial_budget ||
           400
         );
         const actualBudget = initialBudget - actualSpent;
