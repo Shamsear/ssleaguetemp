@@ -13,6 +13,85 @@ const POSITION_CODES: { [key: string]: number } = {
   GK: 0, CB: 1, LB: 2, RB: 3, DMF: 4, CMF: 5, LMF: 6, RMF: 7, AMF: 8, LWF: 9, RWF: 10, SS: 11, CF: 12
 };
 
+const STATS_COLUMNS = [
+  'offensive_awareness', 'ball_control', 'dribbling', 'tight_possession', 'low_pass', 'lofted_pass',
+  'finishing', 'heading', 'set_piece_taking', 'curl', 'speed', 'acceleration', 'kicking_power', 'jumping',
+  'physical_contact', 'balance', 'stamina', 'defensive_awareness', 'tackling', 'aggression',
+  'defensive_engagement', 'gk_awareness', 'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
+];
+
+async function mapConcurrent<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+  async function worker() {
+    while (nextIndex < items.length) {
+      const idx = nextIndex++;
+      try {
+        results[idx] = await fn(items[idx]);
+      } catch (e: any) {
+        console.error(`Error processing item ${idx}:`, e.message);
+        results[idx] = null as any;
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+async function fetchHtmlWithFallback(url: string, headers: any, scraperKeys: string[]): Promise<string> {
+  // 1. Direct fetch
+  try {
+    const directRes = await fetch(url, { headers, cache: 'no-store' });
+    if (directRes.status === 200) {
+      return await directRes.text();
+    }
+  } catch (e) {
+    // Direct fetch failed, fallback to ScraperAPI
+  }
+
+  // 2. ScraperAPI fallback
+  for (const key of scraperKeys) {
+    try {
+      const proxyUrl = `http://api.scraperapi.com?api_key=${key}&keep_headers=true&url=${encodeURIComponent(url)}`;
+      const proxyRes = await fetch(proxyUrl, { headers, cache: 'no-store' });
+      if (proxyRes.status === 200) {
+        return await proxyRes.text();
+      }
+    } catch (e) {
+      // Continue to next key
+    }
+  }
+
+  return '';
+}
+
+async function fetchPlayerDetailStats(playerId: string, scraperKeys: string[]): Promise<{ stats: { [key: string]: number }; playing_style: string }> {
+  const url = `https://pesdb.net/efootball/?id=${playerId}`;
+  const randomUserAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+  const headers = {
+    'User-Agent': randomUserAgent,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  };
+
+  const html = await fetchHtmlWithFallback(url, headers, scraperKeys);
+  if (!html) {
+    return { stats: {}, playing_style: '' };
+  }
+
+  const $ = cheerio.load(html);
+  const stats: { [key: string]: number } = {};
+  $('[data-stat-value]').each(function() {
+    const k = $(this).attr('data-stat-value');
+    if (k) {
+      stats[k] = parseInt($(this).text().replace(/[^0-9]/g, '')) || 0;
+    }
+  });
+
+  const playing_style = $('a[href*="playing_style_2"]').first().text().trim() || $('a[href*="playing_style"]').first().text().trim() || '';
+  return { stats, playing_style };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -32,304 +111,133 @@ export async function GET(request: NextRequest) {
     // 1. Initialize temp table if needed
     await initializeTempTable();
 
-    // 2. Fetch page HTML (set all=0 to search standard players only)
-    // IMPORTANT: The Cookie header value must be plain text — browsers never URL-encode
-    // cookie values, so pesdb.net expects `columns=pos,name,...` not `columns=pos%2Cname,...`
-    const targetUrl = `https://pesdb.net/efootball/?pos=${posCode}&page=${page}&all=0`;
+    // 2. Build target URL with standard availability and overall rating sort descending
+    const targetUrl = `https://pesdb.net/efootball/players/?pos[0]=${posCode}&page=${page}&availability=standard&sort=overall_rating&order=desc`;
     const scraperKeys = [
-      process.env.SCRAPER_API_KEY || "12e89d3469aa5f5bb80cbba557ceec9b",
-      process.env.BACKUP_SCRAPER_API_KEY || "c042d3b9be6af433b58e0ace8b98d66b"
-    ].filter(Boolean);
-    console.log(`🔑 Loaded Scraper keys count: ${scraperKeys.length} (${scraperKeys.map((k: any) => k.substring(0, 4) + '...').join(', ')})`);
+      process.env.SCRAPER_API_KEY,
+      process.env.BACKUP_SCRAPER_API_KEY,
+      "c042d3b9be6af433b58e0ace8b98d66b",
+      "12e89d3469aa5f5bb80cbba557ceec9b"
+    ].filter(Boolean) as string[];
+
     const randomUserAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-
-    // Cookie with plain-text (decoded) values — this is how browsers send cookies
-    const COLUMNS_COOKIE = 'columns=pos,name,club_team,nationality,height,weight,age,foot,featured,offensive_awareness,ball_control,dribbling,tight_possession,low_pass,lofted_pass,finishing,heading,set_piece_taking,curl,speed,acceleration,kicking_power,jumping,physical_contact,balance,stamina,defensive_awareness,tackling,aggression,defensive_engagement,gk_awareness,gk_catching,gk_parrying,gk_reflexes,gk_reach,weak_foot_usage,weak_foot_accuracy,form,injury_resistance,condition,overall_rating,max_level,overall_at_max_level,playing_style,S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,S13,S14,S15,S16,S17,S18,S19,S20,S21,S22,S23,S24,S25,S26,S27,S28,S29,S30,S31,S32,S33,S34,S35,S36,S37,S38,S39,S40,S41,S42,S43,S44,S45,S46,S47,S48,S49,S50,S51,S52,S53,S54,S55,S56,S57,S58,S59,S60,S61,S62,P01,P02,P03,P04,P05,P06,P07';
-
     const sharedHeaders = {
       'User-Agent': randomUserAgent,
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.5',
-      'Connection': 'keep-alive',
-      'Referer': 'https://pesdb.net/efootball/',
-      'Cookie': COLUMNS_COOKIE,
+      'Referer': 'https://pesdb.net/efootball/players/',
+      'Cookie': 'pesdb_efootball_search=' + encodeURIComponent(JSON.stringify({ view: 'table' }))
     };
 
-    let html = '';
-    let usedProxy = false;
+    console.log(`🌐 Fetching search results for ${positionUpper} page ${page}...`);
+    const html = await fetchHtmlWithFallback(targetUrl, sharedHeaders, scraperKeys);
 
-    // --- Attempt 1: Direct fetch (works on local dev and most cloud providers) ---
-    try {
-      console.log(`🌐 Direct fetch: ${targetUrl}`);
-      const directRes = await fetch(targetUrl, {
-        headers: sharedHeaders,
-        cache: 'no-store',
-      });
-
-      if (directRes.status === 200) {
-        html = await directRes.text();
-        console.log(`✅ Direct fetch succeeded (${html.length} bytes)`);
-      } else if (directRes.status === 403 || directRes.status === 429 || directRes.status === 503) {
-        // Vercel/cloud IP is blocked — fall through to ScraperAPI
-        console.warn(`⚠️ Direct fetch blocked (${directRes.status}), retrying via ScraperAPI...`);
-      } else {
-        return NextResponse.json({ success: false, error: `pesdb.net returned HTTP ${directRes.status}` }, { status: 500 });
-      }
-    } catch (e: any) {
-      console.warn(`⚠️ Direct fetch failed (${e.message}), retrying via ScraperAPI...`);
-    }
-
-    // --- Attempt 2: ScraperAPI fallback (rotates IPs when the server is blocked) ---
     if (!html) {
-      usedProxy = true;
-      let lastError = '';
-
-      for (let i = 0; i < scraperKeys.length; i++) {
-        const currentKey = scraperKeys[i];
-        try {
-          // keep_headers=true tells ScraperAPI to forward our headers (including Cookie) to the target
-          const proxyUrl = `http://api.scraperapi.com?api_key=${currentKey}&keep_headers=true&url=${encodeURIComponent(targetUrl)}`;
-          console.log(`🔀 ScraperAPI fetch (key index ${i}): ${targetUrl}`);
-          const proxyRes = await fetch(proxyUrl, {
-            headers: sharedHeaders,
-            cache: 'no-store',
-          });
-
-          if (proxyRes.status === 200) {
-            html = await proxyRes.text();
-            console.log(`✅ ScraperAPI fetch succeeded (key index ${i}) (${html.length} bytes)`);
-            break; // Succeeded! Break the retry loop
-          } else {
-            console.warn(`⚠️ ScraperAPI key index ${i} failed with status ${proxyRes.status}`);
-            lastError = `ScraperAPI returned HTTP ${proxyRes.status}`;
-          }
-        } catch (e: any) {
-          console.error(`❌ ScraperAPI key index ${i} fetch error:`, e);
-          lastError = e.message;
-        }
-      }
-
-      if (!html) {
-        return NextResponse.json({ success: false, error: `All fetch attempts failed: ${lastError}` }, { status: 500 });
-      }
+      return NextResponse.json({ success: false, error: 'Failed to fetch search page from pesdb.net' }, { status: 502 });
     }
 
-
-    // 3. Parse players with Cheerio
+    // 3. Parse players from HTML (table view or card view)
     const $ = cheerio.load(html);
-    const playersTable = $('table.players').first().length ? $('table.players').first() : $('table').first();
+    const tableRows = $('table.player-results-table tbody tr');
+    const cards = $('.efootball-result-card');
 
-    if (!playersTable.length) {
-      return NextResponse.json({ success: true, count: 0, message: 'No players table found' });
+    const basicPlayers: any[] = [];
+
+    if (tableRows.length > 0) {
+      tableRows.each((_, row) => {
+        const cells = $(row).find('td');
+        if (cells.length < 5) return;
+        const nameA = cells.eq(1).find('a');
+        const name = nameA.text().trim();
+        const href = nameA.attr('href') || '';
+        const idMatch = href.match(/-(\d+)$/);
+        const playerId = idMatch ? idMatch[1] : '';
+        if (!playerId || !name) return;
+
+        const playerPos = cells.eq(0).text().trim().toUpperCase() || positionUpper;
+        const club = cells.eq(2).text().trim();
+        const nat = cells.eq(3).text().trim();
+        const age = parseInt(cells.eq(6).text().replace(/[^0-9]/g, '')) || 0;
+        const overall_rating = parseInt(cells.last().text().replace(/[^0-9]/g, '')) || 0;
+
+        basicPlayers.push({
+          player_id: playerId,
+          name,
+          position: playerPos,
+          team_name: club,
+          nationality: nat,
+          age,
+          overall_rating
+        });
+      });
+    } else if (cards.length > 0) {
+      cards.each((_, card) => {
+        const nameA = $(card).find('h2.efootball-result-name a');
+        const name = nameA.text().trim();
+        const href = nameA.attr('href') || '';
+        const idMatch = href.match(/-(\d+)$/);
+        const playerId = idMatch ? idMatch[1] : '';
+        if (!playerId || !name) return;
+
+        const img = $(card).find('img');
+        const alt = img.attr('alt') || '';
+        const ovrMatch = alt.match(/OVR\s*(\d+)/i);
+        const overall_rating = ovrMatch ? parseInt(ovrMatch[1]) : 0;
+        const posMatch = alt.match(/—\s*([A-Z]+),/i);
+        const playerPos = posMatch ? posMatch[1].toUpperCase() : positionUpper;
+
+        basicPlayers.push({
+          player_id: playerId,
+          name,
+          position: playerPos,
+          team_name: '',
+          nationality: '',
+          age: 0,
+          overall_rating
+        });
+      });
     }
 
-    const rows = playersTable.find('tr');
-    if (rows.length < 2) {
+    if (basicPlayers.length === 0) {
       return NextResponse.json({ success: true, count: 0, message: 'No players found on page' });
     }
 
-    // Map headers to fields
-    const headerCols = rows.first().find('th');
-    const colMap: { [key: string]: number } = {};
+    // 4. Min Rating filter & threshold check
+    let minRatingReached = false;
+    let eligiblePlayers = basicPlayers;
 
-    headerCols.each((idx: any, col: any) => {
-      const link = $(col).find('a');
-      const colText = (link.length ? link.text() : $(col).text()).trim().toLowerCase();
-
-      // Mappings similar to scraper.py
-      const mappings: { [key: string]: string } = {
-        'id': 'player_id',
-        'pos': 'position',
-        'position': 'position',
-        'shirt name': 'shirt_name',
-        'club team': 'team_name',
-        'team name': 'team_name',
-        'club_team': 'team_name',
-        'nationality': 'nationality',
-        'height': 'height',
-        'weight': 'weight',
-        'age': 'age',
-        'overall rating': 'overall_rating',
-        'overall_rating': 'overall_rating',
-        'playing style': 'playing_style',
-        'playing_style': 'playing_style',
-        'offensive awareness': 'offensive_awareness',
-        'ball control': 'ball_control',
-        'dribbling': 'dribbling',
-        'tight possession': 'tight_possession',
-        'low pass': 'low_pass',
-        'lofted pass': 'lofted_pass',
-        'finishing': 'finishing',
-        'heading': 'heading',
-        'set piece taking': 'set_piece_taking',
-        'curl': 'curl',
-        'speed': 'speed',
-        'acceleration': 'acceleration',
-        'kicking power': 'kicking_power',
-        'jumping': 'jumping',
-        'physical contact': 'physical_contact',
-        'balance': 'balance',
-        'stamina': 'stamina',
-        'defensive awareness': 'defensive_awareness',
-        'tackling': 'tackling',
-        'aggression': 'aggression',
-        'defensive engagement': 'defensive_engagement',
-        'gk awareness': 'gk_awareness',
-        'gk catching': 'gk_catching',
-        'gk parrying': 'gk_parrying',
-        'gk reflexes': 'gk_reflexes',
-        'gk reach': 'gk_reach',
-        'featured': 'featured',
-        'featured players': 'featured',
-        'featured_players': 'featured'
-      };
-
-      for (const [key, value] of Object.entries(mappings)) {
-        if (colText === key) {
-          colMap[value] = idx;
-          break;
-        }
+    if (minRating > 0) {
+      eligiblePlayers = basicPlayers.filter(p => p.overall_rating >= minRating);
+      if (eligiblePlayers.length < basicPlayers.length) {
+        minRatingReached = true;
       }
-
-      // Fallback substring mapping
-      if (colMap['player_id'] === undefined && colText.includes('id')) colMap['player_id'] = idx;
-      if (colMap['team_name'] === undefined && (colText.includes('club') || colText.includes('team'))) colMap['team_name'] = idx;
-    });
-
-    // Make sure we have name mapping
-    headerCols.each((idx: any, col: any) => {
-      const colText = $(col).text().trim().toLowerCase();
-      if (colText === 'name' || colText === 'player name') {
-        colMap['name'] = idx;
+      if (eligiblePlayers.length === 0) {
+        return NextResponse.json({
+          success: true,
+          count: 0,
+          minRatingReached: true,
+          message: `All players on page ${page} are below minimum rating ${minRating}`
+        });
       }
-    });
-
-    // Parse players rows
-    const parsedPlayers: any[] = [];
-    let totalRowsParsed = 0;
-    let belowMinRatingCount = 0;
-    let noStatsCount = 0; // Players where cookie didn't apply — stats all zero
-
-    // Detect if the stat columns were actually returned by pesdb.net.
-    // If colMap has no entry for 'offensive_awareness' the cookie was ignored.
-    const statsColumns = [
-      'offensive_awareness', 'ball_control', 'dribbling', 'tight_possession', 'low_pass', 'lofted_pass',
-      'finishing', 'heading', 'set_piece_taking', 'curl', 'speed', 'acceleration', 'kicking_power', 'jumping',
-      'physical_contact', 'balance', 'stamina', 'defensive_awareness', 'tackling', 'aggression',
-      'defensive_engagement', 'gk_awareness', 'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
-    ];
-    const cookieWorked = statsColumns.some((f: any) => colMap[f] !== undefined);
-
-    if (!cookieWorked) {
-      // The cookie was stripped — pesdb.net rendered a minimal table with no stat columns.
-      // Return an error so the frontend can retry rather than save stat-less records.
-      console.warn('⚠️ No stat columns found in HTML — cookie was not applied by the proxy.');
-      return NextResponse.json({
-        success: false,
-        cookieError: true,
-        error: 'Stat columns missing: the columns cookie was not forwarded to pesdb.net. Retry this page.'
-      }, { status: 502 });
-    }
-    
-    rows.slice(1).each((_: any, row: any) => {
-      const cols = $(row).find('td');
-      if (cols.length < 5) return;
-      totalRowsParsed++;
-
-      const safeInt = (text: string) => {
-        const val = parseInt(text.replace(/[^0-9]/g, ''));
-        return isNaN(val) ? 0 : val;
-      };
-
-      const safeText = (text: string) => {
-        return text.trim();
-      };
-
-      // Extract player_id from link
-      let playerId = '';
-      const nameIndex = colMap['name'] !== undefined ? colMap['name'] : 0;
-      const nameCell = cols.eq(nameIndex);
-      const link = nameCell.find('a');
-      if (link.length && link.attr('href')) {
-        const href = link.attr('href') || '';
-        if (href.includes('?id=')) {
-          playerId = href.split('?id=')[1].split('&')[0];
-        }
-      }
-
-      if (!playerId) {
-        // Fallback to reading player_id column
-        const idIndex = colMap['player_id'];
-        if (idIndex !== undefined) {
-          playerId = cols.eq(idIndex).text().trim();
-        }
-      }
-
-      if (!playerId) return; // Skip if no ID
-
-      // Extract featured column and skip if it is a featured player
-      const featuredIndex = colMap['featured'];
-      const featuredVal = featuredIndex !== undefined ? safeText(cols.eq(featuredIndex).text()) : '';
-      if (featuredVal && featuredVal.toLowerCase() !== 'none') {
-        return; // Skip featured players (continue to next row)
-      }
-
-      // Extract position from columns, fallback to positionUpper if column is missing
-      const posIndex = colMap['position'];
-      let playerPosition = positionUpper;
-      if (posIndex !== undefined) {
-        const textVal = safeText(cols.eq(posIndex).text()).toUpperCase();
-        if (textVal) {
-          playerPosition = textVal;
-        }
-      }
-
-      const player: any = {
-        player_id: playerId,
-        name: safeText(cols.eq(nameIndex).text()),
-        position: playerPosition,
-        team_name: colMap['team_name'] !== undefined ? safeText(cols.eq(colMap['team_name']).text()) : '',
-        nationality: colMap['nationality'] !== undefined ? safeText(cols.eq(colMap['nationality']).text()) : '',
-        age: colMap['age'] !== undefined ? safeInt(cols.eq(colMap['age']).text()) : 0,
-        playing_style: colMap['playing_style'] !== undefined ? safeText(cols.eq(colMap['playing_style']).text()) : '',
-        overall_rating: colMap['overall_rating'] !== undefined ? safeInt(cols.eq(colMap['overall_rating']).text()) : 0
-      };
-
-      // Extract stats
-      statsColumns.forEach((field: any) => {
-        const idx = colMap[field];
-        player[field] = idx !== undefined ? safeInt(cols.eq(idx).text()) : 0;
-      });
-
-      // Guard: if all numeric stats are 0 but the player has a rating, the cookie
-      // didn't apply for this row. Skip instead of saving zeroed-out data.
-      const hasAnyStats = statsColumns.some((f: any) => player[f] > 0);
-      if (!hasAnyStats && player.overall_rating > 0) {
-        noStatsCount++;
-        return;
-      }
-
-      if (minRating > 0 && player.overall_rating < minRating) {
-        belowMinRatingCount++;
-        return; // Skip if below minimum rating
-      }
-
-      if (player.name && player.player_id) {
-        parsedPlayers.push(player);
-      }
-    });
-
-    if (parsedPlayers.length === 0) {
-      if (totalRowsParsed > 0 && belowMinRatingCount === totalRowsParsed) {
-        return NextResponse.json({ success: true, count: 0, minRatingReached: true, message: 'Reached minimum rating threshold' });
-      }
-      if (noStatsCount > 0) {
-        return NextResponse.json({ success: false, cookieError: true, count: 0, error: `All ${noStatsCount} rows had zero stats — cookie may not have been applied. Retry this page.` }, { status: 502 });
-      }
-      return NextResponse.json({ success: true, count: 0, message: 'Failed to parse any players from page' });
     }
 
-    // 4. Batch-Insert players into PostgreSQL temp table
+    // 5. Fetch full detailed stats concurrently (concurrency 4)
+    console.log(`⚡ Fetching detailed stats for ${eligiblePlayers.length} players from ${positionUpper} page ${page}...`);
+    const detailedPlayers = await mapConcurrent(eligiblePlayers, 4, async (p) => {
+      const { stats, playing_style } = await fetchPlayerDetailStats(p.player_id, scraperKeys);
+      return {
+        ...p,
+        playing_style: playing_style || p.playing_style || '',
+        ...stats
+      };
+    });
+
+    const validPlayers = detailedPlayers.filter(Boolean);
+    if (validPlayers.length === 0) {
+      return NextResponse.json({ success: true, count: 0, message: 'Failed to process players' });
+    }
+
+    // 6. Batch-Insert players into PostgreSQL temp table
     const columnsToInsert = [
       'player_id', 'name', 'position', 'team_name', 'nationality', 'age', 'playing_style', 'overall_rating',
       'offensive_awareness', 'ball_control', 'dribbling', 'tight_possession', 'low_pass', 'lofted_pass',
@@ -342,7 +250,7 @@ export async function GET(request: NextRequest) {
     const queryParams: any[] = [];
     let paramIndex = 1;
 
-    parsedPlayers.forEach((p: any) => {
+    validPlayers.forEach((p: any) => {
       const rowPlaceholders: string[] = [];
       columnsToInsert.forEach((col: any) => {
         rowPlaceholders.push(`$${paramIndex++}`);
@@ -400,9 +308,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      count: parsedPlayers.length,
-      noStatsSkipped: noStatsCount,
-      message: `Scraped ${parsedPlayers.length} players from ${positionUpper} page ${page}${noStatsCount > 0 ? ` (${noStatsCount} skipped — no stats)` : ''}`
+      count: validPlayers.length,
+      minRatingReached,
+      message: `Scraped ${validPlayers.length} players from ${positionUpper} page ${page}`
     });
 
   } catch (error: any) {
