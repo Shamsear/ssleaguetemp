@@ -167,27 +167,27 @@ export default function DatabaseManagementPage() {
               }
 
               if (result.success) {
+                if (result.count > 0) {
+                  const skippedNote = result.noStatsSkipped > 0 ? ` (⚠️ ${result.noStatsSkipped} stat-less skipped)` : ''
+                  addScrapedCount(result.count)
+                  positionScrapedCount += result.count
+                  logMessage(`[Worker ${workerId}] ✓ Added ${result.count} players from page ${currentPage} (${position})${skippedNote}.`)
+                }
+
                 if (result.minRatingReached) {
                   logMessage(`[Worker ${workerId}] ✓ Minimum rating cutoff (${resolvedMinRating} OVR) reached. Skipping rest of ${position}.`)
                   hasMore = false
                 } else if (result.count === 0) {
                   logMessage(`[Worker ${workerId}] ✅ Finished scraping all pages for ${position}.`)
                   hasMore = false
+                } else if (positionScrapedCount >= resolvedMaxPlayers) {
+                  logMessage(`[Worker ${workerId}] ✓ Max player limit (${resolvedMaxPlayers}) reached for ${position}.`)
+                  hasMore = false
                 } else {
-                  const skippedNote = result.noStatsSkipped > 0 ? ` (⚠️ ${result.noStatsSkipped} stat-less skipped)` : ''
-                  addScrapedCount(result.count)
-                  positionScrapedCount += result.count
-                  logMessage(`[Worker ${workerId}] ✓ Added ${result.count} players from page ${currentPage} (${position})${skippedNote}.`)
-                  
-                  if (positionScrapedCount >= resolvedMaxPlayers) {
-                    logMessage(`[Worker ${workerId}] ✓ Max player limit (${resolvedMaxPlayers}) reached for ${position}.`)
-                    hasMore = false
-                  } else {
-                    page++
-                    // Add random delay to prevent hitting rate limit simultaneously
-                    const delay = 1000 + Math.random() * 800
-                    await new Promise(r => setTimeout(r, delay))
-                  }
+                  page++
+                  // Add random delay to prevent hitting rate limit simultaneously
+                  const delay = 1000 + Math.random() * 800
+                  await new Promise(r => setTimeout(r, delay))
                 }
               }
               break // success — exit retry loop
