@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb } from '@/lib/neon/main-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
 
 /**
  * PATCH /api/teams/[id]
@@ -18,6 +19,8 @@ export async function PATCH(
       logo_url: 'logo_url',
       teamLogo: 'logo_url',
       logoUrl: 'logo_url',
+      team_logo: 'logo_url',
+      logo: 'logo_url',
       team_color: 'team_color',
       team_name: 'team_name',
       is_active: 'is_active',
@@ -44,9 +47,30 @@ export async function PATCH(
     values.push(id);
 
     await sql.query(
-      `UPDATE teams SET ${updates.join(', ')} WHERE id = $${idx}`,
+      `UPDATE teams SET ${updates.join(', ')} WHERE id = $${idx} OR team_id = $${idx}`,
       values
     );
+
+    // Sync to Firestore teams collection
+    try {
+      const firestoreUpdates: Record<string, any> = {};
+      const logo = body.logo_url || body.teamLogo || body.logoUrl || body.team_logo || body.logo;
+      if (logo) {
+        firestoreUpdates.logo_url = logo;
+        firestoreUpdates.team_logo = logo;
+        firestoreUpdates.logoUrl = logo;
+        firestoreUpdates.teamLogo = logo;
+      }
+      if (body.team_name) firestoreUpdates.team_name = body.team_name;
+      if (body.team_color) firestoreUpdates.team_color = body.team_color;
+
+      if (Object.keys(firestoreUpdates).length > 0) {
+        firestoreUpdates.updated_at = new Date();
+        await adminDb.collection('teams').doc(id).set(firestoreUpdates, { merge: true });
+      }
+    } catch (fsErr) {
+      console.warn('Error syncing team update to Firestore:', fsErr);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

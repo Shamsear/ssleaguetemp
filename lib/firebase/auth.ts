@@ -304,14 +304,29 @@ export const uploadTeamLogo = async (
       throw new Error('File must be an image');
     }
 
-    // Convert to Base64
-    const base64String = await fileToBase64(file);
+    // Upload to ImageKit for CDN hosting, fallback to Base64
+    let logoUrl = '';
+    try {
+      const { uploadImage } = await import('@/lib/imagekit/upload');
+      const result = await uploadImage({
+        file,
+        fileName: `team_${uid}_${Date.now()}_${file.name.replace(/\s+/g, '_')}`,
+        folder: '/team-logos',
+        tags: ['team', uid],
+        useUniqueFileName: true,
+      });
+      logoUrl = result.url;
+      console.log('✅ Team logo uploaded to ImageKit:', logoUrl);
+    } catch (ikError) {
+      console.warn('ImageKit upload failed, falling back to base64:', ikError);
+      logoUrl = await fileToBase64(file);
+    }
     
-    // Update user document with Base64 string
+    // Update user document
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, {
-      teamLogo: base64String,
-      logoUrl: base64String, // Compatibility
+      teamLogo: logoUrl,
+      logoUrl: logoUrl,
       updatedAt: serverTimestamp(),
     });
 
@@ -320,25 +335,26 @@ export const uploadTeamLogo = async (
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        if (userData.teamId) {
-          // Update team via Neon API
-          await fetch(`/api/teams/${userData.teamId}`, {
+        const targetTeamId = userData.teamId || uid;
+        if (targetTeamId) {
+          // Update team via Neon & Firestore API
+          await fetch(`/api/teams/${targetTeamId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              logo_url: base64String,
-              teamLogo: base64String,
-              logoUrl: base64String,
+              logo_url: logoUrl,
+              teamLogo: logoUrl,
+              logoUrl: logoUrl,
             }),
           });
-          console.log(`✅ Updated team logo via API for team ID: ${userData.teamId}`);
+          console.log(`✅ Updated team logo via API for team ID: ${targetTeamId}`);
         }
       }
     } catch (teamLogoError) {
       console.error('Error updating team document logo:', teamLogoError);
     }
 
-    return base64String;
+    return logoUrl;
   } catch (error: any) {
     console.error('Error uploading team logo:', error);
     throw new Error(error.message || 'Failed to upload team logo');

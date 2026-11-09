@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { getMainDb, isMainDbAvailable } from '@/lib/neon/main-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
 import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
-
-const sql = neon(process.env.DATABASE_URL || process.env.NEON_DATABASE_URL!);
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,62 +26,163 @@ export async function POST(request: NextRequest) {
     const { teamName, logoUrl, owner, manager, seasonId } = body;
     console.log('📦 Request data:', { teamName, logoUrl, hasOwner: !!owner, hasManager: !!manager, seasonId });
 
-    // Get team ID from Neon
+    // Get team ID from Neon or Firestore
     console.log('🔍 Fetching team for userId:', userId);
-    const teamResult = await sql`
-      SELECT id FROM teams WHERE firebase_uid = ${userId} LIMIT 1
-    `;
+    const mainSql = getMainDb();
+    let teamId: string | null = null;
+
+    try {
+      const teamResult = await mainSql`
+        SELECT id, team_name, logo_url FROM teams 
+        WHERE owner_uid = ${userId} OR uid = ${userId} OR id = ${userId} OR user_id = ${userId}
+        LIMIT 1
+      `;
+      if (teamResult && teamResult.length > 0) {
+        teamId = teamResult[0].id;
+      }
+    } catch (teamSqlErr) {
+      console.warn('Error querying Neon teams by owner_uid:', teamSqlErr);
+    }
+
+    // Fallback: check Firestore users doc
+    if (!teamId) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          teamId = userDoc.data()?.teamId || null;
+        }
+      } catch (userDocErr) {
+        console.warn('Error fetching user document for teamId:', userDocErr);
+      }
+    }
     
-    if (teamResult.length === 0) {
+    if (!teamId) {
       console.error('❌ Team not found for userId:', userId);
       return NextResponse.json({
         success: false,
-        error: 'Team not found',
+        error: 'Team not found for this user',
       }, { status: 404 });
     }
 
-    const teamId = teamResult[0].id;
     console.log('✅ Team found:', teamId);
 
-    // Update team name in Neon teams table (logo is stored in Firebase only)
-    if (teamName) {
-      await sql`UPDATE teams SET name = ${teamName}, updated_at = NOW() WHERE id = ${teamId}`;
+    // Update Neon teams table
+    if (teamName || logoUrl) {
+      try {
+        const updates: string[] = [];
+        const values: any[] = [];
+        let idx = 1;
+
+        if (teamName) {
+          updates.push(`team_name = $${idx++}`);
+          values.push(teamName.trim());
+        }
+        if (logoUrl) {
+          updates.push(`logo_url = $${idx++}`);
+          values.push(logoUrl);
+        }
+        updates.push('updated_at = NOW()');
+        values.push(teamId);
+
+        await mainSql.query(
+          `UPDATE teams SET ${updates.join(', ')} WHERE id = $${idx} OR owner_uid = $${idx}`,
+          values
+        );
+        console.log(`✅ Updated Neon teams table for team ID: ${teamId}`);
+      } catch (neonUpdateErr) {
+        console.error('Failed to update Neon teams table:', neonUpdateErr);
+      }
+    }
+
+    // Update Neon team_seasons table if applicable
+    if (logoUrl || teamName) {
+      try {
+        const tsUpdates: string[] = [];
+        const tsValues: any[] = [];
+        let tsIdx = 1;
+        if (logoUrl) {
+          tsUpdates.push(`logo_url = $${tsIdx++}`);
+          tsValues.push(logoUrl);
+        }
+        if (teamName) {
+          tsUpdates.push(`team_name = $${tsIdx++}`);
+          tsValues.push(teamName.trim());
+        }
+        tsUpdates.push('updated_at = NOW()');
+        tsValues.push(teamId);
+
+        let query = `UPDATE team_seasons SET ${tsUpdates.join(', ')} WHERE team_id = $${tsIdx}`;
+        if (seasonId) {
+          tsValues.push(seasonId);
+          query += ` AND season_id = $${++tsIdx}`;
+        }
+        await mainSql.query(query, tsValues);
+        console.log(`✅ Updated Neon team_seasons table for team ID: ${teamId}`);
+      } catch (neonTsErr) {
+        console.warn('Failed to update Neon team_seasons table:', neonTsErr);
+      }
     }
 
     // Update Firebase users collection (for global team info)
     if (teamName || logoUrl) {
-      const userRef = adminDb.collection('users').doc(userId);
-      const userUpdateData: any = {};
-      
-      if (teamName) userUpdateData.teamName = teamName;
-      if (logoUrl) userUpdateData.logoUrl = logoUrl;
-      
-      await userRef.update(userUpdateData);
-      console.log('✅ Updated users collection:', userUpdateData);
+      try {
+        const userRef = adminDb.collection('users').doc(userId);
+        const userUpdateData: any = {};
+        
+        if (teamName) userUpdateData.teamName = teamName.trim();
+        if (logoUrl) {
+          userUpdateData.logoUrl = logoUrl;
+          userUpdateData.teamLogo = logoUrl;
+        }
+        
+        await userRef.set(userUpdateData, { merge: true });
+        console.log('✅ Updated users collection:', userUpdateData);
+      } catch (userUpErr) {
+        console.error('Failed to update user document:', userUpErr);
+      }
     }
 
     // Update Firebase teams collection
     if (teamName || logoUrl) {
-      const teamRef = adminDb.collection('teams').doc(teamId);
-      const teamUpdateData: any = {};
-      
-      if (teamName) teamUpdateData.name = teamName;
-      if (logoUrl) teamUpdateData.logo_url = logoUrl;
-      
-      await teamRef.update(teamUpdateData);
-      console.log('✅ Updated teams collection:', teamUpdateData);
+      try {
+        const teamRef = adminDb.collection('teams').doc(teamId);
+        const teamUpdateData: any = {};
+        
+        if (teamName) {
+          teamUpdateData.team_name = teamName.trim();
+          teamUpdateData.name = teamName.trim();
+        }
+        if (logoUrl) {
+          teamUpdateData.logo_url = logoUrl;
+          teamUpdateData.team_logo = logoUrl;
+          teamUpdateData.logoUrl = logoUrl;
+          teamUpdateData.teamLogo = logoUrl;
+        }
+        
+        await teamRef.set(teamUpdateData, { merge: true });
+        console.log('✅ Updated teams collection:', teamUpdateData);
+      } catch (teamUpErr) {
+        console.error('Failed to update team document:', teamUpErr);
+      }
     }
 
     // Update team_seasons in Firebase
     if (seasonId && (teamName || logoUrl)) {
-      const teamSeasonRef = adminDb.collection('team_seasons').doc(`${teamId}_${seasonId}`);
-      const updateData: any = { updated_at: new Date() };
-      
-      if (teamName) updateData.team_name = teamName;
-      if (logoUrl) updateData.team_logo = logoUrl;
-      
-      await teamSeasonRef.update(updateData);
-      console.log('✅ Updated team_seasons collection:', updateData);
+      try {
+        const teamSeasonRef = adminDb.collection('team_seasons').doc(`${teamId}_${seasonId}`);
+        const updateData: any = { updated_at: new Date() };
+        
+        if (teamName) updateData.team_name = teamName.trim();
+        if (logoUrl) {
+          updateData.team_logo = logoUrl;
+          updateData.logo_url = logoUrl;
+        }
+        
+        await teamSeasonRef.set(updateData, { merge: true });
+        console.log('✅ Updated team_seasons collection:', updateData);
+      } catch (tsUpErr) {
+        console.error('Failed to update team_seasons document:', tsUpErr);
+      }
     }
 
     const tournamentSql = getTournamentDb();

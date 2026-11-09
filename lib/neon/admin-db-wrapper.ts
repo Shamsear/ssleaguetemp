@@ -121,6 +121,9 @@ function mapTeamRow(row: any): Record<string, any> {
   const stats = typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || {});
   const realPlayers = typeof row.real_players === 'string' ? JSON.parse(row.real_players) : (row.real_players || []);
   const footballPlayers = typeof row.football_players === 'string' ? JSON.parse(row.football_players) : (row.football_players || []);
+  const raw = typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {};
+  const logo = row.logo_url || raw.logo_url || raw.logoUrl || raw.teamLogo || raw.team_logo || null;
+
   return {
     team_id: row.team_id || row.id,
     team_name: row.team_name || 'Unknown Team',
@@ -130,13 +133,16 @@ function mapTeamRow(row: any): Record<string, any> {
     owner_email: row.owner_email,
     username: row.username,
     is_active: row.is_active !== false,
-    logo_url: row.logo_url,
     team_color: row.team_color,
     players_count: row.players_count,
     stats,
     real_players: realPlayers,
     football_players: footballPlayers,
-    ...(typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {}),
+    ...raw,
+    logo_url: logo,
+    team_logo: logo,
+    logoUrl: logo,
+    teamLogo: logo,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -146,6 +152,9 @@ function mapTeamSeasonRow(row: any): Record<string, any> {
   const stats = typeof row.stats === 'string' ? JSON.parse(row.stats) : (row.stats || {});
   const realPlayers = typeof row.real_players === 'string' ? JSON.parse(row.real_players) : (row.real_players || []);
   const footballPlayers = typeof row.football_players === 'string' ? JSON.parse(row.football_players) : (row.football_players || []);
+  const raw = typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {};
+  const logo = row.logo_url || raw.logo_url || raw.team_logo || raw.logoUrl || raw.teamLogo || null;
+
   return {
     team_id: row.team_id,
     team_name: row.team_name,
@@ -163,11 +172,14 @@ function mapTeamSeasonRow(row: any): Record<string, any> {
     stats,
     real_players: realPlayers,
     football_players: footballPlayers,
-    logo_url: row.logo_url,
     team_color: row.team_color,
     dollar_balance: row.dollar_balance,
     euro_balance: row.euro_balance,
-    ...(typeof row.raw_data === 'object' && row.raw_data !== null ? row.raw_data : {}),
+    ...raw,
+    logo_url: logo,
+    team_logo: logo,
+    logoUrl: logo,
+    teamLogo: logo,
     football_budget: row.football_budget ?? (typeof row.raw_data === 'object' ? row.raw_data?.football_budget : undefined),
     football_spent: row.football_spent ?? (typeof row.raw_data === 'object' ? row.raw_data?.football_spent : undefined),
     real_player_budget: row.real_player_budget ?? (typeof row.raw_data === 'object' ? row.raw_data?.real_player_budget : undefined),
@@ -506,6 +518,11 @@ function mapFieldName(collection: string, field: any): string {
     category_id: 'category_id',
     player_id: 'player_id',
     playerId: 'player_id',
+    logo_url: 'logo_url',
+    logoUrl: 'logo_url',
+    team_logo: 'logo_url',
+    teamLogo: 'logo_url',
+    logo: 'logo_url',
   };
   
   if (collection === 'seasons') {

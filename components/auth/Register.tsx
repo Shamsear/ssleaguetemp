@@ -190,9 +190,29 @@ function RegisterContent() {
         additionalData
       );
       
-      // For teams, create team document BEFORE signing out
+      // For teams, upload logo and create team document BEFORE signing out
       if (role === 'team' && firebaseUser) {
-        // Create team document
+        let uploadedLogoUrl = '';
+        if (teamLogo) {
+          try {
+            const { uploadImage } = await import('@/lib/imagekit/upload');
+            const cleanName = (teamName || finalUsername).toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const result = await uploadImage({
+              file: teamLogo,
+              fileName: `team_${cleanName}_${Date.now()}_${teamLogo.name.replace(/\s+/g, '_')}`,
+              folder: '/team-logos',
+              tags: ['team', firebaseUser.uid],
+              useUniqueFileName: true,
+            });
+            uploadedLogoUrl = result.url;
+            console.log('✅ Team logo uploaded to ImageKit:', uploadedLogoUrl);
+          } catch (uploadErr) {
+            console.warn('ImageKit logo upload failed during registration, trying fallback:', uploadErr);
+            uploadedLogoUrl = await uploadTeamLogo(firebaseUser.uid, teamLogo).catch(() => '');
+          }
+        }
+
+        // Create team document with logoUrl
         await fetch('/api/teams/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -204,17 +224,11 @@ function RegisterContent() {
             ownerName,
             managerName: '',
             seasonId: invite?.seasonId || '',
+            logoUrl: uploadedLogoUrl || null,
           }),
         }).catch((teamError) => {
           console.error('Failed to create team document:', teamError);
         });
-        
-        // Upload team logo if provided
-        if (teamLogo) {
-          await uploadTeamLogo(firebaseUser.uid, teamLogo).catch((logoError) => {
-            console.error('Logo upload failed:', logoError);
-          });
-        }
         
         // Mark invite as used before signing out
         if (inviteCode) {

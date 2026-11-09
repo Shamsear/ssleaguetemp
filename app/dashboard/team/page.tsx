@@ -915,10 +915,10 @@ export default function TeamDashboard() {
                           onClick={() => router.push(`/teams/${team.team_id}`)}
                           className="bg-slate-50 border border-slate-100 rounded-xl p-4 hover:bg-slate-100 transition-all text-left w-full cursor-pointer flex items-center gap-3.5 hover:shadow-sm"
                         >
-                          {team.logo_url ? (
+                          {(team.logo_url || (team as any).team_logo || (team as any).logoUrl || (team as any).teamLogo) ? (
                             <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
                               <img 
-                                src={team.logo_url} 
+                                src={team.logo_url || (team as any).team_logo || (team as any).logoUrl || (team as any).teamLogo} 
                                 alt={team.team_name} 
                                 className="w-full h-full object-cover p-1" 
                                 style={{

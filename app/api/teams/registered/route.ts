@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
         team_name: data.team_name || 'Unknown Team',
         team_code: data.team_code || '',
         owner_name: data.owner_name || data.username || '',
-        team_logo: data.team_logo || null,
+        team_logo: data.team_logo || data.logo_url || null,
+        logo_url: data.logo_url || data.team_logo || null,
       };
     });
     
@@ -72,7 +73,10 @@ export async function GET(request: NextRequest) {
         team_name: team.team_name,
         team_code: team.team_code,
         owner_name: team.owner_name,
-        team_logo: team.team_logo,
+        team_logo: team.team_logo || team.logo_url,
+        logo_url: team.logo_url || team.team_logo,
+        logoUrl: team.logo_url || team.team_logo,
+        teamLogo: team.team_logo || team.logo_url,
       })),
       count: teams.length,
     });

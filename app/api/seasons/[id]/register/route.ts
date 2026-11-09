@@ -219,8 +219,10 @@ export async function POST(
       };
       
       // Add team metadata
+      const resolvedLogo = userData?.logoUrl || userData?.teamLogo || existingTeamData?.logo_url || existingTeamData?.team_logo || existingTeamData?.logoUrl || existingTeamData?.teamLogo || existingTeamData?.logo || '';
       teamSeasonData.team_email = userData.email;
-      teamSeasonData.team_logo = userData.logoUrl || '';
+      teamSeasonData.team_logo = resolvedLogo;
+      teamSeasonData.logo_url = resolvedLogo;
       teamSeasonData.joined_at = FieldValue.serverTimestamp();
       
       const teamSeasonRef = adminDb.collection('team_seasons').doc(teamSeasonId);
@@ -414,7 +416,8 @@ export async function POST(
         username: userData.username || '',
         owner_name: userData.username || '',
         team_email: userData.email,
-        team_logo: userData.logoUrl || '',
+        team_logo: userData?.logoUrl || userData?.teamLogo || existingTeamData?.logo_url || existingTeamData?.team_logo || '',
+        logo_url: userData?.logoUrl || userData?.teamLogo || existingTeamData?.logo_url || existingTeamData?.team_logo || '',
         status: 'declined',
         players_count: 0,
         position_counts: {

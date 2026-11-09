@@ -698,10 +698,10 @@ export default function RegisteredTeamDashboard({ seasonStatus, user }: Props) {
           <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
             {/* Team Logo & Name - Mobile Optimized */}
             <div className="relative group flex-shrink-0">
-              {team.logo_url ? (
+              {(team.logo_url || (team as any).team_logo || (team as any).logoUrl || (team as any).teamLogo) ? (
                 <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm overflow-hidden">
                   <img 
-                    src={team.logo_url} 
+                    src={team.logo_url || (team as any).team_logo || (team as any).logoUrl || (team as any).teamLogo} 
                     alt={team.name} 
                     className="w-full h-full object-cover" 
                     style={{

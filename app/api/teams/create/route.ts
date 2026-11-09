@@ -9,7 +9,7 @@ import { formatId, ID_PREFIXES, ID_PADDING } from '@/lib/id-utils';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { uid, email, username, teamName, ownerName, managerName, seasonId } = await request.json();
+    const { uid, email, username, teamName, ownerName, managerName, seasonId, logoUrl } = await request.json();
 
     if (!uid || !email || !username) {
       return NextResponse.json(
@@ -77,6 +77,10 @@ export async function POST(request: NextRequest) {
       email: email,
       owner_email: email,
       username: username,
+      logo_url: logoUrl || null,
+      team_logo: logoUrl || null,
+      logoUrl: logoUrl || null,
+      teamLogo: logoUrl || null,
       role: 'team',
       is_active: true,
       is_approved: false,
@@ -98,17 +102,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Team document created: ${teamId}`);
 
-    // CRITICAL: Update user document with teamId so season registration can find the team
+    // CRITICAL: Update user document with teamId and logo so season registration can find the team
     try {
-      await adminDb.collection('users').doc(uid).update({
+      const userUpdate: Record<string, any> = {
         teamId: teamId,
         updated_at: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
-      });
-      console.log(`✅ User document updated with teamId: ${teamId}`);
+      };
+      if (logoUrl) {
+        userUpdate.logoUrl = logoUrl;
+        userUpdate.teamLogo = logoUrl;
+      }
+      await adminDb.collection('users').doc(uid).update(userUpdate);
+      console.log(`✅ User document updated with teamId: ${teamId} and logo: ${!!logoUrl}`);
     } catch (userUpdateError) {
       console.error('Error updating user document with teamId:', userUpdateError);
-      // This is critical but we'll log and continue
     }
 
     // Set custom claims for the user (enables role-based auth without DB reads)
