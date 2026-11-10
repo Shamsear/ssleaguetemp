@@ -13,6 +13,24 @@ const POSITION_CODES: { [key: string]: number } = {
   GK: 0, CB: 1, LB: 2, RB: 3, DMF: 4, CMF: 5, LMF: 6, RMF: 7, AMF: 8, LWF: 9, RWF: 10, SS: 11, CF: 12
 };
 
+function normalizeClub(club: any): string {
+  if (!club) return 'Free Agents';
+  const trimmed = String(club).trim();
+  if (
+    !trimmed ||
+    trimmed === '-' ||
+    trimmed.toUpperCase() === 'FREE' ||
+    trimmed.toLowerCase() === 'free agent' ||
+    trimmed.toLowerCase() === 'free agents' ||
+    trimmed.toLowerCase() === 'freeagent' ||
+    trimmed.toLowerCase() === 'freeagents' ||
+    trimmed.toLowerCase() === 'none'
+  ) {
+    return 'Free Agents';
+  }
+  return trimmed;
+}
+
 const STATS_COLUMNS = [
   'offensive_awareness', 'ball_control', 'dribbling', 'tight_possession', 'low_pass', 'lofted_pass',
   'finishing', 'heading', 'set_piece_taking', 'curl', 'speed', 'acceleration', 'kicking_power', 'jumping',
@@ -155,7 +173,7 @@ export async function GET(request: NextRequest) {
         if (!playerId || !name) return;
 
         const playerPos = cells.eq(0).text().trim().toUpperCase() || positionUpper;
-        const club = cells.eq(2).text().trim();
+        const club = normalizeClub(cells.eq(2).text().trim());
         const nat = cells.eq(3).text().trim();
         const age = parseInt(cells.eq(6).text().replace(/[^0-9]/g, '')) || 0;
         const overall_rating = parseInt(cells.last().text().replace(/[^0-9]/g, '')) || 0;
@@ -190,7 +208,7 @@ export async function GET(request: NextRequest) {
           player_id: playerId,
           name,
           position: playerPos,
-          team_name: '',
+          team_name: 'Free Agents',
           nationality: '',
           age: 0,
           overall_rating

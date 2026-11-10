@@ -13,6 +13,24 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15'
 ];
 
+function normalizeClub(club: any): string {
+  if (!club) return 'Free Agents';
+  const trimmed = String(club).trim();
+  if (
+    !trimmed ||
+    trimmed === '-' ||
+    trimmed.toUpperCase() === 'FREE' ||
+    trimmed.toLowerCase() === 'free agent' ||
+    trimmed.toLowerCase() === 'free agents' ||
+    trimmed.toLowerCase() === 'freeagent' ||
+    trimmed.toLowerCase() === 'freeagents' ||
+    trimmed.toLowerCase() === 'none'
+  ) {
+    return 'Free Agents';
+  }
+  return trimmed;
+}
+
 const COUNTRY_ID_MAP: { [key: number]: string } = {
   228: 'Portugal',
   35: 'France',
@@ -396,9 +414,7 @@ export async function POST(request: NextRequest) {
             }
           }
         }
-        if (!teamName || teamName === '-') {
-          teamName = 'Free Agent';
-        }
+        teamName = normalizeClub(teamName);
 
         await tempSql.query(`
           INSERT INTO temp_players_import (

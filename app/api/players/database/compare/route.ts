@@ -76,6 +76,24 @@ export async function GET(request: NextRequest) {
       return String(val).trim();
     };
 
+    const normalizeClub = (club: any): string => {
+      if (!club) return 'Free Agents';
+      const trimmed = String(club).trim();
+      if (
+        !trimmed ||
+        trimmed === '-' ||
+        trimmed.toUpperCase() === 'FREE' ||
+        trimmed.toLowerCase() === 'free agent' ||
+        trimmed.toLowerCase() === 'free agents' ||
+        trimmed.toLowerCase() === 'freeagent' ||
+        trimmed.toLowerCase() === 'freeagents' ||
+        trimmed.toLowerCase() === 'none'
+      ) {
+        return 'Free Agents';
+      }
+      return trimmed;
+    };
+
     const normalizeNumber = (val: any) => {
       const num = Number(val);
       return isNaN(num) ? 0 : num;
@@ -127,12 +145,15 @@ export async function GET(request: NextRequest) {
       const activePlayer = activeMap.get(playerId);
       if (activePlayer) {
         // Build comparative records mapping aggregate attributes for UI
+        const oldClub = normalizeClub(activePlayer.club);
+        const newClub = normalizeClub(tempPlayer.team_name || activePlayer.club);
+
         const oldValues: any = {
           position: normalizeVal(activePlayer.position),
           overall_rating: normalizeNumber(activePlayer.overall_rating),
           playing_style: normalizeVal(activePlayer.playing_style),
           team_name: normalizeVal(activePlayer.team_name), // SS League team
-          club: normalizeVal(activePlayer.club), // real club
+          club: oldClub, // real club
           nationality: normalizeVal(activePlayer.nationality),
           age: normalizeNumber(activePlayer.age), // age
         };
@@ -142,7 +163,7 @@ export async function GET(request: NextRequest) {
           overall_rating: normalizeNumber(tempPlayer.overall_rating) || normalizeNumber(activePlayer.overall_rating),
           playing_style: normalizeVal(tempPlayer.playing_style) || normalizeVal(activePlayer.playing_style),
           team_name: normalizeVal(activePlayer.team_name), // preserve the active SS League team assignment so we don't overwrite it or flag it as a change!
-          club: normalizeVal(tempPlayer.team_name) || normalizeVal(activePlayer.club), // real club from temp database
+          club: newClub, // real club from temp database
           nationality: normalizeVal(tempPlayer.nationality) || normalizeVal(activePlayer.nationality),
           age: normalizeNumber(tempPlayer.age) || normalizeNumber(activePlayer.age), // age from temp database
         };
@@ -262,7 +283,7 @@ export async function GET(request: NextRequest) {
             position: activePlayer.position,
             overall_rating: activePlayer.overall_rating,
             team_name: activePlayer.team_name,
-            club: activePlayer.club
+            club: normalizeClub(activePlayer.club)
           });
         }
       } else {
@@ -284,7 +305,7 @@ export async function GET(request: NextRequest) {
             name: d.name,
             overall_rating: d.overall_rating,
             position: d.position,
-            club: d.club,
+            club: normalizeClub(d.club),
             team_name: d.team_name,
             nationality: d.nationality,
             source: 'active'
@@ -294,7 +315,7 @@ export async function GET(request: NextRequest) {
             name: d.name,
             overall_rating: d.overall_rating,
             position: d.position,
-            club: d.team_name,
+            club: normalizeClub(d.team_name),
             team_name: d.team_name,
             nationality: d.nationality,
             source: 'temp'
@@ -307,7 +328,8 @@ export async function GET(request: NextRequest) {
           position: tempPlayer.position,
           overall_rating: tempPlayer.overall_rating,
           playing_style: tempPlayer.playing_style,
-          team_name: tempPlayer.team_name,
+          club: normalizeClub(tempPlayer.team_name),
+          team_name: normalizeClub(tempPlayer.team_name),
           nationality: tempPlayer.nationality,
           age: tempPlayer.age,
           pace: tempPlayer.speed,
@@ -364,7 +386,7 @@ export async function GET(request: NextRequest) {
           team_name: activePlayer.team_name,
           is_sold: activePlayer.is_sold,
           nationality: activePlayer.nationality,
-          club: activePlayer.club,
+          club: normalizeClub(activePlayer.club),
           age: activePlayer.age,
           bidsCount,
           roundBidsCount,

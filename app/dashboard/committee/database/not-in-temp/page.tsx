@@ -268,7 +268,7 @@ export default function NotInTempPlayersPage() {
           name: p.name,
           position: p.position,
           rating: p.overall_rating,
-          club: p.club || 'N/A',
+          club: p.club || 'Free Agents',
           leagueTeam: p.team_name || 'Free Agent',
           nationality: p.nationality || 'N/A',
           age: p.age || 'N/A',
@@ -632,7 +632,7 @@ export default function NotInTempPlayersPage() {
                             {player.overall_rating}
                           </span>
                         </td>
-                        <td className="py-2.5 px-4 text-slate-500">{player.club || 'N/A'}</td>
+                        <td className="py-2.5 px-4 text-slate-500">{player.club || 'Free Agents'}</td>
                         <td className="py-2.5 px-4 text-slate-500">{player.team_name || 'Free Agent'}</td>
                         <td className="py-2.5 px-4 text-slate-500">{player.nationality || 'N/A'}</td>
                         <td className="py-2.5 px-4 text-center">

@@ -886,7 +886,7 @@ Continue?`;
                                           className={`truncate text-right ${player.old.club !== player.new.club ? "text-red-600 line-through font-semibold" : "text-gray-800 font-medium"}`}
                                           title={player.old.club}
                                         >
-                                          {player.old.club || 'None'}
+                                          {player.old.club || 'Free Agents'}
                                         </span>
                                       </div>
                                       <div className="flex justify-between items-center gap-1 min-w-0">
@@ -989,7 +989,7 @@ Continue?`;
                                           className={`truncate text-right ${player.old.club !== player.new.club ? "text-emerald-800 font-bold bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300" : "text-gray-800 font-medium"}`}
                                           title={player.new.club}
                                         >
-                                          {player.new.club || 'None'}
+                                          {player.new.club || 'Free Agents'}
                                         </span>
                                       </div>
                                       <div className="flex justify-between items-center gap-1 min-w-0">
@@ -1249,7 +1249,7 @@ Continue?`;
                               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-xs pt-2 border-t border-gray-100">
                                 <div className="flex justify-between">
                                   <span className="text-gray-500">Club:</span>
-                                  <span className="font-semibold text-gray-800 truncate ml-1">{player.team_name || 'None'}</span>
+                                  <span className="font-semibold text-gray-800 truncate ml-1">{player.club || player.team_name || 'Free Agents'}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-500">Style:</span>
@@ -1338,7 +1338,7 @@ Continue?`;
                               </span>
                             </div>
                             <div className="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
-                              <span>Club: <strong className="text-gray-700">{player.club || 'None'}</strong></span>
+                              <span>Club: <strong className="text-gray-700">{player.club || 'Free Agents'}</strong></span>
                               <span>•</span>
                               <span>SS Team: <strong className="text-gray-700">{player.team_name || 'Free Agent'}</strong></span>
                             </div>
@@ -1423,7 +1423,7 @@ Continue?`;
                               )}
                             </div>
                             <div className="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
-                              <span>Club: <strong className="text-gray-700">{player.club || 'None'}</strong></span>
+                              <span>Club: <strong className="text-gray-700">{player.club || 'Free Agents'}</strong></span>
                               <span>•</span>
                               <span>SS Team: <strong className="text-gray-700">{player.team_name || 'Free Agent'}</strong></span>
                             </div>

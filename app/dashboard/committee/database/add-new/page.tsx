@@ -512,7 +512,7 @@ export default function AddScrapedPlayersPage() {
                               {player.overall_rating}
                             </span>
                           </td>
-                          <td className="py-2.5 px-4 text-slate-500">{player.team_name || 'Free Agent'}</td>
+                          <td className="py-2.5 px-4 text-slate-500">{player.club || player.team_name || 'Free Agents'}</td>
                           <td className="py-2.5 px-4 text-slate-500">{player.nationality}</td>
                           <td className="py-2.5 px-4">
                             <div className="flex flex-wrap gap-1 text-[10px]">
@@ -555,7 +555,7 @@ export default function AddScrapedPlayersPage() {
                                       <div>Player ID: <strong className="text-slate-800 font-bold">{player.player_id}</strong></div>
                                       <div>Position: <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-extrabold text-slate-700">{player.position}</span></div>
                                       <div>OVR Rating: <span className="px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-[10px] font-extrabold text-blue-700">{player.overall_rating}</span></div>
-                                      <div>Club: <strong className="text-slate-800 font-bold">{player.team_name || 'Free Agent'}</strong></div>
+                                      <div>Club: <strong className="text-slate-800 font-bold">{player.club || player.team_name || 'Free Agents'}</strong></div>
                                       <div>Nationality: <strong className="text-slate-800 font-bold">{player.nationality}</strong></div>
                                     </div>
                                   </div>
@@ -573,7 +573,7 @@ export default function AddScrapedPlayersPage() {
                                           <div>ID: <strong className="text-slate-800 font-bold">{dup.player_id}</strong></div>
                                           <div>Position: <strong className="text-slate-800 font-bold">{dup.position}</strong></div>
                                           <div>OVR: <strong className="text-slate-800 font-bold">{dup.overall_rating}</strong></div>
-                                          <div>Club/Team: <strong className="text-slate-800 font-bold">{dup.club || dup.team_name || 'Free Agent'}</strong></div>
+                                          <div>Club/Team: <strong className="text-slate-800 font-bold">{dup.club || dup.team_name || 'Free Agents'}</strong></div>
                                           <div>Nationality: <strong className="text-slate-800 font-bold">{dup.nationality}</strong></div>
                                         </div>
                                       </div>

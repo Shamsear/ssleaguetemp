@@ -3,6 +3,24 @@ import { sql } from '@/lib/neon/config';
 import { tempSql } from '@/lib/neon/temp-config';
 import { randomUUID } from 'crypto';
 
+function normalizeClub(club: any): string {
+  if (!club) return 'Free Agents';
+  const trimmed = String(club).trim();
+  if (
+    !trimmed ||
+    trimmed === '-' ||
+    trimmed.toUpperCase() === 'FREE' ||
+    trimmed.toLowerCase() === 'free agent' ||
+    trimmed.toLowerCase() === 'free agents' ||
+    trimmed.toLowerCase() === 'freeagent' ||
+    trimmed.toLowerCase() === 'freeagents' ||
+    trimmed.toLowerCase() === 'none'
+  ) {
+    return 'Free Agents';
+  }
+  return trimmed;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -71,7 +89,7 @@ export async function POST(request: NextRequest) {
       queryParams.push(p.age ? Number(p.age) : null);
 
       rowPlaceholders.push(`$${paramIndex++}`);
-      queryParams.push(p.team_name || null); // club (mirror team_name)
+      queryParams.push(normalizeClub(p.team_name)); // club (normalized real-life club)
 
       rowPlaceholders.push(`$${paramIndex++}`);
       queryParams.push(p.playing_style || null);
@@ -134,7 +152,7 @@ export async function POST(request: NextRequest) {
           chunkParams.push(p.position || null);
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
-          chunkParams.push(null); // team_name (fantasy team, initially null)
+          chunkParams.push(null); // team_name (SS League team, initially null)
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
           chunkParams.push(p.nationality || null);
@@ -143,7 +161,7 @@ export async function POST(request: NextRequest) {
           chunkParams.push(p.age ? Number(p.age) : null);
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
-          chunkParams.push(p.team_name || null); // club
+          chunkParams.push(normalizeClub(p.team_name)); // club (normalized real-life club)
 
           rowPlaceholders.push(`$${chunkParamIndex++}`);
           chunkParams.push(p.playing_style || null);
