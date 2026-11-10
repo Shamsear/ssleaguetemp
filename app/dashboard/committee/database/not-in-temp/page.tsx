@@ -256,7 +256,7 @@ export default function NotInTempPlayersPage() {
         { header: 'Position', key: 'position', width: 12 },
         { header: 'Rating (OVR)', key: 'rating', width: 12 },
         { header: 'Club/Team', key: 'club', width: 25 },
-        { header: 'Fantasy Team', key: 'fantasyTeam', width: 25 },
+        { header: 'SS League Team', key: 'leagueTeam', width: 25 },
         { header: 'Nationality', key: 'nationality', width: 20 },
         { header: 'Age', key: 'age', width: 10 },
         { header: 'Status', key: 'status', width: 15 }
@@ -269,7 +269,7 @@ export default function NotInTempPlayersPage() {
           position: p.position,
           rating: p.overall_rating,
           club: p.club || 'N/A',
-          fantasyTeam: p.team_name || 'Free Agent',
+          leagueTeam: p.team_name || 'Free Agent',
           nationality: p.nationality || 'N/A',
           age: p.age || 'N/A',
           status: p.is_sold ? 'SOLD' : 'UNSOLD'
@@ -560,7 +560,7 @@ export default function NotInTempPlayersPage() {
                       </th>
                       <th className="py-3 px-4">
                         <button type="button" onClick={() => handleSort('team_name')} className="font-bold uppercase tracking-wider flex items-center gap-1 focus:outline-none hover:text-slate-800 transition-colors cursor-pointer">
-                          Fantasy Team {sortField === 'team_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}
+                          SS League Team {sortField === 'team_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}
                         </button>
                       </th>
                       <th className="py-3 px-4">

@@ -111,7 +111,7 @@ WHAT WILL BE UPDATED:
 - Player stats (ratings, speed, shooting, passing, etc.)
 
 WHAT WILL BE PRESERVED:
-- Fantasy team assignments (team_id, team_name)
+- SS League team assignments (team_id, team_name)
 - Ownership status (is_sold)
 - Contract and purchase details
 
@@ -581,7 +581,7 @@ Continue?`;
                   <p className="text-xs sm:text-sm text-orange-900 leading-relaxed">
                     <strong>These players will be UPDATED:</strong> Real Club, position, playing style, age, nationality, and stats will be updated from the temporary scraped database.
                     <span className="block mt-1 text-xs text-orange-800/90 font-medium">
-                      🛡️ Fantasy team ownership, contract details, and sold status are <strong>strictly preserved</strong>.
+                      🛡️ SS League team ownership, contract details, and sold status are <strong>strictly preserved</strong>.
                     </span>
                   </p>
                 </div>
@@ -809,7 +809,7 @@ Continue?`;
                                       )}
                                     </span>
 
-                                    {/* Fantasy Team Tag (Preserved) */}
+                                    {/* SS League Team Tag (Preserved) */}
                                     <span className="px-2.5 py-1 rounded-lg text-xs bg-gray-100 text-gray-700 border border-gray-200 flex items-center gap-1">
                                       <span className="text-gray-400">SS Team:</span>
                                       <strong className="text-gray-900 max-w-[120px] truncate">{player.old.team_name || 'Free Agent'}</strong>
@@ -1457,7 +1457,7 @@ Continue?`;
               <p className="text-xs sm:text-sm text-gray-600 max-w-2xl leading-relaxed">
                 This will sync <strong>{comparison.summary.willUpdate}</strong> existing players' real clubs, styles, ages, and stats into the active database.
                 <span className="block text-[11px] sm:text-xs text-gray-500 mt-1">
-                  🛡️ Fantasy team ownership, contract details, and sold status are <strong>strictly preserved</strong>.
+                  🛡️ SS League team ownership, contract details, and sold status are <strong>strictly preserved</strong>.
                   The {comparison.summary.willCreate} new players in "Not In Active DB" are not created here — import them via the Add New Players portal.
                 </span>
               </p>

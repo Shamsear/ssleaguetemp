@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
           position: normalizeVal(activePlayer.position),
           overall_rating: normalizeNumber(activePlayer.overall_rating),
           playing_style: normalizeVal(activePlayer.playing_style),
-          team_name: normalizeVal(activePlayer.team_name), // fantasy team
+          team_name: normalizeVal(activePlayer.team_name), // SS League team
           club: normalizeVal(activePlayer.club), // real club
           nationality: normalizeVal(activePlayer.nationality),
           age: normalizeNumber(activePlayer.age), // age
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
           position: normalizeVal(tempPlayer.position) || normalizeVal(activePlayer.position),
           overall_rating: normalizeNumber(tempPlayer.overall_rating) || normalizeNumber(activePlayer.overall_rating),
           playing_style: normalizeVal(tempPlayer.playing_style) || normalizeVal(activePlayer.playing_style),
-          team_name: normalizeVal(activePlayer.team_name), // preserve the active fantasy team name so we don't overwrite it or flag it as a change!
+          team_name: normalizeVal(activePlayer.team_name), // preserve the active SS League team assignment so we don't overwrite it or flag it as a change!
           club: normalizeVal(tempPlayer.team_name) || normalizeVal(activePlayer.club), // real club from temp database
           nationality: normalizeVal(tempPlayer.nationality) || normalizeVal(activePlayer.nationality),
           age: normalizeNumber(tempPlayer.age) || normalizeNumber(activePlayer.age), // age from temp database
