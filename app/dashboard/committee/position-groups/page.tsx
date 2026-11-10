@@ -76,7 +76,7 @@ export default function PositionGroupsPage() {
     }
   }, [user]);
 
-  const fetchPlayers = async () => {
+  const fetchPlayers = async (posToRefresh?: string | null) => {
     try {
       setLoading(true);
       // Fetch all players without limit to get complete data
@@ -84,18 +84,27 @@ export default function PositionGroupsPage() {
       const { data: players, success } = await response.json();
 
       if (success) {
-        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Position Groups] Fetched ${players.length} total players`);
+        console.log(`[Position Groups] Fetched ${players.length} total players`);
         
         // Filter to only show players with the specified positions
-        // Don't filter by is_auction_eligible - we want to group ALL players
         const relevantPlayers = players.filter((p: Player) => 
           POSITION_GROUP_POSITIONS.includes(p.position?.toUpperCase() as any)
         );
         
-        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Position Groups] Filtered to ${relevantPlayers.length} players in CB/DMF/CMF/AMF/CF positions`);
+        console.log(`[Position Groups] Filtered to ${relevantPlayers.length} players in CB/DMF/CMF/AMF/CF positions`);
 
         setAllPlayers(relevantPlayers);
         calculateStats(relevantPlayers);
+
+        const targetPos = posToRefresh !== undefined ? posToRefresh : selectedPosition;
+        if (targetPos) {
+          const posPlayers = relevantPlayers.filter((p: Player) => p.position?.toUpperCase() === targetPos);
+          setGroupedPlayers({
+            group1: posPlayers.filter((p: Player) => p.position_group === `${targetPos}-1`),
+            group2: posPlayers.filter((p: Player) => p.position_group === `${targetPos}-2`),
+            ungrouped: posPlayers.filter((p: Player) => !p.position_group)
+          });
+        }
       }
     } catch (err: any) {
       console.error('Error fetching players:', err);
@@ -136,72 +145,30 @@ export default function PositionGroupsPage() {
 
     setDividing(true);
     try {
-      // Get all players for this position
-      const posPlayers = allPlayers.filter(p => p.position?.toUpperCase() === selectedPosition);
-      
-      // Sort by rating (highest first) for balanced distribution
-      const sortedPlayers = [...posPlayers].sort((a, b) => 
-        (b.overall_rating || 0) - (a.overall_rating || 0)
-      );
-
-      // Distribute players alternately to balance groups
-      const updates: Promise<any>[] = [];
-      sortedPlayers.forEach((player, index) => {
-        const group = index % 2 === 0 ? `${selectedPosition}-1` : `${selectedPosition}-2`;
-        updates.push(
-          fetchWithTokenRefresh(`/api/players/${player.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ position_group: group })
-          })
-        );
+      const response = await fetchWithTokenRefresh('/api/players/position-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'divide', position: selectedPosition })
       });
 
-      await Promise.all(updates);
-      
-      console.log(`<CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /> [Position Groups] Updated ${sortedPlayers.length} players with position_group`);
-      
-      // Refresh data from database
-      await fetchPlayers();
-      
-      // Small delay to ensure state has updated
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Re-fetch the fresh data and update the view
-      const response = await fetchWithTokenRefresh('/api/players?limit=10000');
-      const { data: freshPlayers, success } = await response.json();
-      
-      if (success) {
-        const relevantPlayers = freshPlayers.filter((p: Player) => 
-          POSITION_GROUP_POSITIONS.includes(p.position?.toUpperCase() as any)
-        );
-        
-        setAllPlayers(relevantPlayers);
-        
-        // Now update the position view with fresh data
-        const posPlayers = relevantPlayers.filter((p: Player) => p.position?.toUpperCase() === selectedPosition);
-        console.log(`<BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> [Position Groups] Found ${posPlayers.length} ${selectedPosition} players after division`);
-        
-        setGroupedPlayers({
-          group1: posPlayers.filter((p: Player) => p.position_group === `${selectedPosition}-1`),
-          group2: posPlayers.filter((p: Player) => p.position_group === `${selectedPosition}-2`),
-          ungrouped: posPlayers.filter((p: Player) => !p.position_group)
-        });
-        
-        calculateStats(relevantPlayers);
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || 'Failed to divide players');
       }
-      
+
+      await fetchPlayers(selectedPosition);
+
       showAlert({
         type: 'success',
         title: 'Success',
-        message: `Successfully divided ${sortedPlayers.length} players into 2 balanced groups!`
+        message: resData.message || `Successfully divided ${selectedPosition} players into 2 balanced groups!`
       });
     } catch (err: any) {
       console.error('Error dividing players:', err);
       showAlert({
         type: 'error',
         title: 'Division Failed',
-        message: 'Failed to divide players. Please try again.'
+        message: err.message || 'Failed to divide players. Please try again.'
       });
     } finally {
       setDividing(false);
@@ -213,99 +180,68 @@ export default function PositionGroupsPage() {
 
     setDividing(true);
     try {
-      const posPlayers = allPlayers.filter(p => 
-        p.position?.toUpperCase() === selectedPosition && p.position_group
-      );
-
-      const updates: Promise<any>[] = [];
-      posPlayers.forEach((player) => {
-        updates.push(
-          fetchWithTokenRefresh(`/api/players/${player.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ position_group: null })
-          })
-        );
+      const response = await fetchWithTokenRefresh(`/api/players/position-groups?position=${selectedPosition}`, {
+        method: 'DELETE'
       });
 
-      await Promise.all(updates);
-      
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || 'Failed to clear position groups');
+      }
+
+      await fetchPlayers(selectedPosition);
+
       showAlert({
         type: 'success',
         title: 'Groups Cleared',
-        message: `Successfully cleared groups for all ${selectedPosition} players.`
-      });
-
-      await fetchPlayers();
-      
-      // Update local view
-      const freshPosPlayers = allPlayers.filter(p => p.position?.toUpperCase() === selectedPosition);
-      setGroupedPlayers({
-        group1: [],
-        group2: [],
-        ungrouped: freshPosPlayers
+        message: resData.message || `Successfully cleared groups for all ${selectedPosition} players.`
       });
     } catch (err: any) {
       console.error('Error resetting groups:', err);
       showAlert({
         type: 'error',
         title: 'Action Failed',
-        message: 'An error occurred while clearing the position groups.'
+        message: err.message || 'An error occurred while clearing the position groups.'
       });
     } finally {
       setDividing(false);
     }
   };
+
   const handleResetAllGroups = async () => {
     const confirm = window.confirm("Are you sure you want to clear position groups for ALL players across ALL positions? This will make everyone ungrouped.");
     if (!confirm) return;
 
     setDividing(true);
     try {
-      const groupedPlayersList = allPlayers.filter(p => p.position_group);
+      const response = await fetchWithTokenRefresh('/api/players/position-groups?all=true', {
+        method: 'DELETE'
+      });
 
-      if (groupedPlayersList.length === 0) {
-        showAlert({
-          type: 'info',
-          title: 'No Groups Found',
-          message: 'All players are already ungrouped.'
-        });
-        setDividing(false);
-        return;
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || 'Failed to reset position groups');
       }
 
-      const updates: Promise<any>[] = [];
-      groupedPlayersList.forEach((player) => {
-        updates.push(
-          fetchWithTokenRefresh(`/api/players/${player.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ position_group: null })
-          })
-        );
-      });
-
-      await Promise.all(updates);
-      
-      showAlert({
-        type: 'success',
-        title: 'All Groups Cleared',
-        message: `Successfully cleared position groups for all ${groupedPlayersList.length} players across the registry.`
-      });
-
-      await fetchPlayers();
+      await fetchPlayers(null);
       setSelectedPosition(null);
       setGroupedPlayers({
         group1: [],
         group2: [],
         ungrouped: []
       });
+
+      showAlert({
+        type: 'success',
+        title: 'All Groups Cleared',
+        message: resData.message || 'Successfully cleared position groups for all players across the registry.'
+      });
     } catch (err: any) {
       console.error('Error resetting all groups:', err);
       showAlert({
         type: 'error',
         title: 'Action Failed',
-        message: 'An error occurred while resetting the position groups.'
+        message: err.message || 'An error occurred while resetting the position groups.'
       });
     } finally {
       setDividing(false);
@@ -321,14 +257,13 @@ export default function PositionGroupsPage() {
       : `${selectedPosition}-1`;
 
     try {
-      const response = await fetchWithTokenRefresh(`/api/players/${player.id}`, {
-        method: 'PUT',
+      const response = await fetchWithTokenRefresh('/api/players/position-groups', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ position_group: newGroup })
+        body: JSON.stringify({ playerId: player.id, position_group: newGroup })
       });
 
       if (response.ok) {
-        // Prevent race condition or state lag by updating all relevant states synchronously
         const updatedAllPlayers = allPlayers.map(p => 
           p.id === player.id ? { ...p, position_group: newGroup } : p
         );

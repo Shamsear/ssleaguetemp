@@ -93,11 +93,7 @@ export async function getAllPlayers(filters?: {
       return result as FootballPlayer[];
     }
 
-    // For filtered queries, we need to use Pool for parameterized queries
-    const { Pool } = await import('@neondatabase/serverless');
-    const pool = new Pool({ connectionString: process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL });
-
-    try {
+    // Parameterized filtered queries using HTTP-based sql.query
       // Build WHERE conditions dynamically (exclude retired unless includeRetired or retired is true)
       let query = 'SELECT * FROM footballplayers WHERE 1=1';
       if (!filters?.includeRetired && filters?.retired === undefined) {
@@ -158,12 +154,9 @@ export async function getAllPlayers(filters?: {
       console.log('📝 Query:', query);
       console.log('📝 Params:', params);
 
-      const result = await pool.query(query, params);
-      console.log(`✅ Fetched ${result.rows.length} players from Neon`);
-      return result.rows as FootballPlayer[];
-    } finally {
-      await pool.end();
-    }
+      const result = await sql.query(query, params);
+      console.log(`✅ Fetched ${result.length} players from Neon`);
+      return result as FootballPlayer[];
   } catch (error) {
     console.error('❌ Error in getAllPlayers:', error);
     throw error;
@@ -288,14 +281,8 @@ export async function updatePlayer(id: string, updates: Partial<FootballPlayer>)
     RETURNING *
   `;
 
-  const { Pool } = await import('@neondatabase/serverless');
-  const pool = new Pool({ connectionString: process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL });
-  try {
-    const result = await pool.query(query, params);
-    return result.rows.length > 0 ? result.rows[0] as FootballPlayer : null;
-  } finally {
-    await pool.end();
-  }
+  const rows = await sql.query(query, params);
+  return rows.length > 0 ? (rows[0] as FootballPlayer) : null;
 }
 
 /**
@@ -317,21 +304,15 @@ export async function updatePlayerEligibility(id: string, isEligible: boolean): 
 export async function bulkUpdateEligibility(playerIds: string[], isEligible: boolean): Promise<number> {
   if (playerIds.length === 0) return 0;
 
-  const { Pool } = await import('@neondatabase/serverless');
-  const pool = new Pool({ connectionString: process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL });
+  const query = `
+    UPDATE footballplayers 
+    SET is_auction_eligible = $1
+    WHERE id = ANY($2::text[])
+    RETURNING id
+  `;
 
-  try {
-    const query = `
-      UPDATE footballplayers 
-      SET is_auction_eligible = $1
-      WHERE id = ANY($2::text[])
-    `;
-
-    const result = await pool.query(query, [isEligible, playerIds]);
-    return result.rowCount || 0;
-  } finally {
-    await pool.end();
-  }
+  const rows = await sql.query(query, [isEligible, playerIds]);
+  return rows.length;
 }
 
 export async function deletePlayer(id: string): Promise<boolean> {
@@ -415,11 +396,7 @@ export async function getTotalPlayerCountWithFilters(filters?: {
       return parseInt(result[0].count);
     }
 
-    // For filtered queries, we need to use Pool for parameterized queries
-    const { Pool } = await import('@neondatabase/serverless');
-    const pool = new Pool({ connectionString: process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL });
-
-    try {
+    // Parameterized filtered queries using HTTP-based sql.query
       // Build WHERE conditions dynamically
       let query = 'SELECT COUNT(*) as count FROM footballplayers WHERE 1=1';
       if (!filters?.includeRetired && filters?.retired === undefined) {
@@ -461,11 +438,8 @@ export async function getTotalPlayerCountWithFilters(filters?: {
       console.log('📝 Count Query:', query);
       console.log('📝 Count Params:', params);
 
-      const result = await pool.query(query, params);
-      return parseInt(result.rows[0].count);
-    } finally {
-      await pool.end();
-    }
+      const result = await sql.query(query, params);
+      return parseInt(result[0].count);
   } catch (error) {
     console.error('❌ Error in getTotalPlayerCountWithFilters:', error);
     throw error;
@@ -841,3 +815,77 @@ export async function bulkImportPlayers(players: Omit<FootballPlayer, 'created_a
   }
 }
 
+/**
+ * Reset position groups for all players in the database
+ */
+export async function resetAllPositionGroups(): Promise<number> {
+  const result = await sql`
+    UPDATE footballplayers
+    SET position_group = NULL
+    WHERE position_group IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+/**
+ * Reset position groups for a specific position (e.g. 'CB', 'CMF')
+ */
+export async function resetPositionGroups(position: string): Promise<number> {
+  const result = await sql`
+    UPDATE footballplayers
+    SET position_group = NULL
+    WHERE UPPER(position) = UPPER(${position}) AND position_group IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+/**
+ * Divide players of a given position into two balanced groups based on overall rating
+ */
+export async function dividePositionGroups(position: string): Promise<{ position: string; total: number; group1: number; group2: number }> {
+  const upperPos = position.toUpperCase();
+  const group1 = `${upperPos}-1`;
+  const group2 = `${upperPos}-2`;
+
+  const result = await sql`
+    WITH ranked AS (
+      SELECT id,
+             CASE WHEN (ROW_NUMBER() OVER (ORDER BY overall_rating DESC NULLS LAST, name ASC) % 2) = 1 
+                  THEN ${group1} 
+                  ELSE ${group2} 
+             END AS assigned_group
+      FROM footballplayers
+      WHERE UPPER(position) = UPPER(${upperPos})
+    )
+    UPDATE footballplayers fp
+    SET position_group = ranked.assigned_group
+    FROM ranked
+    WHERE fp.id = ranked.id
+    RETURNING fp.id, fp.position_group
+  `;
+
+  const group1Count = result.filter(r => r.position_group === group1).length;
+  const group2Count = result.filter(r => r.position_group === group2).length;
+
+  return {
+    position: upperPos,
+    total: result.length,
+    group1: group1Count,
+    group2: group2Count
+  };
+}
+
+/**
+ * Swap or update a player's position group
+ */
+export async function swapPlayerPositionGroup(playerId: string, newGroup: string | null): Promise<FootballPlayer | null> {
+  const result = await sql`
+    UPDATE footballplayers
+    SET position_group = ${newGroup}
+    WHERE id = ${playerId}
+    RETURNING *
+  `;
+  return result.length > 0 ? (result[0] as FootballPlayer) : null;
+}
