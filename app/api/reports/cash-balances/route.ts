@@ -169,63 +169,15 @@ export async function GET(request: NextRequest) {
       // Fetch or create their cash balance doc using live name to ensure DB sync
       const balance = await getOrCreateTeamCashBalance(ts.team_id, liveName);
 
-      let payments: any[] = balance.payments || [];
+      let payments: any[] = (balance.payments || []).filter(
+        (p: any) => p.recorded_by !== 'system_auto_heal' && !p.payment_id?.startsWith('auto_')
+      );
       // Prefer cash-balance doc's payment_type, fall back to teams.raw_data.payment_type
       const seasonPlans = balance.season_plans || {};
       const planForSeason = (seasonId && seasonId !== 'all')
         ? (seasonPlans[seasonId] || balance.payment_type || teamData?.payment_type || 'seasonal')
         : (balance.payment_type || teamData?.payment_type || 'seasonal');
       const paymentType = planForSeason;
-
-      let hasNewPaymentsToPersist = false;
-
-      // Auto-heal: If team is Upfront (or has an upfront season plan) but has no upfront payment (>= 500) logged in payments array
-      const hasUpfrontPayment = payments.some((p: any) => (p.amount || 0) >= 500);
-      const isUpfrontType = paymentType === 'upfront' || Object.values(seasonPlans).includes('upfront');
-
-      if (isUpfrontType && !hasUpfrontPayment) {
-        // Find the earliest season they registered or became upfront
-        const upfrontSeasonId = joinedSeasons[0] || (seasonId && seasonId !== 'all' ? seasonId : 'SSPSLS19');
-        const synthesizedPayment = {
-          payment_id: `auto_upfront_${ts.team_id}_${upfrontSeasonId}`,
-          amount: 500,
-          season_id: upfrontSeasonId,
-          date: new Date().toISOString(),
-          notes: 'Upfront 5-Season Subscription (Auto-synced)',
-          recorded_by: 'system_auto_heal'
-        };
-        payments = [synthesizedPayment, ...payments];
-        hasNewPaymentsToPersist = true;
-      } else if (!isUpfrontType && payments.some((p: any) => p.payment_id?.startsWith(`auto_upfront_${ts.team_id}`) && p.recorded_by === 'system_auto_heal')) {
-        payments = payments.filter((p: any) => !(p.payment_id?.startsWith(`auto_upfront_${ts.team_id}`) && p.recorded_by === 'system_auto_heal'));
-        hasNewPaymentsToPersist = true;
-      }
-
-      // Auto-heal: For registered seasons where the team played as seasonal, ensure payment records exist if registered
-      joinedSeasons.forEach((sid: any) => {
-        const paymentsThisSeason = payments.filter((p: any) => {
-          if (!p.season_id) return false;
-          const pNum = parseInt(p.season_id.replace(/\D/g, '')) || 0;
-          const sNum = parseInt(sid.replace(/\D/g, '')) || 0;
-          return p.season_id === sid || (pNum > 0 && pNum === sNum);
-        });
-
-        const manualPlan = seasonPlans[sid];
-        const isUpfrontSeason = manualPlan === 'upfront' || (paymentType === 'upfront' && !manualPlan);
-        
-        if (!isUpfrontSeason && paymentsThisSeason.length === 0 && (ts as any).is_registered) {
-          const synthesizedSeasonal = {
-            payment_id: `auto_seasonal_${ts.team_id}_${sid}`,
-            amount: 100,
-            season_id: sid,
-            date: new Date().toISOString(),
-            notes: `Seasonal Entry Fee (Auto-synced)`,
-            recorded_by: 'system_auto_heal'
-          };
-          payments.push(synthesizedSeasonal);
-          hasNewPaymentsToPersist = true;
-        }
-      });
 
       // Calculate total payments
       const totalPayments = payments.reduce((sum: any, p: any) => sum + (p.amount || 0), 0);
@@ -244,11 +196,10 @@ export async function GET(request: NextRequest) {
       const totalDeductions = deductions.reduce((sum: any, d: any) => sum + d.amount, 0);
       const remainingBalance = totalPayments - totalDeductions;
 
-      // Self-healing database: Sync remaining_balance and payments in Firestore if updated
-      if (hasNewPaymentsToPersist || balance.remaining_balance !== remainingBalance) {
+      // Sync remaining_balance in Firestore if different
+      if (balance.remaining_balance !== remainingBalance) {
         try {
           await adminDb.collection('team_cash_balances').doc(ts.team_id).update({
-            payments: payments,
             remaining_balance: remainingBalance,
             updated_at: new Date()
           });
@@ -256,6 +207,65 @@ export async function GET(request: NextRequest) {
           console.error('Failed to update team_cash_balances in Firestore:', err);
         }
       }
+
+      // Calculate chronological carryover and debt propagation across all played seasons
+      let carryover = 0;
+      const seasonStates: Record<string, {
+        status: 'paid' | 'unpaid' | 'prepaid';
+        debt: number;
+        balance_before: number;
+        balance_after: number;
+        expected_amount: number;
+        payments_this_season: number;
+        warning?: string;
+      }> = {};
+
+      joinedSeasons.forEach((sid: string) => {
+        const fee = 100;
+        const paymentsThisSeason = payments
+          .filter((p: any) => p.season_id === sid)
+          .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+
+        const balanceBefore = carryover;
+        const currentPlan = seasonPlans[sid] || paymentType;
+
+        let expectedAmount = 0;
+        if (currentPlan === 'upfront') {
+          expectedAmount = Math.max(0, 500 - Math.max(0, balanceBefore));
+        } else {
+          expectedAmount = balanceBefore >= 100 ? 0 : 100;
+        }
+
+        const netBeforePayments = balanceBefore - fee;
+        const netAfterPayments = netBeforePayments + paymentsThisSeason;
+        carryover = netAfterPayments; // Debt carries forward continuously!
+
+        const isPrepaid = paymentsThisSeason === 0 && netBeforePayments >= 0;
+        const status: 'paid' | 'unpaid' | 'prepaid' = netAfterPayments >= 0
+          ? (isPrepaid ? 'prepaid' : 'paid')
+          : 'unpaid';
+
+        const debt = Math.max(0, -carryover);
+
+        let warning: string | undefined = undefined;
+        if (status === 'unpaid') {
+          warning = `Unpaid: ₹${debt} debt`;
+        } else if (paymentsThisSeason > 0 && expectedAmount > 0 && paymentsThisSeason !== expectedAmount) {
+          warning = `Payment mismatch: Expected ₹${expectedAmount}, got ₹${paymentsThisSeason}`;
+        }
+
+        seasonStates[sid] = {
+          status,
+          debt,
+          balance_before: balanceBefore,
+          balance_after: carryover,
+          expected_amount: expectedAmount,
+          payments_this_season: paymentsThisSeason,
+          warning,
+        };
+      });
+
+      const currentSeasonState = (seasonId && seasonId !== 'all') ? seasonStates[seasonId] : undefined;
 
       return {
         team_id: ts.team_id,
@@ -274,6 +284,8 @@ export async function GET(request: NextRequest) {
         payments,
         deductions,
         is_registered: (ts as any).is_registered ?? false,
+        season_states: seasonStates,
+        current_season_state: currentSeasonState,
       };
     });
 
@@ -409,103 +421,65 @@ export async function POST(request: NextRequest) {
           paymentType = teamData.payment_type || 'seasonal';
         }
 
-        // Determine plan for this season (fallback default)
-        let planForSeason = paymentType;
+        // Determine plan for this season
+        const planForSeason = seasonPlans[seasonId] || paymentType;
 
         let joinedSeasons = (teamData?.seasons || []).map((s: any) => typeof s === 'string' ? s.trim() : s);
         
         const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
         let seasonsToProcess = [...joinedSeasons];
         if (seasonId && seasonId !== 'all') {
-          seasonsToProcess = seasonsToProcess.filter((sid: any) => getSeasonNum(sid) <= getSeasonNum(seasonId));
-          if (!seasonsToProcess.includes(seasonId)) {
-            seasonsToProcess.push(seasonId);
-          }
+          seasonsToProcess = seasonsToProcess.filter((sid: any) => getSeasonNum(sid) < getSeasonNum(seasonId));
         }
 
-        // Sort seasons played numerically ascending
-        const sortedSeasons = seasonsToProcess.sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
+        // Sort prior seasons played numerically ascending
+        const sortedPriorSeasons = seasonsToProcess.sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
 
-        // Chronological plan calculation to determine current season's plan type
-        let runningPlan = paymentType;
-        let upfrontSeasonsRemaining = 0;
-
-        sortedSeasons.forEach((sid: any) => {
-          // Include current payments in this check except when calculating if they've paid S6
+        // Carryover/coverage calculation entering the season with debt propagation
+        let carryover = 0;
+        sortedPriorSeasons.forEach((sid: any) => {
+          const fee = 100;
           const paymentsThisSeason = payments
             .filter((p: any) => p.season_id === sid)
             .reduce((sum: number, p: any) => sum + p.amount, 0);
 
-          const manualPlan = seasonPlans[sid];
-          
-          if (manualPlan === 'upfront' || paymentsThisSeason >= 500) {
-            runningPlan = 'upfront';
-            upfrontSeasonsRemaining = 5;
-          } else if (manualPlan === 'seasonal') {
-            runningPlan = 'seasonal';
-            upfrontSeasonsRemaining = 0;
-          }
-
-          const isCovered = upfrontSeasonsRemaining > 0;
-          if (sid === seasonId) {
-            planForSeason = isCovered ? 'upfront' : 'seasonal';
-          }
-
-          if (isCovered) {
-            upfrontSeasonsRemaining--;
-            if (upfrontSeasonsRemaining === 0) {
-              runningPlan = 'seasonal';
-            }
-          }
-        });
-
-        // Carryover/coverage calculation (excluding current season payment, as we want to check status prior to bulk credit)
-        let carryover = 0;
-        const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
-
-        sortedSeasons.forEach((sid: any) => {
-          const fee = 100;
-          const paymentsThisSeason = payments
-            .filter((p: any) => p.season_id === sid && p.season_id !== seasonId)
-            .reduce((sum: number, p: any) => sum + p.amount, 0);
-
           const netBeforePayments = carryover - fee;
           const netAfterPayments = netBeforePayments + paymentsThisSeason;
-
-          if (netAfterPayments >= 0) {
-            const isPrepaid = paymentsThisSeason === 0 && carryover >= fee;
-            seasonStates[sid] = {
-              status: isPrepaid ? 'prepaid' : 'paid',
-              debt: 0
-            };
-            carryover = netAfterPayments;
-          } else {
-            seasonStates[sid] = {
-              status: 'unpaid',
-              debt: Math.abs(netAfterPayments)
-            };
-            carryover = 0;
-          }
+          carryover = netAfterPayments; // Debt carries forward continuously!
         });
 
-        const currentSeasonState = seasonStates[seasonId];
-        const isPrepaidCovered = currentSeasonState ? currentSeasonState.status === 'prepaid' : (carryover >= 100);
+        const carryoverBeforeSeason = carryover;
 
-        // Skip if covered by upfront balance (regardless of upfront or seasonal) or payment already logged
-        const hasPaid = payments.some((p: any) => p.season_id === seasonId) || isPrepaidCovered;
-        if (hasPaid) {
+        // Smart skip 1: Skip if payment is already logged for this season
+        const alreadyPaidThisSeason = payments.some((p: any) => p.season_id === seasonId);
+        if (alreadyPaidThisSeason) {
           return;
         }
 
-        // Upfront pays 500, Seasonal pays 100
-        const creditAmount = planForSeason === 'upfront' ? 500 : 100;
+        // Smart skip 2 & credit amount calculation:
+        let creditAmount = 0;
+        if (planForSeason === 'seasonal') {
+          // Skip prepaid (covered) teams ONLY on seasonal plan
+          if (carryoverBeforeSeason >= 100) {
+            return;
+          }
+          creditAmount = 100;
+        } else {
+          // Upfront: Top up to 500!
+          // Rule: topUp = 500 - max(0, balance before season)
+          const topUp = Math.max(0, 500 - Math.max(0, carryoverBeforeSeason));
+          if (topUp <= 0) {
+            return; // Already has 500+ balance
+          }
+          creditAmount = topUp;
+        }
 
         await recordCashPayment(
           t.team_id,
           liveName,
           creditAmount,
           seasonId,
-          notes || `Bulk Credit (${planForSeason === 'upfront' ? 'Upfront' : 'Seasonal'})`,
+          notes || `Bulk Credit (${planForSeason === 'upfront' ? `Upfront Top-up ₹${creditAmount}` : 'Seasonal ₹100'})`,
           auth.userId || 'super_admin'
         );
       });
@@ -514,7 +488,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: `Successfully processed bulk credits: credited ₹500 to Upfront and ₹100 to Seasonal teams.`,
+        message: `Successfully processed bulk credits: topped up Upfront teams and credited ₹100 to Seasonal teams.`,
       });
     } else if (action === 'bulk_update_type') {
       if (!paymentType || !['upfront', 'seasonal'].includes(paymentType)) {
@@ -835,49 +809,27 @@ export async function POST(request: NextRequest) {
           const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
           let seasonsToProcess = [...joinedSeasons];
           if (seasonId && seasonId !== 'all') {
-            seasonsToProcess = seasonsToProcess.filter((sid: any) => getSeasonNum(sid) <= getSeasonNum(seasonId));
-            if (!seasonsToProcess.includes(seasonId)) {
-              seasonsToProcess.push(seasonId);
-            }
+            seasonsToProcess = seasonsToProcess.filter((sid: any) => getSeasonNum(sid) < getSeasonNum(seasonId));
           }
-          const sortedSeasons = seasonsToProcess.sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
+          const sortedPriorSeasons = seasonsToProcess.sort((a: any, b: any) => getSeasonNum(a) - getSeasonNum(b));
 
           let carryover = 0;
-          const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
-
-          sortedSeasons.forEach((sid: any) => {
+          sortedPriorSeasons.forEach((sid: any) => {
             const fee = 100;
             const paymentsThisSeason = payments
-              .filter((p: any) => p.season_id === sid && p.season_id !== seasonId)
+              .filter((p: any) => p.season_id === sid)
               .reduce((sum: number, p: any) => sum + p.amount, 0);
 
             const netBeforePayments = carryover - fee;
             const netAfterPayments = netBeforePayments + paymentsThisSeason;
-
-            if (netAfterPayments >= 0) {
-              const isPrepaid = paymentsThisSeason === 0 && carryover >= fee;
-              seasonStates[sid] = {
-                status: isPrepaid ? 'prepaid' : 'paid',
-                debt: 0
-              };
-              carryover = netAfterPayments;
-            } else {
-              seasonStates[sid] = {
-                status: 'unpaid',
-                debt: Math.abs(netAfterPayments)
-              };
-              carryover = 0;
-            }
+            carryover = netAfterPayments; // Debt carries forward!
           });
 
-          const currentSeasonState = seasonStates[seasonId];
-          const isPrepaidCovered = currentSeasonState ? currentSeasonState.status === 'prepaid' : (carryover >= 100);
-
-          if (isPrepaidCovered) {
+          if (carryover >= 100) {
             return NextResponse.json(
               { 
                 success: false, 
-                error: `Cannot record payment: ${teamName} is already marked as Prepaid (Covered by carryover balance) for season ${seasonId.replace('SSPSLS', 'S')}.` 
+                error: `Cannot record payment: ${teamName} is already marked as Prepaid (Covered by carryover balance of ₹${carryover}) for season ${seasonId.replace('SSPSLS', 'S')}.` 
               },
               { status: 400 }
             );

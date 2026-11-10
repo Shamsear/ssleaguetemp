@@ -415,6 +415,99 @@ export default function CommitteeCashBalances() {
 
   const docErrorMsg = (err: any) => typeof err === 'string' ? err : 'Operation failed';
 
+  // Unified carryover and status calculation for a team
+  const getTeamSeasonCalc = (team: TeamCashBalance, targetSeasonId: string) => {
+    const currentPlan = (targetSeasonId && targetSeasonId !== 'all')
+      ? (team.season_plans?.[targetSeasonId] || team.payment_type || 'seasonal')
+      : (team.payment_type || 'seasonal');
+
+    const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
+    let seasonsToProcess = [...(team.seasons_played || [])];
+    if (targetSeasonId && targetSeasonId !== 'all') {
+      seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(targetSeasonId));
+      if (!seasonsToProcess.includes(targetSeasonId)) {
+        seasonsToProcess.push(targetSeasonId);
+      }
+    }
+    const sortedSeasons = seasonsToProcess.sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
+
+    let carryover = 0;
+    let balanceBeforeTarget = 0;
+    const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number, balanceBefore: number, balanceAfter: number }> = {};
+
+    sortedSeasons.forEach((sid) => {
+      const fee = 100;
+      const paymentsThisSeason = team.payments?.filter((p: any) => p.season_id === sid).reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
+      const balanceBefore = carryover;
+      if (sid === targetSeasonId) {
+        balanceBeforeTarget = balanceBefore;
+      }
+      const netBeforePayments = balanceBefore - fee;
+      const netAfterPayments = netBeforePayments + paymentsThisSeason;
+      carryover = netAfterPayments; // Debt carries forward continuously!
+
+      const isPrepaid = paymentsThisSeason === 0 && netBeforePayments >= 0;
+      const status: 'paid' | 'unpaid' | 'prepaid' = netAfterPayments >= 0 ? (isPrepaid ? 'prepaid' : 'paid') : 'unpaid';
+      const debt = Math.max(0, -carryover);
+      seasonStates[sid] = {
+        status,
+        debt,
+        balanceBefore,
+        balanceAfter: carryover,
+      };
+    });
+
+    const currentSeasonState = seasonStates[targetSeasonId];
+    const isPrepaidCovered = currentSeasonState?.status === 'prepaid';
+    const hasPaymentLoggedThisSeason = team.payments?.some(p => p.season_id === targetSeasonId) || false;
+
+    // Upfront top up: 500 - max(0, balance before season)
+    const upfrontTopUp = Math.max(0, 500 - Math.max(0, balanceBeforeTarget));
+
+    // To Pay Now (Cash Due for this season)
+    let toPayNow = 0;
+    if (currentPlan === 'upfront') {
+      toPayNow = hasPaymentLoggedThisSeason ? 0 : (balanceBeforeTarget >= 500 ? 0 : upfrontTopUp);
+    } else {
+      toPayNow = (hasPaymentLoggedThisSeason || isPrepaidCovered) ? 0 : 100;
+      if (currentSeasonState?.status === 'unpaid') {
+        toPayNow = currentSeasonState.debt;
+      }
+    }
+
+    // Smart skip for bulk credit:
+    let isSkippedForBulk = false;
+    let bulkCreditAmount = 0;
+    if (hasPaymentLoggedThisSeason) {
+      isSkippedForBulk = true;
+    } else if (currentPlan === 'seasonal') {
+      if (balanceBeforeTarget >= 100) {
+        isSkippedForBulk = true;
+      } else {
+        bulkCreditAmount = 100;
+      }
+    } else {
+      // Upfront
+      if (upfrontTopUp <= 0) {
+        isSkippedForBulk = true;
+      } else {
+        bulkCreditAmount = upfrontTopUp;
+      }
+    }
+
+    return {
+      currentPlan,
+      balanceBeforeTarget,
+      currentSeasonState,
+      isPrepaidCovered,
+      hasPaymentLoggedThisSeason,
+      upfrontTopUp,
+      toPayNow,
+      isSkippedForBulk,
+      bulkCreditAmount,
+    };
+  };
+
   // Calculations for summary cards
   const totalCollected = balances.reduce((sum, b) => {
     const paymentSum = b.payments?.reduce((pSum, p) => pSum + p.amount, 0) || 0;
@@ -433,67 +526,33 @@ export default function CommitteeCashBalances() {
     return sum;
   }, 0);
 
+  const totalToPayNow = balances.reduce((sum, b) => {
+    const calc = getTeamSeasonCalc(b, selectedSeasonId);
+    return sum + calc.toPayNow;
+  }, 0);
+
   // Calculate preview counts for bulk credit modal dynamically
   const bulkCreditPreview = (() => {
     let upfrontCount = 0;
     let seasonalCount = 0;
     let skippedCount = 0;
+    let totalCreditAmount = 0;
 
     balances.forEach((team) => {
-      const currentPlan = team.season_plans?.[selectedSeasonId] || team.payment_type || 'seasonal';
-      
-      // Chronological season-wise calculation and filtering out future seasons
-      const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
-      let seasonsToProcess = [...(team.seasons_played || [])];
-      if (selectedSeasonId && selectedSeasonId !== 'all') {
-        seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(selectedSeasonId));
-        if (!seasonsToProcess.includes(selectedSeasonId)) {
-          seasonsToProcess.push(selectedSeasonId);
-        }
-      }
-      const sortedSeasons = seasonsToProcess.sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
-      
-      let carryover = 0;
-      const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
-      
-      sortedSeasons.forEach((seasonId) => {
-        const fee = 100;
-        const paymentsThisSeason = team.payments?.filter((p: any) => p.season_id === seasonId).reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
-        const netBeforePayments = carryover - fee;
-        const netAfterPayments = netBeforePayments + paymentsThisSeason;
-        
-        if (netAfterPayments >= 0) {
-          const isPrepaid = paymentsThisSeason === 0 && carryover >= fee;
-          seasonStates[seasonId] = {
-            status: isPrepaid ? 'prepaid' : 'paid',
-            debt: 0
-          };
-          carryover = netAfterPayments;
-        } else {
-          seasonStates[seasonId] = {
-            status: 'unpaid',
-            debt: Math.abs(netAfterPayments)
-          };
-          carryover = 0;
-        }
-      });
-      
-      const currentSeasonState = seasonStates[selectedSeasonId];
-      const isPrepaidCovered = currentSeasonState ? currentSeasonState.status === 'prepaid' : (carryover >= 100);
-      const hasPaid = team.payments?.some(p => p.season_id === selectedSeasonId) || isPrepaidCovered;
-
-      if (hasPaid) {
+      const calc = getTeamSeasonCalc(team, selectedSeasonId);
+      if (calc.isSkippedForBulk) {
         skippedCount++;
       } else {
-        if (currentPlan === 'upfront') {
+        if (calc.currentPlan === 'upfront') {
           upfrontCount++;
         } else {
           seasonalCount++;
         }
+        totalCreditAmount += calc.bulkCreditAmount;
       }
     });
 
-    return { upfrontCount, seasonalCount, skippedCount };
+    return { upfrontCount, seasonalCount, skippedCount, totalCreditAmount };
   })();
 
   const formatDate = (dateVal: any) => {
@@ -573,18 +632,24 @@ export default function CommitteeCashBalances() {
             <p className="text-[8px] text-slate-400 uppercase font-semibold mt-3">Sum of all team offline cash payments</p>
           </div>
 
-          {/* Card 2: Upfront Subscribers */}
-          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm hover:border-green-400/40 transition-all flex flex-col justify-between">
+          {/* Card 2: TO PAY NOW / Upfront Subscribers */}
+          <div className="console-card bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm hover:border-emerald-400/40 transition-all flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Upfront Subscribers</p>
-                <h3 className="text-2xl font-black text-emerald-600">{activeUpfrontCount} Teams</h3>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  {selectedSeasonId === 'all' ? 'Upfront Subscribers' : 'TO PAY NOW (Current Season)'}
+                </p>
+                <h3 className="text-2xl font-black text-emerald-600">
+                  {selectedSeasonId === 'all' ? `${activeUpfrontCount} Teams` : `₹${totalToPayNow.toLocaleString()}`}
+                </h3>
               </div>
               <div className="p-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg">
                 <CheckCircle className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-[8px] text-slate-400 uppercase font-semibold mt-3">Paid 500 cash for 5 seasons</p>
+            <p className="text-[8px] text-slate-400 uppercase font-semibold mt-3">
+              {selectedSeasonId === 'all' ? 'Paid 500 cash for 5 seasons' : 'Exact cash due across all teams this season'}
+            </p>
           </div>
 
           {/* Card 3: Total Outstanding Balance */}
@@ -675,52 +740,11 @@ export default function CommitteeCashBalances() {
               .filter(t => normalizeStr(t.team_name).includes(normalizeStr(searchQuery)) || normalizeStr(t.team_id).includes(normalizeStr(searchQuery)))
               .filter(team => {
                 if (selectedSeasonId === 'all' || statusFilter === 'all') return true;
-
-                // Carryover and prepaid verification logic inside filter loop
-                const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
-                let seasonsToProcess = [...(team.seasons_played || [])];
-                if (selectedSeasonId && selectedSeasonId !== 'all') {
-                  seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(selectedSeasonId));
-                  if (!seasonsToProcess.includes(selectedSeasonId)) {
-                    seasonsToProcess.push(selectedSeasonId);
-                  }
-                }
-                const sortedSeasons = seasonsToProcess.sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
-
-                let carryover = 0;
-                const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
-
-                sortedSeasons.forEach((seasonId) => {
-                  const fee = 100;
-                  const paymentsThisSeason = team.payments?.filter((p: any) => p.season_id === seasonId).reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
-                  const netBeforePayments = carryover - fee;
-                  const netAfterPayments = netBeforePayments + paymentsThisSeason;
-
-                  if (netAfterPayments >= 0) {
-                    const isPrepaid = paymentsThisSeason === 0 && carryover >= fee;
-                    seasonStates[seasonId] = {
-                      status: isPrepaid ? 'prepaid' : 'paid',
-                      debt: 0
-                    };
-                    carryover = netAfterPayments;
-                  } else {
-                    seasonStates[seasonId] = {
-                      status: 'unpaid',
-                      debt: Math.abs(netAfterPayments)
-                    };
-                    carryover = 0;
-                  }
-                });
-
-                const currentSeasonState = seasonStates[selectedSeasonId];
-                const isPrepaidCovered = currentSeasonState ? currentSeasonState.status === 'prepaid' : (carryover >= 100);
-                const hasPaymentLoggedThisSeason = team.payments?.some(p => p.season_id === selectedSeasonId) || false;
-                const hasPaidThisSeason = hasPaymentLoggedThisSeason || isPrepaidCovered;
-
+                const calc = getTeamSeasonCalc(team, selectedSeasonId);
                 if (statusFilter === 'missing') {
-                  return !hasPaidThisSeason;
+                  return !calc.hasPaymentLoggedThisSeason && !calc.isPrepaidCovered;
                 } else if (statusFilter === 'paid') {
-                  return hasPaidThisSeason;
+                  return calc.hasPaymentLoggedThisSeason || calc.isPrepaidCovered;
                 }
                 return true;
               });
@@ -761,48 +785,8 @@ export default function CommitteeCashBalances() {
                     {filteredBalances.map((team) => {
                       const totalPaymentsSum = team.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
                       const seasonPaymentsSum = team.payments?.filter(p => p.season_id === selectedSeasonId).reduce((sum, p) => sum + p.amount, 0) || 0;
-                      const currentPlan = team.season_plans?.[selectedSeasonId] || team.payment_type || 'seasonal';
-
-                      // Chronological season-wise calculation and filtering out future seasons
-                      const getSeasonNum = (id: string) => parseInt(id.replace(/\D/g, '')) || 0;
-                      let seasonsToProcess = [...(team.seasons_played || [])];
-                      if (selectedSeasonId && selectedSeasonId !== 'all') {
-                        seasonsToProcess = seasonsToProcess.filter(sid => getSeasonNum(sid) <= getSeasonNum(selectedSeasonId));
-                        if (!seasonsToProcess.includes(selectedSeasonId)) {
-                          seasonsToProcess.push(selectedSeasonId);
-                        }
-                      }
-                      const sortedSeasons = seasonsToProcess.sort((a, b) => getSeasonNum(a) - getSeasonNum(b));
-
-                      let carryover = 0;
-                      const seasonStates: Record<string, { status: 'paid' | 'unpaid' | 'prepaid', debt: number }> = {};
-
-                      sortedSeasons.forEach((seasonId) => {
-                        const fee = 100;
-                        const paymentsThisSeason = team.payments?.filter((p: any) => p.season_id === seasonId).reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
-                        const netBeforePayments = carryover - fee;
-                        const netAfterPayments = netBeforePayments + paymentsThisSeason;
-
-                        if (netAfterPayments >= 0) {
-                          const isPrepaid = paymentsThisSeason === 0 && carryover >= fee;
-                          seasonStates[seasonId] = {
-                            status: isPrepaid ? 'prepaid' : 'paid',
-                            debt: 0
-                          };
-                          carryover = netAfterPayments;
-                        } else {
-                          seasonStates[seasonId] = {
-                            status: 'unpaid',
-                            debt: Math.abs(netAfterPayments)
-                          };
-                          carryover = 0;
-                        }
-                      });
-
-                      const currentSeasonState = seasonStates[selectedSeasonId];
-                      const isPrepaidCovered = currentSeasonState ? currentSeasonState.status === 'prepaid' : (carryover >= 100);
-                      const hasPaymentLoggedThisSeason = team.payments?.some(p => p.season_id === selectedSeasonId) || false;
-                      const hasPaidThisSeason = hasPaymentLoggedThisSeason || isPrepaidCovered;
+                      const calc = getTeamSeasonCalc(team, selectedSeasonId);
+                      const { currentPlan, isPrepaidCovered, hasPaymentLoggedThisSeason, upfrontTopUp, toPayNow, currentSeasonState } = calc;
                     
                     return (
                       <tr key={team.team_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
@@ -835,6 +819,25 @@ export default function CommitteeCashBalances() {
                                  )}
                                </div>
                                <span className="text-[9px] text-slate-400 font-mono mt-0.5">{team.team_id}</span>
+                               {selectedSeasonId !== 'all' && (
+                                 <div className="mt-1 flex flex-wrap gap-1">
+                                   {currentSeasonState?.status === 'unpaid' && (
+                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 rounded text-[8px] font-black uppercase">
+                                       ⚠️ Due: ₹{toPayNow}
+                                     </span>
+                                   )}
+                                   {hasPaymentLoggedThisSeason && currentPlan === 'upfront' && upfrontTopUp > 0 && seasonPaymentsSum !== upfrontTopUp && (
+                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded text-[8px] font-black uppercase">
+                                       ⚠️ Paid ₹{seasonPaymentsSum} (Exp: ₹{upfrontTopUp})
+                                     </span>
+                                   )}
+                                   {team.remaining_balance < 0 && (
+                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 rounded text-[8px] font-black uppercase">
+                                       Deficit: -₹{Math.abs(team.remaining_balance)}
+                                     </span>
+                                   )}
+                                 </div>
+                               )}
                              </div>
                           </div>
                         </td>
@@ -886,7 +889,7 @@ export default function CommitteeCashBalances() {
                             ) : seasonPaymentsSum > 0 ? (
                               <span className="text-emerald-600">+₹{seasonPaymentsSum.toLocaleString()}</span>
                             ) : isPrepaidCovered ? (
-                              <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Prepaid</span>
+                              <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">Prepaid (Covered)</span>
                             ) : (
                               <span className="text-rose-600">₹0</span>
                             )}
@@ -935,12 +938,13 @@ export default function CommitteeCashBalances() {
                                 <span className="text-[9px] text-slate-400 font-bold uppercase italic mr-2">Select season to log</span>
                               ) : (
                                 <>
-                                  {(!hasPaymentLoggedThisSeason && (currentPlan === 'upfront' || !isPrepaidCovered)) && (
+                                  {(!hasPaymentLoggedThisSeason && (currentPlan === 'upfront' ? upfrontTopUp > 0 : !isPrepaidCovered)) && (
                                     <button
                                       onClick={() => {
                                         setActiveModalTeam(team);
                                         setModalType('payment');
-                                        setPaymentAmount(currentPlan === 'upfront' ? '500' : '100');
+                                        const defaultAmt = currentPlan === 'upfront' ? (upfrontTopUp > 0 ? upfrontTopUp : 500) : 100;
+                                        setPaymentAmount(String(defaultAmt));
                                       }}
                                       className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-[9px] uppercase font-black tracking-wider transition-all flex items-center gap-1"
                                     >
@@ -1139,9 +1143,9 @@ export default function CommitteeCashBalances() {
             </div>
             
             <p className="text-[10px] text-slate-500 uppercase font-bold leading-normal">
-              Distribute cash payment credits to all registered teams for this season. 
-              Teams marked as <strong className="text-emerald-600">Upfront Subscriber</strong> will receive <strong className="text-emerald-600">₹500</strong> credit, 
-              and <strong className="text-indigo-600">Seasonal Payers</strong> will receive <strong className="text-indigo-600">₹100</strong> credit.
+              Distribute cash payment credits to registered teams for this season. 
+              Teams marked as <strong className="text-emerald-600">Upfront Subscriber</strong> will receive a top-up credit up to <strong className="text-emerald-600">₹500</strong> (e.g. balance 200 → ₹300 credit), 
+              and <strong className="text-indigo-600">Seasonal Payers</strong> will receive <strong className="text-indigo-600">₹100</strong> credit. Teams that have already paid or are prepaid covered are automatically skipped.
             </p>
 
             <div className="p-3 bg-slate-50 border border-slate-200/60 rounded-2xl space-y-1.5 text-[10px] font-bold uppercase text-slate-650 font-mono">
@@ -1151,12 +1155,16 @@ export default function CommitteeCashBalances() {
                 <span className="text-indigo-600 font-extrabold">{bulkCreditPreview.seasonalCount} Teams</span>
               </div>
               <div className="flex justify-between">
-                <span>Upfront Subscribers (₹500):</span>
+                <span>Upfront Subscribers (Top-up):</span>
                 <span className="text-emerald-600 font-extrabold">{bulkCreditPreview.upfrontCount} Teams</span>
               </div>
               <div className="flex justify-between border-t border-slate-200/60 pt-1.5 mt-1">
-                <span>Skipped (Paid/Covered):</span>
+                <span>Skipped (Already Paid / Covered):</span>
                 <span className="text-slate-500 font-extrabold">{bulkCreditPreview.skippedCount} Teams</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-1.5 mt-1 text-slate-800">
+                <span>Total Credit Distribution:</span>
+                <span className="text-amber-600 font-black">₹{bulkCreditPreview.totalCreditAmount.toLocaleString()}</span>
               </div>
             </div>
 
