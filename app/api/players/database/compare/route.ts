@@ -90,6 +90,34 @@ export async function GET(request: NextRequest) {
       'gk_catching', 'gk_parrying', 'gk_reflexes', 'gk_reach'
     ];
 
+    const statLabels: Record<string, string> = {
+      speed: 'Pace / Speed',
+      acceleration: 'Acceleration',
+      finishing: 'Shooting / Finishing',
+      low_pass: 'Passing / Low Pass',
+      lofted_pass: 'Lofted Pass',
+      dribbling: 'Dribbling',
+      ball_control: 'Ball Control',
+      tight_possession: 'Tight Possession',
+      offensive_awareness: 'Offensive Awareness',
+      heading: 'Heading',
+      set_piece_taking: 'Set Piece',
+      curl: 'Curl',
+      kicking_power: 'Kicking Power',
+      jumping: 'Jumping',
+      physical_contact: 'Physical Contact',
+      balance: 'Balance',
+      stamina: 'Stamina',
+      defensive_awareness: 'Defending Awareness',
+      tackling: 'Tackling',
+      aggression: 'Aggression',
+      defensive_engagement: 'Defensive Engagement',
+      gk_awareness: 'GK Awareness',
+      gk_catching: 'GK Catching',
+      gk_parrying: 'GK Parrying',
+      gk_reflexes: 'GK Reflexes',
+      gk_reach: 'GK Reach'
+    };
 
     // Check temp players to update or create
     tempPlayers.forEach(tempPlayer => {
@@ -105,23 +133,8 @@ export async function GET(request: NextRequest) {
           playing_style: normalizeVal(activePlayer.playing_style),
           team_name: normalizeVal(activePlayer.team_name), // fantasy team
           club: normalizeVal(activePlayer.club), // real club
+          nationality: normalizeVal(activePlayer.nationality),
           age: normalizeNumber(activePlayer.age), // age
-          pace: normalizeNumber(activePlayer.speed),
-          shooting: normalizeNumber(activePlayer.finishing),
-          passing: normalizeNumber(activePlayer.low_pass),
-          dribbling: normalizeNumber(activePlayer.dribbling),
-          defending: normalizeNumber(activePlayer.defensive_awareness),
-          physical: normalizeNumber(activePlayer.physical_contact),
-          acceleration: normalizeNumber(activePlayer.acceleration),
-          ball_control: normalizeNumber(activePlayer.ball_control),
-          tight_possession: normalizeNumber(activePlayer.tight_possession),
-          lofted_pass: normalizeNumber(activePlayer.lofted_pass),
-          heading: normalizeNumber(activePlayer.heading),
-          kicking_power: normalizeNumber(activePlayer.kicking_power),
-          jumping: normalizeNumber(activePlayer.jumping),
-          stamina: normalizeNumber(activePlayer.stamina),
-          tackling: normalizeNumber(activePlayer.tackling),
-          aggression: normalizeNumber(activePlayer.aggression),
         };
 
         const newValues: any = {
@@ -130,27 +143,75 @@ export async function GET(request: NextRequest) {
           playing_style: normalizeVal(tempPlayer.playing_style) || normalizeVal(activePlayer.playing_style),
           team_name: normalizeVal(activePlayer.team_name), // preserve the active fantasy team name so we don't overwrite it or flag it as a change!
           club: normalizeVal(tempPlayer.team_name) || normalizeVal(activePlayer.club), // real club from temp database
+          nationality: normalizeVal(tempPlayer.nationality) || normalizeVal(activePlayer.nationality),
           age: normalizeNumber(tempPlayer.age) || normalizeNumber(activePlayer.age), // age from temp database
-          pace: normalizeNumber(tempPlayer.speed) || normalizeNumber(activePlayer.speed),
-          shooting: normalizeNumber(tempPlayer.finishing) || normalizeNumber(activePlayer.finishing),
-          passing: normalizeNumber(tempPlayer.low_pass) || normalizeNumber(activePlayer.low_pass),
-          dribbling: normalizeNumber(tempPlayer.dribbling) || normalizeNumber(activePlayer.dribbling),
-          defending: normalizeNumber(tempPlayer.defensive_awareness) || normalizeNumber(activePlayer.defensive_awareness),
-          physical: normalizeNumber(tempPlayer.physical_contact) || normalizeNumber(activePlayer.physical_contact),
-          acceleration: normalizeNumber(tempPlayer.acceleration) || normalizeNumber(activePlayer.acceleration),
-          ball_control: normalizeNumber(tempPlayer.ball_control) || normalizeNumber(activePlayer.ball_control),
-          tight_possession: normalizeNumber(tempPlayer.tight_possession) || normalizeNumber(activePlayer.tight_possession),
-          lofted_pass: normalizeNumber(tempPlayer.lofted_pass) || normalizeNumber(activePlayer.lofted_pass),
-          heading: normalizeNumber(tempPlayer.heading) || normalizeNumber(activePlayer.heading),
-          kicking_power: normalizeNumber(tempPlayer.kicking_power) || normalizeNumber(activePlayer.kicking_power),
-          jumping: normalizeNumber(tempPlayer.jumping) || normalizeNumber(activePlayer.jumping),
-          stamina: normalizeNumber(tempPlayer.stamina) || normalizeNumber(activePlayer.stamina),
-          tackling: normalizeNumber(tempPlayer.tackling) || normalizeNumber(activePlayer.tackling),
-          aggression: normalizeNumber(tempPlayer.aggression) || normalizeNumber(activePlayer.aggression),
         };
 
+        const changes: any[] = [];
+
+        if (oldValues.club !== newValues.club) {
+          changes.push({
+            field: 'club',
+            label: 'Club',
+            category: 'info',
+            old: oldValues.club || 'None',
+            new: newValues.club || 'None'
+          });
+        }
+
+        if (oldValues.position !== newValues.position) {
+          changes.push({
+            field: 'position',
+            label: 'Position',
+            category: 'info',
+            old: oldValues.position || '-',
+            new: newValues.position || '-'
+          });
+        }
+
+        if (oldValues.overall_rating !== newValues.overall_rating) {
+          changes.push({
+            field: 'overall_rating',
+            label: 'Overall Rating (OVR)',
+            category: 'stat',
+            old: oldValues.overall_rating,
+            new: newValues.overall_rating,
+            diff: newValues.overall_rating - oldValues.overall_rating
+          });
+        }
+
+        if (oldValues.playing_style !== newValues.playing_style) {
+          changes.push({
+            field: 'playing_style',
+            label: 'Playing Style',
+            category: 'info',
+            old: oldValues.playing_style || 'None',
+            new: newValues.playing_style || 'None'
+          });
+        }
+
+        if (oldValues.age !== newValues.age) {
+          changes.push({
+            field: 'age',
+            label: 'Age',
+            category: 'info',
+            old: oldValues.age,
+            new: newValues.age,
+            diff: newValues.age - oldValues.age
+          });
+        }
+
+        if (oldValues.nationality !== newValues.nationality) {
+          changes.push({
+            field: 'nationality',
+            label: 'Nationality',
+            category: 'info',
+            old: oldValues.nationality || 'None',
+            new: newValues.nationality || 'None'
+          });
+        }
+
         // Add all stats comparison
-        let hasStatChange = false;
         statsFields.forEach(stat => {
           const oldStat = normalizeNumber(activePlayer[stat]);
           let newStat = normalizeNumber(tempPlayer[stat]);
@@ -161,30 +222,38 @@ export async function GET(request: NextRequest) {
           oldValues[stat] = oldStat;
           newValues[stat] = newStat;
           if (oldStat !== newStat) {
-            hasStatChange = true;
+            changes.push({
+              field: stat,
+              label: statLabels[stat] || stat,
+              category: 'stat',
+              old: oldStat,
+              new: newStat,
+              diff: newStat - oldStat
+            });
           }
         });
 
-        // Determine if any mapped fields changed
-        const hasBaseChange = 
-          oldValues.position !== newValues.position ||
-          oldValues.overall_rating !== newValues.overall_rating ||
-          oldValues.playing_style !== newValues.playing_style ||
-          oldValues.club !== newValues.club ||
-          oldValues.age !== newValues.age ||
-          oldValues.pace !== newValues.pace ||
-          oldValues.shooting !== newValues.shooting ||
-          oldValues.passing !== newValues.passing ||
-          oldValues.dribbling !== newValues.dribbling ||
-          oldValues.defending !== newValues.defending ||
-          oldValues.physical !== newValues.physical;
+        // Set aliases for UI grids
+        oldValues.pace = oldValues.speed;
+        newValues.pace = newValues.speed;
+        oldValues.shooting = oldValues.finishing;
+        newValues.shooting = newValues.finishing;
+        oldValues.passing = oldValues.low_pass;
+        newValues.passing = newValues.low_pass;
+        oldValues.dribbling = oldValues.dribbling;
+        newValues.dribbling = newValues.dribbling;
+        oldValues.defending = oldValues.defensive_awareness;
+        newValues.defending = newValues.defensive_awareness;
+        oldValues.physical = oldValues.physical_contact;
+        newValues.physical = newValues.physical_contact;
 
-        if (hasBaseChange || hasStatChange) {
+        if (changes.length > 0) {
           toUpdate.push({
             player_id: playerId,
             name: tempPlayer.name,
             old: oldValues,
-            new: newValues
+            new: newValues,
+            changes
           });
         } else {
           unchanged.push({
@@ -192,7 +261,8 @@ export async function GET(request: NextRequest) {
             name: tempPlayer.name,
             position: activePlayer.position,
             overall_rating: activePlayer.overall_rating,
-            team_name: activePlayer.team_name
+            team_name: activePlayer.team_name,
+            club: activePlayer.club
           });
         }
       } else {
