@@ -101,15 +101,16 @@ export async function verifyAuth(
       // Use for low-risk operations only (player browsing, starred players, etc.)
       const { decodeJWTLocally } = await import('@/lib/jwt-decode');
       const decoded = decodeJWTLocally(token);
+      const uid = decoded?.uid || decoded?.user_id || decoded?.sub;
       
-      if (!decoded || !decoded.uid) {
+      if (!decoded || !uid) {
         return {
           authenticated: false,
           error: 'Invalid token format',
         };
       }
       
-      userId = decoded.uid;
+      userId = uid;
       role = decoded.role;
       seasonId = decoded.seasonId;
     } else {

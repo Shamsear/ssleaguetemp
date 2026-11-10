@@ -9,6 +9,7 @@
 export interface DecodedToken {
   uid: string;
   user_id?: string;
+  sub?: string;
   email?: string;
   role?: string;
   [key: string]: any;
@@ -27,6 +28,11 @@ export function decodeJWTLocally(token: string): DecodedToken | null {
       Buffer.from(parts[1], 'base64').toString('utf-8')
     );
 
+    // Normalize uid so callers can safely access decoded.uid or decoded.user_id or decoded.sub
+    if (!payload.uid && (payload.user_id || payload.sub)) {
+      payload.uid = payload.user_id || payload.sub;
+    }
+
     return payload;
   } catch (error) {
     console.error('Failed to decode JWT:', error);
@@ -41,5 +47,5 @@ export function getFirebaseUidFromToken(token: string): string | null {
   const decoded = decodeJWTLocally(token);
   if (!decoded) return null;
   
-  return decoded.uid || decoded.user_id || null;
+  return decoded.uid || decoded.user_id || decoded.sub || null;
 }
