@@ -94,6 +94,23 @@ export async function GET(request: NextRequest) {
       return trimmed;
     };
 
+    const STYLE_MAP: Record<string, string> = {
+      'attacking full-back': 'Offensive Full-back',
+      'attacking gk': 'Offensive Goalkeeper',
+      'defensive gk': 'Defensive Goalkeeper',
+      'deep-lying forward': 'Deep-Lying Forward',
+      'box-to-box': 'Box-to-Box',
+      'box to box': 'Box-to-Box',
+    };
+
+    const normalizePlayingStyle = (style: any): string => {
+      if (!style) return '';
+      const trimmed = String(style).trim();
+      const lower = trimmed.toLowerCase();
+      if (lower === 'basic' || lower === '-' || lower === 'none') return '';
+      return STYLE_MAP[lower] || trimmed;
+    };
+
     const normalizeNumber = (val: any) => {
       const num = Number(val);
       return isNaN(num) ? 0 : num;
@@ -147,11 +164,13 @@ export async function GET(request: NextRequest) {
         // Build comparative records mapping aggregate attributes for UI
         const oldClub = normalizeClub(activePlayer.club);
         const newClub = normalizeClub(tempPlayer.team_name || activePlayer.club);
+        const oldStyle = normalizePlayingStyle(activePlayer.playing_style);
+        const newStyle = normalizePlayingStyle(tempPlayer.playing_style) || oldStyle;
 
         const oldValues: any = {
           position: normalizeVal(activePlayer.position),
           overall_rating: normalizeNumber(activePlayer.overall_rating),
-          playing_style: normalizeVal(activePlayer.playing_style),
+          playing_style: oldStyle,
           team_name: normalizeVal(activePlayer.team_name), // SS League team
           club: oldClub, // real club
           nationality: normalizeVal(activePlayer.nationality),
@@ -161,7 +180,7 @@ export async function GET(request: NextRequest) {
         const newValues: any = {
           position: normalizeVal(tempPlayer.position) || normalizeVal(activePlayer.position),
           overall_rating: normalizeNumber(tempPlayer.overall_rating) || normalizeNumber(activePlayer.overall_rating),
-          playing_style: normalizeVal(tempPlayer.playing_style) || normalizeVal(activePlayer.playing_style),
+          playing_style: newStyle,
           team_name: normalizeVal(activePlayer.team_name), // preserve the active SS League team assignment so we don't overwrite it or flag it as a change!
           club: newClub, // real club from temp database
           nationality: normalizeVal(tempPlayer.nationality) || normalizeVal(activePlayer.nationality),
@@ -283,7 +302,8 @@ export async function GET(request: NextRequest) {
             position: activePlayer.position,
             overall_rating: activePlayer.overall_rating,
             team_name: activePlayer.team_name,
-            club: normalizeClub(activePlayer.club)
+            club: normalizeClub(activePlayer.club),
+            playing_style: normalizePlayingStyle(activePlayer.playing_style)
           });
         }
       } else {
@@ -327,7 +347,7 @@ export async function GET(request: NextRequest) {
           name: tempPlayer.name,
           position: tempPlayer.position,
           overall_rating: tempPlayer.overall_rating,
-          playing_style: tempPlayer.playing_style,
+          playing_style: normalizePlayingStyle(tempPlayer.playing_style),
           club: normalizeClub(tempPlayer.team_name),
           team_name: normalizeClub(tempPlayer.team_name),
           nationality: tempPlayer.nationality,

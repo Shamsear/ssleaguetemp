@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { tempSql, initializeTempTable } from '@/lib/neon/temp-config';
 import * as cheerio from 'cheerio';
+import dns from 'dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -29,6 +32,23 @@ function normalizeClub(club: any): string {
     return 'Free Agents';
   }
   return trimmed;
+}
+
+const STYLE_MAP: Record<string, string> = {
+  'attacking full-back': 'Offensive Full-back',
+  'attacking gk': 'Offensive Goalkeeper',
+  'defensive gk': 'Defensive Goalkeeper',
+  'deep-lying forward': 'Deep-Lying Forward',
+  'box-to-box': 'Box-to-Box',
+  'box to box': 'Box-to-Box',
+};
+
+function normalizePlayingStyle(style: string): string {
+  if (!style) return '';
+  const trimmed = style.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'basic' || lower === '-' || lower === 'none') return '';
+  return STYLE_MAP[lower] || trimmed;
 }
 
 const STATS_COLUMNS = [
@@ -106,7 +126,17 @@ async function fetchPlayerDetailStats(playerId: string, scraperKeys: string[]): 
     }
   });
 
-  const playing_style = $('a[href*="playing_style_2"]').first().text().trim() || $('a[href*="playing_style"]').first().text().trim() || '';
+  // Collect all playing style links and pick the first non-basic playing style
+  const candidates: string[] = [];
+  $('a[href*="playing_style"]').each(function() {
+    const t = $(this).text().trim();
+    if (t && t.toLowerCase() !== 'basic' && t !== '-') {
+      candidates.push(t);
+    }
+  });
+
+  const rawStyle = candidates[0] || '';
+  const playing_style = normalizePlayingStyle(rawStyle);
   return { stats, playing_style };
 }
 

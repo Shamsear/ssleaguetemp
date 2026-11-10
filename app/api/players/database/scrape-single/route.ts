@@ -31,6 +31,23 @@ function normalizeClub(club: any): string {
   return trimmed;
 }
 
+const STYLE_MAP: Record<string, string> = {
+  'attacking full-back': 'Offensive Full-back',
+  'attacking gk': 'Offensive Goalkeeper',
+  'defensive gk': 'Defensive Goalkeeper',
+  'deep-lying forward': 'Deep-Lying Forward',
+  'box-to-box': 'Box-to-Box',
+  'box to box': 'Box-to-Box',
+};
+
+function normalizePlayingStyle(style: string): string {
+  if (!style) return '';
+  const trimmed = style.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'basic' || lower === '-' || lower === 'none') return '';
+  return STYLE_MAP[lower] || trimmed;
+}
+
 const COUNTRY_ID_MAP: { [key: number]: string } = {
   228: 'Portugal',
   35: 'France',
@@ -465,7 +482,7 @@ export async function POST(request: NextRequest) {
           teamName,
           nationality,
           playerObj.age || 0,
-          playerObj.playingStyle || '-',
+          normalizePlayingStyle(playerObj.playingStyle) || null,
           playerObj.overallRating || 0,
           pStats.offensiveAwareness || 0,
           pStats.ballControl || 0,
