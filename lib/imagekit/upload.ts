@@ -1,10 +1,10 @@
 import ImageKit from 'imagekit-javascript';
 import { imagekitConfig, validateImageKitConfig } from './config';
 
-// Initialize ImageKit client
+// Initialize ImageKit client (kept for backwards compatibility)
 let imagekit: ImageKit | null = null;
 
-function getImageKit() {
+export function getImageKit() {
   if (!imagekit) {
     try {
       validateImageKitConfig();
@@ -14,14 +14,13 @@ function getImageKit() {
       } as any);
     } catch (error) {
       console.error('Failed to initialize ImageKit:', error);
-      throw new Error('ImageKit configuration is missing. Please check environment variables.');
     }
   }
   return imagekit;
 }
 
 export interface UploadOptions {
-  file: File;
+  file: File | Blob | string;
   fileName: string;
   folder?: string;
   tags?: string[];
@@ -38,83 +37,79 @@ export interface UploadResult {
 }
 
 /**
- * Upload an image to ImageKit
+ * Upload an image to ImageKit via standard FormData POST.
+ * Direct multipart upload eliminates FileReader base64 issues and memory bottlenecks.
  */
 export async function uploadImage(options: UploadOptions): Promise<UploadResult> {
   try {
-    const ik = getImageKit();
-    
     // Get authentication parameters from server
-    // This runs client-side (browser), so relative URL works fine.
-    // Avoid constructing absolute URL with NEXT_PUBLIC_BASE_URL which may be wrong in production.
     const authEndpoint = imagekitConfig.authenticationEndpoint.startsWith('http')
       ? imagekitConfig.authenticationEndpoint
-      : imagekitConfig.authenticationEndpoint; // Keep relative — browser resolves it correctly
+      : imagekitConfig.authenticationEndpoint;
     
     const authResponse = await fetch(authEndpoint);
     if (!authResponse.ok) {
       throw new Error('Failed to get authentication parameters');
     }
     const authParams = await authResponse.json();
-    
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          const base64 = e.target?.result as string;
-          
-          if (!base64) {
-            reject(new Error('Failed to convert file to base64'));
-            return;
-          }
-          
-          console.log('Uploading to ImageKit:', {
-            fileName: options.fileName,
-            folder: options.folder,
-            fileSize: options.file.size,
-          });
-          
-          (ik.upload as any)({
-            file: base64,
-            fileName: options.fileName,
-            folder: options.folder || '/team-logos',
-            tags: options.tags || [],
-            useUniqueFileName: options.useUniqueFileName !== false,
-            signature: authParams.signature,
-            token: authParams.token,
-            expire: authParams.expire,
-          }, (err: any, result: any) => {
-            if (err) {
-              console.error('ImageKit upload error:', err);
-              reject(new Error(err.message || 'Upload failed'));
-            } else if (result) {
-              console.log('ImageKit upload success:', result.url);
-              resolve({
-                url: result.url,
-                fileId: result.fileId,
-                name: result.name,
-                size: result.size,
-                filePath: result.filePath,
-                thumbnailUrl: result.thumbnailUrl,
-              });
-            } else {
-              reject(new Error('No result from ImageKit upload'));
-            }
-          });
-        } catch (error) {
-          console.error('Error in upload callback:', error);
-          reject(error);
-        }
-      };
-      
-      reader.onerror = (error) => {
-        console.error('FileReader error:', error);
-        reject(new Error('Failed to read file'));
-      };
-      
-      reader.readAsDataURL(options.file);
+    const publicKey = authParams.publicKey || imagekitConfig.publicKey;
+
+    if (!publicKey) {
+      throw new Error('ImageKit public key is missing');
+    }
+
+    const formData = new FormData();
+    if (typeof options.file === 'string') {
+      formData.append('file', options.file);
+    } else {
+      formData.append('file', options.file, options.fileName);
+    }
+    formData.append('fileName', options.fileName);
+    formData.append('publicKey', publicKey);
+    formData.append('signature', authParams.signature);
+    formData.append('token', authParams.token);
+    formData.append('expire', String(authParams.expire));
+    if (options.folder) {
+      formData.append('folder', options.folder);
+    }
+    if (options.tags && options.tags.length > 0) {
+      formData.append('tags', options.tags.join(','));
+    }
+    formData.append('useUniqueFileName', String(options.useUniqueFileName !== false));
+
+    console.log('Uploading to ImageKit:', {
+      fileName: options.fileName,
+      folder: options.folder,
+      fileType: typeof options.file === 'string' ? 'string' : (options.file as any).type,
+      fileSize: typeof options.file === 'string' ? options.file.length : (options.file as any).size,
     });
+
+    const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Upload failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = `Upload failed with status ${response.status}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('ImageKit upload success:', result.url);
+    return {
+      url: result.url,
+      fileId: result.fileId,
+      name: result.name,
+      size: result.size,
+      filePath: result.filePath,
+      thumbnailUrl: result.thumbnailUrl,
+    };
   } catch (error) {
     console.error('Error in uploadImage:', error);
     throw error;
@@ -129,12 +124,19 @@ export async function uploadImageWithProgress(
   onProgress?: (progress: number) => void
 ): Promise<UploadResult> {
   try {
-    const authEndpoint = imagekitConfig.authenticationEndpoint;
+    const authEndpoint = imagekitConfig.authenticationEndpoint.startsWith('http')
+      ? imagekitConfig.authenticationEndpoint
+      : imagekitConfig.authenticationEndpoint;
     const authResponse = await fetch(authEndpoint);
     if (!authResponse.ok) {
       throw new Error('Failed to get authentication parameters');
     }
     const authParams = await authResponse.json();
+    const publicKey = authParams.publicKey || imagekitConfig.publicKey;
+
+    if (!publicKey) {
+      throw new Error('ImageKit public key is missing');
+    }
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -178,9 +180,13 @@ export async function uploadImageWithProgress(
       };
 
       const formData = new FormData();
-      formData.append('file', options.file);
+      if (typeof options.file === 'string') {
+        formData.append('file', options.file);
+      } else {
+        formData.append('file', options.file, options.fileName);
+      }
       formData.append('fileName', options.fileName);
-      formData.append('publicKey', imagekitConfig.publicKey);
+      formData.append('publicKey', publicKey);
       formData.append('signature', authParams.signature);
       formData.append('token', authParams.token);
       formData.append('expire', String(authParams.expire));

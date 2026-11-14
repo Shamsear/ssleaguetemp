@@ -189,11 +189,17 @@ export default function EditTeamProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (PNG, JPG, WebP, etc.)');
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
       return;
     }
 
+    setError('');
     setNewLogoFile(file);
     setNewLogoPreview(URL.createObjectURL(file));
   };
@@ -202,11 +208,17 @@ export default function EditTeamProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (PNG, JPG, WebP, etc.)');
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
       return;
     }
 
+    setError('');
     setOwnerPhoto(file);
     setOwnerPhotoPreview(URL.createObjectURL(file));
   };
@@ -215,11 +227,17 @@ export default function EditTeamProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (PNG, JPG, WebP, etc.)');
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
       return;
     }
 
+    setError('');
     setManagerPhoto(file);
     setManagerPhotoPreview(URL.createObjectURL(file));
   };
@@ -253,14 +271,17 @@ export default function EditTeamProfilePage() {
     try {
       setIsSubmitting(true);
 
+      const effectiveTeamId = teamId || user?.uid || 'team';
+
       // Upload team logo if changed
       let logoUrl = currentLogoUrl;
       if (newLogoFile) {
+        const cleanName = (newLogoFile.name || 'logo.png').replace(/[^a-zA-Z0-9.-]/g, '_');
         const result = await uploadImage({
           file: newLogoFile,
-          fileName: `team_${teamId}_${Date.now()}_${newLogoFile.name}`,
+          fileName: `team_${effectiveTeamId}_${Date.now()}_${cleanName}`,
           folder: '/team-logos',
-          tags: ['team', teamId],
+          tags: ['team', effectiveTeamId],
           useUniqueFileName: true,
         });
         logoUrl = result.url;
@@ -269,11 +290,12 @@ export default function EditTeamProfilePage() {
       // Upload owner photo if changed
       let ownerPhotoUrl = currentOwnerPhoto;
       if (ownerPhoto) {
+        const cleanName = (ownerPhoto.name || 'owner.png').replace(/[^a-zA-Z0-9.-]/g, '_');
         const result = await uploadImage({
           file: ownerPhoto,
-          fileName: `owner_${teamId}_${Date.now()}_${ownerPhoto.name}`,
+          fileName: `owner_${effectiveTeamId}_${Date.now()}_${cleanName}`,
           folder: '/owner-photos',
-          tags: ['owner', teamId],
+          tags: ['owner', effectiveTeamId],
           useUniqueFileName: true,
         });
         ownerPhotoUrl = result.url;
@@ -282,11 +304,12 @@ export default function EditTeamProfilePage() {
       // Upload manager photo if changed (non-player only)
       let managerPhotoUrl = currentManagerPhoto;
       if (managerMode === 'non-player' && managerPhoto) {
+        const cleanName = (managerPhoto.name || 'manager.png').replace(/[^a-zA-Z0-9.-]/g, '_');
         const result = await uploadImage({
           file: managerPhoto,
-          fileName: `manager_${teamId}_${Date.now()}_${managerPhoto.name}`,
+          fileName: `manager_${effectiveTeamId}_${Date.now()}_${cleanName}`,
           folder: '/manager-photos',
-          tags: ['manager', teamId],
+          tags: ['manager', effectiveTeamId],
           useUniqueFileName: true,
         });
         managerPhotoUrl = result.url;
