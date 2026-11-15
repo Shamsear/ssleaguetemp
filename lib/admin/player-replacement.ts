@@ -331,19 +331,20 @@ export async function executePlayerReplacement(params: {
         posCounts[newPosition] = (posCounts[newPosition] || 0) + 1;
       }
       
+      const diff = Number(priceDiff) || 0;
       const upd: any = {
-        total_spent: (tsd?.total_spent || 0) + priceDiff,
+        total_spent: Number(tsd?.total_spent || 0) + diff,
         position_counts: posCounts,
         updated_at: new Date()
       };
       
       if (curr === 'dual') {
-        const currentFb = tsd?.football_budget || 0;
-        upd.football_budget = currentFb - priceDiff;
-        upd.football_spent = (tsd?.football_spent || 0) + priceDiff;
+        const currentFb = Number(tsd?.football_budget || 0);
+        upd.football_budget = currentFb - diff;
+        upd.football_spent = Number(tsd?.football_spent || 0) + diff;
       } else {
-        const currentB = tsd?.budget || 0;
-        upd.budget = currentB - priceDiff;
+        const currentB = Number(tsd?.budget || 0);
+        upd.budget = currentB - diff;
       }
       
       await tsRef.update(upd);

@@ -600,28 +600,31 @@ export async function applyFinalizationResults(
         if (tsDoc.exists) {
           const tsd = tsDoc.data();
           const curr = tsd?.currency_system || 'single';
-          const budget = curr === 'dual' ? (tsd?.football_budget || 0) : (tsd?.budget || 0);
+          const budget = Number(curr === 'dual' ? (tsd?.football_budget || 0) : (tsd?.budget || 0));
           const posCounts = tsd?.position_counts || {};
           if (pos && pos in posCounts) posCounts[pos] = (posCounts[pos] || 0) + 1;
           
           const currentFbCount = Number(tsd?.football_players_count ?? tsd?.players_count ?? 0);
+          const currentPlayersCount = Number(tsd?.players_count || 0);
+          const allocAmount = Number(alloc.amount) || 0;
+
           const upd: any = {
-            total_spent: (tsd?.total_spent || 0) + alloc.amount,
-            players_count: (tsd?.players_count || 0) + 1,
+            total_spent: Number(tsd?.total_spent || 0) + allocAmount,
+            players_count: currentPlayersCount + 1,
             football_players_count: currentFbCount + 1,
             position_counts: posCounts,
             updated_at: new Date()
           };
           
           if (curr === 'dual') {
-            upd.football_budget = budget - alloc.amount;
-            upd.football_spent = (tsd?.football_spent || 0) + alloc.amount;
+            upd.football_budget = Math.max(0, budget - allocAmount);
+            upd.football_spent = Number(tsd?.football_spent || 0) + allocAmount;
           } else {
-            upd.budget = budget - alloc.amount;
+            upd.budget = Math.max(0, budget - allocAmount);
           }
           
           await tsRef.update(upd);
-          await logAuctionWin(alloc.team_id, seasonId, alloc.player_name, alloc.player_id, 'football', alloc.amount, budget, roundId);
+          await logAuctionWin(alloc.team_id, seasonId, alloc.player_name, alloc.player_id, 'football', allocAmount, budget, roundId);
         }
       } catch {}
 

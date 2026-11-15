@@ -241,6 +241,7 @@ export async function POST(request: NextRequest) {
         const upd: any = {
           total_spent: actualSumSpent,
           players_count: actualPlayersCount,
+          football_players_count: actualPlayersCount,
           position_counts: positionCounts,
           updated_at: new Date()
         };

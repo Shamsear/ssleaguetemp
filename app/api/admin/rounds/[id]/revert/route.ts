@@ -132,18 +132,23 @@ export async function POST(
           positionCounts[pos] = Math.max(0, (positionCounts[pos] || 1) - 1);
         }
 
+        const price = Number(alloc.purchase_price) || 0;
+        const currentFbCount = Number(tsd?.football_players_count ?? tsd?.players_count ?? 1);
+        const currentPlayersCount = Number(tsd?.players_count || 1);
+
         const upd: any = {
-          total_spent: Math.max(0, (tsd?.total_spent || 0) - alloc.purchase_price),
-          players_count: Math.max(0, (tsd?.players_count || 1) - 1),
+          total_spent: Math.max(0, Number(tsd?.total_spent || 0) - price),
+          players_count: Math.max(0, currentPlayersCount - 1),
+          football_players_count: Math.max(0, currentFbCount - 1),
           position_counts: positionCounts,
           updated_at: new Date()
         };
 
         if (curr === 'dual') {
-          upd.football_budget = (tsd?.football_budget || 0) + alloc.purchase_price;
-          upd.football_spent = Math.max(0, (tsd?.football_spent || 0) - alloc.purchase_price);
+          upd.football_budget = Number(tsd?.football_budget || 0) + price;
+          upd.football_spent = Math.max(0, Number(tsd?.football_spent || 0) - price);
         } else {
-          upd.budget = (tsd?.budget || 0) + alloc.purchase_price;
+          upd.budget = Number(tsd?.budget || 0) + price;
         }
 
         await tsRef.update(upd);

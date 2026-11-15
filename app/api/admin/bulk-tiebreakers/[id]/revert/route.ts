@@ -236,12 +236,16 @@ export async function POST(
             updated_at: new Date()
           };
 
+          const winAmount = Number(winningAmount) || 0;
+          const currBudget = Number(currentBudget) || 0;
+          const currSpent = Number(currentSpent) || 0;
+
           if (isDualCurrency) {
-            updateData.football_budget = currentBudget + winningAmount;
-            updateData.football_spent = Math.max(0, currentSpent - winningAmount);
+            updateData.football_budget = currBudget + winAmount;
+            updateData.football_spent = Math.max(0, currSpent - winAmount);
           } else {
-            updateData.budget = currentBudget + winningAmount;
-            updateData.total_spent = Math.max(0, currentSpent - winningAmount);
+            updateData.budget = currBudget + winAmount;
+            updateData.total_spent = Math.max(0, currSpent - winAmount);
           }
 
           await teamSeasonRef.update(updateData);

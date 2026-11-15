@@ -153,16 +153,16 @@ export async function POST(request: NextRequest) {
 
     if (currencySystem === 'dual') {
       // Dual currency: Update football_budget and football_spent
-      firebaseUpdate.football_budget = newBudget; // Should DECREASE
-      firebaseUpdate.football_spent = (teamSeasonData?.football_spent || 0) + totalCost; // Should INCREASE
+      firebaseUpdate.football_budget = Number(newBudget); // Should DECREASE
+      firebaseUpdate.football_spent = Number(teamSeasonData?.football_spent || 0) + Number(totalCost); // Should INCREASE
       
       console.log(`[Team Manage Slots] Currency: DUAL - Updating football_budget and football_spent`);
       console.log(`[Team Manage Slots] football_budget: ${currentBudget} → ${newBudget} (change: ${newBudget - currentBudget})`);
-      console.log(`[Team Manage Slots] football_spent: ${teamSeasonData?.football_spent || 0} → ${(teamSeasonData?.football_spent || 0) + totalCost} (change: +${totalCost})`);
+      console.log(`[Team Manage Slots] football_spent: ${teamSeasonData?.football_spent || 0} → ${(Number(teamSeasonData?.football_spent || 0)) + Number(totalCost)} (change: +${totalCost})`);
     } else {
       // Single currency: Update budget and total_spent
-      firebaseUpdate.budget = newBudget; // Should DECREASE
-      firebaseUpdate.total_spent = (teamSeasonData?.total_spent || 0) + totalCost; // Should INCREASE
+      firebaseUpdate.budget = Number(newBudget); // Should DECREASE
+      firebaseUpdate.total_spent = Number(teamSeasonData?.total_spent || 0) + Number(totalCost); // Should INCREASE
       
       console.log(`[Team Manage Slots] Currency: SINGLE - Updating budget and total_spent`);
       console.log(`[Team Manage Slots] budget: ${currentBudget} → ${newBudget} (change: ${newBudget - currentBudget})`);

@@ -164,11 +164,12 @@ function mapTeamSeasonRow(row: any): Record<string, any> {
     username: row.username,
     team_email: row.team_email,
     status: row.status,
-    budget: row.budget,
-    initial_budget: row.initial_budget,
+    budget: row.budget !== null && row.budget !== undefined ? Number(row.budget) : (raw.budget !== undefined ? Number(raw.budget) : row.budget),
+    initial_budget: row.initial_budget !== null && row.initial_budget !== undefined ? Number(row.initial_budget) : (raw.initial_budget !== undefined ? Number(raw.initial_budget) : row.initial_budget),
     currency_system: row.currency_system,
-    players_count: row.players_count,
-    football_players_count: row.football_players_count,
+    players_count: row.players_count !== null && row.players_count !== undefined ? Number(row.players_count) : (raw.players_count !== undefined ? Number(raw.players_count) : 0),
+    football_players_count: row.football_players_count !== null && row.football_players_count !== undefined ? Number(row.football_players_count) : (raw.football_players_count !== undefined ? Number(raw.football_players_count) : 0),
+    total_spent: raw.total_spent !== undefined ? Number(raw.total_spent) : 0,
     stats,
     real_players: realPlayers,
     football_players: footballPlayers,
@@ -180,10 +181,10 @@ function mapTeamSeasonRow(row: any): Record<string, any> {
     team_logo: logo,
     logoUrl: logo,
     teamLogo: logo,
-    football_budget: row.football_budget ?? (typeof row.raw_data === 'object' ? row.raw_data?.football_budget : undefined),
-    football_spent: row.football_spent ?? (typeof row.raw_data === 'object' ? row.raw_data?.football_spent : undefined),
-    real_player_budget: row.real_player_budget ?? (typeof row.raw_data === 'object' ? row.raw_data?.real_player_budget : undefined),
-    real_player_spent: row.real_player_spent ?? (typeof row.raw_data === 'object' ? row.raw_data?.real_player_spent : undefined),
+    football_budget: row.football_budget !== null && row.football_budget !== undefined ? Number(row.football_budget) : (typeof row.raw_data === 'object' && row.raw_data?.football_budget !== undefined ? Number(row.raw_data.football_budget) : undefined),
+    football_spent: row.football_spent !== null && row.football_spent !== undefined ? Number(row.football_spent) : (typeof row.raw_data === 'object' && row.raw_data?.football_spent !== undefined ? Number(row.raw_data.football_spent) : undefined),
+    real_player_budget: row.real_player_budget !== null && row.real_player_budget !== undefined ? Number(row.real_player_budget) : (typeof row.raw_data === 'object' && row.raw_data?.real_player_budget !== undefined ? Number(row.raw_data.real_player_budget) : undefined),
+    real_player_spent: row.real_player_spent !== null && row.real_player_spent !== undefined ? Number(row.real_player_spent) : (typeof row.raw_data === 'object' && row.raw_data?.real_player_spent !== undefined ? Number(row.raw_data.real_player_spent) : undefined),
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -510,6 +511,13 @@ function mapFieldName(collection: string, field: any): string {
   const fieldStr = typeof field === 'string'
     ? field
     : (field && typeof field === 'object' && field.isEqual ? '__name__' : String(field || ''));
+
+  if (fieldStr.includes('.')) {
+    const parts = fieldStr.split('.');
+    const jsonPath = parts.slice(0, -1).map(p => `'${p}'`).join('->');
+    const lastPart = parts[parts.length - 1];
+    return `(raw_data->${jsonPath}->>'${lastPart}')`;
+  }
 
   const COMMON_MAP: Record<string, string> = {
     __name__: 'id',
