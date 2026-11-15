@@ -126,7 +126,7 @@ export function useTiebreakerWebSocket(
  * Hook for auction/round updates
  * Uses Firebase Realtime Database for instant round updates
  */
-export function useAuctionWebSocket(roundId: string | null, enabled: boolean = true) {
+export function useAuctionWebSocket(roundId: string | null, enabled: boolean = true, seasonId?: string | null) {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
 
@@ -168,7 +168,7 @@ export function useAuctionWebSocket(roundId: string | null, enabled: boolean = t
       unsubscribe();
       setIsConnected(false);
     };
-  }, [roundId, enabled, queryClient]);
+  }, [roundId, enabled, seasonId, queryClient]);
 
   return {
     isConnected,

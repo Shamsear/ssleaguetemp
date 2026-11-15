@@ -90,6 +90,15 @@ export async function broadcastRoundStatusUpdate(
       status,
       timestamp: Date.now(),
     });
+    // Also write to rounds/${roundId} for direct listeners
+    try {
+      await adminRealtimeDb.ref(`rounds/${roundId}`).set({
+        status,
+        timestamp: Date.now(),
+      });
+    } catch (e) {
+      console.warn('Direct round update failed:', e);
+    }
     console.log('✅ Round status update broadcasted via Realtime DB');
   } catch (error) {
     console.error('❌ Failed to broadcast round status:', error);
@@ -106,11 +115,19 @@ export async function broadcastRoundUpdate(
 ) {
   try {
     const updateRef = adminRealtimeDb.ref(`updates/${seasonId}/rounds/${roundId}`);
-    // Use push() instead of set() to send as a single message
     await updateRef.push({
       ...data,
       timestamp: Date.now(),
     });
+    // Also write to rounds/${roundId} for direct listeners
+    try {
+      await adminRealtimeDb.ref(`rounds/${roundId}`).set({
+        ...data,
+        timestamp: Date.now(),
+      });
+    } catch (e) {
+      console.warn('Direct round update failed:', e);
+    }
     console.log('✅ Round update broadcasted via Realtime DB');
   } catch (error) {
     console.error('❌ Failed to broadcast round update:', error);

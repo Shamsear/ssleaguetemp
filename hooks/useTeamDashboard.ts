@@ -445,9 +445,9 @@ export function useRoundStatus(roundId: string | undefined, enabled: boolean = t
       return data;
     },
     enabled: enabled && !!roundId,
-    staleTime: 0, // Always refetch - ensures fresh status for deleted/recreated rounds
-    refetchOnMount: 'always', // Force refetch when component mounts
-    refetchInterval: false, // Disabled - use WebSocket
+    staleTime: 5000,
+    refetchOnMount: 'always',
+    refetchInterval: 10000, // 10-second polling fallback to catch finalizations / completions
     refetchIntervalInBackground: false,
   });
 }
