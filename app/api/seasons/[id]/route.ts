@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMainDb } from '@/lib/neon/main-config';
+import { getAuctionDb } from '@/lib/neon/auction-config';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -102,12 +103,35 @@ export async function PATCH(
       else mappedBody[key] = value;
     }
 
-    // If activating this season, deactivate all other seasons
+    // If activating this season, deactivate all other seasons and reset expired players for new season
     if (mappedBody.is_active === true || mappedBody.status === 'active') {
       await sql.query(
         "UPDATE seasons SET is_active = false, status = CASE WHEN status = 'active' THEN 'completed' ELSE status END WHERE id != $1",
         [seasonId]
       );
+
+      // Automatically reset expired football player contracts for the new season in auction DB
+      try {
+        const auctionSql = getAuctionDb();
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        await auctionSql`
+          UPDATE footballplayers
+          SET is_sold = false,
+              team_id = NULL,
+              team_name = NULL,
+              round_id = NULL,
+              status = 'free_agent',
+              updated_at = NOW()
+          WHERE (is_sold = true OR team_id IS NOT NULL)
+          AND (
+            season_id IS DISTINCT FROM ${seasonId}
+            OR COALESCE(NULLIF(REGEXP_REPLACE(contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int < ${seasonNum}
+          )
+        `;
+        console.log(`✅ Automatically reset expired players in auction DB for new active season ${seasonId}`);
+      } catch (auctionResetError: any) {
+        console.error('⚠️ Could not reset players in auction DB on season activation:', auctionResetError.message);
+      }
     }
 
     // Build dynamic SET clause

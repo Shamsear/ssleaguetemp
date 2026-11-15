@@ -20,8 +20,10 @@ import {
   Clock, 
   ArrowRight,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 export default function SeasonsManagement() {
@@ -81,6 +83,24 @@ export default function SeasonsManagement() {
       await fetch(`/api/seasons/${seasonId}`, { method: 'DELETE' });
     } catch (err: any) {
       alert(err.message || 'Failed to delete season');
+    }
+  };
+
+  const handleResetPlayers = async (seasonId: string, seasonName: string) => {
+    if (!confirm(`Are you sure you want to reset all players with expired contracts from prior seasons into Free Agents for "${seasonName}"?\n\nThis will make all players available for auction in this season.`)) return;
+
+    try {
+      const res = await fetchWithTokenRefresh(`/api/admin/seasons/${seasonId}/reset-players`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Players reset successfully!');
+      } else {
+        alert(data.error || 'Failed to reset players');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error resetting players');
     }
   };
 
@@ -289,6 +309,17 @@ export default function SeasonsManagement() {
                       className="inline-flex items-center px-4 py-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm"
                     >
                       Mark Completed
+                    </button>
+                  )}
+
+                  {isSeasonActive(season) && (
+                    <button
+                      onClick={() => handleResetPlayers(season.id, season.name)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 text-xs font-mono font-bold rounded-xl transition-all shadow-sm cursor-pointer"
+                      title="Reset prior season player contracts into Free Agents"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reset Free Agents
                     </button>
                   )}
 
