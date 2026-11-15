@@ -921,8 +921,8 @@ export default function CommitteeDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Replacement</h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase">Replace won players</p>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider group-hover:text-amber-600 transition-colors mb-1">Player Replacement</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Randomly swap won players</p>
                 </Link>
               </div>
 

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuctionWebSocket } from '@/hooks/useWebSocket';
 import { useAutoFinalize } from '@/hooks/useAutoFinalize';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
-import { ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Download, CheckCircle, XCircle } from 'lucide-react';
+import { Dices, ArrowLeft, Trash2, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Download, CheckCircle, XCircle } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Bid {
@@ -538,12 +538,22 @@ export default function RoundDetailPage({ params }: { params: Promise<{ id: stri
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Rounds
             </Link>
 
-            <button
-              onClick={handleExport}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-100" /> Export to Excel
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/dashboard/committee/player-replacement"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                title="Randomly replace won players from this round"
+              >
+                <Dices className="w-3.5 h-3.5 text-white" /> Player Replacement
+              </Link>
+
+              <button
+                onClick={handleExport}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-100" /> Export to Excel
+              </button>
+            </div>
           </div>
 
           {/* Header Card */}

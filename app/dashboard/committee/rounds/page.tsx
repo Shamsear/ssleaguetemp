@@ -38,7 +38,7 @@ import { MultiRoundAutoFinalize } from '@/components/MultiRoundAutoFinalize';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { ArrowLeft, Trash2, RotateCcw, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
+import { Dices, ArrowLeft, Trash2, RotateCcw, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Round {
@@ -1744,12 +1744,20 @@ export default function RoundsManagementPage() {
       
       <div className="max-w-7xl mx-auto relative z-10 space-y-6">
         {/* Navigation */}
-        <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/dashboard/committee"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+          </Link>
+
+          <Link
+            href="/dashboard/committee/player-replacement"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow transition-all"
+            title="Randomly replace won players from the same position group"
+          >
+            <Dices className="w-4 h-4" /> Player Replacement
           </Link>
         </div>
 
