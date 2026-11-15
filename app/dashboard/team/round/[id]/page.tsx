@@ -1378,7 +1378,7 @@ export default function TeamRoundPage() {
                                       type="number"
                                       value={editAmount}
                                       onChange={(e) => setEditAmount(e.target.value)}
-                                      className="block w-full pl-6 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
+                                      className="block w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
                                       placeholder="New amount"
                                       min="10"
                                       max={teamBalance + bid.amount}
@@ -1437,7 +1437,7 @@ export default function TeamRoundPage() {
                                 type="number"
                                 value={editAmount}
                                 onChange={(e) => setEditAmount(e.target.value)}
-                                className="block w-full pl-6 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 bg-white"
+                                className="block w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 bg-white"
                                 placeholder="New amount"
                                 min="10"
                                 max={teamBalance + bid.amount}
@@ -2134,12 +2134,12 @@ function PlayerCard({
             {bidCount < maxBids && !isLocked ? (
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <div className="relative flex-grow">
-                  <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">£</span>
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">£</span>
                   <input
                     type="number"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    className="block w-full pl-6 pr-2 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
+                    className="block w-full pl-8 pr-2.5 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     placeholder="Amount"
                     required
                     min="10"
@@ -2181,7 +2181,7 @@ function PlayerCard({
                   type="number"
                   value={editAmount}
                   onChange={(e) => setEditAmount(e.target.value)}
-                  className="block w-full pl-7 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:outline-none"
+                  className="block w-full pl-8 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:outline-none"
                   placeholder="New bid"
                   required
                   min="10"

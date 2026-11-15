@@ -909,13 +909,27 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1">
                     <label className="block text-xs font-bold text-slate-700 uppercase font-mono mb-2">Minutes to Adjust</label>
-                    <input
-                      type="number"
-                      value={minutesToAdd}
-                      onChange={(e: any) => setMinutesToAdd(e.target.value)}
-                      className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-sm"
-                      placeholder="e.g. 5 or -5"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        inputMode="text"
+                        value={minutesToAdd}
+                        onChange={(e: any) => {
+                          const val = e.target.value;
+                          if (val === '' || val === '-' || /^-?\d*$/.test(val)) {
+                            setMinutesToAdd(val);
+                          }
+                        }}
+                        className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-sm"
+                        placeholder="e.g. 5 or -5"
+                      />
+                      <div className="flex items-center gap-1.5">
+                        <button type="button" onClick={() => setMinutesToAdd('-10')} className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-600 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-600 cursor-pointer">-10m</button>
+                        <button type="button" onClick={() => setMinutesToAdd('-5')} className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-600 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-600 cursor-pointer">-5m</button>
+                        <button type="button" onClick={() => setMinutesToAdd('5')} className="px-2.5 py-1 bg-white hover:bg-blue-50 hover:text-blue-600 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-600 cursor-pointer">+5m</button>
+                        <button type="button" onClick={() => setMinutesToAdd('10')} className="px-2.5 py-1 bg-white hover:bg-blue-50 hover:text-blue-600 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-600 cursor-pointer">+10m</button>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-end gap-2">
                     <button

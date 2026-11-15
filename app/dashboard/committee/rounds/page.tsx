@@ -1035,7 +1035,8 @@ export default function RoundsManagementPage() {
   };
 
   const handleAddTime = async (roundId: string) => {
-    const minutes = parseInt(addTimeInputs[roundId] || '10');
+    const rawVal = addTimeInputs[roundId] !== undefined ? addTimeInputs[roundId] : '10';
+    const minutes = parseInt(rawVal, 10);
     
     if (isNaN(minutes) || minutes === 0) {
       showAlert({
@@ -2183,17 +2184,57 @@ export default function RoundsManagementPage() {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="relative flex-1 max-w-[120px]">
-                            <input
-                              type="number"
-                              value={addTimeInputs[round.id] || '10'}
-                              onChange={(e) => setAddTimeInputs({ ...addTimeInputs, [round.id]: e.target.value })}
-                              className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
-                              placeholder="e.g. 10 or -10"
-                            />
-                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase">min</span>
-                          </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="relative w-[100px]">
+                          <input
+                            type="text"
+                            inputMode="text"
+                            value={addTimeInputs[round.id] !== undefined ? addTimeInputs[round.id] : '10'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '' || val === '-' || /^-?\d*$/.test(val)) {
+                                setAddTimeInputs({ ...addTimeInputs, [round.id]: val });
+                              }
+                            }}
+                            className="w-full py-2 pl-3 pr-8 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none text-xs font-bold font-mono shadow-sm text-slate-800"
+                            placeholder="e.g. -10"
+                          />
+                          <span className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase pointer-events-none">min</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setAddTimeInputs({ ...addTimeInputs, [round.id]: '-10' })}
+                            className="px-2 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 border border-slate-200/80 rounded-lg text-[10px] font-mono font-bold text-slate-600 transition-colors cursor-pointer"
+                            title="Set -10 minutes"
+                          >
+                            -10m
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAddTimeInputs({ ...addTimeInputs, [round.id]: '-5' })}
+                            className="px-2 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 border border-slate-200/80 rounded-lg text-[10px] font-mono font-bold text-slate-600 transition-colors cursor-pointer"
+                            title="Set -5 minutes"
+                          >
+                            -5m
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAddTimeInputs({ ...addTimeInputs, [round.id]: '5' })}
+                            className="px-2 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200/80 rounded-lg text-[10px] font-mono font-bold text-slate-600 transition-colors cursor-pointer"
+                            title="Set +5 minutes"
+                          >
+                            +5m
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAddTimeInputs({ ...addTimeInputs, [round.id]: '10' })}
+                            className="px-2 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200/80 rounded-lg text-[10px] font-mono font-bold text-slate-600 transition-colors cursor-pointer"
+                            title="Set +10 minutes"
+                          >
+                            +10m
+                          </button>
+                        </div>
                           <button
                             onClick={() => handleAddTime(round.id)}
                             className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-1"
