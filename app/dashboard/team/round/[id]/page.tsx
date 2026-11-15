@@ -507,11 +507,15 @@ export default function TeamRoundPage() {
       created_at: new Date().toISOString(),
       player: {
         id: player.id,
+        player_id: player.player_id,
         name: player.name,
         position: player.position,
+        position_group: player.position_group,
         team_name: player.team_name,
+        club: player.club,
         overall_rating: player.overall_rating,
         playing_style: player.playing_style,
+        retired: player.retired,
         is_starred: player.is_starred || false
       }
     };
@@ -1312,7 +1316,7 @@ export default function TeamRoundPage() {
                                       <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-rose-100 text-rose-700 uppercase tracking-wider">Retired</span>
                                     )}
                                   </div>
-                                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{bid.player.club || bid.player.team_name || '—'}</div>
+                                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{bid.player.club || bid.player.team_name || 'Free Agent'}</div>
                                 </div>
                               </div>
                             </td>
@@ -1408,7 +1412,7 @@ export default function TeamRoundPage() {
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="inline-block px-1.5 py-0.5 text-[9px] font-black uppercase rounded-md bg-slate-100 text-slate-700">{bid.player.position}</span>
-                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate">{bid.player.club || bid.player.team_name || '—'}</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate">{bid.player.club || bid.player.team_name || 'Free Agent'}</span>
                             </div>
                           </div>
                           <div className="flex-shrink-0 text-right">
@@ -1745,10 +1749,20 @@ export default function TeamRoundPage() {
                   })}
                 </div>
                 {sortedPlayers.length > visibleCount && (
-                  <div className="flex justify-center pt-4 font-mono">
+                  <div className="flex justify-center pt-4 font-mono" style={{ overflowAnchor: 'none' }}>
                     <button
-                      onClick={() => setVisibleCount(prev => prev + 30)}
-                      className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                        const currentScrollY = window.scrollY;
+                        setVisibleCount(prev => prev + 30);
+                        requestAnimationFrame(() => {
+                          window.scrollTo({ top: currentScrollY, behavior: 'instant' });
+                        });
+                      }}
+                      style={{ overflowAnchor: 'none' }}
+                      className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
                     >
                       Load More Players ({sortedPlayers.length - visibleCount} remaining)
                     </button>
@@ -2042,7 +2056,7 @@ function PlayerCard({
             {player.name}
           </div>
           <div className="text-[9px] text-white/60 font-bold uppercase tracking-widest truncate mt-0.5">
-            {player.club || player.team_name || '—'}
+            {player.club || player.team_name || 'Free Agent'}
           </div>
         </div>
       </div>

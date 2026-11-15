@@ -27,6 +27,11 @@ export default function PlayerImage({
 
   // Reset when playerId changes
   useEffect(() => {
+    if (!playerId || playerId === 'undefined' || playerId === 'null') {
+      setImageError(true);
+      setIsLoading(false);
+      return;
+    }
     setCurrentSrc(`/images/players/${playerId}.webp`);
     setFailedLocal(false);
     setImageError(false);
@@ -78,7 +83,7 @@ export default function PlayerImage({
         onLoad={() => setIsLoading(false)}
         priority={priority}
         sizes={`${size}px`}
-        unoptimized={false}
+        unoptimized={true}
       />
     </div>
   );
