@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, Star, XCircle } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -19,6 +19,7 @@ interface Player {
   id: string;
   name: string;
   position: string;
+  position_group?: string;
   team_name: string;
   club?: string;
   overall_rating: number;
@@ -86,6 +87,8 @@ export default function TeamRoundPage() {
 
   // UI State
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPosition, setSelectedPosition] = useState<string>('all');
+  const [selectedPlayingStyle, setSelectedPlayingStyle] = useState<string>('all');
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -94,10 +97,10 @@ export default function TeamRoundPage() {
   const [showMaxBidDetails, setShowMaxBidDetails] = useState(false);
   const [visibleCount, setVisibleCount] = useState(30);
 
-  // Reset visible count when search term changes to speed up rendering
+  // Reset visible count when search term or filters change to speed up rendering
   useEffect(() => {
     setVisibleCount(30);
-  }, [searchTerm]);
+  }, [searchTerm, selectedPosition, selectedPlayingStyle]);
 
   // Extract data from React Query result
   const round = roundData?.round;
@@ -843,10 +846,64 @@ export default function TeamRoundPage() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Extract distinct positions from round and players (only used if there are multiple positions)
+  const availablePositions = useMemo(() => {
+    const list: string[] = [];
+    if (round?.position && round.position.includes(',')) {
+      round.position.split(',').forEach((p: string) => {
+        const trimmed = p.trim();
+        if (trimmed && !list.includes(trimmed)) list.push(trimmed);
+      });
+    }
+
+    if (list.length > 1) return list;
+
+    // Fallback: check distinct player positions
+    const posSet = new Set<string>();
+    players.forEach((p: Player) => {
+      if (p.position && p.position.trim()) posSet.add(p.position.trim());
+    });
+    return Array.from(posSet).sort();
+  }, [round?.position, players]);
+
+  // Extract distinct playing styles from players
+  const availablePlayingStyles = useMemo(() => {
+    const styleMap = new Map<string, string>();
+    players.forEach((p: Player) => {
+      const raw = p.playing_style?.trim();
+      if (raw) {
+        const key = raw.replace(/\s+/g, '-').toLowerCase();
+        if (!styleMap.has(key)) {
+          styleMap.set(key, raw);
+        }
+      }
+    });
+    return Array.from(styleMap.values()).sort((a, b) => a.localeCompare(b));
+  }, [players]);
+
   // Filter players
-  const filteredPlayers = players.filter((player: Player) =>
-    normalizeStr(player.name).includes(normalizeStr(searchTerm))
-  );
+  const filteredPlayers = players.filter((player: Player) => {
+    // 1. Search term filter
+    if (searchTerm && !normalizeStr(player.name).includes(normalizeStr(searchTerm))) {
+      return false;
+    }
+
+    // 2. Position filter (if multiple positions exist and a specific one is selected)
+    if (selectedPosition !== 'all') {
+      const isMatch = player.position === selectedPosition || player.position_group === selectedPosition;
+      if (!isMatch) return false;
+    }
+
+    // 3. Playing style filter
+    if (selectedPlayingStyle !== 'all') {
+      if (!player.playing_style) return false;
+      const playerStyleNorm = player.playing_style.trim().replace(/\s+/g, '-').toLowerCase();
+      const selectedStyleNorm = selectedPlayingStyle.trim().replace(/\s+/g, '-').toLowerCase();
+      if (playerStyleNorm !== selectedStyleNorm) return false;
+    }
+
+    return true;
+  });
 
   // Sort players (starred first)
   const sortedPlayers = [...filteredPlayers].sort((a, b) => {
@@ -1529,29 +1586,132 @@ export default function TeamRoundPage() {
               </div>
             </div>
 
-            {/* Search bar */}
-            <div className="relative mb-4">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            {/* Search and Filters Bar */}
+            <div className="space-y-2.5 mb-5 font-mono">
+              <div className="flex flex-col md:flex-row gap-2.5">
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                    <Search className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full pl-10 pr-10 py-2.5 text-sm font-sans font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 transition-all shadow-sm"
+                    placeholder="Search by player name…"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      title="Clear search"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Controls (Position + Playing Style) */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                  {/* Position Filter (visible if round has multiple positions) */}
+                  {availablePositions.length > 1 && (
+                    <div className="relative min-w-[140px] flex-1 sm:flex-initial">
+                      <select
+                        value={selectedPosition}
+                        onChange={(e) => setSelectedPosition(e.target.value)}
+                        className={`w-full py-2.5 pl-3 pr-8 text-xs font-bold rounded-2xl border transition-all appearance-none bg-white cursor-pointer shadow-sm ${
+                          selectedPosition !== 'all'
+                            ? 'border-amber-500 bg-amber-50/50 text-amber-900 ring-2 ring-amber-500/10'
+                            : 'border-slate-200 text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <option value="all">All Positions ({availablePositions.length})</option>
+                        {availablePositions.map((pos) => (
+                          <option key={pos} value={pos}>
+                            {pos}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Playing Style Filter */}
+                  {availablePlayingStyles.length > 0 && (
+                    <div className="relative min-w-[170px] flex-1 sm:flex-initial">
+                      <select
+                        value={selectedPlayingStyle}
+                        onChange={(e) => setSelectedPlayingStyle(e.target.value)}
+                        className={`w-full py-2.5 pl-3 pr-8 text-xs font-bold rounded-2xl border transition-all appearance-none bg-white cursor-pointer shadow-sm ${
+                          selectedPlayingStyle !== 'all'
+                            ? 'border-amber-500 bg-amber-50/50 text-amber-900 ring-2 ring-amber-500/10'
+                            : 'border-slate-200 text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <option value="all">All Styles ({availablePlayingStyles.length})</option>
+                        {availablePlayingStyles.map((style) => (
+                          <option key={style} value={style}>
+                            {style}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Clear all active filters */}
+                  {(searchTerm || selectedPosition !== 'all' || selectedPlayingStyle !== 'all') && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedPosition('all');
+                        setSelectedPlayingStyle('all');
+                      }}
+                      className="px-3 py-2.5 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-2xl transition-all whitespace-nowrap cursor-pointer shadow-sm flex items-center gap-1.5"
+                      title="Reset all filters"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Reset</span>
+                    </button>
+                  )}
+                </div>
               </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 transition-all shadow-sm"
-                placeholder="Search by player name…"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+
+              {/* Active Filter Badges */}
+              {(selectedPosition !== 'all' || selectedPlayingStyle !== 'all' || searchTerm) && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                  <span className="text-slate-400 font-bold uppercase text-[10px] mr-1">Active:</span>
+                  {selectedPosition !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">
+                      Position: {selectedPosition}
+                      <button onClick={() => setSelectedPosition('all')} className="hover:text-amber-950 ml-0.5 cursor-pointer">×</button>
+                    </span>
+                  )}
+                  {selectedPlayingStyle !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold">
+                      Style: {selectedPlayingStyle}
+                      <button onClick={() => setSelectedPlayingStyle('all')} className="hover:text-indigo-950 ml-0.5 cursor-pointer">×</button>
+                    </span>
+                  )}
+                  {searchTerm && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
+                      Name: "{searchTerm}"
+                      <button onClick={() => setSearchTerm('')} className="hover:text-slate-900 ml-0.5 cursor-pointer">×</button>
+                    </span>
+                  )}
+                  <span className="text-slate-400 ml-auto font-mono text-[10px]">
+                    Showing {sortedPlayers.length} of {players.length} players
+                  </span>
+                </div>
               )}
             </div>
 
@@ -1603,9 +1763,16 @@ export default function TeamRoundPage() {
                   </svg>
                 </div>
                 <p className="text-sm font-black text-slate-600 uppercase tracking-wider">No players found</p>
-                {searchTerm && (
-                  <button onClick={() => setSearchTerm('')} className="mt-2 text-xs text-slate-400 hover:text-slate-700 font-bold uppercase tracking-wider underline underline-offset-2">
-                    Clear search
+                {(searchTerm || selectedPosition !== 'all' || selectedPlayingStyle !== 'all') && (
+                  <button 
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedPosition('all');
+                      setSelectedPlayingStyle('all');
+                    }} 
+                    className="mt-2 text-xs text-slate-500 hover:text-slate-800 font-bold uppercase tracking-wider underline underline-offset-2 cursor-pointer"
+                  >
+                    Clear all filters
                   </button>
                 )}
               </div>

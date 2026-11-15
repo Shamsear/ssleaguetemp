@@ -185,6 +185,7 @@ export async function GET(
         p.player_id,
         p.name,
         p.position,
+        p.position_group,
         p.team_name,
         p.nationality,
         p.age,
