@@ -27,6 +27,7 @@ export interface ReplacementInfo {
     player_id: string;
     player_name: string;
     position: string;
+    position_group: string | null;
     purchase_price: number;
     team_id: string;
     acquired_at: string;
@@ -38,6 +39,7 @@ export interface ReplacementInfo {
     round_type: string | null;
     status: string | null;
   };
+  availablePoolCount: number;
   candidates: ReplacementCandidate[];
 }
 
@@ -51,7 +53,7 @@ export async function getReplacementInfo(
 ): Promise<ReplacementInfo> {
   // 1. Get the player's assignment details
   const assignment = await sql`
-    SELECT tp.*, fp.name as player_name, fp.position
+    SELECT tp.*, fp.name as player_name, fp.position, fp.position_group
     FROM team_players tp
     JOIN footballplayers fp ON tp.player_id = fp.id
     WHERE tp.player_id = ${playerId} AND tp.season_id = ${seasonId}
@@ -173,12 +175,27 @@ export async function getReplacementInfo(
     };
   });
   
+  const targetPosGroup = playerAssignment.position_group || (round.position ? round.position : playerAssignment.position);
+  const basePosition = playerAssignment.position || (round.position ? round.position.split('-')[0] : '');
+
+  const poolCountRes = await sql`
+    SELECT COUNT(*) as count 
+    FROM footballplayers 
+    WHERE position = ${basePosition}
+      AND position_group = ${targetPosGroup}
+      AND (is_sold IS NOT TRUE)
+      AND (retired IS NOT TRUE)
+      AND id != ${playerId}
+  `;
+  const availablePoolCount = Number(poolCountRes[0]?.count || 0);
+
   return {
     originalPlayer: {
       player_id: playerAssignment.player_id,
       player_name: playerAssignment.player_name,
       position: playerAssignment.position,
-      purchase_price: playerAssignment.purchase_price,
+      position_group: targetPosGroup,
+      purchase_price: Number(playerAssignment.purchase_price) || 0,
       team_id: playerAssignment.team_id,
       acquired_at: playerAssignment.acquired_at
     },
@@ -189,6 +206,7 @@ export async function getReplacementInfo(
       round_type: round.round_type,
       status: round.status
     },
+    availablePoolCount,
     candidates
   };
 }
@@ -424,4 +442,182 @@ export async function executePlayerReplacement(params: {
     console.error('Replacement transaction failed:', err);
     throw new Error(err.message || 'Failed to replace player');
   }
+}
+
+
+/**
+ * Perform a server-side random player replacement from the exact same position and position group at the exact same price.
+ * Non-selectable by design to ensure complete fairness for randomly assigned players.
+ */
+export async function executeRandomPlayerReplacement(params: {
+  originalPlayerId: string;
+  teamId: string;
+  seasonId: string;
+  adminUser: { uid: string; email: string; username?: string };
+}): Promise<{
+  success: boolean;
+  message: string;
+  originalPlayer: { id: string; name: string; position: string; position_group: string };
+  newPlayer: { id: string; name: string; position: string; position_group: string; overall_rating: number; club: string };
+  price: number;
+}> {
+  const { originalPlayerId, teamId, seasonId, adminUser } = params;
+
+  // 1. Fetch original player and assignment details
+  const origAssignment = await sql`
+    SELECT tp.*, fp.name as player_name, fp.position, fp.position_group
+    FROM team_players tp
+    JOIN footballplayers fp ON tp.player_id = fp.id
+    WHERE tp.player_id = ${originalPlayerId} AND tp.season_id = ${seasonId} AND tp.team_id = ${teamId}
+    LIMIT 1
+  `;
+  if (origAssignment.length === 0) {
+    throw new Error('Original player assignment not found for this team');
+  }
+  const original = origAssignment[0];
+  const roundId = original.round_id;
+  const lockedPrice = Number(original.purchase_price) || 0;
+  const targetPos = original.position;
+  const targetPosGroup = original.position_group || (roundId ? (await sql`SELECT position FROM rounds WHERE id = ${roundId} LIMIT 1`)[0]?.position : targetPos);
+
+  // 2. Draw a random unsold player from the exact same position and position group
+  const candidates = await sql`
+    SELECT * FROM footballplayers
+    WHERE position = ${targetPos}
+      AND position_group = ${targetPosGroup}
+      AND (is_sold IS NOT TRUE)
+      AND (retired IS NOT TRUE)
+      AND id != ${originalPlayerId}
+    ORDER BY RANDOM()
+    LIMIT 1
+  `;
+  if (candidates.length === 0) {
+    throw new Error(`No available unsold players found in position group ${targetPosGroup}`);
+  }
+  const replacementPlayer = candidates[0];
+
+  // 3. Execute Neon database modifications in DATABASE_URL
+  // Delete original from team_players
+  await sql`
+    DELETE FROM team_players 
+    WHERE player_id = ${originalPlayerId} AND season_id = ${seasonId} AND team_id = ${teamId}
+  `;
+
+  // Revert original in footballplayers
+  await sql`
+    UPDATE footballplayers 
+    SET is_sold = false, team_id = null, team_name = null, acquisition_value = null, status = null, round_id = null, updated_at = NOW()
+    WHERE id = ${originalPlayerId}
+  `;
+
+  // Insert replacement into team_players
+  await sql`
+    INSERT INTO team_players (team_id, player_id, season_id, round_id, purchase_price, acquired_at)
+    VALUES (${teamId}, ${replacementPlayer.id}, ${seasonId}, ${roundId || null}, ${lockedPrice}, NOW())
+  `;
+
+  const teamRes = await sql`SELECT name FROM teams WHERE id = ${teamId} AND season_id = ${seasonId} LIMIT 1`;
+  const teamName = teamRes[0]?.name || teamId;
+
+  // Set replacement in footballplayers
+  await sql`
+    UPDATE footballplayers 
+    SET is_sold = true, team_id = ${teamId}, team_name = ${teamName}, acquisition_value = ${lockedPrice}, 
+        season_id = ${seasonId}, round_id = ${roundId || null}, status = 'active', 
+        contract_start_season = ${seasonId}, contract_end_season = ${seasonId}, contract_length = 1, updated_at = NOW()
+    WHERE id = ${replacementPlayer.id}
+  `;
+
+  // 4. Update transactions table in NEON_MAIN_DB_URL
+  const mainDbUrl = process.env.NEON_MAIN_DB_URL || process.env.DATABASE_URL!;
+  const mainSql = neon(mainDbUrl);
+  try {
+    const existingTx = await mainSql`
+      SELECT id, raw_data FROM transactions 
+      WHERE season_id = ${seasonId} 
+        AND team_id = ${teamId} 
+        AND type = 'auction_win' 
+        AND (player_id = ${originalPlayerId} OR player_name ILIKE ${'%' + original.player_name + '%'})
+      LIMIT 1
+    `;
+
+    if (existingTx.length > 0) {
+      const txId = existingTx[0].id;
+      const desc = `Won auction (Random Replacement): ${replacementPlayer.name}`;
+      await mainSql`
+        UPDATE transactions
+        SET 
+          player_id = ${replacementPlayer.id},
+          player_name = ${replacementPlayer.name},
+          description = ${desc},
+          raw_data = jsonb_set(
+            jsonb_set(
+              raw_data, 
+              '{description}', 
+              to_jsonb(${desc}::text)
+            ),
+            '{metadata}',
+            coalesce(raw_data->'metadata', '{}'::jsonb) || jsonb_build_object(
+              'playerId', ${replacementPlayer.id},
+              'playerName', ${replacementPlayer.name},
+              'replacedPlayerId', ${originalPlayerId},
+              'replacedPlayerName', ${original.player_name},
+              'isRandomReplacement', true
+            )
+          ),
+          updated_at = NOW()
+        WHERE id = ${txId}
+      `;
+      console.log(`✅ Updated transaction ${txId} for ${replacementPlayer.name}`);
+    }
+  } catch (txErr) {
+    console.error('Failed to update transaction in Neon Main DB:', txErr);
+  }
+
+  // 5. Audit Log
+  try {
+    const { logAuditAction } = await import('@/lib/audit-logger');
+    await logAuditAction({
+      action_type: 'random_player_replacement',
+      user_id: adminUser.uid,
+      user_email: adminUser.email,
+      resource_type: 'player',
+      resource_id: replacementPlayer.id,
+      season_id: seasonId,
+      description: `Randomly replaced ${original.player_name} with ${replacementPlayer.name} (Position Group: ${targetPosGroup}, Price: £${lockedPrice}) for team ${teamName}`,
+      metadata: {
+        team_id: teamId,
+        team_name: teamName,
+        round_id: roundId,
+        original_player_id: originalPlayerId,
+        original_player_name: original.player_name,
+        replacement_player_id: replacementPlayer.id,
+        replacement_player_name: replacementPlayer.name,
+        price: lockedPrice,
+        position_group: targetPosGroup
+      }
+    });
+  } catch (auditErr) {
+    console.error('Failed to log audit action:', auditErr);
+  }
+
+  return {
+    success: true,
+    message: `Successfully replaced ${original.player_name} with ${replacementPlayer.name} (Random Draw from ${targetPosGroup} at £${lockedPrice}) for team ${teamName}.`,
+    originalPlayer: {
+      id: originalPlayerId,
+      name: original.player_name,
+      position: original.position,
+      position_group: targetPosGroup
+    },
+    newPlayer: {
+      id: replacementPlayer.id,
+      name: replacementPlayer.name,
+      position: replacementPlayer.position,
+      position_group: targetPosGroup,
+      overall_rating: Number(replacementPlayer.overall_rating || 0),
+      club: replacementPlayer.club || ''
+    },
+    price: lockedPrice
+  };
 }
