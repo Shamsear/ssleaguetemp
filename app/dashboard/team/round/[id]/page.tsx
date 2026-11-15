@@ -14,6 +14,7 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import { PlayerAvatar } from '@/components/PlayerImage';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface Player {
   id: string;
@@ -78,6 +79,7 @@ export default function TeamRoundPage() {
   const {
     alertState,
     showAlert,
+
     closeAlert,
     confirmState,
     showConfirm,
@@ -89,6 +91,7 @@ export default function TeamRoundPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
   const [selectedPlayingStyle, setSelectedPlayingStyle] = useState<string>('all');
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -100,7 +103,7 @@ export default function TeamRoundPage() {
   // Reset visible count when search term or filters change to speed up rendering
   useEffect(() => {
     setVisibleCount(30);
-  }, [searchTerm, selectedPosition, selectedPlayingStyle]);
+  }, [searchTerm, selectedPosition, selectedPlayingStyle, showStarredOnly]);
 
   // Extract data from React Query result
   const round = roundData?.round;
@@ -885,8 +888,18 @@ export default function TeamRoundPage() {
     return Array.from(styleMap.values()).sort((a, b) => a.localeCompare(b));
   }, [players]);
 
+  // Count of starred players
+  const starredCount = useMemo(() => {
+    return players.filter((p: Player) => p.is_starred).length;
+  }, [players]);
+
   // Filter players
   const filteredPlayers = players.filter((player: Player) => {
+    // 0. Starred filter
+    if (showStarredOnly && !player.is_starred) {
+      return false;
+    }
+
     // 1. Search term filter
     if (searchTerm && !normalizeStr(player.name).includes(normalizeStr(searchTerm))) {
       return false;
@@ -915,6 +928,94 @@ export default function TeamRoundPage() {
     if (!a.is_starred && b.is_starred) return 1;
     return 0;
   });
+
+  // Toggle star status for player
+  const toggleStarPlayer = async (playerId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const player = players.find((p: Player) => p.id === playerId);
+    if (!player) return;
+
+    const newStarredStatus = !player.is_starred;
+
+    // Optimistic update in React Query cache
+    queryClient.setQueryData(['round', roundId], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        players: (oldData.players || []).map((p: Player) =>
+          p.id === playerId ? { ...p, is_starred: newStarredStatus } : p
+        ),
+        myBids: (oldData.myBids || []).map((b: Bid) =>
+          b.player_id === playerId && b.player
+            ? { ...b, player: { ...b.player, is_starred: newStarredStatus } }
+            : b
+        )
+      };
+    });
+
+    const endpoint = player.is_starred 
+      ? `/api/players/unstar/${playerId}` 
+      : `/api/players/star/${playerId}`;
+
+    try {
+      const response = await fetchWithTokenRefresh(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        queryClient.setQueryData(['round', roundId], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            players: (oldData.players || []).map((p: Player) =>
+              p.id === playerId ? { ...p, is_starred: !newStarredStatus } : p
+            ),
+            myBids: (oldData.myBids || []).map((b: Bid) =>
+              b.player_id === playerId && b.player
+                ? { ...b, player: { ...b.player, is_starred: !newStarredStatus } }
+                : b
+            )
+          };
+        });
+
+        showAlert({
+          type: 'error',
+          title: 'Update Failed',
+          message: 'Failed to update starred status. Please try again.'
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['starredPlayers'] });
+        queryClient.invalidateQueries({ queryKey: ['teamDashboard'] });
+      }
+    } catch (err: any) {
+      console.error('Error toggling star:', err);
+      queryClient.setQueryData(['round', roundId], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          players: (oldData.players || []).map((p: Player) =>
+            p.id === playerId ? { ...p, is_starred: !newStarredStatus } : p
+          ),
+          myBids: (oldData.myBids || []).map((b: Bid) =>
+            b.player_id === playerId && b.player
+              ? { ...b, player: { ...b.player, is_starred: !newStarredStatus } }
+              : b
+          )
+        };
+      });
+
+      showAlert({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update starred status. Please try again.'
+      });
+    }
+  };
 
   // Check if player has bid
   const hasBid = (playerId: string) => {
@@ -1319,7 +1420,16 @@ export default function TeamRoundPage() {
                                 <div>
                                   <div className="text-xs font-black text-slate-900 flex items-center gap-1.5 uppercase tracking-tight">
                                     {bid.player.name}
-                                    {bid.player.is_starred && <span className="text-amber-500 text-[10px]">★</span>}
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleStarPlayer(bid.player_id)}
+                                      className={`${bid.player.is_starred ? 'text-amber-500' : 'text-slate-350'} hover:text-amber-400 transition-colors p-0.5 cursor-pointer`}
+                                      title={bid.player.is_starred ? 'Unstar player' : 'Star player'}
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill={bid.player.is_starred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                      </svg>
+                                    </button>
                                     {bid.player.retired && (
                                       <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-rose-100 text-rose-700 uppercase tracking-wider">Retired</span>
                                     )}
@@ -1378,7 +1488,7 @@ export default function TeamRoundPage() {
                                       type="number"
                                       value={editAmount}
                                       onChange={(e) => setEditAmount(e.target.value)}
-                                      className="block w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
+                                      className="block w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white font-mono"
                                       placeholder="New amount"
                                       min="10"
                                       max={teamBalance + bid.amount}
@@ -1415,7 +1525,16 @@ export default function TeamRoundPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-black text-slate-900 uppercase tracking-tight truncate">{bid.player.name}</span>
-                              {bid.player.is_starred && <span className="text-amber-500 text-[10px]">★</span>}
+                              <button
+                                type="button"
+                                onClick={() => toggleStarPlayer(bid.player_id)}
+                                className={`${bid.player.is_starred ? 'text-amber-500' : 'text-slate-350'} hover:text-amber-400 transition-colors p-0.5 cursor-pointer`}
+                                title={bid.player.is_starred ? 'Unstar player' : 'Star player'}
+                              >
+                                <svg className="w-3.5 h-3.5" fill={bid.player.is_starred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                </svg>
+                              </button>
                               {bid.player.retired && <span className="px-1 py-0.5 rounded text-[8px] font-black bg-rose-100 text-rose-700 uppercase">Retired</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -1437,7 +1556,7 @@ export default function TeamRoundPage() {
                                 type="number"
                                 value={editAmount}
                                 onChange={(e) => setEditAmount(e.target.value)}
-                                className="block w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 bg-white"
+                                className="block w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 bg-white font-mono"
                                 placeholder="New amount"
                                 min="10"
                                 max={teamBalance + bid.amount}
@@ -1680,13 +1799,31 @@ export default function TeamRoundPage() {
                     </div>
                   )}
 
+                  {/* Starred Filter Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowStarredOnly(!showStarredOnly)}
+                    className={`py-2.5 px-3.5 text-xs font-bold rounded-2xl border transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                      showStarredOnly
+                        ? 'border-amber-400 bg-amber-400 text-slate-950 font-black shadow-amber-200'
+                        : 'border-slate-200 text-slate-700 hover:border-amber-300 bg-white'
+                    }`}
+                    title="Filter to starred players only"
+                  >
+                    <svg className={`w-3.5 h-3.5 ${showStarredOnly ? 'text-slate-950 fill-slate-950' : 'text-amber-500 fill-amber-500'}`} viewBox="0 0 24 24">
+                      <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    <span>Starred ({starredCount})</span>
+                  </button>
+
                   {/* Clear all active filters */}
-                  {(searchTerm || selectedPosition !== 'all' || selectedPlayingStyle !== 'all') && (
+                  {(searchTerm || selectedPosition !== 'all' || selectedPlayingStyle !== 'all' || showStarredOnly) && (
                     <button
                       onClick={() => {
                         setSearchTerm('');
                         setSelectedPosition('all');
                         setSelectedPlayingStyle('all');
+                        setShowStarredOnly(false);
                       }}
                       className="px-3 py-2.5 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-2xl transition-all whitespace-nowrap cursor-pointer shadow-sm flex items-center gap-1.5"
                       title="Reset all filters"
@@ -1699,9 +1836,15 @@ export default function TeamRoundPage() {
               </div>
 
               {/* Active Filter Badges */}
-              {(selectedPosition !== 'all' || selectedPlayingStyle !== 'all' || searchTerm) && (
+              {(selectedPosition !== 'all' || selectedPlayingStyle !== 'all' || searchTerm || showStarredOnly) && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
                   <span className="text-slate-400 font-bold uppercase text-[10px] mr-1">Active:</span>
+                  {showStarredOnly && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold">
+                      ★ Starred Only
+                      <button onClick={() => setShowStarredOnly(false)} className="hover:text-amber-950 ml-0.5 cursor-pointer">×</button>
+                    </span>
+                  )}
                   {selectedPosition !== 'all' && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">
                       Position: {selectedPosition}
@@ -1752,6 +1895,7 @@ export default function TeamRoundPage() {
                         isLocked={isLocked}
                         submission={submission}
                         showAlert={showAlert}
+                        onToggleStar={toggleStarPlayer}
                       />
                     );
                   })}
@@ -1847,6 +1991,7 @@ interface PlayerCardProps {
   isLocked: boolean;
   submission: any;
   showAlert: (options: any) => void;
+  onToggleStar?: (playerId: string, e?: React.MouseEvent) => void;
 }
 
 function PlayerCard({
@@ -1864,6 +2009,8 @@ function PlayerCard({
   isLocked,
   submission,
   showAlert,
+
+  onToggleStar,
 }: PlayerCardProps) {
   const [bidAmount, setBidAmount] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -2054,12 +2201,27 @@ function PlayerCard({
           </div>
         )}
 
-        {/* Starred badge */}
-        {player.is_starred && (
-          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[8px] font-black uppercase tracking-wider shadow">
-            ★ Starred
-          </div>
-        )}
+        {/* Star button / badge */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleStar?.(player.id, e);
+          }}
+          className={`absolute top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1 z-10 transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+            player.is_starred
+              ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-500/20'
+              : 'bg-black/45 hover:bg-black/65 backdrop-blur-sm border border-white/20 text-white/80 hover:text-amber-300 opacity-75 hover:opacity-100'
+          }`}
+          title={player.is_starred ? 'Starred player. Click to unstar' : 'Click to star player'}
+        >
+          <svg className={`w-3 h-3 ${player.is_starred ? 'text-slate-950 fill-slate-950' : 'text-amber-400'}`} fill={player.is_starred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+          <span>{player.is_starred ? 'STARRED' : 'STAR'}</span>
+        </button>
+        
 
         {/* Submitted / Draft overlay banner */}
         {isLocked && hasBid && (
@@ -2139,7 +2301,7 @@ function PlayerCard({
                     type="number"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    className="block w-full pl-8 pr-2.5 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
+                    className="block w-full pl-9 pr-2.5 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 font-mono"
                     placeholder="Amount"
                     required
                     min="10"
@@ -2181,7 +2343,7 @@ function PlayerCard({
                   type="number"
                   value={editAmount}
                   onChange={(e) => setEditAmount(e.target.value)}
-                  className="block w-full pl-8 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:outline-none"
+                  className="block w-full pl-9 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:outline-none font-mono"
                   placeholder="New bid"
                   required
                   min="10"

@@ -558,6 +558,24 @@ button[class*="hover:translate-x-"]:hover::before {
 }
 
 /* Fix text going behind icon inside console cards */
+.console-card input.pl-6:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select.pl-6,
+.console-card input[class*="pl-6"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select[class*="pl-6"] {
+  padding-left: 1.5rem !important;
+}
+.console-card input.pl-7:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select.pl-7,
+.console-card input[class*="pl-7"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select[class*="pl-7"] {
+  padding-left: 1.75rem !important;
+}
+.console-card input.pl-8:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select.pl-8,
+.console-card input[class*="pl-8"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.console-card select[class*="pl-8"] {
+  padding-left: 2rem !important;
+}
 .console-card input.pl-9:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
 .console-card select.pl-9,
 .console-card input[class*="pl-9"]:not([type="checkbox"]):not([type="range"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
