@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { verifyAuth } from '@/lib/auth-helper';
+import { getMainDb } from '@/lib/neon/main-config';
 
 export async function GET(
   request: NextRequest,
@@ -40,7 +41,7 @@ export async function GET(
     const round = roundResult[0];
 
     // Get all teams registered for this season
-    const teamsResult = await sql`
+    let teamsResult = await sql`
       SELECT 
         t.id as team_id,
         t.name as team_name,
@@ -49,6 +50,45 @@ export async function GET(
       WHERE t.season_id = ${round.season_id}
       ORDER BY t.name ASC
     `;
+
+    // Auto-sync from Main DB team_seasons if any registered teams are missing from Neon teams table
+    try {
+      const mainSql = getMainDb();
+      const registeredTeamSeasons = await mainSql`
+        SELECT team_id, team_name, user_id as firebase_uid, football_budget
+        FROM team_seasons
+        WHERE season_id = ${round.season_id} AND status = 'registered'
+        ORDER BY team_name ASC
+      `;
+
+      if (registeredTeamSeasons.length > teamsResult.length) {
+        for (const rts of registeredTeamSeasons) {
+          const budget = Number(rts.football_budget) || 10000;
+          await sql`
+            INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, created_at, updated_at)
+            VALUES (${rts.team_id}, ${rts.team_name}, ${rts.firebase_uid}, ${round.season_id}, ${budget}, 0, NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET
+              name = EXCLUDED.name,
+              firebase_uid = EXCLUDED.firebase_uid,
+              season_id = EXCLUDED.season_id,
+              football_budget = CASE WHEN teams.season_id != EXCLUDED.season_id THEN EXCLUDED.football_budget ELSE teams.football_budget END,
+              updated_at = NOW()
+          `;
+        }
+
+        teamsResult = await sql`
+          SELECT 
+            t.id as team_id,
+            t.name as team_name,
+            t.firebase_uid
+          FROM teams t
+          WHERE t.season_id = ${round.season_id}
+          ORDER BY t.name ASC
+        `;
+      }
+    } catch (syncErr: any) {
+      console.warn('⚠️ Could not auto-sync teams from main DB in submissions API:', syncErr.message);
+    }
 
     console.log('🔍 [Submissions API] Teams found:', teamsResult.length);
     console.log('🔍 [Submissions API] Teams:', teamsResult);
