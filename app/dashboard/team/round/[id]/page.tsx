@@ -1323,7 +1323,7 @@ export default function TeamRoundPage() {
                             {/* Position */}
                             <td className="px-4 py-3 whitespace-nowrap">
                               <span className="inline-block px-2 py-0.5 text-[9px] font-black uppercase rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-                                {bid.player.position}
+                                {bid.player.position_group || bid.player.position}
                               </span>
                             </td>
                             {/* Bid */}
@@ -1411,7 +1411,7 @@ export default function TeamRoundPage() {
                               {bid.player.retired && <span className="px-1 py-0.5 rounded text-[8px] font-black bg-rose-100 text-rose-700 uppercase">Retired</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="inline-block px-1.5 py-0.5 text-[9px] font-black uppercase rounded-md bg-slate-100 text-slate-700">{bid.player.position}</span>
+                              <span className="inline-block px-1.5 py-0.5 text-[9px] font-black uppercase rounded-md bg-slate-100 text-slate-700">{bid.player.position_group || bid.player.position}</span>
                               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate">{bid.player.club || bid.player.team_name || 'Free Agent'}</span>
                             </div>
                           </div>
@@ -1985,24 +1985,34 @@ function PlayerCard({
   };
 
   const cardBorderClass = hasBid
-    ? 'border-2 border-slate-900 shadow-md scale-[1.01]'
+    ? 'border-2 border-slate-900 shadow-md ring-2 ring-slate-900/10 scale-[1.01]'
     : player.is_starred
-      ? 'border border-amber-300 hover:border-amber-400/80 shadow-sm'
-      : 'border border-slate-200/60 hover:border-slate-350 shadow-sm';
+      ? 'border border-amber-300 hover:border-amber-400 shadow-xs hover:shadow-md'
+      : 'border border-slate-200/80 hover:border-slate-400 shadow-xs hover:shadow-md';
 
   const getHeroBg = () => {
-    const pos = (player.position || '').toUpperCase();
-    if (pos === 'GK') return 'bg-gradient-to-br from-violet-700 via-purple-800 to-slate-950';
-    if (pos === 'CB' || pos === 'LB' || pos === 'RB' || pos === 'LWB' || pos === 'RWB' || pos === 'DEF') return 'bg-gradient-to-br from-emerald-700 via-teal-800 to-slate-950';
-    if (pos === 'CM' || pos === 'CDM' || pos === 'CAM' || pos === 'LM' || pos === 'RM' || pos === 'MID') return 'bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-950';
-    if (pos === 'LW' || pos === 'RW' || pos === 'ST' || pos === 'CF' || pos === 'SS' || pos === 'FWD') return 'bg-gradient-to-br from-rose-600 via-orange-700 to-slate-950';
+    const rawPos = (player.position || player.position_group || '').toUpperCase();
+    const pos = rawPos.split('-')[0].trim();
+
+    if (pos === 'GK') {
+      return 'bg-gradient-to-br from-violet-700 via-purple-800 to-slate-950';
+    }
+    if (['CB', 'LB', 'RB', 'LWB', 'RWB', 'DEF'].includes(pos)) {
+      return 'bg-gradient-to-br from-emerald-700 via-teal-800 to-slate-950';
+    }
+    if (['CM', 'CMF', 'DM', 'DMF', 'CDM', 'AM', 'AMF', 'CAM', 'LM', 'LMF', 'RM', 'RMF', 'MID'].includes(pos)) {
+      return 'bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-950';
+    }
+    if (['CF', 'ST', 'SS', 'LW', 'LWF', 'RW', 'RWF', 'FWD'].includes(pos)) {
+      return 'bg-gradient-to-br from-rose-600 via-orange-700 to-slate-950';
+    }
     return 'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950';
   };
 
   return (
 
     <div
-      className={`bg-white rounded-2xl hover:shadow-xl transition-all duration-300 flex flex-col relative overflow-hidden ${cardBorderClass} ${isLocked ? 'opacity-90' : ''}`}
+      className={`group bg-white rounded-2xl hover:shadow-xl transition-all duration-300 flex flex-col relative overflow-hidden ${cardBorderClass} ${isLocked && !hasBid ? 'opacity-85 hover:opacity-100' : ''}`}
     >
       {/* ── TOP: Player Photo Hero ── */}
       <div className={`relative h-44 overflow-hidden flex-shrink-0 no-console-override ${getHeroBg()}`}>
@@ -2016,7 +2026,7 @@ function PlayerCard({
         )}
 
         {/* Player image centred */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
           <PlayerAvatar
             playerId={player.player_id || player.id}
             playerName={player.name}
@@ -2025,8 +2035,8 @@ function PlayerCard({
         </div>
 
         {/* Top-left: position pill */}
-        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/20 text-white font-black text-[10px] uppercase tracking-widest">
-          {player.position}
+        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white/15 backdrop-blur-sm border border-white/25 text-white font-black text-[10px] uppercase tracking-widest shadow-xs">
+          {player.position_group || player.position}
         </div>
 
         {/* Top-right: OVR badge */}
@@ -2070,7 +2080,7 @@ function PlayerCard({
       </div>
 
       {/* ── BOTTOM: Bid section ── */}
-      <div className="px-3 py-2.5 flex flex-col gap-2 bg-gradient-to-b from-slate-50 to-slate-100/60 rounded-b-2xl border-t border-slate-100">
+      <div className="px-3 py-2.5 flex flex-col gap-2 bg-gradient-to-b from-slate-50 to-slate-100/70 rounded-b-2xl border-t border-slate-100/80 group-hover:from-white group-hover:to-slate-100/90 transition-colors">
         {hasBid && bid ? (
           <>
             <div className="flex items-center justify-between bg-slate-100 px-2.5 py-1.5 rounded-xl">
@@ -2138,11 +2148,11 @@ function PlayerCard({
                 </button>
               </form>
             ) : isLocked ? (
-              <div className="py-1.5 text-[9px] text-center text-slate-400 font-black uppercase tracking-wider bg-slate-50 border border-slate-100 rounded-xl">
+              <div className="py-1.5 text-[9px] text-center text-slate-500 font-bold uppercase tracking-wider bg-white/90 border border-slate-200/90 rounded-xl shadow-xs">
                 No Bid Placed
               </div>
             ) : (
-              <div className="py-1.5 text-[9px] text-center text-slate-400 font-black uppercase tracking-wider bg-slate-50 border border-slate-100 rounded-xl">
+              <div className="py-1.5 text-[9px] text-center text-slate-500 font-bold uppercase tracking-wider bg-white/90 border border-slate-200/90 rounded-xl shadow-xs">
                 Slot Reached
               </div>
             )}
