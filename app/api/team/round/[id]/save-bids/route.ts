@@ -196,7 +196,7 @@ export async function POST(
     
     for (const bid of bids) {
       const playerResult = await sql`
-        SELECT id, name, position, position_group, is_auction_eligible, is_sold, team_id, retired
+        SELECT id, name, position, position_group, is_auction_eligible, is_sold, team_id, retired, season_id, contract_end_season
         FROM footballplayers 
         WHERE id = ${bid.player_id}
       `;
@@ -224,7 +224,12 @@ export async function POST(
         );
       }
 
-      if (player.is_sold || (player.team_id && player.team_id !== '')) {
+      const roundSeasonNum = parseInt(round.season_id?.replace(/\D/g, '') || '19', 10);
+      const playerContractEndNum = parseInt(player.contract_end_season?.replace(/\D/g, '') || '0', 10);
+      const isPlayerSoldInCurrentSeason = (player.is_sold || (player.team_id && player.team_id !== '')) &&
+        (player.season_id === round.season_id || playerContractEndNum >= roundSeasonNum);
+
+      if (isPlayerSoldInCurrentSeason) {
         return NextResponse.json(
           { success: false, error: `Player ${player.name} is already assigned to a team` },
           { status: 400 }

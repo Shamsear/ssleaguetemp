@@ -176,6 +176,9 @@ export async function GET(
     // Check if any position is a position group (e.g., "CF-1")
     const hasPositionGroups = positions.some((p: string) => /^[A-Z]+-\d+$/.test(p));
     
+    // Determine round season number for contract expiration check (e.g., 'SSPSLS19' -> 19)
+    const roundSeasonNum = parseInt(round.season_id?.replace(/\D/g, '') || '19', 10);
+    
     const playersResult = await sql`
       SELECT 
         p.id,
@@ -220,8 +223,11 @@ export async function GET(
       WHERE (p.position = ANY(${positions}) OR p.position_group = ANY(${positions}))
       AND p.is_auction_eligible = true
       AND (p.retired IS NOT TRUE)
-      AND (p.is_sold = false OR p.is_sold IS NULL)
-      AND (p.team_id IS NULL OR p.team_id = '')
+      AND (
+        (p.is_sold = false OR p.is_sold IS NULL)
+        OR (p.team_id IS NULL OR p.team_id = '')
+        OR (p.season_id IS DISTINCT FROM ${round.season_id} AND COALESCE(NULLIF(REGEXP_REPLACE(p.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int < ${roundSeasonNum})
+      )
       ORDER BY is_starred DESC, p.overall_rating DESC
     `;
 

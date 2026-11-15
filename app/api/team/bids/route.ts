@@ -211,7 +211,9 @@ export async function POST(request: NextRequest) {
         position_group,
         is_auction_eligible,
         is_sold,
-        team_id
+        team_id,
+        season_id,
+        contract_end_season
       FROM footballplayers 
       WHERE id = ${player_id} AND (retired IS NOT TRUE)
     `;
@@ -233,16 +235,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (player.is_sold) {
-      return NextResponse.json(
-        { success: false, error: 'Player is already sold' },
-        { status: 400 }
-      );
-    }
+    const roundSeasonNum = parseInt(round.season_id?.replace(/\D/g, '') || '19', 10);
+    const playerContractEndNum = parseInt(player.contract_end_season?.replace(/\D/g, '') || '0', 10);
+    const isPlayerSoldInCurrentSeason = (player.is_sold || (player.team_id && player.team_id !== '')) &&
+      (player.season_id === round.season_id || playerContractEndNum >= roundSeasonNum);
 
-    if (player.team_id && player.team_id !== '') {
+    if (isPlayerSoldInCurrentSeason) {
       return NextResponse.json(
-        { success: false, error: 'Player is already assigned to a team' },
+        { success: false, error: 'Player is already sold or assigned to a team' },
         { status: 400 }
       );
     }

@@ -158,12 +158,17 @@ export async function POST(request: NextRequest) {
       
       try {
         // Fetch all auction-eligible players from footballplayers table
+        const roundSeasonNum = parseInt(season_id?.replace(/\D/g, '') || '19', 10);
         const eligiblePlayers = await sql`
           SELECT id, name, position, position_group
           FROM footballplayers
           WHERE is_auction_eligible = true
-          AND is_sold = false
           AND (retired IS NOT TRUE)
+          AND (
+            (is_sold = false OR is_sold IS NULL)
+            OR (team_id IS NULL OR team_id = '')
+            OR (season_id IS DISTINCT FROM ${season_id} AND COALESCE(NULLIF(REGEXP_REPLACE(contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int < ${roundSeasonNum})
+          )
           ORDER BY position, name
         `;
 
