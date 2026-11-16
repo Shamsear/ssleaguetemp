@@ -107,6 +107,7 @@ export async function GET(
         SELECT tp.player_id, tp.team_id, tp.purchase_price
         FROM team_players tp
         WHERE tp.player_id = ANY(${wonBidPlayerIds})
+          AND tp.season_id = ${round.season_id}
         ORDER BY tp.acquired_at DESC
       `;
       

@@ -281,6 +281,11 @@ export async function executePlayerReplacement(params: {
         SET status = 'unsold', winning_team_id = null, winning_bid = null
         WHERE round_id = ${roundId} AND player_id = ${originalPlayerId}
       `;
+      await sql`
+        UPDATE bids 
+        SET status = 'lost', updated_at = NOW()
+        WHERE round_id = ${roundId} AND team_id = ${teamId} AND player_id = ${originalPlayerId}
+      `;
     }
     
     // Assign replacement player
@@ -301,6 +306,11 @@ export async function executePlayerReplacement(params: {
     `;
     
     if (roundId) {
+      await sql`
+        UPDATE bids 
+        SET status = 'won', updated_at = NOW()
+        WHERE round_id = ${roundId} AND team_id = ${teamId} AND player_id = ${replacementPlayerId}
+      `;
       const rpExists = await sql`
         SELECT id FROM round_players 
         WHERE round_id = ${roundId} AND player_id = ${replacementPlayerId}
@@ -604,6 +614,14 @@ export async function executeRandomPlayerReplacement(params: {
         contract_start_season = ${seasonId}, contract_end_season = ${seasonId}, contract_length = 1, updated_at = NOW()
     WHERE id = ${replacementPlayer.id}
   `;
+
+  if (roundId) {
+    await sql`
+      UPDATE bids 
+      SET status = 'lost', updated_at = NOW()
+      WHERE round_id = ${roundId} AND team_id = ${teamId} AND player_id = ${originalPlayerId}
+    `;
+  }
 
   // 4. Update transactions table in NEON_MAIN_DB_URL
   const mainDbUrl = process.env.NEON_MAIN_DB_URL || process.env.DATABASE_URL!;
