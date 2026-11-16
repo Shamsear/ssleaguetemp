@@ -331,8 +331,85 @@ export async function executePlayerReplacement(params: {
         updated_at = NOW()
       WHERE id = ${teamId} AND season_id = ${seasonId}
     `;
+
+    // 4. Update team_seasons and transactions in NEON_MAIN_DB_URL
+    const mainDbUrl = process.env.NEON_MAIN_DB_URL || process.env.DATABASE_URL!;
+    const mainSql = neon(mainDbUrl);
+
+    try {
+      await mainSql`
+        UPDATE team_seasons 
+        SET 
+          football_spent = COALESCE(football_spent, 0) + ${priceDiff},
+          football_budget = COALESCE(football_budget, 0) - ${priceDiff},
+          raw_data = jsonb_set(
+            jsonb_set(
+              raw_data,
+              '{football_spent}',
+              to_jsonb((COALESCE((raw_data->>'football_spent')::numeric, 0) + ${priceDiff})::numeric)
+            ),
+            '{football_budget}',
+            to_jsonb((COALESCE((raw_data->>'football_budget')::numeric, 0) - ${priceDiff})::numeric)
+          ),
+          updated_at = NOW()
+        WHERE team_id = ${teamId} AND season_id = ${seasonId}
+      `;
+      console.log(`✅ Updated team_seasons for team ${teamId} with price diff £${priceDiff}M`);
+    } catch (tsErr) {
+      console.error('Failed to update team_seasons in Neon Main DB:', tsErr);
+    }
+
+    try {
+      const existingTx = await mainSql`
+        SELECT id, raw_data, balance_after FROM transactions 
+        WHERE season_id = ${seasonId} 
+          AND team_id = ${teamId} 
+          AND type = 'auction_win' 
+          AND (player_id = ${originalPlayerId} OR player_name ILIKE ${'%' + original.player_name + '%'})
+        LIMIT 1
+      `;
+
+      const desc = `Won auction: ${replacementPlayer.name}`;
+      if (existingTx.length > 0) {
+        const txId = existingTx[0].id;
+        const currentRaw = existingTx[0].raw_data || {};
+        const newBalAfter = Number(existingTx[0].balance_after) - priceDiff;
+        const updatedRaw = {
+          ...currentRaw,
+          amount: -newPrice,
+          balance_after: newBalAfter,
+          description: desc,
+          metadata: {
+            ...(currentRaw.metadata || {}),
+            playerId: replacementPlayerId,
+            playerName: replacementPlayer.name,
+            replacedPlayerId: originalPlayerId,
+            replacedPlayerName: original.player_name,
+            newPrice: newPrice,
+            oldPrice: oldPrice,
+            note: `Replaced ${original.player_name} (£${oldPrice}) with ${replacementPlayer.name} (£${newPrice})`
+          }
+        };
+
+        await mainSql`
+          UPDATE transactions
+          SET 
+            player_id = ${replacementPlayerId},
+            player_name = ${replacementPlayer.name},
+            amount = ${-newPrice},
+            balance_after = ${newBalAfter},
+            description = ${desc},
+            raw_data = ${JSON.stringify(updatedRaw)}::jsonb,
+            updated_at = NOW()
+          WHERE id = ${txId}
+        `;
+        console.log(`✅ Updated transaction ${txId} for ${replacementPlayer.name}`);
+      }
+    } catch (txErr) {
+      console.error('Failed to update transaction in Neon Main DB:', txErr);
+    }
     
-    // 4. Update Firestore team_season budget and counts
+    // 5. Update Firestore team_season budget and counts (legacy fallback)
     const tsId = `${teamId}_${seasonId}`;
     const tsRef = adminDb.collection('team_seasons').doc(tsId);
     const tsDoc = await tsRef.get();
@@ -544,27 +621,27 @@ export async function executeRandomPlayerReplacement(params: {
     if (existingTx.length > 0) {
       const txId = existingTx[0].id;
       const desc = `Won auction (Random Replacement): ${replacementPlayer.name}`;
+      const currentRaw = existingTx[0].raw_data || {};
+      const updatedRaw = {
+        ...currentRaw,
+        description: desc,
+        metadata: {
+          ...(currentRaw.metadata || {}),
+          playerId: replacementPlayer.id,
+          playerName: replacementPlayer.name,
+          replacedPlayerId: originalPlayerId,
+          replacedPlayerName: original.player_name,
+          isRandomReplacement: true
+        }
+      };
+
       await mainSql`
         UPDATE transactions
         SET 
           player_id = ${replacementPlayer.id},
           player_name = ${replacementPlayer.name},
           description = ${desc},
-          raw_data = jsonb_set(
-            jsonb_set(
-              raw_data, 
-              '{description}', 
-              to_jsonb(${desc}::text)
-            ),
-            '{metadata}',
-            coalesce(raw_data->'metadata', '{}'::jsonb) || jsonb_build_object(
-              'playerId', ${replacementPlayer.id},
-              'playerName', ${replacementPlayer.name},
-              'replacedPlayerId', ${originalPlayerId},
-              'replacedPlayerName', ${original.player_name},
-              'isRandomReplacement', true
-            )
-          ),
+          raw_data = ${JSON.stringify(updatedRaw)}::jsonb,
           updated_at = NOW()
         WHERE id = ${txId}
       `;
