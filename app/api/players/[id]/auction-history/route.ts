@@ -33,6 +33,7 @@ export async function GET(
       LEFT JOIN teams t ON b.team_id = t.id
       LEFT JOIN rounds r ON b.round_id::text = r.id::text
       WHERE b.player_id = ${playerId}
+        AND r.status = 'completed'
     `;
 
     // Fetch bids from bulk auction (round_bids table)
@@ -56,6 +57,7 @@ export async function GET(
       FROM round_bids rb
       LEFT JOIN rounds r ON rb.round_id::text = r.id::text
       WHERE rb.player_id = ${playerId}
+        AND r.status = 'completed'
     `;
 
     // Combine both bid types
