@@ -376,7 +376,7 @@ export default function TeamDraftPage() {
       if (activeWin) {
         windowBidsLoaded = true; // Prevent fallback to initial main draft bids when transfer window is active
         const windowBidsRes = await fetchWithTokenRefresh(
-          `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${activeWin.window_id}`
+          `/api/fantasy/draft/post-release-bids?league_id=${leagueId}&window_id=${activeWin.window_id}&team_id=${teamId}`
         );
         if (windowBidsRes.ok) {
           const windowBidsData = await windowBidsRes.json();

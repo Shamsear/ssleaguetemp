@@ -82,86 +82,107 @@ export async function GET(
       }
     }
 
-    // Fetch bids for this round with player information
-    // ✅ ZERO FIREBASE READS - team_name is denormalized in bids table
-    const bidsRaw = await sql`
-      SELECT 
-        b.*,
-        p.name as player_name,
-        p.position,
-        p.overall_rating
-      FROM bids b
-      LEFT JOIN footballplayers p ON b.player_id = p.id
-      WHERE b.round_id = ${roundId}
-      ORDER BY b.created_at DESC;
-    `;
+    // Verify caller role
+    const auth = await verifyAuth([], request);
+    const isCommittee = auth.authenticated && (auth.role === 'admin' || auth.role === 'committee_admin' || auth.role === 'super_admin');
+    const isCompleted = round.status === 'completed';
 
-    // OPTIMIZATION: team_name is now stored directly in bids table
-    
-    // STEP 3: Get won bid purchase prices (batch query)
-    const wonBidPlayerIds = bidsRaw.filter((b: any) => b.status === 'won').map((b: any) => b.player_id);
-    const purchasePrices = new Map<string, number>();
-    
-    if (wonBidPlayerIds.length > 0) {
-      const teamPlayersResult = await sql`
-        SELECT tp.player_id, tp.team_id, tp.purchase_price
-        FROM team_players tp
-        WHERE tp.player_id = ANY(${wonBidPlayerIds})
-          AND tp.season_id = ${round.season_id}
-        ORDER BY tp.acquired_at DESC
-      `;
-      
-      teamPlayersResult.forEach((tp: any) => {
-        const key = `${tp.player_id}_${tp.team_id}`;
-        if (!purchasePrices.has(key)) {
-          purchasePrices.set(key, tp.purchase_price);
+    // Sanitize bulk round tiebreakers if not completed and not committee
+    if (!isCompleted && !isCommittee && round.round_type === 'bulk') {
+      roundPlayers = roundPlayers.map((rp: any) => {
+        const sanitized = { ...rp };
+        if (sanitized.tiebreaker) {
+          sanitized.tiebreaker = {
+            id: sanitized.tiebreaker.id,
+            status: sanitized.tiebreaker.status,
+            created_at: sanitized.tiebreaker.created_at,
+            team_count: sanitized.tiebreaker.team_count,
+          };
         }
+        return sanitized;
       });
     }
-    
-    // Process all bids
-    const bids = [];
-    for (const bid of bidsRaw) {
-      try {
-        const { amount } = decryptBidData(bid.encrypted_bid_data);
+
+    let allBids: any[] = [];
+    let bidStats: any[] = [];
+
+    // Only process bids if round is completed OR if caller is committee
+    if (isCompleted) {
+      // Fetch bids for this round with player information
+      const bidsRaw = await sql`
+        SELECT 
+          b.*,
+          p.name as player_name,
+          p.position,
+          p.overall_rating
+        FROM bids b
+        LEFT JOIN footballplayers p ON b.player_id = p.id
+        WHERE b.round_id = ${roundId}
+        ORDER BY b.created_at DESC;
+      `;
+
+      // STEP 3: Get won bid purchase prices (batch query)
+      const wonBidPlayerIds = bidsRaw.filter((b: any) => b.status === 'won').map((b: any) => b.player_id);
+      const purchasePrices = new Map<string, number>();
+      
+      if (wonBidPlayerIds.length > 0) {
+        const teamPlayersResult = await sql`
+          SELECT tp.player_id, tp.team_id, tp.purchase_price
+          FROM team_players tp
+          WHERE tp.player_id = ANY(${wonBidPlayerIds})
+            AND tp.season_id = ${round.season_id}
+          ORDER BY tp.acquired_at DESC
+        `;
         
-        let finalAmount = amount;
-        if (bid.status === 'won') {
-          const priceKey = `${bid.player_id}_${bid.team_id}`;
-          finalAmount = purchasePrices.get(priceKey) || amount;
-        }
-        
-        bids.push({
-          ...bid,
-          amount: finalAmount,
-          // Use denormalized team_name from bids table (zero Firebase reads)
-          team_name: bid.team_name || bid.team_id,
+        teamPlayersResult.forEach((tp: any) => {
+          const key = `${tp.player_id}_${tp.team_id}`;
+          if (!purchasePrices.has(key)) {
+            purchasePrices.set(key, tp.purchase_price);
+          }
         });
-      } catch (error: any) {
-        console.error(`Error processing bid ${bid.id}:`, error);
       }
-    }
+      
+      // Process all bids
+      const bids = [];
+      for (const bid of bidsRaw) {
+        try {
+          const { amount } = decryptBidData(bid.encrypted_bid_data);
+          
+          let finalAmount = amount;
+          if (bid.status === 'won') {
+            const priceKey = `${bid.player_id}_${bid.team_id}`;
+            finalAmount = purchasePrices.get(priceKey) || amount;
+          }
+          
+          bids.push({
+            ...bid,
+            amount: finalAmount,
+            team_name: bid.team_name || bid.team_id,
+          });
+        } catch (error: any) {
+          console.error(`Error processing bid ${bid.id}:`, error);
+        }
+      }
 
-    // Calculate bid statistics grouped by player
-    const bidStats = await sql`
-      SELECT 
-        b.player_id,
-        p.name as player_name,
-        p.position,
-        COUNT(*) as bid_count,
-        MAX(b.amount) as highest_bid,
-        MIN(b.amount) as lowest_bid,
-        COUNT(DISTINCT b.team_id) as teams_count
-      FROM bids b
-      LEFT JOIN footballplayers p ON b.player_id = p.id
-      WHERE b.round_id = ${roundId}
-      GROUP BY b.player_id, p.name, p.position
-      ORDER BY highest_bid DESC;
-    `;
+      // Calculate bid statistics grouped by player
+      bidStats = await sql`
+        SELECT 
+          b.player_id,
+          p.name as player_name,
+          p.position,
+          COUNT(*) as bid_count,
+          MAX(b.amount) as highest_bid,
+          MIN(b.amount) as lowest_bid,
+          COUNT(DISTINCT b.team_id) as teams_count
+        FROM bids b
+        LEFT JOIN footballplayers p ON b.player_id = p.id
+        WHERE b.round_id = ${roundId}
+        GROUP BY b.player_id, p.name, p.position
+        ORDER BY highest_bid DESC;
+      `;
 
-    // Fetch synthetic allocations (Phase 3 - teams that got players without bids)
-    const syntheticAllocations = [];
-    if (round.status === 'completed') {
+      // Fetch synthetic allocations (Phase 3 - teams that got players without bids)
+      const syntheticAllocations = [];
       const teamPlayersWithoutBids = await sql`
         SELECT 
           tp.team_id,
@@ -197,7 +218,6 @@ export async function GET(
         }
       }));
 
-      // Create synthetic bid objects
       for (const tp of teamPlayersWithoutBids) {
         syntheticAllocations.push({
           id: `synthetic_${tp.team_id}_${tp.player_id}`,
@@ -215,15 +235,38 @@ export async function GET(
           is_synthetic: true,
         });
       }
-    }
 
-    // Merge bids with synthetic allocations
-    const allBids = [...bids, ...syntheticAllocations];
+      allBids = [...bids, ...syntheticAllocations];
+    } else if (isCommittee) {
+      // Round is active/not completed, but caller is committee:
+      // Return metadata only for submission counts (WITHOUT decrypting secret bid amounts)
+      const bidsRaw = await sql`
+        SELECT 
+          b.id,
+          b.team_id,
+          b.player_id,
+          b.round_id,
+          b.status,
+          b.created_at,
+          t.name as team_name
+        FROM bids b
+        LEFT JOIN teams t ON b.team_id = t.id
+        WHERE b.round_id = ${roundId}
+        ORDER BY b.created_at DESC;
+      `;
+      allBids = bidsRaw.map((b: any) => ({
+        ...b,
+        amount: null,
+        team_name: b.team_name || b.team_id,
+      }));
+    }
 
     return NextResponse.json({
       success: true,
+      round,
       data: {
         ...round,
+        round,
         bids: allBids,
         bidStats,
         roundPlayers,
@@ -421,6 +464,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const roundId = id; // Round ID is a UUID string, not an integer
 

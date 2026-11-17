@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { verifyAuth } from '@/lib/auth-helper';
 
 /**
  * GET /api/bulk-rounds/:id/team-summary
@@ -11,6 +12,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id: roundId } = await params;
 
     console.log('[Team Summary] Fetching for round ID:', roundId);

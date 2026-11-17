@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { verifyAuth } from '@/lib/auth-helper';
 
 // Use auction database
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_AUCTION_DB_URL!);
@@ -13,6 +14,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id: roundId } = await params;
 
     // Fetch round details

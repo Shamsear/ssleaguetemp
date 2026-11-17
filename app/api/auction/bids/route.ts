@@ -7,9 +7,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { broadcastAuctionBid } from '@/lib/realtime/broadcast';
+import { verifyAuth } from '@/lib/auth-helper';
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const sql = getAuctionDb();
     const { searchParams } = new URL(request.url);
     
@@ -63,6 +72,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(['admin', 'committee_admin'], request);
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const sql = getAuctionDb();
     const body = await request.json();
     

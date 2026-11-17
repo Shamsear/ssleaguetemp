@@ -194,27 +194,45 @@ export async function GET(
             teamBalance = data?.budget || 0;
           }
           
+          const isCurrentUser = tt.team_id === userTeamId;
+          const isResolved = tiebreaker.status === 'resolved';
+          const isAdmin = userData?.role === 'admin' || userData?.role === 'committee_admin';
+          const maskedBidAmount = (isCurrentUser || isResolved || isAdmin) ? tt.new_bid_amount : null;
+
           teamData.push({
             ...tt,
+            new_bid_amount: maskedBidAmount,
             team_name: tt.team_name || data?.team_name || tt.team_id,
             team_balance: teamBalance,
-            is_current_user: tt.team_id === userTeamId, // Mark if this is the current user's team
+            is_current_user: isCurrentUser,
           });
         } else {
+          const isCurrentUser = tt.team_id === userTeamId;
+          const isResolved = tiebreaker.status === 'resolved';
+          const isAdmin = userData?.role === 'admin' || userData?.role === 'committee_admin';
+          const maskedBidAmount = (isCurrentUser || isResolved || isAdmin) ? tt.new_bid_amount : null;
+
           teamData.push({
             ...tt,
+            new_bid_amount: maskedBidAmount,
             team_name: tt.team_name || tt.team_id,
             team_balance: 0,
-            is_current_user: tt.team_id === userTeamId,
+            is_current_user: isCurrentUser,
           });
         }
       } catch (error: any) {
         console.error(`Error fetching team ${tt.team_id}:`, error);
+        const isCurrentUser = tt.team_id === userTeamId;
+        const isResolved = tiebreaker.status === 'resolved';
+        const isAdmin = userData?.role === 'admin' || userData?.role === 'committee_admin';
+        const maskedBidAmount = (isCurrentUser || isResolved || isAdmin) ? tt.new_bid_amount : null;
+
         teamData.push({
           ...tt,
+          new_bid_amount: maskedBidAmount,
           team_name: tt.team_name || tt.team_id,
           team_balance: 0,
-          is_current_user: tt.team_id === userTeamId,
+          is_current_user: isCurrentUser,
         });
       }
     }

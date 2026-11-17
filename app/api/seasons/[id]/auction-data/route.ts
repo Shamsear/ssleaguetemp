@@ -31,13 +31,13 @@ export async function GET(
       ORDER BY round_number ASC
     `;
 
-    // Fetch all bids for this season's rounds
-    const roundIds = rounds.map((r: any) => r.id);
+    // Fetch bids only for completed rounds
+    const completedRoundIds = rounds.filter((r: any) => r.status === 'completed').map((r: any) => r.id);
     let bids = [];
     let topBids = [];
     
-    if (roundIds.length > 0) {
-      // Get all bids
+    if (completedRoundIds.length > 0) {
+      // Get all bids from completed rounds
       bids = await sql`
         SELECT 
           b.id,
@@ -51,7 +51,7 @@ export async function GET(
           fp.position as player_position
         FROM bids b
         LEFT JOIN footballplayers fp ON b.player_id = fp.player_id
-        WHERE b.round_id = ANY(${roundIds})
+        WHERE b.round_id = ANY(${completedRoundIds})
         ORDER BY b.created_at DESC
       `;
 
@@ -68,7 +68,7 @@ export async function GET(
         FROM bids b
         LEFT JOIN footballplayers fp ON b.player_id = fp.player_id
         LEFT JOIN rounds r ON b.round_id = r.id
-        WHERE b.round_id = ANY(${roundIds}) AND b.status = 'won'
+        WHERE b.round_id = ANY(${completedRoundIds}) AND b.status = 'won'
         ORDER BY b.amount DESC
         LIMIT 10
       `;
@@ -100,12 +100,13 @@ export async function GET(
       totalAcquiredPlayers: teamPlayers.length,
     };
 
-    // Add bid counts to rounds
+    // Add bid counts to rounds (completed rounds only)
     const roundsWithBids = rounds.map((round: any) => {
-      const roundBids = bids.filter((b: any) => b.round_id === round.id);
+      const isCompleted = round.status === 'completed';
+      const roundBids = isCompleted ? bids.filter((b: any) => b.round_id === round.id) : [];
       return {
         ...round,
-        bidCount: roundBids.length,
+        bidCount: isCompleted ? roundBids.length : 0,
       };
     });
 

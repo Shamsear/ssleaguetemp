@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fantasySql } from '@/lib/neon/fantasy-config';
+import { verifyAuth } from '@/lib/auth-helper';
 
 /**
  * GET /api/fantasy/draft/post-release-bids?league_id=xxx&window_id=yyy&category=zzz
@@ -7,10 +8,14 @@ import { fantasySql } from '@/lib/neon/fantasy-config';
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await verifyAuth([], request);
+    const isCommittee = auth.authenticated && (auth.role === 'admin' || auth.role === 'committee_admin' || auth.role === 'super_admin');
+
     const { searchParams } = new URL(request.url);
     const leagueId = searchParams.get('league_id');
     const windowId = searchParams.get('window_id');
     const category = searchParams.get('category');
+    const teamId = searchParams.get('team_id');
 
     if (!leagueId || !windowId) {
       return NextResponse.json(
@@ -19,35 +24,76 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (!isCommittee && !teamId) {
+      return NextResponse.json(
+        { error: 'team_id is required' },
+        { status: 400 }
+      );
+    }
+
     // Query bids from fantasy_post_release_bids joined with fantasy_teams
+    // If not committee or teamId provided, restrict bids to that team or finalized 'won' bids
     let bids = [];
     if (category) {
-      bids = await fantasySql`
-        SELECT 
-          b.bid_id, b.draft_round_id, b.league_id, b.team_id,
-          b.category, b.is_passive_team, b.target_id, b.target_name,
-          b.bid_amount, b.status, b.submitted_at,
-          t.team_name, t.owner_name, t.budget_remaining
-        FROM fantasy_post_release_bids b
-        JOIN fantasy_teams t ON b.team_id = t.team_id
-        WHERE b.league_id = ${leagueId}
-          AND (b.draft_round_id = ${windowId} OR b.bid_id LIKE ${'%' + windowId + '%'})
-          AND (b.category ILIKE ${category} OR (${category === 'Passive Team'} AND b.is_passive_team = true))
-        ORDER BY b.target_id, b.bid_amount DESC, b.submitted_at ASC
-      `;
+      if (teamId) {
+        bids = await fantasySql`
+          SELECT 
+            b.bid_id, b.draft_round_id, b.league_id, b.team_id,
+            b.category, b.is_passive_team, b.target_id, b.target_name,
+            b.bid_amount, b.status, b.submitted_at,
+            t.team_name, t.owner_name, t.budget_remaining
+          FROM fantasy_post_release_bids b
+          JOIN fantasy_teams t ON b.team_id = t.team_id
+          WHERE b.league_id = ${leagueId}
+            AND (b.draft_round_id = ${windowId} OR b.bid_id LIKE ${'%' + windowId + '%'})
+            AND (b.category ILIKE ${category} OR (${category === 'Passive Team'} AND b.is_passive_team = true))
+            AND (b.team_id = ${teamId} OR b.status = 'won')
+          ORDER BY b.target_id, b.bid_amount DESC, b.submitted_at ASC
+        `;
+      } else {
+        bids = await fantasySql`
+          SELECT 
+            b.bid_id, b.draft_round_id, b.league_id, b.team_id,
+            b.category, b.is_passive_team, b.target_id, b.target_name,
+            b.bid_amount, b.status, b.submitted_at,
+            t.team_name, t.owner_name, t.budget_remaining
+          FROM fantasy_post_release_bids b
+          JOIN fantasy_teams t ON b.team_id = t.team_id
+          WHERE b.league_id = ${leagueId}
+            AND (b.draft_round_id = ${windowId} OR b.bid_id LIKE ${'%' + windowId + '%'})
+            AND (b.category ILIKE ${category} OR (${category === 'Passive Team'} AND b.is_passive_team = true))
+          ORDER BY b.target_id, b.bid_amount DESC, b.submitted_at ASC
+        `;
+      }
     } else {
-      bids = await fantasySql`
-        SELECT 
-          b.bid_id, b.draft_round_id, b.league_id, b.team_id,
-          b.category, b.is_passive_team, b.target_id, b.target_name,
-          b.bid_amount, b.status, b.submitted_at,
-          t.team_name, t.owner_name, t.budget_remaining
-        FROM fantasy_post_release_bids b
-        JOIN fantasy_teams t ON b.team_id = t.team_id
-        WHERE b.league_id = ${leagueId}
-          AND (b.draft_round_id = ${windowId} OR b.bid_id LIKE ${'%' + windowId + '%'})
-        ORDER BY b.submitted_at DESC
-      `;
+      if (teamId) {
+        bids = await fantasySql`
+          SELECT 
+            b.bid_id, b.draft_round_id, b.league_id, b.team_id,
+            b.category, b.is_passive_team, b.target_id, b.target_name,
+            b.bid_amount, b.status, b.submitted_at,
+            t.team_name, t.owner_name, t.budget_remaining
+          FROM fantasy_post_release_bids b
+          JOIN fantasy_teams t ON b.team_id = t.team_id
+          WHERE b.league_id = ${leagueId}
+            AND (b.draft_round_id = ${windowId} OR b.bid_id LIKE ${'%' + windowId + '%'})
+            AND (b.team_id = ${teamId} OR b.status = 'won')
+          ORDER BY b.submitted_at DESC
+        `;
+      } else {
+        bids = await fantasySql`
+          SELECT 
+            b.bid_id, b.draft_round_id, b.league_id, b.team_id,
+            b.category, b.is_passive_team, b.target_id, b.target_name,
+            b.bid_amount, b.status, b.submitted_at,
+            t.team_name, t.owner_name, t.budget_remaining
+          FROM fantasy_post_release_bids b
+          JOIN fantasy_teams t ON b.team_id = t.team_id
+          WHERE b.league_id = ${leagueId}
+            AND (b.draft_round_id = ${windowId} OR b.bid_id LIKE ${'%' + windowId + '%'})
+          ORDER BY b.submitted_at DESC
+        `;
+      }
     }
 
     // Also fetch ties for this window
