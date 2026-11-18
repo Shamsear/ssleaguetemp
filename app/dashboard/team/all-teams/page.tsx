@@ -212,7 +212,14 @@ export default function AllTeamsPage() {
   const [maxPlayers, setMaxPlayers] = useState(25); // Default to 25
   const [seasonType, setSeasonType] = useState<'single' | 'multi'>('single');
   const [error, setError] = useState('');
-  const [playerCounts, setPlayerCounts] = useState<{ [key: string]: { footballPlayersCount: number; realPlayersCount: number } }>({});
+  const [playerCounts, setPlayerCounts] = useState<{ 
+    [key: string]: { 
+      footballPlayersCount: number; 
+      realPlayersCount: number;
+      footballBudget?: number;
+      footballSpent?: number;
+    } 
+  }>({});
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedTeam, setCopiedTeam] = useState<string | null>(null);
@@ -370,11 +377,21 @@ export default function AllTeamsPage() {
         })
         .map((teamSeasonData: any) => {
           const teamId = teamSeasonData.team_id;
-          // Get actual player counts from Neon databases
-          const footballPlayersCount = playerCounts[teamId]?.footballPlayersCount || 0;
+          // Get actual player counts and budget from Neon database
+          const footballPlayersCount = playerCounts[teamId]?.footballPlayersCount !== undefined 
+            ? playerCounts[teamId].footballPlayersCount 
+            : (teamSeasonData.football_players_count || 0);
           const realPlayersCount = playerCounts[teamId]?.realPlayersCount || 0;
           const totalPlayers = footballPlayersCount + realPlayersCount;
           const avgRating = teamSeasonData.average_rating || 0;
+
+          const footballBudget = playerCounts[teamId]?.footballBudget !== undefined
+            ? playerCounts[teamId].footballBudget
+            : (teamSeasonData.football_budget || 0);
+
+          const footballSpent = playerCounts[teamId]?.footballSpent !== undefined
+            ? playerCounts[teamId].footballSpent
+            : (teamSeasonData.football_spent || 0);
 
           return {
             team: {
@@ -387,20 +404,20 @@ export default function AllTeamsPage() {
               logo_position_x_square: teamSeasonData.logo_position_x_square,
               logo_position_y_square: teamSeasonData.logo_position_y_square,
               logo_scale_square: teamSeasonData.logo_scale_square,
-              balance: teamSeasonData.budget || 0,
+              balance: footballBudget,
               // Dual currency fields
               currencySystem: teamSeasonData.currency_system || 'dual',
-              footballBudget: teamSeasonData.football_budget || 0,
+              footballBudget,
               realPlayerBudget: teamSeasonData.real_player_budget || 0,
-              footballSpent: teamSeasonData.football_spent || 0,
+              footballSpent,
               realPlayerSpent: teamSeasonData.real_player_spent || 0,
             },
             totalPlayers,
             footballPlayersCount,
             realPlayersCount,
             totalValue: teamSeasonData.currency_system === 'dual'
-              ? (teamSeasonData.football_spent || 0) + (teamSeasonData.real_player_spent || 0)
-              : (teamSeasonData.total_spent || 0),
+              ? footballSpent + (teamSeasonData.real_player_spent || 0)
+              : (teamSeasonData.total_spent || footballSpent),
             avgRating: Math.round(avgRating * 10) / 10,
             positionBreakdown: teamSeasonData.position_counts || {},
           };

@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Combine the results
-    const playerCounts: { [key: string]: { footballPlayersCount: number; realPlayersCount: number } } = {};
+    const playerCounts: { [key: string]: { footballPlayersCount: number; realPlayersCount: number; footballBudget?: number; footballSpent?: number } } = {};
 
     // Add football player counts
     footballPlayerCounts.forEach((row: any) => {
@@ -105,6 +105,31 @@ export async function GET(request: NextRequest) {
       playerCounts[row.team_id].realPlayersCount = parseInt(row.count);
     });
 
+    // Add authoritative budget & spent from Neon teams table
+    try {
+      const neonTeams = await auctionDb`
+        SELECT id, football_budget, football_spent, football_players_count
+        FROM teams
+        WHERE season_id = ${seasonId}
+      `;
+      neonTeams.forEach((nt: any) => {
+        if (!playerCounts[nt.id]) {
+          playerCounts[nt.id] = { footballPlayersCount: 0, realPlayersCount: 0 };
+        }
+        if (nt.football_budget !== null && nt.football_budget !== undefined) {
+          playerCounts[nt.id].footballBudget = Number(nt.football_budget);
+        }
+        if (nt.football_spent !== null && nt.football_spent !== undefined) {
+          playerCounts[nt.id].footballSpent = Number(nt.football_spent);
+        }
+        if (nt.football_players_count !== null && nt.football_players_count !== undefined) {
+          playerCounts[nt.id].footballPlayersCount = parseInt(nt.football_players_count);
+        }
+      });
+    } catch (teamErr) {
+      console.warn('Could not fetch neon teams budget in player-counts:', teamErr);
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -112,7 +137,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         },
       }
     );
@@ -127,3 +152,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';

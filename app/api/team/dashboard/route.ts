@@ -152,6 +152,23 @@ export async function GET(request: NextRequest) {
     const { getTeamBudgets, getTeamSlots } = require('@/lib/team-season-utils');
     const budgets = getTeamBudgets(teamSeasonData);
     const slots = getTeamSlots(teamSeasonData);
+
+    // Prefer authoritative budget from Neon DB teams table if exists
+    if (dbTeamId) {
+      try {
+        const neonTeamBudgetRes = await sql`
+          SELECT football_budget, football_spent, football_players_count FROM teams 
+          WHERE id = ${dbTeamId} AND season_id = ${seasonId}
+          LIMIT 1
+        `;
+        if (neonTeamBudgetRes.length > 0 && neonTeamBudgetRes[0].football_budget !== null) {
+          budgets.football = Number(neonTeamBudgetRes[0].football_budget);
+          budgets.footballSpent = Number(neonTeamBudgetRes[0].football_spent);
+        }
+      } catch (err) {
+        console.warn('Could not read neon team budget in dashboard:', err);
+      }
+    }
     
     // Fetch base team details for adjustments
     let logo_position_x_circle = null;

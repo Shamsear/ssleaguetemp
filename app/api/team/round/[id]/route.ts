@@ -160,8 +160,17 @@ export async function GET(
     const currencySystem = teamSeasonData?.currency_system || 'single';
     const isDualCurrency = currencySystem === 'dual';
     
+    // Prefer authoritative budget from Neon DB teams table
+    const neonTeamBudgetRes = await sql`
+      SELECT football_budget, football_spent FROM teams 
+      WHERE id = ${teamId} AND season_id = ${round.season_id}
+      LIMIT 1
+    `;
+
     let teamBalance = 0;
-    if (isDualCurrency) {
+    if (neonTeamBudgetRes.length > 0 && neonTeamBudgetRes[0].football_budget !== null) {
+      teamBalance = Number(neonTeamBudgetRes[0].football_budget);
+    } else if (isDualCurrency) {
       // For dual currency, use football_budget (since this is for football players)
       teamBalance = teamSeasonData?.football_budget || 0;
     } else {

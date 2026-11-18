@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { neon } from '@neondatabase/serverless';
 
 /**
  * GET /api/cached/firebase/team-seasons
- * Returns team_seasons data with ISR caching
+ * Returns team_seasons data with authoritative Neon DB balances
  * 
  * Query params:
  * - seasonId: Filter by season (optional)
  * - teamId: Filter by team (optional)
- * 
- * Cache: 60 seconds (teams update during matches)
  */
 export async function GET(request: Request) {
   try {
@@ -43,15 +42,51 @@ export async function GET(request: Request) {
         logo_scale_square: data.logo_scale_square,
       });
     });
+
+    // Cross-reference authoritative team budget/spent from Neon Auction DB
+    const auctionDbMap = new Map<string, any>();
+    try {
+      const auctionDbUrl = process.env.NEON_AUCTION_DB_URL || process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+      if (auctionDbUrl) {
+        const auctionSql = neon(auctionDbUrl);
+        const auctionTeams = seasonId 
+          ? await auctionSql`SELECT id, name, season_id, football_budget, football_spent, football_players_count FROM teams WHERE season_id = ${seasonId}`
+          : await auctionSql`SELECT id, name, season_id, football_budget, football_spent, football_players_count FROM teams`;
+        auctionTeams.forEach((at: any) => {
+          auctionDbMap.set(at.id, at);
+        });
+      }
+    } catch (neonErr) {
+      console.warn('Could not query auction neon teams in team-seasons:', neonErr);
+    }
     
     const teamSeasons = snapshot.docs.map(doc => {
       const data = doc.data() as any;
       const tId = data.team_id || doc.id.split('_')[0];
       const positioning = teamsMap.get(tId) || {};
+      const at = auctionDbMap.get(tId);
+
+      const football_budget = at?.football_budget !== undefined && at?.football_budget !== null
+        ? Number(at.football_budget)
+        : (data.football_budget !== undefined ? Number(data.football_budget) : 0);
+
+      const football_spent = at?.football_spent !== undefined && at?.football_spent !== null
+        ? Number(at.football_spent)
+        : (data.football_spent !== undefined ? Number(data.football_spent) : 0);
+
+      const football_players_count = at?.football_players_count !== undefined && at?.football_players_count !== null
+        ? Number(at.football_players_count)
+        : (data.football_players_count !== undefined ? Number(data.football_players_count) : 0);
+
       return {
         id: doc.id,
         ...data,
         ...positioning,
+        football_budget,
+        football_spent,
+        football_players_count,
+        players_count: football_players_count,
+        budget: football_budget,
       };
     });
     
@@ -70,14 +105,12 @@ export async function GET(request: Request) {
       {
         success: true,
         data: teamSeasons,
-        cached: true,
+        cached: false,
         timestamp: new Date().toISOString(),
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
-          'CDN-Cache-Control': 'public, s-maxage=60',
-          'Vercel-CDN-Cache-Control': 'public, s-maxage=60',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         },
       }
     );
@@ -93,5 +126,5 @@ export async function GET(request: Request) {
   }
 }
 
-export const revalidate = 60; // Revalidate every 60 seconds
-export const dynamic = 'force-static';
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
