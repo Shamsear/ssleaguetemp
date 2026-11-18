@@ -1561,7 +1561,7 @@ export default function TeamRoundPage() {
               </div>
               <div className="flex-1">
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Auction Status</h4>
-                <div className="mt-3 text-[10px] text-slate-500 uppercase font-bold grid grid-cols-2 sm:grid-cols-4 gap-y-1.5 gap-x-4">
+                <div className="mt-2.5 sm:mt-3 text-[10px] text-slate-500 uppercase font-bold grid grid-cols-2 sm:grid-cols-4 gap-y-2 gap-x-3 sm:gap-x-4">
                   <div>
                     <span className="text-slate-400">Rounds completed:</span>
                     <p className="text-xs text-slate-700 font-mono font-black mt-0.5">{completedRounds} of {totalRounds}</p>
@@ -1570,7 +1570,7 @@ export default function TeamRoundPage() {
                     <span className="text-slate-400">Rounds remaining:</span>
                     <p className="text-xs text-slate-700 font-mono font-black mt-0.5">{totalRounds - completedRounds}</p>
                   </div>
-                  <div>
+                  <div className="col-span-2 sm:col-span-1">
                     <span className="text-slate-400">Max bid this round:</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <p className="text-xs text-slate-700 font-mono font-black">
@@ -1583,15 +1583,15 @@ export default function TeamRoundPage() {
                         {showMaxBidDetails ? 'Hide' : 'Info'}
                       </button>
                     </div>
-                    <span className="text-[8px] text-slate-400 block mt-0.5 leading-none uppercase font-extrabold">
+                    <span className="text-[8px] text-slate-400 block mt-0.5 leading-none uppercase font-extrabold truncate">
                       (Phase 1 Strict • Phase 2 Skippable • Phase 3 Flex)
                     </span>
                   </div>
-                  <div>
+                  <div className="col-span-2 sm:col-span-1">
                     <span className="text-slate-400">Your balance:</span>
                     <p className={`text-xs font-mono font-black mt-0.5 ${teamBalance >= minBalancePerRound ? 'text-emerald-600' : 'text-rose-600'}`}>
                       £{teamBalance.toLocaleString()}
-                      <span className={`text-[10px] ml-1 block sm:inline ${teamBalance >= minBalancePerRound ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      <span className={`text-[10px] ml-1 ${teamBalance >= minBalancePerRound ? 'text-emerald-500' : 'text-rose-500'}`}>
                         ({teamBalance >= minBalancePerRound ? 'sufficient' : 'insufficient'})
                       </span>
                     </p>
@@ -1754,12 +1754,12 @@ export default function TeamRoundPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-3 sm:mt-0 justify-end items-center">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto mt-3 sm:mt-0 items-center justify-start sm:justify-end">
                   <a
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border inline-flex items-center justify-center ${
+                    className={`w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border inline-flex items-center justify-center text-center ${
                       isOfficiallySubmitted
                         ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/60'
                         : isEditingDraft
@@ -1771,7 +1771,7 @@ export default function TeamRoundPage() {
                   </a>
                   <button
                     onClick={handleCopyToClipboard}
-                    className={`px-3 py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border ${
+                    className={`w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all border inline-flex items-center justify-center text-center ${
                       isOfficiallySubmitted
                         ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/60'
                         : isEditingDraft
@@ -1788,7 +1788,7 @@ export default function TeamRoundPage() {
                       <button
                         type="button"
                         onClick={handleEditDraft}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all flex items-center gap-1.5 shadow-xs"
+                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all inline-flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1801,7 +1801,7 @@ export default function TeamRoundPage() {
                           type="button"
                           onClick={handleSubmitBids}
                           disabled={isSubmitting}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all flex items-center gap-1.5 shadow-sm animate-pulse hover:animate-none"
+                          className="w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all inline-flex items-center justify-center gap-1.5 shadow-sm animate-pulse hover:animate-none"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -1824,7 +1824,7 @@ export default function TeamRoundPage() {
                             setHasUnsavedChanges(false);
                           }
                         }}
-                        className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 border border-slate-300 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all flex items-center gap-1.5"
+                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 border border-slate-300 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all inline-flex items-center justify-center gap-1.5"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1837,7 +1837,7 @@ export default function TeamRoundPage() {
                           type="button"
                           onClick={handleSubmitBids}
                           disabled={isSubmitting}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all flex items-center gap-1.5 shadow-sm"
+                          className="w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all inline-flex items-center justify-center gap-1.5 shadow-sm"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -1854,7 +1854,7 @@ export default function TeamRoundPage() {
                       type="button"
                       onClick={handleUnlockBids}
                       disabled={isUnlocking}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all"
+                      className="w-full sm:w-auto col-span-2 sm:col-span-1 px-3 py-2 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono text-xs uppercase tracking-wider font-extrabold transition-all text-center"
                     >
                       {isUnlocking ? 'Unlocking...' : 'Unlock to Modify'}
                     </button>
@@ -1868,25 +1868,40 @@ export default function TeamRoundPage() {
           <div className="mb-6">
 
             {/* Section header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${!!submission ? 'bg-emerald-600' : 'bg-blue-600'}`}>
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center justify-between sm:justify-start gap-2.5 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${!!submission ? 'bg-emerald-600' : 'bg-blue-600'}`}>
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">Your Selected Players</h4>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      {myBids.length > 0 ? `${myBids.length} / ${round.max_bids_per_team} bids placed` : 'No bids placed yet'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">Your Selected Players</h4>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    {myBids.length > 0 ? `${myBids.length} / ${round.max_bids_per_team} bids placed` : 'No bids placed yet'}
-                  </p>
-                </div>
+
+                {/* Mobile-only status badge beside title */}
+                {(isOfficiallySubmitted || isDraftSaved || isEditingDraft) && (
+                  <span className={`sm:hidden px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-full border shrink-0 ${
+                    isOfficiallySubmitted
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : isEditingDraft
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    {isOfficiallySubmitted ? '✓ Submitted' : isEditingDraft ? '✏️ Editing' : '🔒 Locked'}
+                  </span>
+                )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                {/* Submission status badge */}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-start sm:justify-end">
+                {/* Desktop Submission status badge */}
                 {(isOfficiallySubmitted || isDraftSaved || isEditingDraft) && (
-                  <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-full border ${
+                  <span className={`hidden sm:inline-flex px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-full border ${
                     isOfficiallySubmitted
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : isEditingDraft
@@ -2065,36 +2080,38 @@ export default function TeamRoundPage() {
                     )}
                   </div>
 
-                  {/* Amount input */}
-                  <div className="relative w-full sm:w-36">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">£</span>
-                    <input
-                      ref={quickAmountInputRef}
-                      type="number"
-                      value={quickAddAmount}
-                      onChange={(e) => setQuickAddAmount(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleQuickAddSubmit();
-                        }
-                      }}
-                      placeholder="Amount"
-                      min="10"
-                      max={maxBidThisRound}
-                      className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
-                    />
-                  </div>
+                  {/* Amount input + Add button on mobile side-by-side */}
+                  <div className="flex items-center gap-2 sm:w-auto">
+                    <div className="relative flex-1 sm:w-36">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">£</span>
+                      <input
+                        ref={quickAmountInputRef}
+                        type="number"
+                        value={quickAddAmount}
+                        onChange={(e) => setQuickAddAmount(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleQuickAddSubmit();
+                          }
+                        }}
+                        placeholder="Amount"
+                        min="10"
+                        max={maxBidThisRound}
+                        className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
+                      />
+                    </div>
 
-                  {/* Add button */}
-                  <button
-                    type="button"
-                    onClick={handleQuickAddSubmit}
-                    disabled={!quickAddSelectedPlayer || !quickAddAmount}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-                  >
-                    + Add
-                  </button>
+                    {/* Add button */}
+                    <button
+                      type="button"
+                      onClick={handleQuickAddSubmit}
+                      disabled={!quickAddSelectedPlayer || !quickAddAmount}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
+                    >
+                      + Add
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -2562,10 +2579,10 @@ export default function TeamRoundPage() {
                 </div>
 
                 {/* Filter Controls (Position + Playing Style) */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {/* Position Filter (visible if round has multiple positions) */}
                   {availablePositions.length > 1 && (
-                    <div className="relative min-w-[140px] flex-1 sm:flex-initial">
+                    <div className="relative min-w-[120px] flex-1 sm:flex-initial">
                       <select
                         value={selectedPosition}
                         onChange={(e) => setSelectedPosition(e.target.value)}
@@ -2592,7 +2609,7 @@ export default function TeamRoundPage() {
 
                   {/* Playing Style Filter */}
                   {availablePlayingStyles.length > 0 && (
-                    <div className="relative min-w-[170px] flex-1 sm:flex-initial">
+                    <div className="relative min-w-[130px] flex-1 sm:flex-initial">
                       <select
                         value={selectedPlayingStyle}
                         onChange={(e) => setSelectedPlayingStyle(e.target.value)}
@@ -2802,26 +2819,26 @@ export default function TeamRoundPage() {
 
       {/* ── Quick Paste Modal ── */}
       {isPasteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-mono">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl p-6 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs font-mono">
+          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl p-4 sm:p-6 max-h-[88vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100">
               <div>
-                <h3 className="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
                   <span>📋</span>
                   <span>Quick Paste Bids</span>
                 </h3>
-                <p className="text-xs text-slate-400 font-bold mt-0.5">Paste your bids list from WhatsApp, Notes, or Excel</p>
+                <p className="text-[11px] sm:text-xs text-slate-400 font-bold mt-0.5">Paste your bids list from WhatsApp, Notes, or Excel</p>
               </div>
               <button
                 type="button"
                 onClick={() => { setIsPasteModalOpen(false); setPasteRawText(''); setPasteParsedResults([]); }}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            <div className="py-4 space-y-4 overflow-y-auto flex-1">
+            <div className="py-3 sm:py-4 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5 tracking-wider">
                   Paste Text Below
@@ -2833,7 +2850,7 @@ export default function TeamRoundPage() {
                     handleParsePasteText(e.target.value);
                   }}
                   placeholder={`1. Désiré Doué - £824\n2. Michael Olise - £823\n3. Lamine Yamal - £684\n...`}
-                  rows={6}
+                  rows={5}
                   className="w-full p-3 text-xs font-mono rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-slate-50/50"
                 />
               </div>
@@ -2850,7 +2867,7 @@ export default function TeamRoundPage() {
                     </span>
                   </div>
 
-                  <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-2xl divide-y divide-slate-100">
+                  <div className="max-h-52 sm:max-h-60 overflow-y-auto border border-slate-200 rounded-2xl divide-y divide-slate-100">
                     {pasteParsedResults.map((r, i) => (
                       <div key={i} className={`p-2.5 flex items-center justify-between text-xs ${r.valid ? 'bg-white' : 'bg-rose-50/60'}`}>
                         <div className="flex items-center gap-2 min-w-0">
@@ -2879,20 +2896,20 @@ export default function TeamRoundPage() {
               )}
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+            <div className="pt-3 sm:pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => { setIsPasteModalOpen(false); setPasteRawText(''); setPasteParsedResults([]); }}
-                className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors order-3 sm:order-1 text-center"
               >
                 Cancel
               </button>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto order-1 sm:order-2">
                 <button
                   type="button"
                   disabled={pasteParsedResults.filter(r => r.valid).length === 0}
                   onClick={() => handleApplyPasteBids(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-white text-xs font-black uppercase tracking-wider hover:bg-slate-700 transition-colors disabled:opacity-40"
+                  className="w-full sm:w-auto px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-800 text-white text-[11px] sm:text-xs font-black uppercase tracking-wider hover:bg-slate-700 transition-colors disabled:opacity-40 text-center truncate"
                   title="Keep existing bids and add new valid ones"
                 >
                   Add to Existing
@@ -2901,10 +2918,10 @@ export default function TeamRoundPage() {
                   type="button"
                   disabled={pasteParsedResults.filter(r => r.valid).length === 0}
                   onClick={() => handleApplyPasteBids(true)}
-                  className="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider hover:bg-amber-300 transition-colors disabled:opacity-40 shadow-sm"
+                  className="w-full sm:w-auto px-2.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-amber-400 text-slate-950 text-[11px] sm:text-xs font-black uppercase tracking-wider hover:bg-amber-300 transition-colors disabled:opacity-40 shadow-sm text-center truncate"
                   title="Replace entire draft with these bids"
                 >
-                  Replace Draft ({pasteParsedResults.filter(r => r.valid).length})
+                  Replace Draft {pasteParsedResults.filter(r => r.valid).length > 0 ? `(${pasteParsedResults.filter(r => r.valid).length})` : ''}
                 </button>
               </div>
             </div>
