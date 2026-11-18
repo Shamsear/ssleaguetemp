@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, Star, XCircle } from 'lucide-react';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -99,6 +99,25 @@ export default function TeamRoundPage() {
   const [editAmount, setEditAmount] = useState('');
   const [showMaxBidDetails, setShowMaxBidDetails] = useState(false);
   const [visibleCount, setVisibleCount] = useState(30);
+
+  // Fast edit, delete & multi-select state
+  const [selectedBidIds, setSelectedBidIds] = useState<Set<string>>(new Set());
+  const [undoToast, setUndoToast] = useState<{ visible: boolean; message: string; bid: any; index: number } | null>(null);
+  const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isBatchEditMode, setIsBatchEditMode] = useState(false);
+  const [batchAmounts, setBatchAmounts] = useState<Record<string, string>>({});
+
+  // Quick Add state
+  const [quickAddSearch, setQuickAddSearch] = useState('');
+  const [quickAddSelectedPlayer, setQuickAddSelectedPlayer] = useState<any | null>(null);
+  const [quickAddAmount, setQuickAddAmount] = useState('');
+  const [isQuickAddDropdownOpen, setIsQuickAddDropdownOpen] = useState(false);
+  const quickAmountInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Quick Paste state
+  const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
+  const [pasteRawText, setPasteRawText] = useState('');
+  const [pasteParsedResults, setPasteParsedResults] = useState<any[]>([]);
 
   // Reset visible count when search term or filters change to speed up rendering
   useEffect(() => {
@@ -619,6 +638,375 @@ export default function TeamRoundPage() {
   const handleTableEditCancel = () => {
     setEditingBidId(null);
     setEditAmount('');
+  };
+
+  // Fast 1-Click Delete with Undo
+  const handleQuickDelete = (bidId: string) => {
+    const idx = localBids.findIndex(b => b.id === bidId);
+    if (idx === -1) return;
+    const deletedBid = localBids[idx];
+    const updatedBids = localBids.filter(b => b.id !== bidId);
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
+
+    setSelectedBidIds(prev => {
+      const next = new Set(prev);
+      next.delete(bidId);
+      return next;
+    });
+
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    setUndoToast({
+      visible: true,
+      message: `Removed ${deletedBid.player?.name || 'player'}`,
+      bid: deletedBid,
+      index: idx
+    });
+    undoTimeoutRef.current = setTimeout(() => {
+      setUndoToast(null);
+    }, 4500);
+  };
+
+  const handleUndoDelete = () => {
+    if (!undoToast?.bid) return;
+    const restored = [...localBids];
+    restored.splice(Math.min(undoToast.index, restored.length), 0, undoToast.bid);
+    setLocalBids(restored);
+    setHasUnsavedChanges(checkHasChanges(restored));
+    setUndoToast(null);
+  };
+
+  // Multi-select & Bulk Delete
+  const handleToggleSelectAll = () => {
+    if (selectedBidIds.size === myBids.length) {
+      setSelectedBidIds(new Set());
+    } else {
+      setSelectedBidIds(new Set(myBids.map((b: Bid) => b.id)));
+    }
+  };
+
+  const handleToggleSelectBid = (bidId: string) => {
+    setSelectedBidIds(prev => {
+      const next = new Set(prev);
+      if (next.has(bidId)) {
+        next.delete(bidId);
+      } else {
+        next.add(bidId);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedBidIds.size === 0) return;
+    const confirmed = await showConfirm({
+      type: 'warning',
+      title: 'Delete Selected Bids',
+      message: `Are you sure you want to delete ${selectedBidIds.size} selected bids?`,
+      confirmText: `Yes, Delete (${selectedBidIds.size})`,
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+
+    const updatedBids = localBids.filter(b => !selectedBidIds.has(b.id));
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
+    setSelectedBidIds(new Set());
+  };
+
+  const handleClearAllBids = async () => {
+    if (localBids.length === 0) return;
+    const confirmed = await showConfirm({
+      type: 'warning',
+      title: 'Clear All Bids',
+      message: `Are you sure you want to remove all ${localBids.length} draft bids?`,
+      confirmText: 'Yes, Clear All',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+
+    setLocalBids([]);
+    setHasUnsavedChanges(true);
+    setSelectedBidIds(new Set());
+  };
+
+  // Priority Reordering (Swap Amounts)
+  const handleSwapBidAmounts = (idx1: number, idx2: number) => {
+    if (idx1 < 0 || idx2 < 0 || idx1 >= myBids.length || idx2 >= myBids.length) return;
+    const bid1 = myBids[idx1];
+    const bid2 = myBids[idx2];
+    if (!bid1 || !bid2) return;
+
+    const amount1 = bid1.amount;
+    const amount2 = bid2.amount;
+
+    const updatedBids = localBids.map(b => {
+      if (b.id === bid1.id) return { ...b, amount: amount2 };
+      if (b.id === bid2.id) return { ...b, amount: amount1 };
+      return b;
+    });
+
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
+  };
+
+  // Keyboard navigation for inline edit
+  const handleTableEditAndNext = (currentBid: Bid, direction: number = 1) => {
+    const amount = parseInt(editAmount);
+    if (!amount || isNaN(amount) || amount < 10) {
+      showAlert({ type: 'warning', title: 'Invalid Amount', message: 'Bid amount must be at least £10' });
+      return;
+    }
+    const currentMaxAllowed = maxBidThisRound + currentBid.amount;
+    if (amount > currentMaxAllowed) {
+      showAlert({ type: 'error', title: 'Reserve Pool Restriction', message: `Bid of £${amount} exceeds allowed limit: £${currentMaxAllowed.toLocaleString()}` });
+      return;
+    }
+    const otherBidAmounts = localBids.filter((b: any) => b.id !== currentBid.id).map((b: any) => b.amount);
+    if (otherBidAmounts.includes(amount)) {
+      showAlert({ type: 'error', title: 'Duplicate Bid Amount', message: 'Each bid must have a unique amount.' });
+      return;
+    }
+
+    const updatedBids = localBids.map(b => b.id === currentBid.id ? { ...b, amount } : b);
+    setLocalBids(updatedBids);
+    setHasUnsavedChanges(checkHasChanges(updatedBids));
+
+    const currentIdx = myBids.findIndex((b: Bid) => b.id === currentBid.id);
+    const nextIdx = currentIdx + direction;
+    if (nextIdx >= 0 && nextIdx < myBids.length) {
+      const nextBid = myBids[nextIdx];
+      setEditingBidId(nextBid.id);
+      setEditAmount(nextBid.amount.toString());
+    } else {
+      setEditingBidId(null);
+      setEditAmount('');
+    }
+  };
+
+  // Batch / Spreadsheet Edit mode
+  const handleToggleBatchEdit = () => {
+    if (isBatchEditMode) {
+      const amountsMap = { ...batchAmounts };
+      const amountsSet = new Set<number>();
+
+      for (const bid of myBids) {
+        const valStr = amountsMap[bid.id];
+        const val = valStr ? parseInt(valStr, 10) : bid.amount;
+        if (isNaN(val) || val < 10) {
+          showAlert({ type: 'warning', title: 'Invalid Bid Amount', message: `Bid for ${bid.player?.name} must be at least £10` });
+          return;
+        }
+        if (val > maxBidThisRound) {
+          showAlert({ type: 'error', title: 'Reserve Limit Exceeded', message: `Bid of £${val} for ${bid.player?.name} exceeds allowed max: £${maxBidThisRound.toLocaleString()}` });
+          return;
+        }
+        if (amountsSet.has(val)) {
+          showAlert({ type: 'error', title: 'Duplicate Bid Amount', message: `Duplicate amount £${val} detected. Each bid must have a unique amount.` });
+          return;
+        }
+        amountsSet.add(val);
+      }
+
+      const updatedBids = localBids.map(b => {
+        const valStr = amountsMap[b.id];
+        return valStr ? { ...b, amount: parseInt(valStr, 10) } : b;
+      });
+
+      setLocalBids(updatedBids);
+      setHasUnsavedChanges(checkHasChanges(updatedBids));
+      setIsBatchEditMode(false);
+      setBatchAmounts({});
+    } else {
+      const initial: Record<string, string> = {};
+      localBids.forEach(b => {
+        initial[b.id] = b.amount.toString();
+      });
+      setBatchAmounts(initial);
+      setIsBatchEditMode(true);
+    }
+  };
+
+  const handleBatchAmountChange = (bidId: string, val: string) => {
+    setBatchAmounts(prev => ({ ...prev, [bidId]: val }));
+  };
+
+  // Quick Add Candidates
+  const quickAddCandidates = useMemo(() => {
+    if (!quickAddSearch || quickAddSearch.trim().length < 1) return [];
+    const searchNorm = normalizeStr(quickAddSearch);
+    const alreadyBidPlayerIds = new Set(localBids.map(b => b.player_id));
+    return players
+      .filter((p: any) => !alreadyBidPlayerIds.has(p.id) && normalizeStr(p.name).includes(searchNorm))
+      .slice(0, 8);
+  }, [quickAddSearch, players, localBids]);
+
+  const handleQuickAddSubmit = async () => {
+    const targetPlayer = quickAddSelectedPlayer || quickAddCandidates[0];
+    if (!targetPlayer) {
+      showAlert({ type: 'warning', title: 'Select Player', message: 'Please select a player to add' });
+      return;
+    }
+    const amount = parseInt(quickAddAmount);
+    if (!amount || isNaN(amount) || amount < 10) {
+      showAlert({ type: 'warning', title: 'Invalid Amount', message: 'Bid amount must be at least £10' });
+      return;
+    }
+    if (amount > maxBidThisRound) {
+      showAlert({ type: 'error', title: 'Reserve Pool Restriction', message: `Bid of £${amount} exceeds the allowed limit: £${maxBidThisRound.toLocaleString()}` });
+      return;
+    }
+    if (myBids.some((b: Bid) => b.amount === amount)) {
+      showAlert({ type: 'error', title: 'Duplicate Bid Amount', message: 'You already have a bid with this amount.' });
+      return;
+    }
+    if (bidCount >= round.max_bids_per_team) {
+      showAlert({ type: 'warning', title: 'Slot Limit Reached', message: `You have reached the maximum of ${round.max_bids_per_team} bids.` });
+      return;
+    }
+
+    await handlePlaceBid(targetPlayer.id, amount);
+    setQuickAddSearch('');
+    setQuickAddSelectedPlayer(null);
+    setQuickAddAmount('');
+    setIsQuickAddDropdownOpen(false);
+  };
+
+  // Quick Paste parser & apply
+  const handleParsePasteText = (text: string) => {
+    if (!text || !text.trim()) {
+      setPasteParsedResults([]);
+      return;
+    }
+
+    const lines = text.split(/\r?\n/);
+    const results: any[] = [];
+    const usedAmounts = new Set<number>();
+    const usedPlayerIds = new Set<string>();
+
+    for (let rawLine of lines) {
+      let line = rawLine.trim();
+      if (!line) continue;
+      if (line.startsWith('*') && line.endsWith('*')) continue;
+      const lower = line.toLowerCase();
+      if (lower.startsWith('round') || lower.startsWith('position:') || lower.startsWith('team:') || lower.startsWith('bids:') || lower.startsWith('player')) continue;
+
+      line = line.replace(/^\d+[\.\)\:\-\s]+/, '').trim();
+
+      let namePart = '';
+      let amount = 0;
+
+      const delimiterMatch = line.match(/^(.*?)(?:\s*[-–—:,|]\s*|\s+)[£$€]?\s*(\d[\d,]*)\s*$/);
+      if (delimiterMatch) {
+        namePart = delimiterMatch[1].replace(/[*-_]/g, '').trim();
+        amount = parseInt(delimiterMatch[2].replace(/,/g, ''), 10);
+      } else {
+        const endNumMatch = line.match(/^(.*?)[£$€]?\s*(\d[\d,]*)\s*$/);
+        if (endNumMatch) {
+          namePart = endNumMatch[1].replace(/[-–—:,|*]/g, '').trim();
+          amount = parseInt(endNumMatch[2].replace(/,/g, ''), 10);
+        }
+      }
+
+      if (!namePart || isNaN(amount)) {
+        continue;
+      }
+
+      const searchNorm = normalizeStr(namePart);
+      let matched = players.find((p: any) => normalizeStr(p.name) === searchNorm);
+      if (!matched) {
+        matched = players.find((p: any) => normalizeStr(p.name).includes(searchNorm) || searchNorm.includes(normalizeStr(p.name)));
+      }
+
+      let error = '';
+      if (!matched) {
+        error = `Player "${namePart}" not found in this round`;
+      } else if (usedPlayerIds.has(matched.id)) {
+        error = `Duplicate player "${matched.name}" in paste list`;
+      } else if (amount < 10) {
+        error = `Bid £${amount} is below minimum £10`;
+      } else if (amount > maxBidThisRound) {
+        error = `Bid £${amount} exceeds allowed max £${maxBidThisRound.toLocaleString()}`;
+      } else if (usedAmounts.has(amount)) {
+        error = `Duplicate bid amount £${amount}`;
+      }
+
+      if (!error && matched) {
+        usedAmounts.add(amount);
+        usedPlayerIds.add(matched.id);
+      }
+
+      results.push({
+        rawLine,
+        rawName: namePart,
+        amount,
+        matchedPlayer: matched || null,
+        valid: !error && !!matched,
+        error
+      });
+    }
+
+    setPasteParsedResults(results);
+  };
+
+  const handleApplyPasteBids = (replace: boolean) => {
+    const validItems = pasteParsedResults.filter(r => r.valid && r.matchedPlayer);
+    if (validItems.length === 0) {
+      showAlert({ type: 'warning', title: 'No Valid Bids', message: 'No valid bids to apply. Please check the preview.' });
+      return;
+    }
+
+    let nextBids: any[] = replace ? [] : [...localBids];
+    const existingAmounts = new Set<number>(nextBids.map(b => b.amount));
+    const existingPlayerIds = new Set<string>(nextBids.map(b => b.player_id));
+
+    let addedCount = 0;
+    for (const item of validItems) {
+      const p = item.matchedPlayer;
+      if (!replace) {
+        if (existingPlayerIds.has(p.id)) continue;
+        if (existingAmounts.has(item.amount)) continue;
+        if (nextBids.length >= round.max_bids_per_team) break;
+      }
+
+      nextBids.push({
+        id: 'temp-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        player_id: p.id,
+        amount: item.amount,
+        round_id: roundId,
+        created_at: new Date().toISOString(),
+        player: {
+          id: p.id,
+          player_id: p.player_id,
+          name: p.name,
+          position: p.position,
+          position_group: p.position_group,
+          team_name: p.team_name,
+          club: p.club,
+          overall_rating: p.overall_rating,
+          playing_style: p.playing_style,
+          retired: p.retired,
+          is_starred: p.is_starred || false
+        }
+      });
+      existingAmounts.add(item.amount);
+      existingPlayerIds.add(p.id);
+      addedCount++;
+    }
+
+    setLocalBids(nextBids);
+    setHasUnsavedChanges(checkHasChanges(nextBids));
+    setIsPasteModalOpen(false);
+    setPasteRawText('');
+    setPasteParsedResults([]);
+
+    showAlert({
+      type: 'success',
+      title: 'Bids Applied',
+      message: replace
+        ? `Replaced draft with ${addedCount} pasted bids!`
+        : `Added ${addedCount} pasted bids to your draft!`
+    });
   };
 
   // Submit bids
@@ -1352,13 +1740,77 @@ export default function TeamRoundPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {/* Submission status badge */}
                 {hasSubmitted && (
                   <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-full border ${!!submission ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
                     {!!submission ? '✓ Submitted' : 'Draft'}
                   </span>
                 )}
+
+                {/* Fast Tools for Unlocked Mode */}
+                {!isLocked && (
+                  <>
+                    {/* Paste Bids Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsPasteModalOpen(true)}
+                      className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center gap-1 text-[11px] font-bold font-mono transition-colors shadow-xs"
+                      title="Paste bids from WhatsApp or text"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <span>Paste</span>
+                    </button>
+
+                    {myBids.length > 0 && (
+                      <>
+                        {/* Edit All Toggle */}
+                        <button
+                          type="button"
+                          onClick={handleToggleBatchEdit}
+                          className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1 text-[11px] font-bold font-mono transition-colors border shadow-xs ${isBatchEditMode ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'}`}
+                          title={isBatchEditMode ? 'Save and finish editing all' : 'Spreadsheet mode: edit all bids'}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          <span>{isBatchEditMode ? 'Done' : 'Edit All'}</span>
+                        </button>
+
+                        {/* Delete Selected Button */}
+                        {selectedBidIds.size > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleBulkDelete}
+                            className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1 text-[11px] font-bold font-mono transition-colors shadow-xs"
+                            title="Delete selected bids"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Delete ({selectedBidIds.size})</span>
+                          </button>
+                        )}
+
+                        {/* Clear All Drafts */}
+                        <button
+                          type="button"
+                          onClick={handleClearAllBids}
+                          className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center gap-1 text-[11px] font-bold font-mono transition-colors shadow-xs"
+                          title="Clear all draft bids"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span className="hidden sm:inline">Clear</span>
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+
                 {/* Action buttons */}
                 {myBids.length > 0 && (
                   <>
@@ -1387,6 +1839,102 @@ export default function TeamRoundPage() {
               </div>
             </div>
 
+            {/* ── Quick Search & Add Bar ── */}
+            {!isLocked && bidCount < round.max_bids_per_team && (
+              <div className="mb-4 p-3 bg-slate-50/80 border border-slate-200 rounded-2xl font-mono shadow-xs">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 relative">
+                  {/* Player search input */}
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <Search className="w-3.5 h-3.5" />
+                    </div>
+                    <input
+                      type="text"
+                      value={quickAddSearch}
+                      onChange={(e) => {
+                        setQuickAddSearch(e.target.value);
+                        setQuickAddSelectedPlayer(null);
+                        setIsQuickAddDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsQuickAddDropdownOpen(true)}
+                      placeholder={quickAddSelectedPlayer ? quickAddSelectedPlayer.name : "Quick search player to add..."}
+                      className="w-full pl-9 pr-8 py-2 text-xs font-sans font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
+                    />
+                    {quickAddSearch && (
+                      <button
+                        type="button"
+                        onClick={() => { setQuickAddSearch(''); setQuickAddSelectedPlayer(null); }}
+                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
+                    {/* Dropdown candidates */}
+                    {isQuickAddDropdownOpen && quickAddCandidates.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl z-30 divide-y divide-slate-100">
+                        {quickAddCandidates.map((p: any) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onMouseDown={() => {
+                              setQuickAddSelectedPlayer(p);
+                              setQuickAddSearch(p.name);
+                              setIsQuickAddDropdownOpen(false);
+                              setTimeout(() => quickAmountInputRef.current?.focus(), 50);
+                            }}
+                            className="w-full px-3 py-2 text-left hover:bg-amber-50/70 flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <PlayerAvatar playerId={p.player_id || p.id} playerName={p.name} size={28} />
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
+                                <p className="text-[10px] text-slate-400 truncate">{p.club || p.team_name || 'Free Agent'} • {p.position}</p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-black font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                              {p.overall_rating}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Amount input */}
+                  <div className="relative w-full sm:w-36">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">£</span>
+                    <input
+                      ref={quickAmountInputRef}
+                      type="number"
+                      value={quickAddAmount}
+                      onChange={(e) => setQuickAddAmount(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleQuickAddSubmit();
+                        }
+                      }}
+                      placeholder="Amount"
+                      min="10"
+                      max={maxBidThisRound}
+                      className="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white"
+                    />
+                  </div>
+
+                  {/* Add button */}
+                  <button
+                    type="button"
+                    onClick={handleQuickAddSubmit}
+                    disabled={!quickAddSelectedPlayer || !quickAddAmount}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+            )}
+
             {myBids.length > 0 ? (
               <>
                 {/* Desktop Table */}
@@ -1394,7 +1942,18 @@ export default function TeamRoundPage() {
                   <table className="min-w-full divide-y divide-slate-100">
                     <thead>
                       <tr className="bg-slate-900">
-                        <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
+                        {!isLocked && (
+                          <th className="px-3 py-3 text-center w-8">
+                            <input
+                              type="checkbox"
+                              checked={myBids.length > 0 && selectedBidIds.size === myBids.length}
+                              onChange={handleToggleSelectAll}
+                              className="w-3.5 h-3.5 rounded text-amber-500 focus:ring-amber-400 cursor-pointer accent-amber-500"
+                              title="Select all"
+                            />
+                          </th>
+                        )}
+                        <th className="px-3 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
                         <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Player</th>
                         <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pos</th>
                         <th className="px-4 py-3 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Bid</th>
@@ -1404,9 +1963,45 @@ export default function TeamRoundPage() {
                     <tbody className="divide-y divide-slate-100 bg-white">
                       {myBids.map((bid: Bid, idx: number) => (
                         <React.Fragment key={bid.id}>
-                          <tr className={`hover:bg-slate-50 transition-colors ${editingBidId === bid.id ? 'bg-amber-50/60' : bid.player.is_starred ? 'bg-amber-50/30' : ''}`}>
-                            {/* # */}
-                            <td className="px-4 py-3 text-[11px] font-black text-slate-400 font-mono">{idx + 1}</td>
+                          <tr className={`hover:bg-slate-50 transition-colors ${editingBidId === bid.id ? 'bg-amber-50/60' : bid.player.is_starred ? 'bg-amber-50/30' : ''} ${selectedBidIds.has(bid.id) ? 'bg-indigo-50/40' : ''}`}>
+                            {!isLocked && (
+                              <td className="px-3 py-3 text-center w-8">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedBidIds.has(bid.id)}
+                                  onChange={() => handleToggleSelectBid(bid.id)}
+                                  className="w-3.5 h-3.5 rounded text-amber-500 focus:ring-amber-400 cursor-pointer accent-amber-500"
+                                />
+                              </td>
+                            )}
+                            {/* # and reorder arrows */}
+                            <td className="px-3 py-3 text-[11px] font-black text-slate-400 font-mono whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                <span>{idx + 1}</span>
+                                {!isLocked && myBids.length > 1 && (
+                                  <div className="flex flex-col">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSwapBidAmounts(idx, idx - 1)}
+                                      disabled={idx === 0}
+                                      className="p-0.5 text-slate-300 hover:text-slate-800 disabled:opacity-0 transition-colors"
+                                      title="Move Up"
+                                    >
+                                      ▲
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSwapBidAmounts(idx, idx + 1)}
+                                      disabled={idx === myBids.length - 1}
+                                      className="p-0.5 text-slate-300 hover:text-slate-800 disabled:opacity-0 transition-colors"
+                                      title="Move Down"
+                                    >
+                                      ▼
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             {/* Player */}
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-3">
@@ -1446,7 +2041,34 @@ export default function TeamRoundPage() {
                             </td>
                             {/* Bid */}
                             <td className="px-4 py-3 whitespace-nowrap text-right">
-                              <span className="text-sm font-black text-slate-900 font-mono">£{(bid.amount || 0).toLocaleString()}</span>
+                              {isBatchEditMode ? (
+                                <div className="relative inline-flex items-center max-w-[110px]">
+                                  <span className="absolute left-2 text-slate-400 font-mono text-xs font-bold pointer-events-none">£</span>
+                                  <input
+                                    type="number"
+                                    value={batchAmounts[bid.id] ?? bid.amount}
+                                    onChange={(e) => handleBatchAmountChange(bid.id, e.target.value)}
+                                    className="w-full pl-5 pr-2 py-1 text-right text-xs font-black text-slate-900 font-mono rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-500 bg-white"
+                                    min="10"
+                                    max={teamBalance + bid.amount}
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleTableEdit(bid)}
+                                  disabled={isLocked}
+                                  className="group/bid inline-flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-amber-50 transition-colors text-right cursor-pointer"
+                                  title="Click to edit bid"
+                                >
+                                  <span className="text-sm font-black text-slate-900 font-mono group-hover/bid:text-amber-700">£{(bid.amount || 0).toLocaleString()}</span>
+                                  {!isLocked && (
+                                    <svg className="w-3 h-3 text-slate-300 group-hover/bid:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                  )}
+                                </button>
+                              )}
                             </td>
                             {/* Actions */}
                             {!isLocked && (
@@ -1463,10 +2085,10 @@ export default function TeamRoundPage() {
                                     </svg>
                                   </button>
                                   <button
-                                    onClick={() => handleCancelBid(bid.id)}
+                                    onClick={() => handleQuickDelete(bid.id)}
                                     disabled={editingBidId !== null}
                                     className="w-7 h-7 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-all disabled:opacity-30"
-                                    title="Delete"
+                                    title="Delete (Instant)"
                                   >
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1478,16 +2100,25 @@ export default function TeamRoundPage() {
                           </tr>
                           {/* Inline edit row */}
                           {editingBidId === bid.id && (
-                            <tr className="bg-amber-50/50">
-                              <td colSpan={5} className="px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider whitespace-nowrap">Edit — {bid.player.name}</span>
+                            <tr className="bg-amber-50/60 border-y border-amber-200">
+                              <td colSpan={6} className="px-4 py-3">
+                                <form onSubmit={(e) => { e.preventDefault(); handleTableEditSubmit(bid); }} className="flex flex-wrap items-center gap-3">
+                                  <span className="text-[10px] font-black text-amber-800 uppercase tracking-wider whitespace-nowrap">Edit — {bid.player.name}</span>
                                   <div className="relative flex-grow max-w-xs">
                                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">£</span>
                                     <input
                                       type="number"
                                       value={editAmount}
                                       onChange={(e) => setEditAmount(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Escape') {
+                                          e.preventDefault();
+                                          handleTableEditCancel();
+                                        } else if (e.key === 'Tab') {
+                                          e.preventDefault();
+                                          handleTableEditAndNext(bid, e.shiftKey ? -1 : 1);
+                                        }
+                                      }}
                                       className="block w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-white font-mono"
                                       placeholder="New amount"
                                       min="10"
@@ -1495,9 +2126,10 @@ export default function TeamRoundPage() {
                                       autoFocus
                                     />
                                   </div>
-                                  <button onClick={() => handleTableEditSubmit(bid)} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-wider hover:bg-slate-800 transition-colors">Save</button>
-                                  <button onClick={handleTableEditCancel} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors">Cancel</button>
-                                </div>
+                                  <button type="submit" className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-wider hover:bg-slate-800 transition-colors">Save (Enter)</button>
+                                  <button type="button" onClick={handleTableEditCancel} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors">Cancel (Esc)</button>
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline">Press <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-slate-600 font-mono">Tab</kbd> for next</span>
+                                </form>
                               </td>
                             </tr>
                           )}
@@ -1583,8 +2215,30 @@ export default function TeamRoundPage() {
                               </svg>
                               Edit
                             </button>
+                            {myBids.length > 1 && (
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSwapBidAmounts(idx, idx - 1)}
+                                  disabled={idx === 0}
+                                  className="px-2 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold hover:bg-slate-200 disabled:opacity-20 transition-colors"
+                                  title="Move Up"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSwapBidAmounts(idx, idx + 1)}
+                                  disabled={idx === myBids.length - 1}
+                                  className="px-2 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold hover:bg-slate-200 disabled:opacity-20 transition-colors"
+                                  title="Move Down"
+                                >
+                                  ▼
+                                </button>
+                              </div>
+                            )}
                             <button
-                              onClick={() => handleCancelBid(bid.id)}
+                              onClick={() => handleQuickDelete(bid.id)}
                               disabled={editingBidId !== null}
                               className="flex-1 py-1.5 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider hover:bg-rose-100 transition-colors flex items-center justify-center gap-1 disabled:opacity-40"
                             >
@@ -1967,6 +2621,132 @@ export default function TeamRoundPage() {
         cancelText={confirmState.cancelText}
         type={confirmState.type}
       />
+
+      {/* ── Undo Deleted Bid Toast ── */}
+      {undoToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 font-mono text-xs animate-slideUp">
+          <span>{undoToast.message}</span>
+          <button
+            type="button"
+            onClick={handleUndoDelete}
+            className="px-2.5 py-1 bg-amber-400 text-slate-950 font-black rounded-lg text-[10px] uppercase tracking-wider hover:bg-amber-300 transition-colors shadow-xs"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
+      {/* ── Quick Paste Modal ── */}
+      {isPasteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-mono">
+          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl p-6 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                  <span>📋</span>
+                  <span>Quick Paste Bids</span>
+                </h3>
+                <p className="text-xs text-slate-400 font-bold mt-0.5">Paste your bids list from WhatsApp, Notes, or Excel</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setIsPasteModalOpen(false); setPasteRawText(''); setPasteParsedResults([]); }}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4 overflow-y-auto flex-1">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5 tracking-wider">
+                  Paste Text Below
+                </label>
+                <textarea
+                  value={pasteRawText}
+                  onChange={(e) => {
+                    setPasteRawText(e.target.value);
+                    handleParsePasteText(e.target.value);
+                  }}
+                  placeholder={`1. Désiré Doué - £824\n2. Michael Olise - £823\n3. Lamine Yamal - £684\n...`}
+                  rows={6}
+                  className="w-full p-3 text-xs font-mono rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-500 bg-slate-50/50"
+                />
+              </div>
+
+              {/* Parsed Preview Table */}
+              {pasteParsedResults.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Preview ({pasteParsedResults.filter(r => r.valid).length} valid / {pasteParsedResults.length} parsed)
+                    </span>
+                    <span className="text-[10px] font-black text-slate-500">
+                      Total: £{pasteParsedResults.filter(r => r.valid).reduce((acc, r) => acc + r.amount, 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-2xl divide-y divide-slate-100">
+                    {pasteParsedResults.map((r, i) => (
+                      <div key={i} className={`p-2.5 flex items-center justify-between text-xs ${r.valid ? 'bg-white' : 'bg-rose-50/60'}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-black text-slate-400 w-4">{i + 1}</span>
+                          {r.valid ? (
+                            <span className="text-emerald-600 font-bold">✓</span>
+                          ) : (
+                            <span className="text-rose-600 font-bold">✕</span>
+                          )}
+                          <div className="truncate">
+                            <p className="font-bold text-slate-900 truncate">
+                              {r.matchedPlayer ? r.matchedPlayer.name : r.rawName}
+                            </p>
+                            {!r.valid && (
+                              <p className="text-[10px] text-rose-500 font-semibold">{r.error}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="font-mono font-black text-slate-900 flex-shrink-0">
+                          £{r.amount.toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => { setIsPasteModalOpen(false); setPasteRawText(''); setPasteParsedResults([]); }}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={pasteParsedResults.filter(r => r.valid).length === 0}
+                  onClick={() => handleApplyPasteBids(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-white text-xs font-black uppercase tracking-wider hover:bg-slate-700 transition-colors disabled:opacity-40"
+                  title="Keep existing bids and add new valid ones"
+                >
+                  Add to Existing
+                </button>
+                <button
+                  type="button"
+                  disabled={pasteParsedResults.filter(r => r.valid).length === 0}
+                  onClick={() => handleApplyPasteBids(true)}
+                  className="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider hover:bg-amber-300 transition-colors disabled:opacity-40 shadow-sm"
+                  title="Replace entire draft with these bids"
+                >
+                  Replace Draft ({pasteParsedResults.filter(r => r.valid).length})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
       </div>
     </>
