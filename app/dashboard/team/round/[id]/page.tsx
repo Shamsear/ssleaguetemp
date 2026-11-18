@@ -74,6 +74,7 @@ export default function TeamRoundPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
 
   // Modal system
   const {
@@ -141,9 +142,9 @@ export default function TeamRoundPage() {
           player: b.player
         })));
         setIsInitialized(true);
-      } else if (!hasUnsavedChanges) {
-        // Only update local state with query data if there are no unsaved changes
-        // and the incoming data has actually changed (e.g. updated via websocket)
+      } else if (!hasUnsavedChanges && !isEditingDraft) {
+        // Only update local state with query data if there are no unsaved changes,
+        // user is NOT actively editing their draft, and the incoming data has actually changed
         const currentIds = localBids.map(b => `${b.player_id}_${b.amount}`).sort().join(',');
         const incomingIds = rawMyBids.map((b: Bid) => `${b.player_id}_${b.amount}`).sort().join(',');
         if (currentIds !== incomingIds) {
@@ -157,7 +158,7 @@ export default function TeamRoundPage() {
         }
       }
     }
-  }, [roundData, rawMyBids, isInitialized, hasUnsavedChanges, roundId]);
+  }, [roundData, rawMyBids, isInitialized, hasUnsavedChanges, isEditingDraft, roundId]);
 
   // Sort bids by amount (highest first) for display
   const myBids = [...localBids].sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0));
@@ -177,7 +178,6 @@ export default function TeamRoundPage() {
   const hasSubmitted = isOfficiallySubmitted;
 
   // 2. Draft saved & editing states
-  const [isEditingDraft, setIsEditingDraft] = useState(false);
   const isDraftSaved = !isOfficiallySubmitted && !hasUnsavedChanges && localBids.length > 0;
 
   // 3. Overall locked: table editing is disabled if officially submitted, or if draft is saved and user hasn't toggled edit mode
@@ -380,10 +380,10 @@ export default function TeamRoundPage() {
       }
     };
 
-    // Check immediately - if round already ended, redirect right away
+    // Check immediately - if round is explicitly closed or past end time and confirmed inactive, redirect
     const endTime = new Date(round.end_time).getTime();
     const now = Date.now();
-    if (now >= endTime) {
+    if (now >= endTime && (round.status !== 'active' || statusData?.active === false)) {
       console.log('⏰ Round already ended, redirecting immediately...');
       router.push('/dashboard/team');
       return;
