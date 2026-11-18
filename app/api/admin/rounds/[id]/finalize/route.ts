@@ -55,6 +55,22 @@ export async function POST(
       );
     }
 
+    // Acquire lock by setting status to 'finalizing' to prevent concurrent executions
+    if (round.status !== 'finalizing') {
+      const lockResult = await sql`
+        UPDATE rounds
+        SET status = 'finalizing', updated_at = NOW()
+        WHERE id = ${roundId} AND status IN ('active', 'expired', 'tiebreaker_pending')
+        RETURNING id
+      `;
+      if (lockResult.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Round is already being finalized by another request or is completed' },
+          { status: 409 }
+        );
+      }
+    }
+
     // Run finalization algorithm
     const finalizationResult = await finalizeRound(roundId);
 
@@ -76,6 +92,14 @@ export async function POST(
           message: 'Tie detected. Tiebreaker created. Teams must submit new bids.',
         });
       }
+
+      // Revert status on failure so it doesn't get stuck in finalizing
+      await sql`
+        UPDATE rounds
+        SET status = ${round.status === 'finalizing' ? 'expired' : round.status},
+            updated_at = NOW()
+        WHERE id = ${roundId}
+      `;
 
       return NextResponse.json(
         { success: false, error: finalizationResult.error },

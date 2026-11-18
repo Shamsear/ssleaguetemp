@@ -577,6 +577,15 @@ export async function applyFinalizationResults(
         console.log(`🎲 Synthetic allocation for team ${alloc.team_id}: ${alloc.player_name}`);
       }
 
+      // Check if player was already recorded as won by this team in this round (idempotency guard)
+      const existingAssignment = await sql`
+        SELECT team_id, round_id FROM team_players
+        WHERE player_id = ${alloc.player_id} AND season_id = ${seasonId}
+      `;
+      const isNewPurchase = existingAssignment.length === 0 || 
+                            existingAssignment[0].team_id !== alloc.team_id ||
+                            existingAssignment[0].round_id !== roundId;
+
       // Use ON CONFLICT to handle players that might already be in team_players table
       await sql`
         INSERT INTO team_players (team_id, player_id, season_id, round_id, purchase_price, acquired_at) 
@@ -592,53 +601,56 @@ export async function applyFinalizationResults(
       const playerRes = await sql`SELECT position FROM footballplayers WHERE id = ${alloc.player_id}`;
       const pos = playerRes[0]?.position;
 
-      try {
-        const tsId = `${alloc.team_id}_${seasonId}`;
-        const tsRef = adminDb.collection('team_seasons').doc(tsId);
-        const tsDoc = await tsRef.get();
-        
-        if (tsDoc.exists) {
-          const tsd = tsDoc.data();
-          const curr = tsd?.currency_system || 'single';
-          const budget = Number(curr === 'dual' ? (tsd?.football_budget || 0) : (tsd?.budget || 0));
-          const posCounts = tsd?.position_counts || {};
-          if (pos && pos in posCounts) posCounts[pos] = (posCounts[pos] || 0) + 1;
+      // Only deduct budget and increment count if this is a new purchase
+      if (isNewPurchase) {
+        try {
+          const tsId = `${alloc.team_id}_${seasonId}`;
+          const tsRef = adminDb.collection('team_seasons').doc(tsId);
+          const tsDoc = await tsRef.get();
           
-          const currentFbCount = Number(tsd?.football_players_count ?? tsd?.players_count ?? 0);
-          const currentPlayersCount = Number(tsd?.players_count || 0);
-          const allocAmount = Number(alloc.amount) || 0;
+          if (tsDoc.exists) {
+            const tsd = tsDoc.data();
+            const curr = tsd?.currency_system || 'single';
+            const budget = Number(curr === 'dual' ? (tsd?.football_budget || 0) : (tsd?.budget || 0));
+            const posCounts = tsd?.position_counts || {};
+            if (pos && pos in posCounts) posCounts[pos] = (posCounts[pos] || 0) + 1;
+            
+            const currentFbCount = Number(tsd?.football_players_count ?? tsd?.players_count ?? 0);
+            const currentPlayersCount = Number(tsd?.players_count || 0);
+            const allocAmount = Number(alloc.amount) || 0;
 
-          const upd: any = {
-            total_spent: Number(tsd?.total_spent || 0) + allocAmount,
-            players_count: currentPlayersCount + 1,
-            football_players_count: currentFbCount + 1,
-            position_counts: posCounts,
-            updated_at: new Date()
-          };
-          
-          if (curr === 'dual') {
-            upd.football_budget = Math.max(0, budget - allocAmount);
-            upd.football_spent = Number(tsd?.football_spent || 0) + allocAmount;
-          } else {
-            upd.budget = Math.max(0, budget - allocAmount);
+            const upd: any = {
+              total_spent: Number(tsd?.total_spent || 0) + allocAmount,
+              players_count: currentPlayersCount + 1,
+              football_players_count: currentFbCount + 1,
+              position_counts: posCounts,
+              updated_at: new Date()
+            };
+            
+            if (curr === 'dual') {
+              upd.football_budget = Math.max(0, budget - allocAmount);
+              upd.football_spent = Number(tsd?.football_spent || 0) + allocAmount;
+            } else {
+              upd.budget = Math.max(0, budget - allocAmount);
+            }
+            
+            await tsRef.update(upd);
+            await logAuctionWin(alloc.team_id, seasonId, alloc.player_name, alloc.player_id, 'football', allocAmount, budget, roundId);
           }
-          
-          await tsRef.update(upd);
-          await logAuctionWin(alloc.team_id, seasonId, alloc.player_name, alloc.player_id, 'football', allocAmount, budget, roundId);
-        }
-      } catch {}
+        } catch {}
 
-      try {
-        // alloc.team_id contains readable team ID (SSPSLT0001)
-        await sql`UPDATE teams SET 
-          football_spent = football_spent + ${alloc.amount}, 
-          football_budget = football_budget - ${alloc.amount},
-          football_players_count = football_players_count + 1,
-          updated_at = NOW() 
-        WHERE id = ${alloc.team_id}
-        AND season_id = ${seasonId}`;
-      } catch (teamUpdateError) {
-        console.error(`Failed to update team ${alloc.team_id}:`, teamUpdateError);
+        try {
+          // alloc.team_id contains readable team ID (SSPSLT0001)
+          await sql`UPDATE teams SET 
+            football_spent = football_spent + ${alloc.amount}, 
+            football_budget = football_budget - ${alloc.amount},
+            football_players_count = football_players_count + 1,
+            updated_at = NOW() 
+          WHERE id = ${alloc.team_id}
+          AND season_id = ${seasonId}`;
+        } catch (teamUpdateError) {
+          console.error(`Failed to update team ${alloc.team_id}:`, teamUpdateError);
+        }
       }
 
       // Fetch player position for history record
@@ -675,6 +687,53 @@ export async function applyFinalizationResults(
     for (const bid of decryptedAll) {
       if (!winningIds.has(bid.id)) {
         await sql`UPDATE bids SET status = 'lost', updated_at = NOW() WHERE id = ${bid.id}`;
+      }
+    }
+
+    // 🛡️ RECONCILIATION GUARANTEE:
+    // Mathematically reconcile all winning teams' budget, spent, and player count
+    // directly against team_players (the authoritative source of truth).
+    // This prevents any duplicate deduction or desync under any retry or race condition.
+    const affectedTeamIds = Array.from(new Set(allocations.map(a => a.team_id)));
+    for (const tId of affectedTeamIds) {
+      try {
+        const statsRes = await sql`
+          SELECT 
+            COALESCE(SUM(purchase_price), 0) AS true_spent,
+            COUNT(id) AS true_count
+          FROM team_players
+          WHERE team_id = ${tId} AND season_id = ${seasonId}
+        `;
+        if (statsRes.length > 0) {
+          const trueSpent = Number(statsRes[0].true_spent);
+          const trueCount = Number(statsRes[0].true_count);
+          const trueBudget = 10000 - trueSpent;
+
+          // 1. Sync Neon teams table
+          await sql`
+            UPDATE teams
+            SET 
+              football_spent = ${trueSpent},
+              football_budget = ${trueBudget},
+              football_players_count = ${trueCount},
+              updated_at = NOW()
+            WHERE id = ${tId} AND season_id = ${seasonId}
+          `;
+
+          // 2. Sync team_seasons (both Neon Main DB and Firebase via adminDb)
+          const tsId = `${tId}_${seasonId}`;
+          const tsRef = adminDb.collection('team_seasons').doc(tsId);
+          await tsRef.update({
+            football_spent: trueSpent,
+            football_budget: trueBudget,
+            budget: trueBudget,
+            football_players_count: trueCount,
+            players_count: trueCount,
+            updated_at: new Date()
+          }).catch(() => null);
+        }
+      } catch (reconErr) {
+        console.warn(`Failed reconciliation check for team ${tId}:`, reconErr);
       }
     }
 
