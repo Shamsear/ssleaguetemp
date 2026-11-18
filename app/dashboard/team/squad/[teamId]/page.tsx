@@ -136,7 +136,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
 
   useEffect(() => {
     const fetchActiveSeason = async () => {
-      if (!user || user.role !== 'team') return;
+      if (!user) return;
 
       try {
         const seasonsRes = await fetch('/api/seasons');
@@ -189,12 +189,15 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
       if (!seasonId || !teamId) return;
 
       try {
-        setIsLoading(true);        // Fetch team_season data from Neon API
+        setIsLoading(true);
+        // Fetch team_season data from Neon API for the requested team
         const teamSeasonId = `${teamId}_${seasonId}`;
-        const tsRes = await fetch(`/api/team-seasons?user_id=${user?.uid}&season_id=${seasonId}`);
+        const tsRes = await fetch(`/api/team-seasons?team_id=${encodeURIComponent(teamId)}&season_id=${encodeURIComponent(seasonId)}`);
         const tsJson = await tsRes.json();
-        const allTeamSeasons = tsJson.data || tsJson.teamSeasons || [];
-        const teamSeasonData = allTeamSeasons.find((ts: any) => ts.team_id === teamId) || null;
+        const allTeamSeasons = tsJson.data || tsJson.teamSeasons || (tsJson.team_season ? [tsJson.team_season] : []);
+        const teamSeasonData = (allTeamSeasons && allTeamSeasons.length > 0)
+          ? (allTeamSeasons.find((ts: any) => ts.team_id === teamId || ts.id === teamSeasonId) || allTeamSeasons[0])
+          : (tsJson.team_season || null);
 
         if (!teamSeasonData) {
           setError('Team not found in this season');
@@ -350,7 +353,7 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
   }
 
   return (
-    <AuthGuard requiredRole="team">
+    <AuthGuard requiredRole={['team', 'committee_admin', 'super_admin', 'admin']}>
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
       {/* Ambient Gold Glow */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />

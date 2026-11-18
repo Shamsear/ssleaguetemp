@@ -37,6 +37,7 @@ import { useModal } from '@/hooks/useModal';
 import { MultiRoundAutoFinalize } from '@/components/MultiRoundAutoFinalize';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
+import ProxyBidModal from '@/components/modals/ProxyBidModal';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { Dices, ArrowLeft, Trash2, RotateCcw, ShieldAlert, CheckCircle2, AlertTriangle, Info, Sparkles, Plus, Clock, Users, ChevronRight, ChevronDown, RefreshCw, Play, DollarSign, Check, FileText, Settings, Calendar, ArrowRight, Layers, HelpCircle, XCircle, CheckCircle, BarChart2 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -405,6 +406,15 @@ export default function RoundsManagementPage() {
   const [isActivatingRound, setIsActivatingRound] = useState<string | null>(null);
   const [updatingFinalizationMode, setUpdatingFinalizationMode] = useState<string | null>(null);
   const [modifyingSubmissionTeamId, setModifyingSubmissionTeamId] = useState<string | null>(null);
+  const [proxyBidModal, setProxyBidModal] = useState<{
+    isOpen: boolean;
+    round: Round | null;
+    team: { team_id: string; team_name: string } | null;
+  }>({
+    isOpen: false,
+    round: null,
+    team: null,
+  });
 
   // Initialize scheduledStartTime default value
   useEffect(() => {
@@ -2360,6 +2370,17 @@ export default function RoundsManagementPage() {
                                 }`}>
                                   {team.has_submitted ? 'Submitted' : team.has_draft ? `Draft (${team.draft_bid_count})` : 'Pending'}
                                 </span>
+                                <button
+                                  onClick={() => setProxyBidModal({
+                                    isOpen: true,
+                                    round,
+                                    team: { team_id: team.team_id, team_name: team.team_name }
+                                  })}
+                                  className="px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[9px] font-bold uppercase cursor-pointer"
+                                  title="Enter or edit bids for this team"
+                                >
+                                  Bids
+                                </button>
                                 {team.has_submitted ? (
                                   <button
                                     onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}
@@ -2442,27 +2463,41 @@ export default function RoundsManagementPage() {
                                     }
                                   </td>
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center">
-                                    {team.has_submitted ? (
+                                    <div className="flex items-center justify-center gap-1.5">
                                       <button
-                                        onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}
-                                        disabled={modifyingSubmissionTeamId !== null}
-                                        className="px-2 py-1 rounded bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors text-[10px] font-bold uppercase cursor-pointer"
+                                        onClick={() => setProxyBidModal({
+                                          isOpen: true,
+                                          round,
+                                          team: { team_id: team.team_id, team_name: team.team_name }
+                                        })}
+                                        className="px-2 py-1 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[10px] font-bold uppercase cursor-pointer flex items-center gap-1"
+                                        title="Enter or edit bids for this team (paste from chat or manual)"
                                       >
-                                        Revert to Draft
+                                        <FileText className="w-3 h-3" />
+                                        Enter Bids
                                       </button>
-                                    ) : (
-                                      <button
-                                        onClick={() => handleToggleTeamSubmission(round.id, team.team_id, false)}
-                                        disabled={modifyingSubmissionTeamId !== null || (!team.has_draft && team.bid_count === 0)}
-                                        className={`px-2.5 py-1 rounded transition-colors text-[10px] font-bold uppercase cursor-pointer ${
-                                          team.draft_bid_count === round.max_bids_per_team
-                                            ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-                                            : 'bg-slate-50 border border-slate-200 text-slate-550 hover:bg-slate-100'
-                                        }`}
-                                      >
-                                        Force Submit
-                                      </button>
-                                    )}
+                                      {team.has_submitted ? (
+                                        <button
+                                          onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}
+                                          disabled={modifyingSubmissionTeamId !== null}
+                                          className="px-2 py-1 rounded bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors text-[10px] font-bold uppercase cursor-pointer"
+                                        >
+                                          Revert to Draft
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleToggleTeamSubmission(round.id, team.team_id, false)}
+                                          disabled={modifyingSubmissionTeamId !== null || (!team.has_draft && team.bid_count === 0)}
+                                          className={`px-2.5 py-1 rounded transition-colors text-[10px] font-bold uppercase cursor-pointer ${
+                                            team.draft_bid_count === round.max_bids_per_team
+                                              ? "bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                                              : "bg-slate-50 border border-slate-200 text-slate-550 hover:bg-slate-100"
+                                          }`}
+                                        >
+                                          Force Submit
+                                        </button>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
@@ -3028,7 +3063,38 @@ export default function RoundsManagementPage() {
       )}
 
       {/* Modal Components */}
-      <AlertModal
+      
+      {/* Proxy Bid Entry Modal */}
+      {proxyBidModal.isOpen && proxyBidModal.round && proxyBidModal.team && (
+        <ProxyBidModal
+          isOpen={proxyBidModal.isOpen}
+          onClose={() => setProxyBidModal({ isOpen: false, round: null, team: null })}
+          roundId={proxyBidModal.round.id}
+          roundNumber={proxyBidModal.round.round_number}
+          position={proxyBidModal.round.position}
+          maxBids={proxyBidModal.round.max_bids_per_team}
+          teamId={proxyBidModal.team.team_id}
+          teamName={proxyBidModal.team.team_name}
+          onSuccess={async () => {
+            if (proxyBidModal.round?.id) {
+              const rId = proxyBidModal.round.id;
+              try {
+                const subResponse = await fetchWithTokenRefresh(`/api/admin/rounds/${rId}/submissions`);
+                const subData = await subResponse.json();
+                if (subData.success) {
+                  setRoundSubmissions(prev => ({
+                    ...prev,
+                    [rId]: { ...subData.stats, teams: subData.teams }
+                  }));
+                }
+              } catch (e) {
+                console.error('Error refreshing submissions:', e);
+              }
+            }
+          }}
+        />
+      )}
+<AlertModal
         isOpen={alertState.isOpen}
         onClose={closeAlert}
         title={alertState.title}
