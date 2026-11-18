@@ -162,7 +162,9 @@ export async function GET(
     
     const footballPlayers = await auctionSql`
       SELECT 
-        tp.player_id,
+        tp.player_id as team_player_id,
+        fp.id,
+        fp.player_id,
         tp.purchase_price,
         tp.acquired_at,
         tp.round_id,
@@ -170,7 +172,7 @@ export async function GET(
         fp.name as player_name,
         fp.position,
         fp.position_group,
-        fp.team_name as club,
+        COALESCE(fp.club, fp.team_name) as club,
         fp.overall_rating,
         fp.nationality,
         fp.age,
@@ -205,8 +207,9 @@ export async function GET(
     }
 
     const enrichedFootballPlayers = footballPlayers.map((fp: any) => ({
-      id: fp.player_id,
-      player_id: fp.player_id,
+      id: fp.id || fp.team_player_id,
+      player_id: fp.player_id || fp.team_player_id,
+      efootball_id: fp.player_id,
       name: fp.player_name,
       type: 'footballplayer',
       position: fp.position,
