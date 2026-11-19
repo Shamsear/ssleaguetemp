@@ -147,9 +147,15 @@ export function useAuctionWebSocket(roundId: string | null, enabled: boolean = t
         unsubscribe = onValue(roundRef, (snapshot: any) => {
           const data = snapshot.val();
           if (data) {
+            // In standard blind auction rounds, another team's private bid update
+            // should not invalidate our active round query or wipe our in-progress inputs.
+            if (data.type === 'bids_updated') {
+              return;
+            }
+
             console.log('📊 [Round Update] Received:', data);
             
-            // Invalidate round-related caches
+            // Invalidate round-related caches on round status/time updates or completion
             queryClient.invalidateQueries({ queryKey: ['round', roundId] });
             queryClient.invalidateQueries({ queryKey: ['roundStatus', roundId] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });

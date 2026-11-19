@@ -426,6 +426,19 @@ export default function RoundsManagementPage() {
     setScheduledStartTime(localIso);
   }, []);
 
+  // Helper: A round is ongoing if active and its timer has not expired yet
+  const isRoundOngoing = useCallback((r: Round) => {
+    if (r.status !== 'active') return false;
+    const remaining = timeRemaining[r.id];
+    if (remaining !== undefined) {
+      return remaining > 0;
+    }
+    if (r.end_time) {
+      return new Date(r.end_time).getTime() > Date.now();
+    }
+    return true;
+  }, [timeRemaining]);
+
   const fetchAllData = useCallback(async () => {
     if (!user || user.role !== 'committee_admin') return;
 
@@ -2370,17 +2383,19 @@ export default function RoundsManagementPage() {
                                 }`}>
                                   {team.has_submitted ? 'Submitted' : team.has_draft ? `Draft (${team.draft_bid_count})` : 'Pending'}
                                 </span>
-                                <button
-                                  onClick={() => setProxyBidModal({
-                                    isOpen: true,
-                                    round,
-                                    team: { team_id: team.team_id, team_name: team.team_name }
-                                  })}
-                                  className="px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[9px] font-bold uppercase cursor-pointer"
-                                  title="Enter or edit bids for this team"
-                                >
-                                  Bids
-                                </button>
+                                {!isRoundOngoing(round) && (
+                                  <button
+                                    onClick={() => setProxyBidModal({
+                                      isOpen: true,
+                                      round,
+                                      team: { team_id: team.team_id, team_name: team.team_name }
+                                    })}
+                                    className="px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[9px] font-bold uppercase cursor-pointer"
+                                    title="Enter or edit bids for this team"
+                                  >
+                                    Bids
+                                  </button>
+                                )}
                                 {team.has_submitted ? (
                                   <button
                                     onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}
@@ -2464,18 +2479,20 @@ export default function RoundsManagementPage() {
                                   </td>
                                   <td className="px-4 py-2.5 whitespace-nowrap text-center">
                                     <div className="flex items-center justify-center gap-1.5">
-                                      <button
-                                        onClick={() => setProxyBidModal({
-                                          isOpen: true,
-                                          round,
-                                          team: { team_id: team.team_id, team_name: team.team_name }
-                                        })}
-                                        className="px-2 py-1 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[10px] font-bold uppercase cursor-pointer flex items-center gap-1"
-                                        title="Enter or edit bids for this team (paste from chat or manual)"
-                                      >
-                                        <FileText className="w-3 h-3" />
-                                        Enter Bids
-                                      </button>
+                                      {!isRoundOngoing(round) && (
+                                        <button
+                                          onClick={() => setProxyBidModal({
+                                            isOpen: true,
+                                            round,
+                                            team: { team_id: team.team_id, team_name: team.team_name }
+                                          })}
+                                          className="px-2 py-1 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors text-[10px] font-bold uppercase cursor-pointer flex items-center gap-1"
+                                          title="Enter or edit bids for this team (paste from chat or manual)"
+                                        >
+                                          <FileText className="w-3 h-3" />
+                                          Enter Bids
+                                        </button>
+                                      )}
                                       {team.has_submitted ? (
                                         <button
                                           onClick={() => handleToggleTeamSubmission(round.id, team.team_id, true)}

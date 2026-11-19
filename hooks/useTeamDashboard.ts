@@ -124,8 +124,9 @@ export function useRoundData(roundId: string | undefined, enabled: boolean = tru
       return data;
     },
     enabled: enabled && !!roundId,
-    staleTime: 0, // Always refetch on mount - ensures deleted/recreated rounds load fresh data
+    staleTime: 10000, // 10s stale time avoids redundant instant refetches on minor re-renders
     refetchOnMount: 'always', // Force refetch when component mounts
+    refetchOnWindowFocus: false, // Prevents tab/window switching from resetting form inputs or uncommitted draft bids
     refetchInterval: false, // Disabled - WebSockets and Firebase handle real-time updates
     refetchIntervalInBackground: false, // Disabled - prevents background network drain
   });

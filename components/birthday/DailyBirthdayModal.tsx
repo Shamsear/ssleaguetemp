@@ -215,7 +215,7 @@ export default function DailyBirthdayModal() {
       {!isOpen && (
         <aside
           aria-label="Birthday celebration notification"
-          className="fixed bottom-20 right-4 z-40 sm:bottom-6 sm:right-6"
+          className="fixed bottom-20 right-4 z-30 sm:bottom-6 sm:right-6"
         >
           <button
             onClick={handleReopen}
