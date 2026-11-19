@@ -362,8 +362,8 @@ export default function CommitteeTiebreakerPage() {
   };
 
   const formatTimeRemaining = (milliseconds: number | null) => {
-    if (milliseconds === null) return 'No timer';
-    if (milliseconds <= 0) return 'Expired';
+    if (milliseconds === null) return 'Untimed';
+    if (milliseconds <= 0) return 'Time Up';
 
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
@@ -540,6 +540,8 @@ export default function CommitteeTiebreakerPage() {
                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-xs ${
                               isExpired
                                 ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : tb.timeRemaining === null
+                                ? 'bg-slate-100 text-slate-700 border-slate-200'
                                 : 'bg-amber-50 text-amber-800 border-amber-200'
                             }`}>
                               <Clock className="w-3 h-3" />
