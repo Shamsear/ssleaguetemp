@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
       SELECT 
         t.*,
         p.name as player_name,
+        p.player_id,
+        p.club,
         p.position,
         p.overall_rating,
         r.position as round_position,
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
       INNER JOIN rounds r ON t.round_id = r.id
       LEFT JOIN team_tiebreakers tt ON t.id = tt.tiebreaker_id
       ${whereClause}
-      GROUP BY t.id, p.name, p.position, p.overall_rating, r.position, r.season_id
+      GROUP BY t.id, p.name, p.player_id, p.club, p.position, p.overall_rating, r.position, r.season_id
       ORDER BY t.created_at DESC
     `;
 
