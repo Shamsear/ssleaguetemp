@@ -75,6 +75,8 @@ interface Round {
     sold_count?: number;
     pending_count?: number;
     contested_count?: number;
+    tiebreakers_count?: number;
+    active_tiebreakers_count?: number;
   };
 }
 
@@ -669,13 +671,14 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   );
 
   const playersByStatus = () => {
-    if (!round || !round.roundPlayers) return { pending: [], sold: [], contested: [] };
+    if (!round || !round.roundPlayers) return { pending: [], sold: [], contested: [], tiebreakers: [] };
     
     return {
       pending: round.roundPlayers.filter(p => p.status === 'pending'),
       sold: round.roundPlayers.filter(p => p.status === 'sold'),
       // Only show contested players that don't have a tiebreaker yet
       contested: round.roundPlayers.filter(p => p.bid_count && p.bid_count > 1 && !p.tiebreaker_id),
+      tiebreakers: round.roundPlayers.filter(p => !!p.tiebreaker_id),
     };
   };
 
@@ -691,8 +694,14 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
     );
   }
 
-  const { pending, sold, contested } = playersByStatus();
-  const shouldShowBids = round.status === 'completed' || timeRemaining === 0;
+  const { pending, sold, contested, tiebreakers } = playersByStatus();
+  const shouldShowBids = round.status === 'completed' || round.status === 'tiebreaker_pending' || timeRemaining === 0;
+
+  const tiebreakersCount = round.stats?.tiebreakers_count ?? tiebreakers.length;
+  const isRoundOngoing = round.status === 'active';
+  const isRoundFinalized = round.status === 'tiebreaker_pending' || round.status === 'completed';
+  const hasTiebreakersCreated = tiebreakersCount > 0;
+  const shouldShowViewTiebreakers = !isRoundOngoing && isRoundFinalized && hasTiebreakersCreated;
 
   return (
     <AuthGuard requiredRole="committee_admin">
@@ -877,13 +886,13 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                 </button>
               )}
 
-              {/* Show tiebreaker management button whenever there are contested players */}
-              {contested.length > 0 && (
+              {/* Show tiebreaker management button only when round is not active, is finalized, and tiebreakers are created */}
+              {shouldShowViewTiebreakers && (
                 <Link
                   href={`/dashboard/committee/bulk-rounds/${round.id}/tiebreakers`}
                   className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all font-mono text-xs uppercase tracking-wider font-bold shadow-sm flex items-center gap-2 cursor-pointer border border-orange-500/20"
                 >
-                  ⚡ View Tiebreakers ({contested.length})
+                  ⚡ View Tiebreakers ({tiebreakersCount})
                 </Link>
               )}
 
@@ -1009,7 +1018,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
                 )}
 
                 {/* Copy Tiebreakers Button */}
-                {round?.roundPlayers && round.roundPlayers.some(p => p.tiebreaker_id && p.tiebreaker && p.tiebreaker.status === 'active') && (
+                {shouldShowViewTiebreakers && round?.roundPlayers && round.roundPlayers.some(p => p.tiebreaker_id && p.tiebreaker && p.tiebreaker.status === 'active') && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1261,15 +1270,21 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
               </span>
             </div>
 
-            {shouldShowBids && (
+            {shouldShowBids && (contested.length > 0 || hasTiebreakersCreated) && (
               <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm border-l-4 border-l-orange-500 flex justify-between items-center">
                 <div>
-                  <span className="text-[10px] text-orange-700 font-bold uppercase tracking-wider font-mono">STATUS</span>
-                  <h3 className="text-sm sm:text-base font-extrabold text-slate-800 mt-0.5">Contested Players</h3>
-                  <p className="text-xs text-slate-550 font-mono mt-0.5">Need tiebreaker</p>
+                  <span className="text-[10px] text-orange-700 font-bold uppercase tracking-wider font-mono">
+                    {hasTiebreakersCreated ? 'TIEBREAKERS' : 'STATUS'}
+                  </span>
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-800 mt-0.5">
+                    {hasTiebreakersCreated ? 'Created Tiebreakers' : 'Contested Players'}
+                  </h3>
+                  <p className="text-xs text-slate-550 font-mono mt-0.5">
+                    {hasTiebreakersCreated ? 'Pending resolution' : 'Need tiebreaker'}
+                  </p>
                 </div>
                 <span className="bg-orange-50 border border-orange-200 text-orange-700 text-lg sm:text-xl font-extrabold px-3.5 py-1 rounded-2xl font-mono">
-                  {contested.length}
+                  {hasTiebreakersCreated ? tiebreakersCount : contested.length}
                 </span>
               </div>
             )}

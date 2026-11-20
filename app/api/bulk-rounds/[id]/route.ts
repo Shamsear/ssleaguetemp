@@ -48,6 +48,15 @@ export async function GET(
       WHERE rp.round_id = ${roundId}
     `;
 
+    // Get tiebreakers count from bulk_tiebreakers
+    const tbStats = await sql`
+      SELECT 
+        COUNT(*) as total_tiebreakers,
+        COUNT(*) FILTER (WHERE status = 'active') as active_tiebreakers
+      FROM bulk_tiebreakers
+      WHERE bulk_round_id = ${roundId}
+    `;
+
     // Get all players in the round with pagination support
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -135,6 +144,8 @@ export async function GET(
           total_players: totalPlayers,
           pending_count: parseInt(stats[0]?.pending_count || '0'),
           sold_count: parseInt(stats[0]?.sold_count || '0'),
+          tiebreakers_count: parseInt(tbStats[0]?.total_tiebreakers || '0'),
+          active_tiebreakers_count: parseInt(tbStats[0]?.active_tiebreakers || '0'),
         },
         pagination: {
           page,

@@ -38,11 +38,13 @@ export async function GET(request: Request) {
     const assignedOnly = searchParams.get('assigned_only') === 'true';
     const seasonId = searchParams.get('season_id') || '';
 
-    // Determine current active season number from Neon Main DB
+    // Determine current active season number and id from Neon Main DB
     let activeSeasonNum = 19;
+    let activeSeasonId = 'SSPSLS19';
     try {
       const activeSeason = await neonGetActiveSeason();
       if (activeSeason) {
+        activeSeasonId = activeSeason.id || 'SSPSLS19';
         activeSeasonNum =
           activeSeason.season_number ||
           parseInt(activeSeason.id.replace(/\D/g, '')) ||
@@ -115,9 +117,9 @@ export async function GET(request: Request) {
     if (teamIdFilter) {
       if (teamIdFilter === 'free_agent') {
         if (!seasonId) {
-          // In active season, Free Agent means team_id IS NULL OR contract has expired
+          // In active season, Free Agent means team_id IS NULL OR (not on active season team AND contract has expired)
           whereParts.push(
-            `(fp.team_id IS NULL OR COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int < ${activeSeasonNum})`
+            `(fp.team_id IS NULL OR (fp.season_id IS DISTINCT FROM '${activeSeasonId}' AND COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int < ${activeSeasonNum}))`
           );
         } else {
           whereParts.push('fp.team_id IS NULL');
@@ -125,11 +127,11 @@ export async function GET(request: Request) {
       } else {
         if (!seasonId) {
           whereParts.push(
-            `(fp.team_id = $${paramIndex++} AND COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum})`
+            `(fp.team_id = ${paramIndex++} AND (fp.season_id = '${activeSeasonId}' OR COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum}))`
           );
           queryParams.push(teamIdFilter);
         } else {
-          whereParts.push(`fp.team_id = $${paramIndex++}`);
+          whereParts.push(`fp.team_id = ${paramIndex++}`);
           queryParams.push(teamIdFilter);
         }
       }
@@ -139,7 +141,7 @@ export async function GET(request: Request) {
     if (assignedOnly) {
       if (!seasonId) {
         whereParts.push(
-          `(fp.team_id IS NOT NULL AND COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum})`
+          `(fp.team_id IS NOT NULL AND (fp.season_id = '${activeSeasonId}' OR COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum}))`
         );
       } else {
         whereParts.push('fp.team_id IS NOT NULL');
