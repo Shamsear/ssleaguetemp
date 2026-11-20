@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { getMainDb } from '@/lib/neon/main-config';
 import { getFantasyDb } from '@/lib/neon/fantasy-config';
@@ -151,6 +152,57 @@ export async function POST(
             updated_at = NOW()
           WHERE id = ${teamId}
         `;
+
+        // 2b. Sync team to Neon Auction DB (resetting slots and budget for new season)
+        try {
+          const auctionUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+          if (auctionUrl) {
+            const auctionSql = neon(auctionUrl);
+            await auctionSql`
+              INSERT INTO teams (
+                id, 
+                name, 
+                firebase_uid, 
+                season_id, 
+                football_budget, 
+                football_spent,
+                football_players_count,
+                football_base_slots,
+                football_purchased_slots,
+                football_total_slots,
+                created_at, 
+                updated_at
+              )
+              VALUES (
+                ${teamId}, 
+                ${teamName}, 
+                ${ownerUid}, 
+                ${seasonId}, 
+                ${footballBudget}, 
+                0,
+                0,
+                25,
+                0,
+                25,
+                NOW(), 
+                NOW()
+              )
+              ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                firebase_uid = EXCLUDED.firebase_uid,
+                season_id = EXCLUDED.season_id,
+                football_budget = EXCLUDED.football_budget,
+                football_base_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_base_slots END,
+                football_purchased_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_purchased_slots END,
+                football_total_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_total_slots END,
+                football_spent = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_spent END,
+                football_players_count = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_players_count END,
+                updated_at = NOW()
+            `;
+          }
+        } catch (auctionSyncErr: any) {
+          console.warn(`Auction DB team sync warning for ${teamName}:`, auctionSyncErr.message);
+        }
 
         // 3. Initial balance transactions
         await logInitialBalance(teamId, seasonId, footballBudget, 'football_budget' as any).catch(() => {});

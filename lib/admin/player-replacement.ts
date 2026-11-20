@@ -41,6 +41,9 @@ export interface ReplacementInfo {
   };
   availablePoolCount: number;
   candidates: ReplacementCandidate[];
+  roundAveragePrice?: number | null;
+  roundAllocationsCount?: number;
+  teamUnsoldBidsCount?: number;
 }
 
 /**
@@ -189,6 +192,24 @@ export async function getReplacementInfo(
   `;
   const availablePoolCount = Number(poolCountRes[0]?.count || 0);
 
+  // 5. Calculate round average price excluding this player
+  let roundAveragePrice: number | null = null;
+  let roundAllocationsCount = 0;
+  if (roundId) {
+    const otherAllocs = await sql`
+      SELECT purchase_price 
+      FROM team_players 
+      WHERE round_id = ${roundId} AND player_id != ${playerId}
+    `;
+    roundAllocationsCount = otherAllocs.length;
+    if (otherAllocs.length > 0) {
+      const sum = otherAllocs.reduce((acc, row) => acc + Number(row.purchase_price || 0), 0);
+      roundAveragePrice = Math.round(sum / otherAllocs.length);
+    }
+  }
+
+  const teamUnsoldBidsCount = candidates.filter(c => c.has_team_bid && !c.is_sold && c.player_id !== playerId).length;
+
   return {
     originalPlayer: {
       player_id: playerAssignment.player_id,
@@ -207,7 +228,10 @@ export async function getReplacementInfo(
       status: round.status
     },
     availablePoolCount,
-    candidates
+    candidates,
+    roundAveragePrice,
+    roundAllocationsCount,
+    teamUnsoldBidsCount
   };
 }
 
@@ -444,9 +468,15 @@ export async function executePlayerReplacement(params: {
       };
       
       if (curr === 'dual') {
-        const currentFb = Number(tsd?.football_budget || 0);
-        upd.football_budget = currentFb - diff;
-        upd.football_spent = Number(tsd?.football_spent || 0) + diff;
+        const statsRes = await sql`
+          SELECT COALESCE(SUM(purchase_price), 0) AS true_spent, COUNT(id) AS true_count
+          FROM team_players WHERE team_id = ${teamId} AND season_id = ${seasonId}
+        `;
+        const trueSpent = Number(statsRes[0]?.true_spent || 0);
+        const trueBudget = 10000 - trueSpent;
+        upd.football_budget = trueBudget;
+        upd.football_spent = trueSpent;
+        upd.budget = trueBudget;
       } else {
         const currentB = Number(tsd?.budget || 0);
         upd.budget = currentB - diff;
@@ -714,5 +744,145 @@ export async function executeRandomPlayerReplacement(params: {
       club: replacementPlayer.club || ''
     },
     price: lockedPrice
+  };
+}
+
+
+/**
+ * Revert a won player, randomly pick an unsold replacement player from the team's submitted bids for that round,
+ * and assign them at the round's average price (excluding the original winning amount).
+ */
+export async function executeBidListRandomReplacement(params: {
+  originalPlayerId: string;
+  teamId: string;
+  seasonId: string;
+  useRoundAverage?: boolean;
+  customPrice?: number;
+  adminUser: { uid: string; email: string; username?: string };
+}): Promise<{
+  success: boolean;
+  message: string;
+  originalPlayer: { id: string; name: string; position: string; purchase_price: number };
+  newPlayer: { id: string; name: string; position: string; overall_rating: number; club: string };
+  price: number;
+  priceDiff: number;
+}> {
+  const { originalPlayerId, teamId, seasonId, useRoundAverage = true, customPrice, adminUser } = params;
+
+  // 1. Fetch original player and assignment details
+  const origAssignment = await sql`
+    SELECT tp.*, fp.name as player_name, fp.position
+    FROM team_players tp
+    JOIN footballplayers fp ON tp.player_id = fp.id
+    WHERE tp.player_id = ${originalPlayerId} AND tp.season_id = ${seasonId} AND tp.team_id = ${teamId}
+    LIMIT 1
+  `;
+  if (origAssignment.length === 0) {
+    throw new Error('Original player assignment not found for this team');
+  }
+  const original = origAssignment[0];
+  const roundId = original.round_id;
+  const oldPrice = Number(original.purchase_price) || 0;
+
+  if (!roundId) {
+    throw new Error('Original player was not won in an auction round; cannot pull from round bids');
+  }
+
+  // 2. Calculate round average price if requested (excluding this player)
+  let targetPrice = oldPrice;
+  if (customPrice !== undefined && customPrice !== null && !isNaN(Number(customPrice))) {
+    targetPrice = Number(customPrice);
+  } else if (useRoundAverage) {
+    const otherAllocs = await sql`
+      SELECT purchase_price 
+      FROM team_players 
+      WHERE round_id = ${roundId} AND player_id != ${originalPlayerId}
+    `;
+    if (otherAllocs.length > 0) {
+      const sum = otherAllocs.reduce((acc, row) => acc + Number(row.purchase_price || 0), 0);
+      targetPrice = Math.round(sum / otherAllocs.length);
+    }
+  }
+
+  // 3. Fetch all bids placed by this team in this round
+  const teamBidsResult = await sql`
+    SELECT * FROM bids 
+    WHERE round_id = ${roundId} AND team_id = ${teamId}
+  `;
+
+  const decryptedCandidateIds: string[] = [];
+  for (const bid of teamBidsResult) {
+    try {
+      const decrypted = decryptBidData(bid.encrypted_bid_data);
+      if (decrypted && decrypted.player_id && decrypted.player_id !== originalPlayerId) {
+        decryptedCandidateIds.push(decrypted.player_id);
+      }
+    } catch (err) {
+      console.error(`Failed to decrypt bid ${bid.id}:`, err);
+    }
+  }
+
+  if (decryptedCandidateIds.length === 0) {
+    throw new Error('No other bids found for this team in this round');
+  }
+
+  // 4. Find which of those bid players are unsold in this season
+  const soldResults = await sql`
+    SELECT player_id FROM team_players 
+    WHERE season_id = ${seasonId} AND player_id = ANY(${decryptedCandidateIds})
+  `;
+  const soldSet = new Set(soldResults.map(s => s.player_id));
+  const availableCandidateIds = decryptedCandidateIds.filter(id => !soldSet.has(id));
+
+  if (availableCandidateIds.length === 0) {
+    throw new Error('All other players that this team bid on in this round are already owned by other teams');
+  }
+
+  // 5. Randomly pick one candidate
+  const randomIndex = Math.floor(Math.random() * availableCandidateIds.length);
+  const chosenPlayerId = availableCandidateIds[randomIndex];
+
+  const repPlayerResult = await sql`
+    SELECT * FROM footballplayers WHERE id = ${chosenPlayerId} LIMIT 1
+  `;
+  if (repPlayerResult.length === 0) {
+    throw new Error('Selected replacement player not found in database');
+  }
+  const replacementPlayer = repPlayerResult[0];
+
+  // 6. Execute replacement using executePlayerReplacement
+  const replaceResult = await executePlayerReplacement({
+    originalPlayerId,
+    replacementPlayerId: chosenPlayerId,
+    teamId,
+    seasonId,
+    newPrice: targetPrice,
+    adminUser
+  });
+
+  if (!replaceResult.success) {
+    throw new Error(replaceResult.message || 'Failed to execute replacement');
+  }
+
+  const priceDiff = targetPrice - oldPrice;
+
+  return {
+    success: true,
+    message: `Successfully reverted ${original.player_name} and randomly assigned ${replacementPlayer.name} from team bids at the round average price of £${targetPrice}M.`,
+    originalPlayer: {
+      id: originalPlayerId,
+      name: original.player_name,
+      position: original.position,
+      purchase_price: oldPrice
+    },
+    newPlayer: {
+      id: replacementPlayer.id,
+      name: replacementPlayer.name,
+      position: replacementPlayer.position,
+      overall_rating: Number(replacementPlayer.overall_rating || 0),
+      club: replacementPlayer.club || ''
+    },
+    price: targetPrice,
+    priceDiff
   };
 }

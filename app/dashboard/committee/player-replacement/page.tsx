@@ -7,7 +7,7 @@ import { useCachedTeamSeasons } from '@/hooks/useCachedFirebase';
 import Link from 'next/link';
 import { 
   ArrowLeft, RefreshCw, ShieldAlert, CheckCircle, AlertTriangle, 
-  User, ListFilter, Sparkles, Dices, Lock, Search, Check, DollarSign, ArrowRight 
+  User, ListFilter, Sparkles, Dices, Lock, Search, Check, DollarSign, ArrowRight, Calculator
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -27,7 +27,7 @@ export default function PlayerReplacementPage() {
   
   // Replacement Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'select' | 'random'>('select');
+  const [activeTab, setActiveTab] = useState<'random_bids' | 'select' | 'random_pool'>('random_bids');
   const [candidateInfo, setCandidateInfo] = useState<any | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export default function PlayerReplacementPage() {
     setSelectedCandidate(null);
     setCustomPrice('');
     setCandidateSearch('');
-    setActiveTab('select');
+    setActiveTab('random_bids');
     setActionError(null);
     setActionSuccess(null);
 
@@ -102,14 +102,15 @@ export default function PlayerReplacementPage() {
   };
 
   // Candidate filtering for Manual Mode
-  const { teamBidsList, otherUnsoldList } = useMemo(() => {
-    if (!candidateInfo?.candidates) return { teamBidsList: [], otherUnsoldList: [] };
+  const { teamBidsList, otherUnsoldList, unsoldTeamBids } = useMemo(() => {
+    if (!candidateInfo?.candidates) return { teamBidsList: [], otherUnsoldList: [], unsoldTeamBids: [] };
 
     const searchLower = candidateSearch.trim().toLowerCase();
     const all = candidateInfo.candidates;
 
     // Team's bids in this round (exclude the player being replaced)
     const bids = all.filter((c: any) => c.has_team_bid && c.player_id !== selectedPlayer?.id);
+    const unsoldBids = bids.filter((c: any) => !c.is_sold);
 
     // Other candidates (not in team's bids, unsold, not the replaced player)
     const others = all.filter(
@@ -124,24 +125,93 @@ export default function PlayerReplacementPage() {
       ? others.filter((c: any) => c.player_name.toLowerCase().includes(searchLower)).slice(0, 50)
       : others.slice(0, 30);
 
-    return { teamBidsList: filteredBids, otherUnsoldList: filteredOthers };
+    return { teamBidsList: filteredBids, otherUnsoldList: filteredOthers, unsoldTeamBids: unsoldBids };
   }, [candidateInfo, candidateSearch, selectedPlayer]);
 
   const handleSelectCandidate = (candidate: any) => {
     if (candidate.is_sold) return;
     setSelectedCandidate(candidate);
-    const suggestedPrice = candidate.team_bid_amount ?? candidate.base_price ?? candidateInfo?.originalPlayer?.purchase_price ?? 10;
+    const suggestedPrice = candidateInfo?.roundAveragePrice ?? candidate.team_bid_amount ?? candidate.base_price ?? candidateInfo?.originalPlayer?.purchase_price ?? 10;
     setCustomPrice(suggestedPrice);
   };
 
   // Financial preview values
   const origPrice = candidateInfo?.originalPlayer?.purchase_price || 0;
   const numCustomPrice = Number(customPrice) || 0;
-  const priceDiff = numCustomPrice - origPrice; // e.g. 14 - 18 = -4
+  const priceDiff = numCustomPrice - origPrice;
   const currentBudget = Number(currentTeam?.currency_system === 'dual' ? currentTeam?.football_budget : currentTeam?.budget) || 0;
   const currentSpent = Number(currentTeam?.total_spent) || 0;
   const newEstimatedBudget = currentBudget - priceDiff;
   const newEstimatedSpent = currentSpent + priceDiff;
+
+  // Round average calculations for Tab 1
+  const roundAvgPrice = candidateInfo?.roundAveragePrice ?? origPrice;
+  const avgPriceDiff = roundAvgPrice - origPrice;
+  const avgEstimatedBudget = currentBudget - avgPriceDiff;
+  const avgEstimatedSpent = currentSpent + avgPriceDiff;
+
+  // Execute random replacement from team's round bids @ round average
+  const handleExecuteRandomFromBids = async () => {
+    if (!selectedPlayer || !selectedTeamId || !activeSeasonId || !candidateInfo) return;
+
+    const diffText = avgPriceDiff < 0 
+      ? `Refund of £${Math.abs(avgPriceDiff)}M to team` 
+      : avgPriceDiff > 0 
+        ? `Extra cost of £${avgPriceDiff}M from team` 
+        : `No budget change (£0M)`;
+
+    if (!confirm(
+      `🎲 CONFIRM RANDOM DRAW FROM TEAM'S ROUND BIDS\n\n` +
+      `Player to Revert: "${selectedPlayer.name}" (£${origPrice}M)\n` +
+      `Target Round: Round #${candidateInfo.round?.round_number || ''} (${candidateInfo.round?.position || selectedPlayer.position})\n` +
+      `Round Average Price: £${roundAvgPrice}M (calculated from other ${candidateInfo.roundAllocationsCount || 0} sales)\n\n` +
+      `Financial Impact:\n` +
+      `• Price Adjustment: ${diffText}\n` +
+      `• eCoin Balance: £${currentBudget.toLocaleString()}M -> £${avgEstimatedBudget.toLocaleString()}M\n` +
+      `• Squad Spent: £${currentSpent.toLocaleString()}M -> £${avgEstimatedSpent.toLocaleString()}M\n\n` +
+      `The server will randomly pick 1 unsold player from this team's ${unsoldTeamBids.length} eligible bids and update all databases.\n\n` +
+      `Do you want to proceed?`
+    )) {
+      return;
+    }
+
+    setExecuting(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const response = await fetch('/api/admin/player-replacement/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'random_from_bids',
+          original_player_id: selectedPlayer.id,
+          team_id: selectedTeamId,
+          season_id: activeSeasonId,
+          use_round_average: true
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setActionSuccess(result.message || 'Player replaced successfully from round bids!');
+        setDrawnResult({
+          ...result,
+          mode: 'random_from_bids',
+          newBalance: avgEstimatedBudget,
+          newSpent: avgEstimatedSpent
+        });
+        fetchSquad();
+      } else {
+        setActionError(result.error || 'Failed to execute replacement from bids.');
+      }
+    } catch (err: any) {
+      console.error('Error executing replacement from bids:', err);
+      setActionError(err.message || 'An error occurred during replacement.');
+    } finally {
+      setExecuting(false);
+    }
+  };
 
   // Execute manual candidate replacement
   const handleExecuteManualReplacement = async () => {
@@ -213,18 +283,18 @@ export default function PlayerReplacementPage() {
     }
   };
 
-  // Execute random replacement
-  const handleExecuteRandomReplacement = async () => {
+  // Execute random replacement from general position pool
+  const handleExecuteRandomPoolReplacement = async () => {
     if (!selectedPlayer || !selectedTeamId || !activeSeasonId || !candidateInfo) return;
 
     const posGroup = candidateInfo.originalPlayer.position_group || candidateInfo.round.position || selectedPlayer.position;
     const price = candidateInfo.originalPlayer.purchase_price;
 
     if (!confirm(
-      `🎲 CONFIRM RANDOM DRAW & REPLACEMENT\n\n` +
+      `🎲 CONFIRM GENERAL POOL RANDOM DRAW\n\n` +
       `Are you sure you want to revert "${selectedPlayer.name}" and randomly draw an unsold replacement player from position group "${posGroup}" at £${price.toLocaleString()}M?\n\n` +
-      `• Manual selection is disabled per league fair-play rules.\n` +
-      `• The server will pick a random unsold player from the ${candidateInfo.availablePoolCount || 0} eligible candidates.\n` +
+      `• The server will pick a random unsold player from the ${candidateInfo.availablePoolCount || 0} eligible candidates in the database.\n` +
+      `• Price will remain locked at original £${price.toLocaleString()}M (Net Diff: £0).\n` +
       `• This action will immediately update the database.`
     )) {
       return;
@@ -248,7 +318,7 @@ export default function PlayerReplacementPage() {
 
       const result = await response.json();
       if (result.success) {
-        setActionSuccess(result.message || 'Player replaced successfully via random draw!');
+        setActionSuccess(result.message || 'Player replaced successfully via general pool draw!');
         setDrawnResult({
           ...result,
           mode: 'random'
@@ -446,6 +516,17 @@ export default function PlayerReplacementPage() {
                 <div className="flex border border-slate-200 bg-slate-200/50 p-1 rounded-xl gap-1">
                   <button
                     type="button"
+                    onClick={() => setActiveTab('random_bids')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                      activeTab === 'random_bids'
+                        ? 'bg-white text-slate-900 shadow-sm border border-slate-200/80 ring-2 ring-amber-400/20'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Dices className="w-3.5 h-3.5 text-amber-500" /> 🎲 Random from Team Bids @ Avg
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setActiveTab('select')}
                     className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                       activeTab === 'select'
@@ -453,18 +534,18 @@ export default function PlayerReplacementPage() {
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    <User className="w-3.5 h-3.5 text-amber-500" /> Select From Round Bids
+                    <User className="w-3.5 h-3.5 text-slate-600" /> Manual Selection
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('random')}
+                    onClick={() => setActiveTab('random_pool')}
                     className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                      activeTab === 'random'
+                      activeTab === 'random_pool'
                         ? 'bg-white text-slate-900 shadow-sm border border-slate-200/80'
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    <Dices className="w-3.5 h-3.5 text-amber-500" /> Random Draw
+                    <Sparkles className="w-3.5 h-3.5 text-slate-400" /> General Pool Draw
                   </button>
                 </div>
               </div>
@@ -527,7 +608,104 @@ export default function PlayerReplacementPage() {
                       </div>
                     </div>
 
-                    {/* TAB 1: SELECT CANDIDATE FROM ROUND BIDS */}
+                    {/* TAB 1: RANDOM DRAW FROM TEAM'S ROUND BIDS @ ROUND AVERAGE */}
+                    {activeTab === 'random_bids' && (
+                      <div className="space-y-5">
+                        <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 flex gap-3 text-amber-900 text-xs">
+                          <Sparkles className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="font-black uppercase tracking-wider text-[11px] text-amber-900">
+                              Fair-Play Team Bids Random Draw (Round Average)
+                            </div>
+                            <div className="text-[10px] text-amber-800 font-semibold leading-relaxed mt-1">
+                              Reverts <span className="font-black">{selectedPlayer?.name}</span> back to the unsold pool, automatically computes the round average winning price excluding this player, and randomly picks one unsold player strictly from this team's submitted bids for Round #{candidateInfo.round?.round_number || ''}.
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Round Average & Financial Impact Card */}
+                        <div className="bg-gradient-to-br from-amber-500/5 to-amber-500/10 border-2 border-amber-300 rounded-2xl p-5 space-y-4">
+                          <div className="flex items-center justify-between border-b border-amber-200 pb-3">
+                            <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                              <Calculator className="w-4 h-4 text-amber-600" /> Round Average & Financial Settlement
+                            </h4>
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-black uppercase rounded border border-amber-200">
+                              Round #{candidateInfo.round?.round_number || '-'} ({candidateInfo.round?.position || selectedPlayer?.position})
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white/90 border border-amber-200/80 rounded-xl p-3.5">
+                              <div className="text-[9px] text-slate-400 font-bold uppercase">Original Purchase Price</div>
+                              <div className="text-base font-black text-slate-900 mt-1">
+                                £{origPrice.toLocaleString()}M
+                              </div>
+                              <div className="text-[9px] text-slate-500 font-medium mt-0.5">Paid for {selectedPlayer?.name}</div>
+                            </div>
+
+                            <div className="bg-white/90 border border-amber-200/80 rounded-xl p-3.5">
+                              <div className="text-[9px] text-slate-400 font-bold uppercase">Round Average (Excl. Replaced)</div>
+                              <div className="text-base font-black text-amber-700 mt-1">
+                                £{roundAvgPrice.toLocaleString()}M
+                              </div>
+                              <div className="text-[9px] text-slate-500 font-medium mt-0.5">From {candidateInfo.roundAllocationsCount || 0} other sales in round</div>
+                            </div>
+
+                            <div className="bg-white/90 border border-amber-200/80 rounded-xl p-3.5">
+                              <div className="text-[9px] text-slate-400 font-bold uppercase">Budget Refund / Cost</div>
+                              <div className={`text-base font-black mt-1 ${avgPriceDiff < 0 ? 'text-emerald-600' : avgPriceDiff > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                                {avgPriceDiff < 0 ? `+£${Math.abs(avgPriceDiff).toLocaleString()}M (Refund)` : avgPriceDiff > 0 ? `-£${avgPriceDiff.toLocaleString()}M (Cost)` : '£0M'}
+                              </div>
+                              <div className="text-[9px] text-slate-500 font-medium mt-0.5">
+                                Balance: £{currentBudget.toLocaleString()}M ➔ £{avgEstimatedBudget.toLocaleString()}M
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Eligible Candidates in Team Bids */}
+                          <div className="pt-2 border-t border-amber-200/80 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                                <Dices className="w-3.5 h-3.5 text-amber-600" /> Eligible Unsold Candidates from Team's Bids ({unsoldTeamBids.length})
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                1 Random Candidate will be Selected
+                              </span>
+                            </div>
+
+                            {unsoldTeamBids.length === 0 ? (
+                              <div className="text-center py-6 bg-white/60 border border-amber-200 rounded-xl text-rose-600 text-xs font-bold uppercase">
+                                No unsold players remaining from this team's bids in this round.
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                                {unsoldTeamBids.map((candidate: any) => (
+                                  <div
+                                    key={candidate.player_id}
+                                    className="bg-white/90 border border-amber-200 rounded-xl p-2.5 text-xs flex flex-col justify-between"
+                                  >
+                                    <div>
+                                      <div className="font-black text-slate-900 uppercase truncate">
+                                        {candidate.player_name}
+                                      </div>
+                                      <div className="text-[10px] text-slate-500 font-bold">
+                                        {candidate.club || 'Free Agent'} • OVR {candidate.overall_rating || '-'}
+                                      </div>
+                                    </div>
+                                    <div className="text-[9px] font-black text-amber-700 mt-2 pt-1 border-t border-slate-100 flex justify-between items-center">
+                                      <span>Original Bid:</span>
+                                      <span>£{candidate.team_bid_amount}M</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 2: SELECT CANDIDATE FROM ROUND BIDS (MANUAL) */}
                     {activeTab === 'select' && (
                       <div className="space-y-5">
                         {/* Team Bids Section */}
@@ -536,9 +714,23 @@ export default function PlayerReplacementPage() {
                             <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                               <DollarSign className="w-4 h-4 text-amber-500" /> Bids Placed by This Team in Round {candidateInfo.round?.round_number || ''}
                             </h4>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">
-                              {teamBidsList.length} Bids Total
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {unsoldTeamBids.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const pick = unsoldTeamBids[Math.floor(Math.random() * unsoldTeamBids.length)];
+                                    handleSelectCandidate(pick);
+                                  }}
+                                  className="text-[10px] font-black uppercase text-amber-700 hover:text-amber-800 bg-amber-100/80 hover:bg-amber-200/80 border border-amber-300 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Dices className="w-3 h-3" /> Quick Random Pick
+                                </button>
+                              )}
+                              <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                {teamBidsList.length} Bids Total
+                              </span>
+                            </div>
                           </div>
 
                           {teamBidsList.length === 0 ? (
@@ -699,9 +891,20 @@ export default function PlayerReplacementPage() {
                               {/* Price Input & Financial Impact */}
                               <div className="space-y-3 bg-white/80 border border-amber-200/70 rounded-xl p-3.5">
                                 <div>
-                                  <label className="text-[9px] text-slate-500 font-black uppercase block mb-1">
-                                    Assigned Price (£M)
-                                  </label>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[9px] text-slate-500 font-black uppercase">
+                                      Assigned Price (£M)
+                                    </label>
+                                    {candidateInfo?.roundAveragePrice != null && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setCustomPrice(candidateInfo.roundAveragePrice)}
+                                        className="text-[9px] font-black uppercase text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2 py-0.5 rounded transition-colors flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Calculator className="w-2.5 h-2.5" /> Use Round Avg (£{candidateInfo.roundAveragePrice}M)
+                                      </button>
+                                    )}
+                                  </div>
                                   <div className="relative">
                                     <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">£</span>
                                     <input
@@ -758,49 +961,49 @@ export default function PlayerReplacementPage() {
                       </div>
                     )}
 
-                    {/* TAB 2: RANDOM DRAW */}
-                    {activeTab === 'random' && (
+                    {/* TAB 3: GENERAL POOL RANDOM DRAW */}
+                    {activeTab === 'random_pool' && (
                       <div className="space-y-6">
                         {/* Fair-Play Notice */}
-                        <div className="bg-amber-50/70 border border-amber-200/60 rounded-2xl p-4 flex gap-3 text-amber-900 text-xs">
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex gap-3 text-slate-800 text-xs">
                           <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                           <div>
-                            <div className="font-black uppercase tracking-wider text-[11px] text-amber-800">Fair-Play Random Draw Rule</div>
-                            <div className="text-[10px] text-amber-700 font-semibold leading-relaxed mt-1">
-                              Per league rules, randomly assigned players are replaced strictly via a server-side random draw from the same position group at the exact same purchase price. Manual player selection is disabled to guarantee fair competition.
+                            <div className="font-black uppercase tracking-wider text-[11px] text-slate-800">General Position Pool Draw</div>
+                            <div className="text-[10px] text-slate-600 font-semibold leading-relaxed mt-1">
+                              Pulls a random unsold player from the entire database position group at the exact same purchase price (£{origPrice.toLocaleString()}M). Manual player selection is disabled to guarantee fair competition.
                             </div>
                           </div>
                         </div>
 
                         {/* Random Draw Specifications Card */}
-                        <div className="bg-gradient-to-br from-amber-500/5 to-amber-500/10 border border-amber-200/70 rounded-2xl p-5 space-y-4">
-                          <div className="flex items-center justify-between border-b border-amber-200/60 pb-3">
-                            <h4 className="text-[11px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-5 space-y-4">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                            <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                               <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Draw Criteria
                             </h4>
-                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[9px] font-black uppercase rounded border border-amber-200 flex items-center gap-1">
-                              <Lock className="w-2.5 h-2.5" /> Locked
+                            <span className="px-2 py-0.5 bg-slate-200 text-slate-700 text-[9px] font-black uppercase rounded border border-slate-300 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5" /> Locked Price
                             </span>
                           </div>
 
                           <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <div className="text-[9px] text-amber-800/70 font-bold uppercase">Target Position</div>
+                                <div className="text-[9px] text-slate-400 font-bold uppercase">Target Position</div>
                                 <div className="text-xs font-black text-slate-800 uppercase mt-0.5">
                                   {candidateInfo.originalPlayer.position}
                                 </div>
                               </div>
                               <div>
-                                <div className="text-[9px] text-amber-800/70 font-bold uppercase">Position Group</div>
-                                <div className="text-xs font-black text-amber-700 uppercase mt-0.5">
+                                <div className="text-[9px] text-slate-400 font-bold uppercase">Position Group</div>
+                                <div className="text-xs font-black text-slate-700 uppercase mt-0.5">
                                   {candidateInfo.originalPlayer.position_group || candidateInfo.round.position || '-'}
                                 </div>
                               </div>
                             </div>
 
                             <div>
-                              <div className="text-[9px] text-amber-800/70 font-bold uppercase">Replacement Price</div>
+                              <div className="text-[9px] text-slate-400 font-bold uppercase">Replacement Price</div>
                               <div className="text-sm font-black text-slate-800 mt-0.5 flex items-center gap-2">
                                 £{candidateInfo.originalPlayer.purchase_price.toLocaleString()}M
                                 <span className="text-[9px] text-slate-400 font-bold">(Net Diff: £0)</span>
@@ -808,8 +1011,8 @@ export default function PlayerReplacementPage() {
                             </div>
 
                             <div>
-                              <div className="text-[9px] text-amber-800/70 font-bold uppercase">Available Unsold Pool</div>
-                              <div className="text-xs font-black text-amber-800 mt-0.5">
+                              <div className="text-[9px] text-slate-400 font-bold uppercase">Available Unsold Pool</div>
+                              <div className="text-xs font-black text-slate-800 mt-0.5">
                                 {candidateInfo.availablePoolCount || 0} Eligible Unsold Candidates
                               </div>
                             </div>
@@ -875,7 +1078,23 @@ export default function PlayerReplacementPage() {
                         Cancel
                       </button>
 
-                      {activeTab === 'select' ? (
+                      {activeTab === 'random_bids' ? (
+                        <button
+                          disabled={executing || !candidateInfo || unsoldTeamBids.length === 0}
+                          onClick={handleExecuteRandomFromBids}
+                          className="px-5 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                        >
+                          {executing ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Executing Draw...
+                            </>
+                          ) : (
+                            <>
+                              <Dices className="w-3.5 h-3.5" /> Revert & Draw from Bids @ £{roundAvgPrice}M
+                            </>
+                          )}
+                        </button>
+                      ) : activeTab === 'select' ? (
                         <button
                           disabled={executing || !selectedCandidate || !customPrice}
                           onClick={handleExecuteManualReplacement}
@@ -894,16 +1113,16 @@ export default function PlayerReplacementPage() {
                       ) : (
                         <button
                           disabled={executing || !candidateInfo || candidateInfo.availablePoolCount === 0}
-                          onClick={handleExecuteRandomReplacement}
+                          onClick={handleExecuteRandomPoolReplacement}
                           className="px-5 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer"
                         >
                           {executing ? (
                             <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Drawing & Replacing...
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Drawing Player...
                             </>
                           ) : (
                             <>
-                              <Dices className="w-3.5 h-3.5" /> Execute Random Replacement
+                              <Dices className="w-3.5 h-3.5" /> Confirm General Pool Draw
                             </>
                           )}
                         </button>
@@ -912,7 +1131,6 @@ export default function PlayerReplacementPage() {
                   )}
                 </div>
               </div>
-
             </div>
           </div>
         )}

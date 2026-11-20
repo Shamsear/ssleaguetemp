@@ -217,6 +217,9 @@ export async function GET(
                 football_budget, 
                 football_spent,
                 football_players_count,
+                football_base_slots,
+                football_purchased_slots,
+                football_total_slots,
                 created_at, 
                 updated_at
               )
@@ -228,6 +231,9 @@ export async function GET(
                 ${balance}, 
                 0,
                 0,
+                25,
+                0,
+                25,
                 NOW(), 
                 NOW()
               )
@@ -236,9 +242,17 @@ export async function GET(
                 firebase_uid = EXCLUDED.firebase_uid,
                 season_id = EXCLUDED.season_id,
                 football_budget = EXCLUDED.football_budget,
+                football_base_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_base_slots END,
+                football_purchased_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_purchased_slots END,
+                football_total_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_total_slots END,
+                football_spent = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_spent END,
+                football_players_count = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_players_count END,
                 updated_at = NOW()
             `;
             console.log(`✅ Synced/Created team in Neon auction DB: ${teamId} (${teamName})`);
+            maxSquadSize = 25;
+            currentSquadSize = 0;
+            availableSlots = 25;
           } else {
             console.warn(`⚠️ No team_seasons record found in Neon main DB for user ${userId}, season ${round.season_id}`);
             balance = 1000;

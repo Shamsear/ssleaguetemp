@@ -66,7 +66,13 @@ export async function GET(
           btt.current_bid,
           btt.joined_at,
           btt.withdrawn_at,
-          t.football_budget as budget
+          t.football_budget as budget,
+          COALESCE(t.football_total_slots, 25) as total_slots,
+          (
+            SELECT COUNT(*)::int 
+            FROM footballplayers fp 
+            WHERE fp.team_id = btt.team_id
+          ) as squad_size
         FROM bulk_tiebreaker_teams btt
         LEFT JOIN teams t ON btt.team_id = t.id
         WHERE btt.tiebreaker_id = ANY(${tiebreakerIds})
@@ -86,7 +92,13 @@ export async function GET(
         bid_amount: team.current_bid,
         submitted_at: team.joined_at,
         withdrawn_at: team.withdrawn_at,
-        budget: team.budget,
+        budget: parseFloat(team.budget) || 0,
+        squad_size: parseInt(team.squad_size) || 0,
+        total_slots: parseInt(team.total_slots) || 25,
+        pending_slots: Math.max(0, (parseInt(team.total_slots) || 25) - (parseInt(team.squad_size) || 0)),
+        max_amount: Math.max(0, (parseInt(team.total_slots) || 25) - (parseInt(team.squad_size) || 0)) === 0 
+          ? 0 
+          : Math.max(0, (parseFloat(team.budget) || 0) - (Math.max(0, ((parseInt(team.total_slots) || 25) - (parseInt(team.squad_size) || 0)) - 1) * 10)),
       });
       return acc;
     }, {} as Record<string, any[]>);

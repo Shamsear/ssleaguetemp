@@ -14,7 +14,9 @@ export type AuditActionType =
   | 'finalize_immediately'      // Committee finalized round immediately (skip preview)
   | 'create_round'              // Committee created auction round
   | 'update_round'              // Committee updated auction round
-  | 'delete_round';             // Committee deleted auction round
+  | 'delete_round'              // Committee deleted auction round
+  | 'player_replacement'        // Committee replaced an allocated player
+  | 'random_player_replacement';// Committee randomly replaced an allocated player
 
 export interface AuditLogData {
   action_type: AuditActionType;

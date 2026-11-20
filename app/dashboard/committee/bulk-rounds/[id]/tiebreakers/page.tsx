@@ -31,6 +31,10 @@ interface TiebreakerTeam {
   submitted_at?: string;
   status: string;
   budget?: number;
+  squad_size?: number;
+  total_slots?: number;
+  pending_slots?: number;
+  max_amount?: number;
 }
 
 interface BulkRound {
@@ -212,6 +216,23 @@ export default function BulkRoundTiebreakersPage() {
         }
       }
     });
+
+    // Check for any overbids
+    const currentTb = tiebreakers.find(t => t.id === tiebreakerId);
+    const overbids: string[] = [];
+    Object.entries(manualBids).forEach(([tId, amount]) => {
+      const tm = currentTb?.teams.find(t => t.team_id === tId);
+      if (tm && tm.max_amount !== undefined && amount > tm.max_amount) {
+        overbids.push(`• ${tm.team_name}: Bid £${amount} exceeds max allowed £${tm.max_amount} (needs £10 for each of ${Math.max(0, (tm.pending_slots || 1) - 1)} other slots)`);
+      }
+    });
+
+    if (overbids.length > 0) {
+      const proceed = window.confirm(
+        `⚠️ WARNING: The following manual bids exceed the calculated max allowed amount:\n\n${overbids.join('\n')}\n\nThis would leave the team with less than £10 for their remaining slots.\n\nDo you want to proceed anyway?`
+      );
+      if (!proceed) return;
+    }
 
     const hasManualBids = Object.keys(manualBids).length > 0;
     const confirmMsg = hasManualBids
@@ -691,7 +712,7 @@ export default function BulkRoundTiebreakersPage() {
                                 }`}
                               >
                                 <div>
-                                  <div className="flex items-center gap-2 mb-1">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <span className="font-bold text-slate-855 text-sm">{team.team_name}</span>
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getTeamStatusColor(team.status)}`}>
                                       {team.status}
@@ -699,6 +720,22 @@ export default function BulkRoundTiebreakersPage() {
                                     {team.budget !== undefined && (
                                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-amber-50 border-amber-200 text-amber-700 font-mono">
                                         Bal: £{team.budget.toLocaleString()}
+                                      </span>
+                                    )}
+                                    {team.pending_slots !== undefined && (
+                                      <span 
+                                        className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-blue-50 border-blue-200 text-blue-700 font-mono"
+                                        title={`Squad: ${team.squad_size ?? '?'}/${team.total_slots ?? 25} players. Remaining pending slots: ${team.pending_slots}.`}
+                                      >
+                                        Pending: {team.pending_slots} {team.pending_slots === 1 ? 'slot' : 'slots'}
+                                      </span>
+                                    )}
+                                    {team.max_amount !== undefined && (
+                                      <span 
+                                        className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-emerald-50 border-emerald-200 text-emerald-700 font-mono"
+                                        title={`Max allowed bid: Balance £${team.budget} minus £10 for each of the other ${Math.max(0, (team.pending_slots || 1) - 1)} slots = £${team.max_amount}`}
+                                      >
+                                        Max: £{team.max_amount.toLocaleString()}
                                       </span>
                                     )}
                                   </div>
@@ -724,6 +761,7 @@ export default function BulkRoundTiebreakersPage() {
                                             <input
                                               type="number"
                                               min="0"
+                                              max={team.max_amount}
                                               placeholder="Enter"
                                               disabled={resolvingTiebreaker === tiebreaker.id}
                                               value={adminBids[tiebreaker.id]?.[team.team_id] ?? ''}
@@ -737,7 +775,11 @@ export default function BulkRoundTiebreakersPage() {
                                                   }
                                                 }));
                                               }}
-                                              className="w-24 pl-5 pr-2 py-1 text-xs border border-slate-250 rounded-lg text-right font-mono font-bold focus:ring-amber-500 focus:border-amber-500 bg-white shadow-sm"
+                                              className={`w-24 pl-5 pr-2 py-1 text-xs border rounded-lg text-right font-mono font-bold focus:ring-amber-500 focus:border-amber-500 bg-white shadow-sm ${
+                                                team.max_amount !== undefined && Number(adminBids[tiebreaker.id]?.[team.team_id] || 0) > team.max_amount
+                                                  ? 'border-rose-400 text-rose-700 bg-rose-50/50'
+                                                  : 'border-slate-250 text-slate-800'
+                                              }`}
                                             />
                                           </div>
                                           <button
@@ -756,6 +798,24 @@ export default function BulkRoundTiebreakersPage() {
                                           >
                                             Base
                                           </button>
+                                          {team.max_amount !== undefined && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setAdminBids(prev => ({
+                                                  ...prev,
+                                                  [tiebreaker.id]: {
+                                                    ...(prev[tiebreaker.id] || {}),
+                                                    [team.team_id]: String(team.max_amount)
+                                                  }
+                                                }));
+                                              }}
+                                              className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-extrabold uppercase transition-colors cursor-pointer"
+                                              title={`Set manual bid to max allowed: £${team.max_amount} (Balance £${team.budget} minus £10 for each of the other ${Math.max(0, (team.pending_slots || 1) - 1)} slots)`}
+                                            >
+                                              Max
+                                            </button>
+                                          )}
                                           <button
                                             type="button"
                                             onClick={() => handleWithdrawTeam(tiebreaker.id, team.team_id, team.team_name, tiebreaker.player_name)}

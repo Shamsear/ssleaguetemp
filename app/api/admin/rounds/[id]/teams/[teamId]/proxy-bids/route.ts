@@ -168,7 +168,7 @@ export async function GET(
         budget: teamBalance,
         spent: Number(team.football_spent || 0),
         players_count: Number(team.football_players_count || 0),
-        total_slots: Number(team.football_total_slots || 28),
+        total_slots: Number(team.football_total_slots || 25),
       },
       reserveInfo,
       availablePlayers,

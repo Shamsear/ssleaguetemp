@@ -65,13 +65,18 @@ export async function GET(
         for (const rts of registeredTeamSeasons) {
           const budget = Number(rts.football_budget) || 10000;
           await sql`
-            INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, created_at, updated_at)
-            VALUES (${rts.team_id}, ${rts.team_name}, ${rts.firebase_uid}, ${round.season_id}, ${budget}, 0, NOW(), NOW())
+            INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, football_players_count, football_base_slots, football_purchased_slots, football_total_slots, created_at, updated_at)
+            VALUES (${rts.team_id}, ${rts.team_name}, ${rts.firebase_uid}, ${round.season_id}, ${budget}, 0, 0, 25, 0, 25, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
               name = EXCLUDED.name,
               firebase_uid = EXCLUDED.firebase_uid,
               season_id = EXCLUDED.season_id,
               football_budget = CASE WHEN teams.season_id != EXCLUDED.season_id THEN EXCLUDED.football_budget ELSE teams.football_budget END,
+              football_spent = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_spent END,
+              football_players_count = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_players_count END,
+              football_base_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_base_slots END,
+              football_purchased_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_purchased_slots END,
+              football_total_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_total_slots END,
               updated_at = NOW()
           `;
         }

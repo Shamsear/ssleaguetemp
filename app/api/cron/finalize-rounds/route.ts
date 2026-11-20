@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       FROM rounds
       WHERE status = 'active'
       AND end_time < NOW()
+      AND (round_type IS DISTINCT FROM 'bulk')
       ORDER BY end_time ASC
     `;
 

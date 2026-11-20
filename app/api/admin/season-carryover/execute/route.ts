@@ -67,6 +67,10 @@ export async function POST(request: NextRequest) {
         football_spent: 0,
         real_player_spent: 0,
         total_spent: 0,
+        // Reset slots (purchased slots never carry over across seasons)
+        football_base_slots: 25,
+        football_purchased_slots: 0,
+        football_total_slots: 25,
         // Reset player counts
         players_count: 0,
         position_counts: {
@@ -110,6 +114,9 @@ export async function POST(request: NextRequest) {
           football_budget = ${sourceData.football_budget || 0},
           football_spent = 0,
           football_players_count = 0,
+          football_base_slots = 25,
+          football_purchased_slots = 0,
+          football_total_slots = 25,
           updated_at = NOW()
         WHERE id = ${teamId}
       `;

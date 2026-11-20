@@ -37,6 +37,11 @@ interface TiebreakerTeam {
   submitted: boolean;
   new_bid_amount: number | null;
   submitted_at: string | null;
+  budget?: number;
+  squad_size?: number;
+  total_slots?: number;
+  pending_slots?: number;
+  max_amount?: number;
 }
 
 interface Tiebreaker {
@@ -707,9 +712,20 @@ export default function CommitteeTiebreakerPage() {
                                 <td className="px-4 py-3 whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     {isWinner && <Trophy className="w-4 h-4 text-amber-500 shrink-0" />}
-                                    <span className={`font-black ${isWinner ? 'text-amber-900 font-extrabold' : 'text-slate-800'}`}>
-                                      {team.team_name}
-                                    </span>
+                                    <div>
+                                      <span className={`font-black ${isWinner ? 'text-amber-900 font-extrabold' : 'text-slate-800'}`}>
+                                        {team.team_name}
+                                      </span>
+                                      {team.budget !== undefined && (
+                                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] font-sans">
+                                          <span className="text-slate-400 font-medium">Bal: £{team.budget.toLocaleString()}</span>
+                                          <span className="text-slate-300">•</span>
+                                          <span className="text-blue-600 font-medium">Pending: {team.pending_slots ?? 0}</span>
+                                          <span className="text-slate-300">•</span>
+                                          <span className="text-emerald-600 font-bold">Max: £{(team.max_amount ?? 0).toLocaleString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
 
@@ -829,6 +845,20 @@ export default function CommitteeTiebreakerPage() {
                 </div>
               </div>
 
+              {/* Team Financial Limits */}
+              {adminBidModal.team.budget !== undefined && (
+                <div className="p-2.5 bg-blue-50/60 border border-blue-200/80 rounded-xl flex items-center justify-between text-xs">
+                  <div className="text-slate-600 font-medium">
+                    Bal: <span className="font-bold text-slate-800 font-mono">£{adminBidModal.team.budget.toLocaleString()}</span>
+                    <span className="mx-1.5 text-slate-300">|</span>
+                    Pending: <span className="font-bold text-blue-700">{adminBidModal.team.pending_slots ?? 0} slots</span>
+                  </div>
+                  <div className="text-emerald-700 font-black font-mono">
+                    Max Bid: £{(adminBidModal.team.max_amount ?? 0).toLocaleString()}
+                  </div>
+                </div>
+              )}
+
               {/* Amount Input */}
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">
@@ -862,6 +892,15 @@ export default function CommitteeTiebreakerPage() {
                 >
                   Tied (£{adminBidModal.tiebreaker.original_amount})
                 </button>
+                {adminBidModal.team.max_amount !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => setAdminBidModal(prev => ({ ...prev, bidAmount: String(adminBidModal.team?.max_amount || 0) }))}
+                    className="px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 text-[10px] font-black uppercase"
+                  >
+                    Max (£{adminBidModal.team.max_amount.toLocaleString()})
+                  </button>
+                )}
                 {[50, 100, 250, 500].map((inc) => (
                   <button
                     key={inc}

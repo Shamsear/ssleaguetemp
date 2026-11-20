@@ -95,13 +95,38 @@ export async function GET(request: NextRequest) {
     console.time('⚡ Batch fetch team names from Neon');
     
     // Step 3: Batch fetch team names from Neon teams table
-    const teamNamesMap = new Map<string, string>();
+    const teamDetailsMap = new Map<string, any>();
     if (allTeamIds.length > 0) {
       const teamsResult = await sql`
-        SELECT id, name FROM teams WHERE id = ANY(${allTeamIds})
+        SELECT 
+          t.id, 
+          t.name,
+          t.football_budget as budget,
+          COALESCE(t.football_total_slots, 25) as total_slots,
+          (
+            SELECT COUNT(*)::int 
+            FROM footballplayers fp 
+            WHERE fp.team_id = t.id
+          ) as squad_size
+        FROM teams t 
+        WHERE t.id = ANY(${allTeamIds})
       `;
       teamsResult.forEach(team => {
-        teamNamesMap.set(team.id, team.name);
+        const totalSlots = parseInt(team.total_slots) || 25;
+        const squadSize = parseInt(team.squad_size) || 0;
+        const pendingSlots = Math.max(0, totalSlots - squadSize);
+        const budget = parseFloat(team.budget) || 0;
+        const reservedAmount = Math.max(0, pendingSlots - 1) * 10;
+        const maxAmount = pendingSlots === 0 ? 0 : Math.max(0, budget - reservedAmount);
+
+        teamDetailsMap.set(team.id, {
+          name: team.name,
+          budget,
+          squad_size: squadSize,
+          total_slots: totalSlots,
+          pending_slots: pendingSlots,
+          max_amount: maxAmount,
+        });
       });
     }
     
@@ -114,7 +139,8 @@ export async function GET(request: NextRequest) {
         teamsByTiebreaker.set(teamData.tiebreaker_id, []);
       }
       
-      const teamName = teamNamesMap.get(teamData.team_id) || teamData.team_name || teamData.team_id;
+      const details = teamDetailsMap.get(teamData.team_id) || {};
+      const teamName = details.name || teamData.team_name || teamData.team_id;
       
       teamsByTiebreaker.get(teamData.tiebreaker_id)!.push({
         team_id: teamData.team_id,
@@ -122,6 +148,11 @@ export async function GET(request: NextRequest) {
         submitted: teamData.submitted,
         new_bid_amount: teamData.new_bid_amount,
         submitted_at: teamData.submitted_at,
+        budget: details.budget,
+        squad_size: details.squad_size,
+        total_slots: details.total_slots,
+        pending_slots: details.pending_slots,
+        max_amount: details.max_amount,
       });
     }
     

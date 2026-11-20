@@ -41,7 +41,8 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
         status,
         end_time,
         position,
-        finalization_mode
+        finalization_mode,
+        round_type
       FROM rounds
       WHERE id = ${roundId}
     `;
@@ -51,6 +52,10 @@ export async function checkAndFinalizeExpiredRound(roundId: string): Promise<{
     }
 
     const round = roundResult[0];
+
+    if (round.round_type === 'bulk') {
+      return { finalized: false, alreadyFinalized: round.status === 'completed', pendingManualFinalization: true };
+    }
 
     // If round is not active, don't attempt finalization
     // Possible statuses and their meanings:

@@ -374,14 +374,17 @@ export async function POST(request: NextRequest) {
       const footballSpent = teamSeasonData?.football_spent || 0;
       
       await sql`
-        INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, created_at, updated_at)
-        VALUES (${teamId}, ${teamName}, ${userId}, ${round.season_id}, ${footballBudget}, ${footballSpent}, NOW(), NOW())
+        INSERT INTO teams (id, name, firebase_uid, season_id, football_budget, football_spent, football_players_count, football_base_slots, football_purchased_slots, football_total_slots, created_at, updated_at)
+        VALUES (${teamId}, ${teamName}, ${userId}, ${round.season_id}, ${footballBudget}, ${footballSpent}, 0, 25, 0, 25, NOW(), NOW())
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           firebase_uid = EXCLUDED.firebase_uid,
           season_id = EXCLUDED.season_id,
           football_budget = EXCLUDED.football_budget,
           football_spent = EXCLUDED.football_spent,
+          football_base_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_base_slots END,
+          football_purchased_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 0 ELSE teams.football_purchased_slots END,
+          football_total_slots = CASE WHEN teams.season_id != EXCLUDED.season_id THEN 25 ELSE teams.football_total_slots END,
           updated_at = NOW()
       `;
       console.log(`✅ Synced/Created team: ${teamId} (${teamName}) with budget £${footballBudget}`);
