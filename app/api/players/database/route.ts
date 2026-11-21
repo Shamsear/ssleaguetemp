@@ -183,6 +183,9 @@ export async function GET(request: Request) {
       LIMIT $${limitParam} OFFSET $${offsetParam}
     `;
 
+    console.log('[DEBUG /api/players/database] queryText:', queryText);
+    console.log('[DEBUG /api/players/database] queryParams:', queryParams);
+
     players = await sql.query(queryText, queryParams);
 
     // Fetch team names from auction DB for players that have an active team_id
