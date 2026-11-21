@@ -159,9 +159,17 @@ export async function GET(request: Request) {
 
     const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
 
-    // Add teamId for the JOIN (handle null case)
-    const teamIdParam = paramIndex++;
-    queryParams.push(teamId || null);
+    // Handle starred_players join conditionally based on whether teamId is present
+    let starredJoin = '';
+    let starredSelect = 'false as is_starred';
+    let teamIdParam: number | null = null;
+
+    if (teamId) {
+      teamIdParam = paramIndex++;
+      queryParams.push(teamId);
+      starredJoin = `LEFT JOIN starred_players sp ON fp.id = sp.player_id AND sp.team_id = $${teamIdParam}`;
+      starredSelect = `CASE WHEN sp.id IS NOT NULL THEN true ELSE false END as is_starred`;
+    }
 
     // Add limit and offset
     const limitParam = paramIndex++;
@@ -175,9 +183,9 @@ export async function GET(request: Request) {
         fp.overall_rating, fp.speed, fp.acceleration, fp.ball_control, fp.dribbling,
         fp.low_pass, fp.lofted_pass, fp.finishing, fp.team_id, fp.acquisition_value,
         fp.contract_start_season, fp.contract_end_season,
-        CASE WHEN sp.id IS NOT NULL THEN true ELSE false END as is_starred
+        ${starredSelect}
       FROM footballplayers fp
-      LEFT JOIN starred_players sp ON fp.id = sp.player_id AND sp.team_id = $${teamIdParam}
+      ${starredJoin}
       ${whereClause}
       ORDER BY fp.overall_rating DESC NULLS LAST, fp.name ASC
       LIMIT $${limitParam} OFFSET $${offsetParam}
@@ -241,7 +249,7 @@ export async function GET(request: Request) {
     const countQueryText = `
       SELECT COUNT(*) as total 
       FROM footballplayers fp
-      LEFT JOIN starred_players sp ON fp.id = sp.player_id AND sp.team_id = $${teamIdParam}
+      ${starredJoin}
       ${whereClause}
     `;
 

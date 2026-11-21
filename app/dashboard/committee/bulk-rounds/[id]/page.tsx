@@ -698,7 +698,7 @@ export default function BulkRoundManagementPage({ params }: { params: Promise<{ 
   const shouldShowBids = round.status === 'completed' || round.status === 'tiebreaker_pending' || timeRemaining === 0;
 
   const tiebreakersCount = round.stats?.tiebreakers_count ?? tiebreakers.length;
-  const isRoundOngoing = round.status === 'active';
+  const isRoundOngoing = round.status === 'active' || (timeRemaining !== null && timeRemaining > 0);
   const isRoundFinalized = round.status === 'tiebreaker_pending' || round.status === 'completed';
   const hasTiebreakersCreated = tiebreakersCount > 0;
   const shouldShowViewTiebreakers = !isRoundOngoing && isRoundFinalized && hasTiebreakersCreated;
