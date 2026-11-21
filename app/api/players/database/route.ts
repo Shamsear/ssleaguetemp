@@ -127,11 +127,11 @@ export async function GET(request: Request) {
       } else {
         if (!seasonId) {
           whereParts.push(
-            `(fp.team_id = ${paramIndex++} AND (fp.season_id = '${activeSeasonId}' OR COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum}))`
+            `(fp.team_id = $${paramIndex++} AND (fp.season_id = '${activeSeasonId}' OR COALESCE(NULLIF(REGEXP_REPLACE(fp.contract_end_season, '[^0-9]', '', 'g'), ''), '0')::int >= ${activeSeasonNum}))`
           );
           queryParams.push(teamIdFilter);
         } else {
-          whereParts.push(`fp.team_id = ${paramIndex++}`);
+          whereParts.push(`fp.team_id = $${paramIndex++}`);
           queryParams.push(teamIdFilter);
         }
       }
@@ -182,9 +182,6 @@ export async function GET(request: Request) {
       ORDER BY fp.overall_rating DESC NULLS LAST, fp.name ASC
       LIMIT $${limitParam} OFFSET $${offsetParam}
     `;
-
-    console.log('[DEBUG /api/players/database] queryText:', queryText);
-    console.log('[DEBUG /api/players/database] queryParams:', queryParams);
 
     players = await sql.query(queryText, queryParams);
 
