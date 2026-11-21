@@ -23,6 +23,7 @@ export default function PlayerReplacementPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [squad, setSquad] = useState<any[]>([]);
   const [squadLoading, setSquadLoading] = useState(false);
+  const [squadError, setSquadError] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<any | null>(null);
   
   // Replacement Modal States
@@ -42,28 +43,38 @@ export default function PlayerReplacementPage() {
 
   const filteredTeamSeasons = teamSeasons?.filter((t: any) => t.season_id === activeSeasonId) || [];
   const currentTeam = filteredTeamSeasons.find((t: any) => t.team_id === selectedTeamId);
+  const effectiveSeasonId = activeSeasonId || currentTeam?.season_id;
 
   // Load squad when team is selected
   useEffect(() => {
-    if (selectedTeamId && activeSeasonId) {
+    if (selectedTeamId) {
       fetchSquad();
     } else {
       setSquad([]);
+      setSquadError(null);
     }
-  }, [selectedTeamId, activeSeasonId]);
+  }, [selectedTeamId, effectiveSeasonId]);
 
   const fetchSquad = async () => {
+    if (!selectedTeamId) return;
     setSquadLoading(true);
+    setSquadError(null);
     try {
+      const seasonParam = effectiveSeasonId ? `&season_id=${effectiveSeasonId}` : '';
       const response = await fetch(
-        `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}&season_id=${activeSeasonId}`
+        `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}${seasonParam}`
       );
       const data = await response.json();
       if (data.success) {
         setSquad(data.data?.players || []);
+      } else {
+        setSquadError(data.error || 'Failed to load squad.');
+        setSquad([]);
       }
     } catch (err: any) {
       console.error('Failed to fetch squad:', err);
+      setSquadError(err.message || 'An error occurred while loading the squad.');
+      setSquad([]);
     } finally {
       setSquadLoading(false);
     }
@@ -85,7 +96,7 @@ export default function PlayerReplacementPage() {
 
     try {
       const response = await fetch(
-        `/api/admin/player-replacement/info?player_id=${player.id}&season_id=${activeSeasonId}`
+        `/api/admin/player-replacement/info?player_id=${player.id}&season_id=${effectiveSeasonId}`
       );
       const resData = await response.json();
       if (resData.success) {
@@ -152,7 +163,7 @@ export default function PlayerReplacementPage() {
 
   // Execute random replacement from team's round bids @ round average
   const handleExecuteRandomFromBids = async () => {
-    if (!selectedPlayer || !selectedTeamId || !activeSeasonId || !candidateInfo) return;
+    if (!selectedPlayer || !selectedTeamId || !effectiveSeasonId || !candidateInfo) return;
 
     const diffText = avgPriceDiff < 0 
       ? `Refund of £${Math.abs(avgPriceDiff)}M to team` 
@@ -187,7 +198,7 @@ export default function PlayerReplacementPage() {
           mode: 'random_from_bids',
           original_player_id: selectedPlayer.id,
           team_id: selectedTeamId,
-          season_id: activeSeasonId,
+          season_id: effectiveSeasonId,
           use_round_average: true
         })
       });
@@ -215,7 +226,7 @@ export default function PlayerReplacementPage() {
 
   // Execute manual candidate replacement
   const handleExecuteManualReplacement = async () => {
-    if (!selectedPlayer || !selectedCandidate || !selectedTeamId || !activeSeasonId || !candidateInfo) return;
+    if (!selectedPlayer || !selectedCandidate || !selectedTeamId || !effectiveSeasonId || !candidateInfo) return;
 
     const diffText = priceDiff < 0 
       ? `Refund of £${Math.abs(priceDiff)}M to team` 
@@ -249,7 +260,7 @@ export default function PlayerReplacementPage() {
           original_player_id: selectedPlayer.id,
           replacement_player_id: selectedCandidate.player_id,
           team_id: selectedTeamId,
-          season_id: activeSeasonId,
+          season_id: effectiveSeasonId,
           new_price: numCustomPrice
         })
       });
@@ -285,7 +296,7 @@ export default function PlayerReplacementPage() {
 
   // Execute random replacement from general position pool
   const handleExecuteRandomPoolReplacement = async () => {
-    if (!selectedPlayer || !selectedTeamId || !activeSeasonId || !candidateInfo) return;
+    if (!selectedPlayer || !selectedTeamId || !effectiveSeasonId || !candidateInfo) return;
 
     const posGroup = candidateInfo.originalPlayer.position_group || candidateInfo.round.position || selectedPlayer.position;
     const price = candidateInfo.originalPlayer.purchase_price;
@@ -312,7 +323,7 @@ export default function PlayerReplacementPage() {
           mode: 'random',
           original_player_id: selectedPlayer.id,
           team_id: selectedTeamId,
-          season_id: activeSeasonId
+          season_id: effectiveSeasonId
         })
       });
 
@@ -442,6 +453,16 @@ export default function PlayerReplacementPage() {
               {squadLoading ? (
                 <div className="flex items-center justify-center py-12 text-slate-400 font-bold uppercase text-xs gap-3">
                   <RefreshCw className="w-4 h-4 animate-spin text-amber-500" /> Fetching squad roster...
+                </div>
+              ) : squadError ? (
+                <div className="text-center py-12 text-rose-500 font-bold uppercase text-xs flex flex-col items-center gap-3">
+                  <span>{squadError}</span>
+                  <button
+                    onClick={fetchSquad}
+                    className="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : squad.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 font-bold uppercase text-xs">
