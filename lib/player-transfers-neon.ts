@@ -539,24 +539,31 @@ export async function swapPlayersNeon(
       };
     }
     
-    const teamABalance = teamASnap.data()?.dollar_balance || 0;
-    const teamBBalance = teamBSnap.data()?.dollar_balance || 0;
+    const teamAData = teamASnap.data();
+    const teamBData = teamBSnap.data();
+    const teamAName = playerAData.team || teamAData?.team_name || teamAId;
+    const teamBName = playerBData.team || teamBData?.team_name || teamBId;
+
+    const teamABalance = teamAData?.dollar_balance || 0;
+    const teamBBalance = teamBData?.dollar_balance || 0;
     
-    // Check budget constraints
-    if (feeAmount > 0 && teamABalance < feeAmount) {
-      return {
-        success: false,
-        fee_amount: feeAmount,
-        message: 'Team A has insufficient funds for fee'
-      };
-    }
-    
-    if (feeAmount < 0 && teamBBalance < Math.abs(feeAmount)) {
-      return {
-        success: false,
-        fee_amount: feeAmount,
-        message: 'Team B has insufficient funds for fee'
-      };
+    // Check budget constraints (only for real players where fees/cash apply)
+    if (playerAData.type === 'real') {
+      if (feeAmount > 0 && teamABalance < feeAmount) {
+        return {
+          success: false,
+          fee_amount: feeAmount,
+          message: 'Team A has insufficient funds for fee'
+        };
+      }
+      
+      if (feeAmount < 0 && teamBBalance < Math.abs(feeAmount)) {
+        return {
+          success: false,
+          fee_amount: feeAmount,
+          message: 'Team B has insufficient funds for fee'
+        };
+      }
     }
     
     const seasonNum = parseInt(currentSeasonId.replace(/\D/g, '')) || 0;
@@ -639,20 +646,25 @@ export async function swapPlayersNeon(
       ]);
     }
     
+    // Determine fee direction
+    let feePaidTo: string | null = null;
+    if (feeAmount > 0) {
+      feePaidTo = teamBId;
+    } else if (feeAmount < 0) {
+      feePaidTo = teamAId;
+    }
+
     // Update team balances with fee (only for real players where fees/cash apply)
     if (playerAData.type === 'real') {
       let newTeamABalance = teamABalance;
       let newTeamBBalance = teamBBalance;
-      let feePaidTo = null;
       
       if (feeAmount > 0) {
         newTeamABalance -= feeAmount;
         newTeamBBalance += feeAmount;
-        feePaidTo = teamBId;
       } else if (feeAmount < 0) {
         newTeamABalance += Math.abs(feeAmount);
         newTeamBBalance += Math.abs(feeAmount);
-        feePaidTo = teamAId;
       }
       
       await Promise.all([
@@ -665,63 +677,63 @@ export async function swapPlayersNeon(
           updated_at: new Date()
         })
       ]);
-    }
-    
-    // Log swap fee transactions if applicable
-    if (feeAmount > 0) {
-      await Promise.all([
-        logSwapFeePaid(
-          teamAId,
-          currentSeasonId,
-          playerAData.player_name,
-          playerAData.player_id,
-          playerBData.player_name,
-          playerBData.player_id,
-          playerAData.type,
-          feeAmount,
-          teamABalance,
-          teamBId
-        ),
-        logSwapFeeReceived(
-          teamBId,
-          currentSeasonId,
-          playerBData.player_name,
-          playerBData.player_id,
-          playerAData.player_name,
-          playerAData.player_id,
-          playerAData.type,
-          feeAmount,
-          teamBBalance,
-          teamAId
-        )
-      ]);
-    } else if (feeAmount < 0) {
-      await Promise.all([
-        logSwapFeePaid(
-          teamBId,
-          currentSeasonId,
-          playerBData.player_name,
-          playerBData.player_id,
-          playerAData.player_name,
-          playerAData.player_id,
-          playerAData.type,
-          Math.abs(feeAmount),
-          teamBBalance,
-          teamAId
-        ),
-        logSwapFeeReceived(
-          teamAId,
-          currentSeasonId,
-          playerAData.player_name,
-          playerAData.player_id,
-          playerBData.player_name,
-          playerBData.player_id,
-          playerAData.type,
-          Math.abs(feeAmount),
-          teamABalance,
-          teamBId
-        )
-      ]);
+
+      // Log swap fee transactions if applicable
+      if (feeAmount > 0) {
+        await Promise.all([
+          logSwapFeePaid(
+            teamAId,
+            currentSeasonId,
+            playerAData.player_name,
+            playerAData.player_id,
+            playerBData.player_name,
+            playerBData.player_id,
+            playerAData.type,
+            feeAmount,
+            teamABalance,
+            teamBId
+          ),
+          logSwapFeeReceived(
+            teamBId,
+            currentSeasonId,
+            playerBData.player_name,
+            playerBData.player_id,
+            playerAData.player_name,
+            playerAData.player_id,
+            playerAData.type,
+            feeAmount,
+            teamBBalance,
+            teamAId
+          )
+        ]);
+      } else if (feeAmount < 0) {
+        await Promise.all([
+          logSwapFeePaid(
+            teamBId,
+            currentSeasonId,
+            playerBData.player_name,
+            playerBData.player_id,
+            playerAData.player_name,
+            playerAData.player_id,
+            playerAData.type,
+            Math.abs(feeAmount),
+            teamBBalance,
+            teamAId
+          ),
+          logSwapFeeReceived(
+            teamAId,
+            currentSeasonId,
+            playerAData.player_name,
+            playerAData.player_id,
+            playerBData.player_name,
+            playerBData.player_id,
+            playerAData.type,
+            Math.abs(feeAmount),
+            teamABalance,
+            teamBId
+          )
+        ]);
+      }
     }
     
     // Create transaction record
@@ -746,31 +758,34 @@ export async function swapPlayersNeon(
     const feeText = feeAmount === 0 
       ? '' 
       : feeAmount > 0 
-        ? ` ${playerAData.team} paid $${feeAmount} to ${playerBData.team} as part of the deal.`
-        : ` ${playerBData.team} paid $${Math.abs(feeAmount)} to ${playerAData.team} as part of the deal.`;
+        ? ` ${teamAName} paid ${feeAmount} to ${teamBName} as part of the deal.`
+        : ` ${teamBName} paid ${Math.abs(feeAmount)} to ${teamAName} as part of the deal.`;
     
     // Create news entry
     await createNewsEntry(
       `Player Swap: ${playerAData.player_name} ↔ ${playerBData.player_name}`,
-      `${playerAData.team} and ${playerBData.team} have completed a player swap. ${playerAData.player_name} moves to ${playerBData.team}, while ${playerBData.player_name} joins ${playerAData.team}.${feeText}`,
+      `${teamAName} and ${teamBName} have completed a player swap. ${playerAData.player_name} moves to ${teamBName}, while ${playerBData.player_name} joins ${teamAName}.${feeText}`,
       currentSeasonId,
       'player_movement'
     );
     
     // Update player history
     try {
+      const historyPlayerAId = playerAData.type === 'football' ? playerAData.id : playerAData.player_id;
+      const historyPlayerBId = playerBData.type === 'football' ? playerBData.id : playerBData.player_id;
+
       await Promise.all([
-        closePlayerHistory(playerAData.player_id, teamAId, 'swap', currentSeasonId),
-        closePlayerHistory(playerBData.player_id, teamBId, 'swap', currentSeasonId)
+        closePlayerHistory(historyPlayerAId, teamAId, 'swap', currentSeasonId),
+        closePlayerHistory(historyPlayerBId, teamBId, 'swap', currentSeasonId)
       ]);
       
       await Promise.all([
         createPlayerHistory({
-          playerId: playerAData.player_id,
+          playerId: historyPlayerAId,
           playerName: playerAData.player_name,
           position: null,
           teamId: teamBId,
-          teamName: playerBData.team || 'Unknown Team',
+          teamName: teamBName,
           seasonId: currentSeasonId,
           acquisitionType: 'swap',
           acquisitionValue: playerAData.type === 'football' ? playerBData.auction_value : playerAData.auction_value,
@@ -778,11 +793,11 @@ export async function swapPlayersNeon(
           contractEndSeason: currentSeasonId
         }),
         createPlayerHistory({
-          playerId: playerBData.player_id,
+          playerId: historyPlayerBId,
           playerName: playerBData.player_name,
           position: null,
           teamId: teamAId,
-          teamName: playerAData.team || 'Unknown Team',
+          teamName: teamAName,
           seasonId: currentSeasonId,
           acquisitionType: 'swap',
           acquisitionValue: playerAData.type === 'football' ? playerAData.auction_value : playerBData.auction_value,
