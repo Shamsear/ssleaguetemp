@@ -294,8 +294,14 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
       return;
     }
 
-    let confirmMessage = `Swap ${selectedPlayerA.player_name} (${teamAName}) &harr; ${selectedPlayerB.player_name} (${teamBName})?\n\n`;
-    confirmMessage += `This swap is completely free. No fees or cash transfers will be made.`;
+    let confirmMessage = `Swap ${selectedPlayerA.player_name} (${teamAName}) ↔ ${selectedPlayerB.player_name} (${teamBName})?\n\n`;
+    if (playerType === 'football') {
+      confirmMessage += `• ${selectedPlayerA.player_name} moves to ${teamBName} with value £${selectedPlayerB.auction_value}M\n`;
+      confirmMessage += `• ${selectedPlayerB.player_name} moves to ${teamAName} with value £${selectedPlayerA.auction_value}M\n\n`;
+      confirmMessage += `This swap is completely free. Both teams' total squad values and budgets remain unchanged.`;
+    } else {
+      confirmMessage += `This swap is completely free. No fees or cash transfers will be made.`;
+    }
 
     if (!confirm(confirmMessage)) return;
 
@@ -353,8 +359,14 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
       // Build detailed success message
       const calc = result.calculation;
       let successMessage = `✅ Player swap completed successfully!\n\n`;
-      successMessage += `${selectedPlayerA.player_name} → ${teamBName}\n`;
-      successMessage += `${selectedPlayerB.player_name} → ${teamAName}\n`;
+      if (playerType === 'football') {
+        successMessage += `${selectedPlayerA.player_name} → ${teamBName} (£${selectedPlayerB.auction_value}M)\n`;
+        successMessage += `${selectedPlayerB.player_name} → ${teamAName} (£${selectedPlayerA.auction_value}M)\n\n`;
+        successMessage += `Acquisition values swapped. Both teams' squad values and budgets remain unchanged.\n`;
+      } else {
+        successMessage += `${selectedPlayerA.player_name} → ${teamBName}\n`;
+        successMessage += `${selectedPlayerB.player_name} → ${teamAName}\n`;
+      }
       
       if (calc) {
         // Show category upgrades
@@ -474,7 +486,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Value</span>
-                <p className="font-extrabold text-amber-600 mt-0.5">${selectedPlayerA.auction_value}</p>
+                <p className="font-extrabold text-amber-600 mt-0.5">{playerType === 'football' ? `£${selectedPlayerA.auction_value}M` : `${selectedPlayerA.auction_value}`}</p>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</span>
@@ -520,7 +532,7 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Value</span>
-                <p className="font-extrabold text-amber-600 mt-0.5">${selectedPlayerB.auction_value}</p>
+                <p className="font-extrabold text-amber-600 mt-0.5">{playerType === 'football' ? `£${selectedPlayerB.auction_value}M` : `${selectedPlayerB.auction_value}`}</p>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</span>
@@ -550,6 +562,49 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
               <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Swap Preview
             </h3>
             
+{playerType === 'football' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Player A Details */}
+              <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-3 flex items-center gap-1">
+                  👤 {selectedPlayerA.player_name}
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Current Value:</span>
+                    <span className="font-bold text-slate-800">£{selectedPlayerA.auction_value}M</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Value on {teamBName}:</span>
+                    <span className="font-bold text-emerald-600">£{selectedPlayerB.auction_value}M</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium pt-1">
+                    Takes swapped slot value of {selectedPlayerB.player_name}
+                  </div>
+                </div>
+              </div>
+
+              {/* Player B Details */}
+              <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-3 flex items-center gap-1">
+                  👤 {selectedPlayerB.player_name}
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Current Value:</span>
+                    <span className="font-bold text-slate-800">£{selectedPlayerB.auction_value}M</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Value on {teamAName}:</span>
+                    <span className="font-bold text-emerald-600">£{selectedPlayerA.auction_value}M</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium pt-1">
+                    Takes swapped slot value of {selectedPlayerA.player_name}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Player A Details */}
               <div className="bg-white border border-slate-150 rounded-xl p-4 shadow-sm">
@@ -611,12 +666,15 @@ export default function SwapFormV2({ playerType, onSuccess }: SwapFormV2Props) {
                 </div>
               </div>
             </div>
+          )}
 
             {/* Free Swap Info Banner */}
             <div className="mt-4 bg-white border border-slate-150 rounded-xl p-4 shadow-sm text-center">
               <span className="text-xs font-black text-emerald-600 uppercase tracking-wider">🆓 Free Player Swap</span>
               <p className="text-[10px] text-slate-550 font-mono font-extrabold uppercase tracking-wider mt-1">
-                This operation is free of swap charges. Budgets remain untouched.
+                {playerType === 'football'
+                  ? 'Acquisition values swap between players. Both teams\' squad values and eCoin budgets remain completely unchanged.'
+                  : 'This operation is free of swap charges. Budgets remain untouched.'}
               </p>
             </div>
 

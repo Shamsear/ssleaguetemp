@@ -317,16 +317,16 @@ export async function POST(request: NextRequest) {
         // Update team_players table
         await sql.query(
           `UPDATE team_players 
-           SET team_id = $1, updated_at = NOW() 
-           WHERE player_id = $2`,
-          [playerB.team_id, playerA.id]
+           SET team_id = $1, purchase_price = $2, updated_at = NOW() 
+           WHERE player_id = $3 AND season_id = $4`,
+          [playerB.team_id, playerB.acquisition_value, playerA.id, season_id]
         );
 
         await sql.query(
           `UPDATE team_players 
-           SET team_id = $1, updated_at = NOW() 
-           WHERE player_id = $2`,
-          [playerA.team_id, playerB.id]
+           SET team_id = $1, purchase_price = $2, updated_at = NOW() 
+           WHERE player_id = $3 AND season_id = $4`,
+          [playerA.team_id, playerA.acquisition_value, playerB.id, season_id]
         );
       }
 

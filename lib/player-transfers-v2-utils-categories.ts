@@ -349,6 +349,46 @@ export function calculateSwapDetails(
   playerB: { value: number; category: string; points: number; type: 'real' | 'football' },
   cashAmount: number = 0
 ): SwapCalculation {
+  // For football players: pure 1-for-1 swap with values exchanged between players
+  if (playerA.type === 'football' && playerB.type === 'football') {
+    return {
+      playerA: {
+        originalValue: playerA.value,
+        newValue: playerB.value, // Takes Player B's value
+        valueIncrease: 0,
+        originalCategory: playerA.category || 'Bronze',
+        newCategory: playerA.category || 'Bronze',
+        originalPoints: playerA.points || 0,
+        newPoints: playerA.points || 0,
+        pointsAdded: 0,
+        newSalary: 0,
+        swapFee: 0,
+        committeeFee: 0
+      },
+      playerB: {
+        originalValue: playerB.value,
+        newValue: playerA.value, // Takes Player A's value
+        valueIncrease: 0,
+        originalCategory: playerB.category || 'Bronze',
+        newCategory: playerB.category || 'Bronze',
+        originalPoints: playerB.points || 0,
+        newPoints: playerB.points || 0,
+        pointsAdded: 0,
+        newSalary: 0,
+        swapFee: 0,
+        committeeFee: 0
+      },
+      totalSwapFees: 0,
+      cashFromAToB: 0,
+      cashFromBToA: 0,
+      cashAmount: 0,
+      cashDirection: 'none',
+      teamAPays: 0,
+      teamBPays: 0,
+      totalCommitteeFees: 0
+    };
+  }
+
   // Swaps are free, cash amount is ignored/forced to 0
   const forcedCashAmount = 0;
   validateCashAmount(forcedCashAmount);

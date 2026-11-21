@@ -2121,22 +2121,45 @@ export async function executeSwapV2(
     }, []); // Empty array for now - will be populated with future seasons in task 11
     playerBUpdated = true;
     
-    // Step 7: Update team budgets in Firestore
-    console.log('💸 Updating team budgets...');
-    await updateSwapBalances(
-      teamAId,
-      teamBId,
-      seasonId,
-      playerAType,
-      playerBType,
-      calculation.playerA.newValue,
-      calculation.playerB.newValue,
-      calculation.playerA.originalValue,
-      calculation.playerB.originalValue,
-      0,
-      0
-    );
-    balancesUpdated = true;
+    // Step 6b: For football players, update team_players table with swapped purchase prices
+    if (playerAType === 'football' && playerBType === 'football') {
+      const auctionSql = getAuctionDb();
+      await Promise.all([
+        auctionSql`
+          UPDATE team_players
+          SET team_id = ${teamBId},
+              purchase_price = ${calculation.playerA.newValue},
+              acquired_at = NOW()
+          WHERE player_id = ${playerAData.id} AND season_id = ${seasonId}
+        `,
+        auctionSql`
+          UPDATE team_players
+          SET team_id = ${teamAId},
+              purchase_price = ${calculation.playerB.newValue},
+              acquired_at = NOW()
+          WHERE player_id = ${playerBData.id} AND season_id = ${seasonId}
+        `
+      ]);
+    }
+
+    // Step 7: Update team budgets in Firestore (skipped for football players as values swap cleanly with 0 net change)
+    if (playerAType !== 'football') {
+      console.log('💸 Updating team budgets...');
+      await updateSwapBalances(
+        teamAId,
+        teamBId,
+        seasonId,
+        playerAType,
+        playerBType,
+        calculation.playerA.newValue,
+        calculation.playerB.newValue,
+        calculation.playerA.originalValue,
+        calculation.playerB.originalValue,
+        0,
+        0
+      );
+      balancesUpdated = true;
+    }
     
     // Step 8: Create transaction record
     console.log('📊 Creating transaction record...');

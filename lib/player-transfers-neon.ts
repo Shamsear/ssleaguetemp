@@ -603,59 +603,69 @@ export async function swapPlayersNeon(
         ]);
       }
     } else {
+      // Football players swap:
+      // Player A gets Team B's team_id AND Player B's acquisition_value
+      // Player B gets Team A's team_id AND Player A's acquisition_value
+      // In team_players, purchase_price is also swapped so team squad value remains unchanged!
       await Promise.all([
         sql`
           UPDATE footballplayers
           SET team_id = ${teamBId},
+              acquisition_value = ${playerBData.auction_value},
               updated_at = NOW()
           WHERE player_id = ${playerAData.player_id} AND season_id = ${currentSeasonId}
         `,
         sql`
           UPDATE footballplayers
           SET team_id = ${teamAId},
+              acquisition_value = ${playerAData.auction_value},
               updated_at = NOW()
           WHERE player_id = ${playerBData.player_id} AND season_id = ${currentSeasonId}
         `,
         sql`
           UPDATE team_players
           SET team_id = ${teamBId},
+              purchase_price = ${playerBData.auction_value},
               acquired_at = NOW()
           WHERE player_id = ${playerAData.id} AND season_id = ${currentSeasonId}
         `,
         sql`
           UPDATE team_players
           SET team_id = ${teamAId},
+              purchase_price = ${playerAData.auction_value},
               acquired_at = NOW()
           WHERE player_id = ${playerBData.id} AND season_id = ${currentSeasonId}
         `
       ]);
     }
     
-    // Update team balances with fee
-    let newTeamABalance = teamABalance;
-    let newTeamBBalance = teamBBalance;
-    let feePaidTo = null;
-    
-    if (feeAmount > 0) {
-      newTeamABalance -= feeAmount;
-      newTeamBBalance += feeAmount;
-      feePaidTo = teamBId;
-    } else if (feeAmount < 0) {
-      newTeamABalance += Math.abs(feeAmount);
-      newTeamBBalance -= Math.abs(feeAmount);
-      feePaidTo = teamAId;
+    // Update team balances with fee (only for real players where fees/cash apply)
+    if (playerAData.type === 'real') {
+      let newTeamABalance = teamABalance;
+      let newTeamBBalance = teamBBalance;
+      let feePaidTo = null;
+      
+      if (feeAmount > 0) {
+        newTeamABalance -= feeAmount;
+        newTeamBBalance += feeAmount;
+        feePaidTo = teamBId;
+      } else if (feeAmount < 0) {
+        newTeamABalance += Math.abs(feeAmount);
+        newTeamBBalance += Math.abs(feeAmount);
+        feePaidTo = teamAId;
+      }
+      
+      await Promise.all([
+        adminDb.collection('team_seasons').doc(`${teamAId}_${currentSeasonId}`).update({
+          dollar_balance: newTeamABalance,
+          updated_at: new Date()
+        }),
+        adminDb.collection('team_seasons').doc(`${teamBId}_${currentSeasonId}`).update({
+          dollar_balance: newTeamBBalance,
+          updated_at: new Date()
+        })
+      ]);
     }
-    
-    await Promise.all([
-      adminDb.collection('team_seasons').doc(`${teamAId}_${currentSeasonId}`).update({
-        dollar_balance: newTeamABalance,
-        updated_at: new Date()
-      }),
-      adminDb.collection('team_seasons').doc(`${teamBId}_${currentSeasonId}`).update({
-        dollar_balance: newTeamBBalance,
-        updated_at: new Date()
-      })
-    ]);
     
     // Log swap fee transactions if applicable
     if (feeAmount > 0) {
@@ -763,7 +773,7 @@ export async function swapPlayersNeon(
           teamName: playerBData.team || 'Unknown Team',
           seasonId: currentSeasonId,
           acquisitionType: 'swap',
-          acquisitionValue: playerAData.auction_value,
+          acquisitionValue: playerAData.type === 'football' ? playerBData.auction_value : playerAData.auction_value,
           contractStartSeason: currentSeasonId,
           contractEndSeason: currentSeasonId
         }),
@@ -775,7 +785,7 @@ export async function swapPlayersNeon(
           teamName: playerAData.team || 'Unknown Team',
           seasonId: currentSeasonId,
           acquisitionType: 'swap',
-          acquisitionValue: playerBData.auction_value,
+          acquisitionValue: playerAData.type === 'football' ? playerAData.auction_value : playerBData.auction_value,
           contractStartSeason: currentSeasonId,
           contractEndSeason: currentSeasonId
         })
