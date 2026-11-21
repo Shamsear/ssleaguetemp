@@ -118,6 +118,7 @@ export async function GET(request: NextRequest) {
     const team_id = searchParams.get('team_id');
     const season_id = searchParams.get('season_id');
     const window_id = searchParams.get('window_id');
+    const status = searchParams.get('status');
     
     let requests;
     
@@ -134,12 +135,27 @@ export async function GET(request: NextRequest) {
           ORDER BY submitted_at DESC
         `;
       } else {
-        requests = await sql`
-          SELECT * FROM swap_requests 
-          WHERE status = 'pending' 
-          AND window_id = ${windowIdNum} 
-          ORDER BY submitted_at DESC
-        `;
+        if (status === 'all') {
+          requests = await sql`
+            SELECT * FROM swap_requests 
+            WHERE window_id = ${windowIdNum} 
+            ORDER BY submitted_at DESC
+          `;
+        } else if (status) {
+          requests = await sql`
+            SELECT * FROM swap_requests 
+            WHERE status = ${status} 
+            AND window_id = ${windowIdNum} 
+            ORDER BY submitted_at DESC
+          `;
+        } else {
+          requests = await sql`
+            SELECT * FROM swap_requests 
+            WHERE status = 'pending' 
+            AND window_id = ${windowIdNum} 
+            ORDER BY submitted_at DESC
+          `;
+        }
       }
       
       // Populate players
@@ -149,7 +165,31 @@ export async function GET(request: NextRequest) {
     } else if (team_id && season_id) {
       requests = await getTeamSwapRequests(team_id, season_id);
     } else {
-      requests = await getPendingSwapRequests(season_id || undefined);
+      if (status === 'all') {
+        const { neon } = await import('@neondatabase/serverless');
+        const sql = neon(process.env.NEON_DATABASE_URL!);
+        if (season_id) {
+          requests = await sql`SELECT * FROM swap_requests WHERE season_id = ${season_id} ORDER BY submitted_at DESC`;
+        } else {
+          requests = await sql`SELECT * FROM swap_requests ORDER BY submitted_at DESC`;
+        }
+        for (const req of requests) {
+          req.players = await sql`SELECT * FROM swap_request_players WHERE swap_request_id = ${req.id}`;
+        }
+      } else if (status) {
+        const { neon } = await import('@neondatabase/serverless');
+        const sql = neon(process.env.NEON_DATABASE_URL!);
+        if (season_id) {
+          requests = await sql`SELECT * FROM swap_requests WHERE status = ${status} AND season_id = ${season_id} ORDER BY submitted_at DESC`;
+        } else {
+          requests = await sql`SELECT * FROM swap_requests WHERE status = ${status} ORDER BY submitted_at DESC`;
+        }
+        for (const req of requests) {
+          req.players = await sql`SELECT * FROM swap_request_players WHERE swap_request_id = ${req.id}`;
+        }
+      } else {
+        requests = await getPendingSwapRequests(season_id || undefined);
+      }
     }
     
     return NextResponse.json({ success: true, data: requests });

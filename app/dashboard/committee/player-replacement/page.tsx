@@ -14,7 +14,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 export default function PlayerReplacementPage() {
   const { seasonId: selectedSeason } = useTournamentContext();
   const { user, userSeasonId } = usePermissions();
-  const activeSeasonId = userSeasonId || selectedSeason;
+  const activeSeasonId = userSeasonId || selectedSeason || 'SSPSLS19';
   const { data: teamSeasons, loading: teamsLoading } = useCachedTeamSeasons(
     activeSeasonId ? { seasonId: activeSeasonId } : undefined
   );
@@ -43,7 +43,7 @@ export default function PlayerReplacementPage() {
 
   const filteredTeamSeasons = teamSeasons?.filter((t: any) => t.season_id === activeSeasonId) || [];
   const currentTeam = filteredTeamSeasons.find((t: any) => t.team_id === selectedTeamId);
-  const effectiveSeasonId = activeSeasonId || currentTeam?.season_id;
+  const effectiveSeasonId = activeSeasonId || currentTeam?.season_id || 'SSPSLS19';
 
   // Load squad when team is selected
   useEffect(() => {
@@ -60,13 +60,24 @@ export default function PlayerReplacementPage() {
     setSquadLoading(true);
     setSquadError(null);
     try {
-      const seasonParam = effectiveSeasonId ? `&season_id=${effectiveSeasonId}` : '';
+      const seasonParam = effectiveSeasonId ? `&season_id=${encodeURIComponent(effectiveSeasonId)}` : '';
       const response = await fetch(
         `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}${seasonParam}`
       );
       const data = await response.json();
       if (data.success) {
-        setSquad(data.data?.players || []);
+        let players = data.data?.players || [];
+        // Fallback: if empty with season filter, fetch without season filter to guarantee players load
+        if (players.length === 0) {
+          const fallbackRes = await fetch(
+            `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}`
+          );
+          const fallbackData = await fallbackRes.json();
+          if (fallbackData.success && fallbackData.data?.players?.length > 0) {
+            players = fallbackData.data.players;
+          }
+        }
+        setSquad(players);
       } else {
         setSquadError(data.error || 'Failed to load squad.');
         setSquad([]);

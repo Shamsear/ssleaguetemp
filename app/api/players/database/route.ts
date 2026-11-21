@@ -148,7 +148,7 @@ export async function GET(request: Request) {
       }
     }
 
-    if (seasonId) {
+    if (seasonId && !teamIdFilter) {
       whereParts.push(`fp.team_id IN (SELECT id FROM teams WHERE season_id = $${paramIndex++})`);
       queryParams.push(seasonId);
     }

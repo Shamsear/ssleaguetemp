@@ -80,7 +80,7 @@ const Badge = ({ className, children, variant, ...props }: React.HTMLAttributes<
 export default function CommitteeRequestsPage() {
   const { seasonId: contextSeason } = useTournamentContext();
   const { user, userSeasonId } = usePermissions();
-  const selectedSeason = userSeasonId || contextSeason;
+  const selectedSeason = userSeasonId || contextSeason || 'SSPSLS19';
   
   const [releaseRequests, setReleaseRequests] = useState<any[]>([]);
   const [swapRequests, setSwapRequests] = useState<any[]>([]);
@@ -90,6 +90,8 @@ export default function CommitteeRequestsPage() {
 
   const [windows, setWindows] = useState<any[]>([]);
   const [selectedWindow, setSelectedWindow] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'all'>('pending');
+  const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
 
   const selectedWindowObj = windows.find(w => w.id.toString() === selectedWindow);
   const showSwaps = selectedWindow === 'all' || !selectedWindowObj || selectedWindowObj.type === 'swap';
@@ -104,6 +106,24 @@ export default function CommitteeRequestsPage() {
     const teamSeason = teamSeasons.find((t: any) => t.team_id === teamId);
     return teamSeason?.team_name || teamId;
   };
+
+  const pendingSwaps = swapRequests.filter(r => r.status === 'pending');
+  const approvedSwaps = swapRequests.filter(r => r.status === 'approved');
+  const pendingReleases = releaseRequests.filter(r => r.status === 'pending');
+  const approvedReleases = releaseRequests.filter(r => r.status === 'approved');
+
+  const totalPending = pendingSwaps.length + pendingReleases.length;
+  const totalApproved = approvedSwaps.length + approvedReleases.length;
+  const totalAll = swapRequests.length + releaseRequests.length;
+
+  useEffect(() => {
+    if (!hasAutoSwitched && !loading) {
+      if (totalPending === 0 && totalApproved > 0) {
+        setStatusFilter('approved');
+        setHasAutoSwitched(true);
+      }
+    }
+  }, [loading, totalPending, totalApproved, hasAutoSwitched]);
 
   useEffect(() => {
     fetchWindows();
@@ -139,8 +159,8 @@ export default function CommitteeRequestsPage() {
     setLoading(true);
     try {
       const [releaseRes, swapRes] = await Promise.all([
-        fetch(`/api/requests/release?season_id=${selectedSeason}&window_id=${selectedWindow}`),
-        fetch(`/api/requests/swap?season_id=${selectedSeason}&window_id=${selectedWindow}`)
+        fetch(`/api/requests/release?season_id=${selectedSeason}&window_id=${selectedWindow}&status=all`),
+        fetch(`/api/requests/swap?season_id=${selectedSeason}&window_id=${selectedWindow}&status=all`)
       ]);
       
       if (releaseRes.ok) {
@@ -154,7 +174,7 @@ export default function CommitteeRequestsPage() {
       }
     } catch (error: any) {
       console.error('Error fetching requests:', error);
-      setError('Failed to fetch pending requests');
+      setError('Failed to fetch requests');
     } finally {
       setLoading(false);
     }
@@ -312,6 +332,43 @@ export default function CommitteeRequestsPage() {
           </div>
         )}
 
+        {/* Status Filter Tabs */}
+        <div className="flex border border-slate-200 bg-white p-1 rounded-2xl gap-1 max-w-md shadow-sm">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('pending')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              statusFilter === 'pending'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" /> Pending ({totalPending})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('approved')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              statusFilter === 'approved'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Accepted ({totalApproved})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            All ({totalAll})
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex justify-center p-12">
             <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full"></div>
@@ -324,67 +381,138 @@ export default function CommitteeRequestsPage() {
                 <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-4">
                   <ArrowRightLeft className="w-4 h-4 text-amber-500" /> 
                   Swap Requests 
-                  <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border rounded-lg text-xs font-black font-mono">{swapRequests.length}</span>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border rounded-lg text-xs font-black font-mono">
+                    {statusFilter === 'pending' ? pendingSwaps.length : statusFilter === 'approved' ? approvedSwaps.length : swapRequests.length}
+                  </span>
                 </h2>
                 
-                {swapRequests.length === 0 ? (
+                {(statusFilter === 'pending' ? pendingSwaps : statusFilter === 'approved' ? approvedSwaps : swapRequests).length === 0 ? (
                   <div className="bg-slate-50 border border-dashed rounded-xl p-8 text-center text-slate-450 text-xs font-bold uppercase tracking-wider">
-                    No pending swap requests.
+                    {statusFilter === 'approved' 
+                      ? 'No accepted swap requests in this window.' 
+                      : statusFilter === 'pending' 
+                        ? 'No pending swap requests.' 
+                        : 'No swap requests found.'}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {swapRequests.map((req) => (
-                      <Card key={req.id} className="border-t-4 border-t-amber-500 relative overflow-hidden bg-white border-slate-200">
-                        <CardHeader className="bg-slate-50/50 pb-3 flex flex-row justify-between items-center border-b border-slate-100 mb-3">
-                          <div>
-                            <CardTitle className="text-xs font-black text-amber-600 uppercase tracking-wider">Trade Proposal</CardTitle>
-                            <CardDescription className="text-[9px] text-slate-400 font-bold uppercase mt-1">
-                              {getTeamName(req.requesting_team_id)} &harr; {getTeamName(req.target_team_id)}
-                            </CardDescription>
-                          </div>
-                          <div className="text-[10px] font-bold text-slate-400 font-mono">
-                            {new Date(req.submitted_at).toLocaleDateString()}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {req.players?.map((p: any) => (
-                            <div key={p.id} className="flex flex-col bg-slate-50/80 p-3 rounded-xl border border-slate-150 text-xs font-mono">
-                              <span className="font-extrabold text-sm text-slate-700 mb-0.5">{p.player_name}</span>
-                              <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-1">
-                                <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{getTeamName(p.from_team_id)}</span>
-                                <ArrowRightLeft className="w-3 h-3 text-slate-400" />
-                                <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{getTeamName(p.to_team_id)}</span>
+                    {(statusFilter === 'pending' ? pendingSwaps : statusFilter === 'approved' ? approvedSwaps : swapRequests).map((req) => {
+                      const isApproved = req.status === 'approved';
+                      const isRejected = req.status === 'rejected';
+
+                      return (
+                        <Card 
+                          key={req.id} 
+                          className={`relative overflow-hidden bg-white border-slate-200 shadow-sm ${
+                            isApproved 
+                              ? 'border-t-4 border-t-emerald-500' 
+                              : isRejected 
+                                ? 'border-t-4 border-t-rose-400' 
+                                : 'border-t-4 border-t-amber-500'
+                          }`}
+                        >
+                          <CardHeader className="bg-slate-50/50 pb-3 flex flex-row justify-between items-center border-b border-slate-100 mb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <CardTitle className={`text-xs font-black uppercase tracking-wider ${
+                                  isApproved ? 'text-emerald-700' : isRejected ? 'text-rose-600' : 'text-amber-600'
+                                }`}>
+                                  {isApproved ? 'Deal Accepted' : isRejected ? 'Deal Rejected' : 'Trade Proposal'}
+                                </CardTitle>
+                                {isApproved && (
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded-md border border-emerald-200">
+                                    ✓ Accepted
+                                  </span>
+                                )}
+                                {isRejected && (
+                                  <span className="px-2 py-0.5 bg-rose-100 text-rose-800 text-[9px] font-black uppercase rounded-md border border-rose-200">
+                                    ✕ Rejected
+                                  </span>
+                                )}
                               </div>
+                              <CardDescription className="text-[9px] text-slate-400 font-bold uppercase mt-1">
+                                {getTeamName(req.requesting_team_id)} &harr; {getTeamName(req.target_team_id)}
+                              </CardDescription>
                             </div>
-                          ))}
-                          
-                          {Number(req.cash_amount) > 0 && (
-                            <div className="bg-emerald-50/60 text-emerald-800 p-3 rounded-xl border border-emerald-150 text-xs flex items-center justify-center font-bold uppercase tracking-wider font-mono">
-                              <DollarSign className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                              {req.cash_direction === 'A_to_B' 
-                                ? `${getTeamName(req.requesting_team_id)} pays ${getTeamName(req.target_team_id)} $${req.cash_amount}`
-                                : `${getTeamName(req.target_team_id)} pays ${getTeamName(req.requesting_team_id)} $${req.cash_amount}`}
+                            <div className="text-right">
+                              <div className="text-[10px] font-bold text-slate-500 font-mono">
+                                {new Date(req.submitted_at).toLocaleDateString()}
+                              </div>
+                              {req.processed_at && (
+                                <div className="text-[9px] text-slate-400 font-mono">
+                                  {isApproved ? 'Approved: ' : 'Processed: '}
+                                  {new Date(req.processed_at).toLocaleDateString()}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </CardContent>
-                        <CardFooter className="flex justify-between border-t border-slate-100 pt-3 bg-slate-50/20 gap-2 mt-4">
-                          <button 
-                            onClick={() => handleProcessSwap(req.id, 'rejected')}
-                            disabled={processingId !== null}
-                            className="px-4 py-2 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
-                          >
-                            Reject
-                          </button>
-                          <button 
-                            onClick={() => handleProcessSwap(req.id, 'approved')}
-                            disabled={processingId !== null}
-                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
-                          >
-                            {processingId === `swap-${req.id}` ? 'Processing...' : 'Approve & Execute'}
-                          </button>
-                        </CardFooter>
-                      </Card>
-                    ))}
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            {req.players?.map((p: any) => (
+                              <div key={p.id} className="flex flex-col bg-slate-50/80 p-3 rounded-xl border border-slate-150 text-xs font-mono">
+                                <span className="font-extrabold text-sm text-slate-700 mb-0.5">{p.player_name}</span>
+                                <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-1">
+                                  <span className="bg-white px-2 py-0.5 rounded border border-slate-150">{getTeamName(p.from_team_id)}</span>
+                                  <ArrowRightLeft className={`w-3 h-3 ${isApproved ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                  <span className={`bg-white px-2 py-0.5 rounded border border-slate-150 ${isApproved ? 'text-emerald-700 font-bold' : ''}`}>
+                                    {getTeamName(p.to_team_id)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {Number(req.cash_amount) > 0 && (
+                              <div className="bg-emerald-50/60 text-emerald-800 p-3 rounded-xl border border-emerald-150 text-xs flex items-center justify-center font-bold uppercase tracking-wider font-mono">
+                                <DollarSign className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                                {req.cash_direction === 'A_to_B' 
+                                  ? `${getTeamName(req.requesting_team_id)} ${isApproved ? 'paid' : 'pays'} ${getTeamName(req.target_team_id)} $${req.cash_amount}`
+                                  : `${getTeamName(req.target_team_id)} ${isApproved ? 'paid' : 'pays'} ${getTeamName(req.requesting_team_id)} $${req.cash_amount}`}
+                              </div>
+                            )}
+
+                            {isRejected && req.rejection_reason && (
+                              <div className="bg-rose-50 text-rose-700 p-2.5 rounded-xl border border-rose-200 text-xs font-mono">
+                                <span className="font-bold">Reason:</span> {req.rejection_reason}
+                              </div>
+                            )}
+                          </CardContent>
+                          <CardFooter className="flex justify-between items-center border-t border-slate-100 pt-3 bg-slate-50/20 gap-2 mt-4">
+                            {isApproved ? (
+                              <div className="flex items-center justify-between w-full text-[10px] text-slate-500 font-mono">
+                                <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Executed in Database
+                                </span>
+                                {req.processed_by_name && (
+                                  <span className="text-slate-400">By: {req.processed_by_name}</span>
+                                )}
+                              </div>
+                            ) : isRejected ? (
+                              <div className="flex items-center justify-between w-full text-[10px] text-slate-500 font-mono">
+                                <span className="flex items-center gap-1 text-rose-600 font-bold">
+                                  <XCircle className="w-3.5 h-3.5 text-rose-500" /> Rejected
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => handleProcessSwap(req.id, 'rejected')}
+                                  disabled={processingId !== null}
+                                  className="px-4 py-2 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
+                                >
+                                  Reject
+                                </button>
+                                <button 
+                                  onClick={() => handleProcessSwap(req.id, 'approved')}
+                                  disabled={processingId !== null}
+                                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
+                                >
+                                  {processingId === `swap-${req.id}` ? 'Processing...' : 'Approve & Execute'}
+                                </button>
+                              </>
+                            )}
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -396,55 +524,120 @@ export default function CommitteeRequestsPage() {
                 <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-4 mt-8">
                   <UserMinus className="w-4 h-4 text-rose-500" /> 
                   Release Requests
-                  <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border rounded-lg text-xs font-black font-mono">{releaseRequests.length}</span>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border rounded-lg text-xs font-black font-mono">
+                    {statusFilter === 'pending' ? pendingReleases.length : statusFilter === 'approved' ? approvedReleases.length : releaseRequests.length}
+                  </span>
                 </h2>
                 
-                {releaseRequests.length === 0 ? (
+                {(statusFilter === 'pending' ? pendingReleases : statusFilter === 'approved' ? approvedReleases : releaseRequests).length === 0 ? (
                   <div className="bg-slate-50 border border-dashed rounded-xl p-8 text-center text-slate-450 text-xs font-bold uppercase tracking-wider">
-                    No pending release requests.
+                    {statusFilter === 'approved' 
+                      ? 'No accepted release requests in this window.' 
+                      : statusFilter === 'pending' 
+                        ? 'No pending release requests.' 
+                        : 'No release requests found.'}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {releaseRequests.map((req) => (
-                      <Card key={req.id} className="border-t-4 border-t-rose-500 relative overflow-hidden bg-white border-slate-200">
-                        <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100 mb-3">
-                          <CardTitle className="text-sm font-black text-rose-700 uppercase tracking-wider">{req.player_name}</CardTitle>
-                          <CardDescription className="text-[9px] text-slate-400 font-bold uppercase mt-1">
-                            Requested by: {getTeamName(req.team_id)}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-xs font-mono">
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-500 font-bold uppercase text-[10px]">Submitted:</span>
-                            <span className="font-extrabold text-slate-700">{new Date(req.submitted_at).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-500 font-bold uppercase text-[10px]">Type:</span>
-                            <span className="uppercase text-[9px] font-black bg-slate-200 px-2 py-0.5 rounded text-slate-700 border">{req.player_type}</span>
-                          </div>
-                          <div className="flex justify-between pt-2 border-t border-slate-100 font-extrabold text-slate-700">
-                            <span className="uppercase text-[10px] text-slate-500 font-bold">Expected Refund:</span>
-                            <span className="text-emerald-600 text-sm font-black">${req.refund_amount}</span>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-between border-t border-slate-100 pt-3 bg-slate-50/20 gap-2 mt-4">
-                          <button 
-                            onClick={() => handleProcessRelease(req.id, 'rejected')}
-                            disabled={processingId !== null}
-                            className="px-4 py-2 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
-                          >
-                            Reject
-                          </button>
-                          <button 
-                            onClick={() => handleProcessRelease(req.id, 'approved')}
-                            disabled={processingId !== null}
-                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
-                          >
-                            {processingId === `release-${req.id}` ? 'Processing...' : 'Approve'}
-                          </button>
-                        </CardFooter>
-                      </Card>
-                    ))}
+                    {(statusFilter === 'pending' ? pendingReleases : statusFilter === 'approved' ? approvedReleases : releaseRequests).map((req) => {
+                      const isApproved = req.status === 'approved';
+                      const isRejected = req.status === 'rejected';
+
+                      return (
+                        <Card 
+                          key={req.id} 
+                          className={`relative overflow-hidden bg-white border-slate-200 shadow-sm ${
+                            isApproved 
+                              ? 'border-t-4 border-t-emerald-500' 
+                              : isRejected 
+                                ? 'border-t-4 border-t-slate-400' 
+                                : 'border-t-4 border-t-rose-500'
+                          }`}
+                        >
+                          <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100 mb-3 flex flex-row justify-between items-start">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <CardTitle className={`text-sm font-black uppercase tracking-wider ${
+                                  isApproved ? 'text-slate-800' : isRejected ? 'text-slate-600' : 'text-rose-700'
+                                }`}>
+                                  {req.player_name}
+                                </CardTitle>
+                                {isApproved && (
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded-md border border-emerald-200">
+                                    ✓ Released
+                                  </span>
+                                )}
+                                {isRejected && (
+                                  <span className="px-2 py-0.5 bg-slate-200 text-slate-700 text-[9px] font-black uppercase rounded-md border border-slate-300">
+                                    ✕ Rejected
+                                  </span>
+                                )}
+                              </div>
+                              <CardDescription className="text-[9px] text-slate-400 font-bold uppercase mt-1">
+                                {isApproved ? 'Released from: ' : 'Requested by: '}{getTeamName(req.team_id)}
+                              </CardDescription>
+                            </div>
+                            <div className="text-[10px] font-bold text-slate-400 font-mono text-right">
+                              <div>{new Date(req.submitted_at).toLocaleDateString()}</div>
+                              {req.processed_at && (
+                                <div className="text-[9px] text-slate-400">
+                                  {new Date(req.processed_at).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-2 text-xs font-mono">
+                            <div className="flex justify-between items-center">
+                              <span className="text-slate-500 font-bold uppercase text-[10px]">Type:</span>
+                              <span className="uppercase text-[9px] font-black bg-slate-200 px-2 py-0.5 rounded text-slate-700 border">{req.player_type}</span>
+                            </div>
+                            <div className="flex justify-between pt-2 border-t border-slate-100 font-extrabold text-slate-700">
+                              <span className="uppercase text-[10px] text-slate-500 font-bold">
+                                {isApproved ? 'Refund Paid:' : 'Expected Refund:'}
+                              </span>
+                              <span className="text-emerald-600 text-sm font-black">${req.refund_amount}</span>
+                            </div>
+                            {isRejected && req.rejection_reason && (
+                              <div className="bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-200 text-[11px] font-mono mt-2">
+                                <span className="font-bold">Reason:</span> {req.rejection_reason}
+                              </div>
+                            )}
+                          </CardContent>
+                          <CardFooter className="flex justify-between border-t border-slate-100 pt-3 bg-slate-50/20 gap-2 mt-4">
+                            {isApproved ? (
+                              <div className="flex items-center justify-between w-full text-[10px] text-slate-500 font-mono">
+                                <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Completed
+                                </span>
+                              </div>
+                            ) : isRejected ? (
+                              <div className="flex items-center justify-between w-full text-[10px] text-slate-500 font-mono">
+                                <span className="flex items-center gap-1 text-rose-600 font-bold">
+                                  <XCircle className="w-3.5 h-3.5 text-rose-500" /> Rejected
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => handleProcessRelease(req.id, 'rejected')}
+                                  disabled={processingId !== null}
+                                  className="px-4 py-2 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
+                                >
+                                  Reject
+                                </button>
+                                <button 
+                                  onClick={() => handleProcessRelease(req.id, 'approved')}
+                                  disabled={processingId !== null}
+                                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer"
+                                >
+                                  {processingId === `release-${req.id}` ? 'Processing...' : 'Approve'}
+                                </button>
+                              </>
+                            )}
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </div>
