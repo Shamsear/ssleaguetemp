@@ -4,6 +4,9 @@ import { cookies } from 'next/headers';
 import { getFirebaseUidFromToken } from '@/lib/jwt-decode';
 import { neonGetActiveSeason } from '@/lib/neon/seasons';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Simple in-memory cache for team_id lookups (expires after 5 minutes)
 const teamIdCache = new Map<string, { teamId: string; expiresAt: number }>();
 

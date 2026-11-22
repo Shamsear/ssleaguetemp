@@ -930,6 +930,14 @@ export default function PublicPlayerDetailPage() {
                         );
                         cardHeaderGradient = 'from-purple-50 to-pink-50 border-purple-100';
                         valueText = 'text-purple-700';
+                      } else if (contract.status === 'completed' || contract.status === 'expired') {
+                        statusBadge = (
+                          <span className="px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white bg-slate-500 shrink-0 text-center flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" /> Completed
+                          </span>
+                        );
+                        cardHeaderGradient = 'from-slate-50 to-slate-100 border-slate-200';
+                        valueText = 'text-slate-700';
                       }
 
                       return (
@@ -945,6 +953,11 @@ export default function PublicPlayerDetailPage() {
                                 <div className="flex items-center gap-2.5">
                                   <User className="w-5 h-5 text-slate-700 shrink-0" />
                                   <h3 className="text-base sm:text-lg font-extrabold text-slate-800 truncate leading-tight">{contract.team_name}</h3>
+                                  {contract.season_id && (
+                                    <span className="px-2 py-0.5 bg-white/90 text-slate-600 border border-slate-200 text-[10px] font-mono font-bold uppercase rounded-md shadow-xs">
+                                      {contract.season_id}
+                                    </span>
+                                  )}
                                 </div>
                                 {statusBadge}
                               </div>
@@ -1100,6 +1113,21 @@ export default function PublicPlayerDetailPage() {
                                         </div>
                                       )}
                                     </>
+                                  )}
+
+                                  {(contract.status === 'completed' || contract.status === 'expired') && (
+                                    <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-50/80 to-slate-100/80 rounded-2xl border-2 border-dashed border-slate-200 text-center shadow-inner h-full min-h-[120px]">
+                                      <Clock className="w-8 h-8 text-slate-400 mb-1" />
+                                      <p className="text-sm font-extrabold text-slate-700 uppercase">Contract Completed</p>
+                                      <p className="text-[10px] text-slate-400 mt-0.5">
+                                        {contract.end_reason || '1-Season Contract Completed'}
+                                      </p>
+                                      {contract.end_date && (
+                                        <p className="text-[9px] font-mono text-slate-400 mt-1">
+                                          Ended: {new Date(contract.end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
+                                      )}
+                                    </div>
                                   )}
 
                                   {contract.status === 'active' && (

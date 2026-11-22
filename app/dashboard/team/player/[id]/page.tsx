@@ -961,6 +961,10 @@ export default function PlayerDetailPage() {
                         statusStyle = 'bg-purple-500';
                         cardHeaderGradient = 'from-purple-50 to-pink-50 border-purple-100';
                         valueText = 'text-purple-700';
+                      } else if (contract.status === 'completed' || contract.status === 'expired') {
+                        statusStyle = 'bg-slate-500';
+                        cardHeaderGradient = 'from-slate-50 to-slate-100 border-slate-200';
+                        valueText = 'text-slate-700';
                       }
 
                       return (
@@ -979,9 +983,14 @@ export default function PlayerDetailPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                   </svg>
                                   <h3 className="text-base sm:text-lg font-extrabold text-slate-800 truncate leading-tight">{contract.team_name}</h3>
+                                  {contract.season_id && (
+                                    <span className="px-2 py-0.5 bg-white/90 text-slate-600 border border-slate-200 text-[10px] font-mono font-bold uppercase rounded-md shadow-xs">
+                                      {contract.season_id}
+                                    </span>
+                                  )}
                                 </div>
                                 <span className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white ${statusStyle} shrink-0 text-center`}>
-                                  {contract.status === 'released' ? '🔴 Released' : contract.status === 'swapped' ? '🔄 Swapped' : contract.status === 'takeover' ? '🔄 Takeover' : '🟢 Active'}
+                                  {contract.status === 'released' ? '🔴 Released' : contract.status === 'swapped' ? '🔄 Swapped' : contract.status === 'takeover' ? '🔄 Takeover' : contract.status === 'completed' || contract.status === 'expired' ? '⚪ Completed' : '🟢 Active'}
                                 </span>
                               </div>
                             </div>
@@ -1148,6 +1157,23 @@ export default function PlayerDetailPage() {
                                         </div>
                                       )}
                                     </>
+                                  )}
+
+                                  {(contract.status === 'completed' || contract.status === 'expired') && (
+                                    <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-50/80 to-slate-100/80 rounded-2xl border-2 border-dashed border-slate-200 text-center shadow-inner h-full min-h-[120px]">
+                                      <svg className="w-8 h-8 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      <p className="text-sm font-extrabold text-slate-700 uppercase">Contract Completed</p>
+                                      <p className="text-[10px] text-slate-400 mt-0.5">
+                                        {contract.end_reason || '1-Season Contract Completed'}
+                                      </p>
+                                      {contract.end_date && (
+                                        <p className="text-[9px] font-mono text-slate-400 mt-1">
+                                          Ended: {new Date(contract.end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
+                                      )}
+                                    </div>
                                   )}
 
                                   {contract.status === 'active' && (

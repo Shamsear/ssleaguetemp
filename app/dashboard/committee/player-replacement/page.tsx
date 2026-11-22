@@ -62,7 +62,8 @@ export default function PlayerReplacementPage() {
     try {
       const seasonParam = effectiveSeasonId ? `&season_id=${encodeURIComponent(effectiveSeasonId)}` : '';
       const response = await fetch(
-        `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}${seasonParam}`
+        `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}${seasonParam}&_t=${Date.now()}`,
+        { cache: 'no-store' }
       );
       const data = await response.json();
       if (data.success) {
@@ -70,7 +71,8 @@ export default function PlayerReplacementPage() {
         // Fallback: if empty with season filter, fetch without season filter to guarantee players load
         if (players.length === 0) {
           const fallbackRes = await fetch(
-            `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}`
+            `/api/players/database?limit=2000&assigned_only=true&team_id=${selectedTeamId}&_t=${Date.now()}`,
+            { cache: 'no-store' }
           );
           const fallbackData = await fallbackRes.json();
           if (fallbackData.success && fallbackData.data?.players?.length > 0) {
