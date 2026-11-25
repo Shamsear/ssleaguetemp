@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import LineupSubmission from '@/components/LineupSubmission';
+import TripleThreatLineupSubmission from '@/components/TripleThreatLineupSubmission';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -215,15 +216,27 @@ export default function SelectOpponentLineupPage() {
         {/* Lineup Selection Component */}
         {canSelectLineup && (
           <div className="glass rounded-2xl p-6 shadow-lg border-2 border-yellow-200">
-            <LineupSubmission
-              fixtureId={fixtureId}
-              teamId={opponentTeamId}
-              seasonId={fixture.season_id}
-              existingLineup={existingLineup}
-              onSubmitSuccess={handleSubmitSuccess}
-              isOpponentSelection={true}
-              opponentTeamName={opponentTeamName}
-            />
+            {fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' ? (
+              <TripleThreatLineupSubmission
+                fixtureId={fixtureId}
+                teamId={opponentTeamId}
+                seasonId={fixture.season_id}
+                existingLineup={existingLineup}
+                onSubmitSuccess={handleSubmitSuccess}
+                isOpponentSelection={true}
+                opponentTeamName={opponentTeamName}
+              />
+            ) : (
+              <LineupSubmission
+                fixtureId={fixtureId}
+                teamId={opponentTeamId}
+                seasonId={fixture.season_id}
+                existingLineup={existingLineup}
+                onSubmitSuccess={handleSubmitSuccess}
+                isOpponentSelection={true}
+                opponentTeamName={opponentTeamName}
+              />
+            )}
           </div>
         )}
       </div>

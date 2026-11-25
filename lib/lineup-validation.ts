@@ -290,12 +290,16 @@ export async function isLineupEditable(
       f.home_team_id,
       f.away_team_id,
       f.status as fixture_status,
+      t.tournament_type,
+      ts.matchday_format,
       rd.scheduled_date,
       rd.round_start_time,
       rd.home_fixture_deadline_time,
       rd.away_fixture_deadline_time,
       rd.status as round_status
     FROM fixtures f
+    LEFT JOIN tournaments t ON f.tournament_id = t.id
+    LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
     LEFT JOIN round_deadlines rd ON 
       f.round_number = rd.round_number 
       AND f.season_id = rd.season_id
@@ -366,6 +370,36 @@ export async function isLineupEditable(
     
     // Determine if user is home team
     const isHomeTeam = teamId === fixture.home_team_id;
+
+    // Special Rules for Triple Threat:
+    // 1. Home team has Home Advantage: they can view the away team's lineup and adjust/change their own lineup anytime before matches are completed.
+    // 2. Away team must submit their lineup blindly before 2:00 PM IST.
+    const isTT = fixture.tournament_type === 'triple_threat' || fixture.matchday_format === 'triple_threat';
+    if (isTT) {
+      if (isHomeTeam && fixture.fixture_status !== 'completed' && fixture.fixture_status !== 'finalized') {
+        return {
+          editable: true,
+          reason: 'Home team has Home Advantage and can view and adjust their lineup against the away team',
+          deadline: awayDeadline.toISOString(),
+          roundStart: roundStart.toISOString(),
+          homeDeadline: homeDeadline.toISOString(),
+          awayDeadline: awayDeadline.toISOString()
+        };
+      }
+      if (!isHomeTeam) {
+        const isBeforeAwayDeadline = now < awayDeadline;
+        return {
+          editable: isBeforeAwayDeadline,
+          reason: isBeforeAwayDeadline 
+            ? 'Away team can edit lineup before 2:00 PM IST' 
+            : 'Away team lineup submission deadline (2:00 PM IST) has passed',
+          deadline: awayDeadline.toISOString(),
+          roundStart: roundStart.toISOString(),
+          homeDeadline: homeDeadline.toISOString(),
+          awayDeadline: awayDeadline.toISOString()
+        };
+      }
+    }
     
     // Determine current phase based on round status and deadlines
     let currentPhase: 'draft' | 'home_fixture' | 'fixture_entry' | 'result_entry' | 'closed' = 'closed';

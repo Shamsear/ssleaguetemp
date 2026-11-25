@@ -20,6 +20,7 @@ export default function FixtureLineupPage() {
   const [fixture, setFixture] = useState<any>(null);
   const [teamId, setTeamId] = useState<string>('');
   const [existingLineup, setExistingLineup] = useState<any>(null);
+  const [opponentLineup, setOpponentLineup] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [deadline, setDeadline] = useState<string | null>(null);
 
@@ -132,6 +133,22 @@ export default function FixtureLineupPage() {
         console.log('<Info className="w-4 h-4 text-blue-500" /> DEBUG - No existing lineup found for this team (lineups is null/undefined)');
         setExistingLineup(null);
       }
+
+      // If user is Home Team, also fetch Away Team's lineup (Home Advantage)
+      if (userTeamId === fixtureData.fixture.home_team_id) {
+        try {
+          const oppLineupUrl = `/api/lineups?fixture_id=${fixtureId}&team_id=${fixtureData.fixture.away_team_id}`;
+          const oppLineupRes = await fetchWithTokenRefresh(oppLineupUrl);
+          if (oppLineupRes.ok) {
+            const oppData = await oppLineupRes.json();
+            if (oppData.success && oppData.lineups?.triple_threat_lineup && oppData.lineups.submitted_by !== 'system_auto') {
+              setOpponentLineup(oppData.lineups);
+            }
+          }
+        } catch (oppErr) {
+          console.warn('Could not fetch away lineup for home advantage:', oppErr);
+        }
+      }
     } catch (error: any) {
       console.error('Error fetching data:', error);
     } finally {
@@ -223,6 +240,9 @@ export default function FixtureLineupPage() {
               teamId={teamId}
               seasonId={fixture.season_id}
               existingLineup={existingLineup}
+              opponentLineup={opponentLineup}
+              opponentTeamName={fixture.home_team_id === teamId ? fixture.away_team_name : fixture.home_team_name}
+              isHomeTeam={fixture.home_team_id === teamId}
               onSubmitSuccess={handleSubmitSuccess}
             />
           ) : (

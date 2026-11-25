@@ -25,8 +25,10 @@ interface TripleThreatLineupSubmissionProps {
   seasonId: string;
   onSubmitSuccess?: () => void;
   existingLineup?: any;
+  opponentLineup?: any;
   isOpponentSelection?: boolean;
   opponentTeamName?: string;
+  isHomeTeam?: boolean;
 }
 
 export default function TripleThreatLineupSubmission({
@@ -35,8 +37,10 @@ export default function TripleThreatLineupSubmission({
   seasonId,
   onSubmitSuccess,
   existingLineup,
+  opponentLineup,
   isOpponentSelection = false,
   opponentTeamName,
+  isHomeTeam = false,
 }: TripleThreatLineupSubmissionProps) {
   const { user } = useAuth();
   const [roster, setRoster] = useState<Player[]>([]);
@@ -235,6 +239,7 @@ export default function TripleThreatLineupSubmission({
           { player_id: singlePlayer, player_name: getPlayerName(singlePlayer), mode: 'single', slot: 1 },
         ],
         substitutes: [],
+        selected_by_opponent: isOpponentSelection,
         submitted_by: user?.uid || 'anonymous',
         submitted_by_name: user?.displayName || user?.email || 'Team Manager',
       };
@@ -305,6 +310,18 @@ export default function TripleThreatLineupSubmission({
     );
   };
 
+  const renderOpponentNames = (arr: any) => {
+    if (!arr) return 'None';
+    if (!Array.isArray(arr)) {
+      if (typeof arr === 'object') return arr.player_name || arr.name || arr.player_id || 'Player';
+      return String(arr);
+    }
+    return arr.map((item: any) => {
+      if (typeof item === 'object') return item.player_name || item.name || item.player_id || 'Player';
+      return String(item);
+    }).join(' & ');
+  };
+
   if (loading) {
     return (
       <div className="py-12 text-center font-mono text-xs uppercase text-slate-500 flex items-center justify-center gap-2">
@@ -326,10 +343,18 @@ export default function TripleThreatLineupSubmission({
               <Sparkles className="w-3 h-3" /> SS TRIPLE THREAT
             </div>
             <h2 className="text-xl font-black uppercase tracking-wide flex items-center gap-2">
-              Matchday Lineup Submission
+              {isOpponentSelection 
+                ? `Submit Lineup for ${opponentTeamName || 'Opponent'}`
+                : isHomeTeam && opponentLineup?.triple_threat_lineup
+                  ? 'Adjust Home Lineup (Home Advantage)'
+                  : 'Matchday Lineup Submission'}
             </h2>
             <p className="text-xs text-slate-300 font-sans mt-1">
-              Field exactly <strong className="text-white">5 unique players</strong> across Co-op, Duo, and Single modes. No player can participate in more than one mode.
+              {isOpponentSelection
+                ? `Submitting 5-player lineup on behalf of ${opponentTeamName || 'Opponent'}.`
+                : isHomeTeam && opponentLineup?.triple_threat_lineup
+                  ? 'The Away Team has submitted. You have Home Advantage to see their lineup below and adjust your players!'
+                  : 'Field exactly 5 unique players across Co-op, Duo, and Single modes. No player can participate in more than one mode.'}
             </p>
           </div>
 
@@ -355,6 +380,43 @@ export default function TripleThreatLineupSubmission({
           </div>
         )}
       </div>
+
+      {/* Home Advantage: Opponent Lineup Card */}
+      {isHomeTeam && opponentLineup?.triple_threat_lineup && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 rounded-2xl p-5 shadow-xs">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider">
+              ⭐ HOME ADVANTAGE
+            </span>
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+              {opponentTeamName || 'Away Team'} Submitted Lineup
+            </h3>
+          </div>
+          <p className="text-[11px] text-slate-600 mb-3 font-sans">
+            The Away Team has submitted their lineup. You can see their player placement below and adjust your 5 players to counter their strategy before the match begins!
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+            <div className="p-3 bg-white rounded-xl border border-indigo-200 shadow-2xs">
+              <span className="text-[10px] font-bold text-indigo-700 uppercase block mb-1">🎮 Mode 1: Co-op (2v2)</span>
+              <span className="font-extrabold text-slate-900">
+                {renderOpponentNames(opponentLineup.triple_threat_lineup.coop)}
+              </span>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-emerald-200 shadow-2xs">
+              <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">🤝 Mode 2: Duo (2v2)</span>
+              <span className="font-extrabold text-slate-900">
+                {renderOpponentNames(opponentLineup.triple_threat_lineup.duo)}
+              </span>
+            </div>
+            <div className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs">
+              <span className="text-[10px] font-bold text-amber-700 uppercase block mb-1">⚔️ Mode 3: Single (1v1)</span>
+              <span className="font-extrabold text-slate-900">
+                {renderOpponentNames(opponentLineup.triple_threat_lineup.single)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lock Banner if not editable */}
       {!isEditable && (

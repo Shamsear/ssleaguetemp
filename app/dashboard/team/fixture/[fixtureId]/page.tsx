@@ -1800,7 +1800,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-3xl opacity-20 -z-10"></div>
 
-          <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center shadow-sm">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1814,6 +1814,44 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 )}
               </div>
             </div>
+
+            {/* Triple Threat Action Buttons */}
+            {(() => {
+              const isTT = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || matchups.some(m => !!(m as any).match_mode);
+              if (!isTT || fixture?.status === 'completed') return null;
+
+              return (
+                <div className="flex flex-wrap items-center gap-2 font-mono">
+                  {isHomeTeam && (
+                    <Link
+                      href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                    >
+                      <span>✏️</span>
+                      <span>Change / Adjust Home Lineup</span>
+                    </Link>
+                  )}
+                  {isHomeTeam && !awayLineupSubmitted && (
+                    <Link
+                      href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                    >
+                      <span>👥</span>
+                      <span>Submit Away Lineup</span>
+                    </Link>
+                  )}
+                  {!isHomeTeam && (
+                    <Link
+                      href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                    >
+                      <span>📋</span>
+                      <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup'}</span>
+                    </Link>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Blind Lineup Submission */}
@@ -4738,19 +4776,81 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
           {/* Waiting Message */}
           {!canCreateMatchups && matchups.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm font-medium text-gray-700 mb-2">Waiting for Matchups</p>
-              <p className="text-xs text-gray-600">
-                {!homeLineupSubmitted || !awayLineupSubmitted
-                  ? '⌛ Both teams must submit their lineups before matchups can be created.'
-                  : phase === 'home_fixture' && 'Home team will create player matchups during this phase.'
+            <div className="text-center py-8 text-gray-500 font-mono">
+              {(() => {
+                const isTT = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat';
+                if (isTT) {
+                  return (
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center text-xl">
+                        ⚔️
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+                          Triple Threat Matchups Pending
+                        </h3>
+                        <p className="text-xs text-slate-500 font-sans mt-1">
+                          {!homeLineupSubmitted && !awayLineupSubmitted
+                            ? 'Both teams must submit their 5-player lineups to reveal matchups.'
+                            : !homeLineupSubmitted
+                              ? 'Home team has not submitted their lineup yet.'
+                              : !awayLineupSubmitted
+                                ? 'Away team lineup is pending (Deadline: 2:00 PM IST).'
+                                : 'Generating matchups...'}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                        {isHomeTeam ? (
+                          <>
+                            <Link
+                              href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                            >
+                              <span>📋</span>
+                              <span>{homeLineupSubmitted ? 'Adjust Home Lineup' : 'Submit Home Lineup'}</span>
+                            </Link>
+                            {!awayLineupSubmitted && (
+                              <Link
+                                href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                              >
+                                <span>👥</span>
+                                <span>Submit Away Lineup</span>
+                              </Link>
+                            )}
+                          </>
+                        ) : (
+                          <Link
+                            href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                          >
+                            <span>📋</span>
+                            <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup'}</span>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
                 }
-                {phase === 'fixture_entry' && homeLineupSubmitted && awayLineupSubmitted && 'First team to create matchups gets edit rights'}
-                {phase === 'result_entry' && 'Matchups are finalized'}
-              </p>
+
+                return (
+                  <>
+                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Waiting for Matchups</p>
+                    <p className="text-xs text-gray-600">
+                      {!homeLineupSubmitted || !awayLineupSubmitted
+                        ? '⌛ Both teams must submit their lineups before matchups can be created.'
+                        : phase === 'home_fixture' && 'Home team will create player matchups during this phase.'
+                      }
+                      {phase === 'fixture_entry' && homeLineupSubmitted && awayLineupSubmitted && 'First team to create matchups gets edit rights'}
+                      {phase === 'result_entry' && 'Matchups are finalized'}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
