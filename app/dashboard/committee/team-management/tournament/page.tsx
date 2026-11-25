@@ -1514,29 +1514,29 @@ export function TournamentDashboardPageContent() {
 
   return (
     <AuthGuard requiredRole="committee_admin">
-    <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 font-mono">
+    <div className="console-bg min-h-screen text-slate-800 relative pt-4 sm:pt-6 lg:pt-24 pb-8 sm:pb-12 px-3 sm:px-6 font-mono">
       {/* Decorative glowing ambient overlay */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+      <div className="max-w-7xl mx-auto relative z-10 space-y-4 sm:space-y-6">
         {/* Navigation & Selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href="/dashboard/committee/team-management"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-[11px] sm:text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Team Management
             </Link>
             <Link
               href="/dashboard/committee/team-management/tournament/lineup-status"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-mono font-bold text-[11px] sm:text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
             >
               <CheckCircle className="w-3.5 h-3.5 text-slate-605" /> Lineup Status
             </Link>
             <Link
               href="/dashboard/committee/team-management/match-days"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-705 font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-705 font-mono font-bold text-[11px] sm:text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer"
             >
               <Calendar className="w-3.5 h-3.5 text-slate-600" /> Match Days
             </Link>
@@ -1544,14 +1544,14 @@ export function TournamentDashboardPageContent() {
         </div>
 
         {/* Header Card */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-slate-800 border border-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
-              <Trophy className="w-6 h-6 text-amber-400" />
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3.5 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-800 border border-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/5 flex-shrink-0">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
             </div>
             <div>
               <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">SYSTEM CONTROL</span>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+              <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
                 Tournament Management
               </h1>
               <p className="text-xs text-slate-500 font-mono mt-1">
@@ -1562,59 +1562,59 @@ export function TournamentDashboardPageContent() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Matches</p>
-                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{totalMatches}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">Total Matches</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 mt-0.5 sm:mt-1">{totalMatches}</p>
               </div>
-              <div className="p-2 bg-slate-100 rounded-xl text-slate-600">
-                <Activity className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Completed</p>
-                <p className="text-2xl sm:text-3xl font-black text-emerald-650 mt-1">{completedMatches}</p>
-              </div>
-              <div className="p-2 bg-emerald-50 rounded-xl text-emerald-600">
-                <CheckCircle className="w-5 h-5" />
+              <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg sm:rounded-xl text-slate-600 shrink-0">
+                <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
           </div>
 
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Pending</p>
-                <p className="text-2xl sm:text-3xl font-black text-amber-600 mt-1">{pendingMatches}</p>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-emerald-600 font-bold uppercase tracking-wider truncate">Completed</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-650 mt-0.5 sm:mt-1">{completedMatches}</p>
               </div>
-              <div className="p-2 bg-amber-50 rounded-xl text-amber-600">
-                <Clock className="w-5 h-5" />
+              <div className="p-1.5 sm:p-2 bg-emerald-50 rounded-lg sm:rounded-xl text-emerald-600 shrink-0">
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
           </div>
 
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Teams</p>
-                <p className="text-2xl sm:text-3xl font-black text-purple-600 mt-1">{participantsCount}</p>
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-amber-600 font-bold uppercase tracking-wider truncate">Pending</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-black text-amber-600 mt-0.5 sm:mt-1">{pendingMatches}</p>
               </div>
-              <div className="p-2 bg-purple-50 rounded-xl text-purple-600">
-                <Users className="w-5 h-5" />
+              <div className="p-1.5 sm:p-2 bg-amber-50 rounded-lg sm:rounded-xl text-amber-600 shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+            </div>
+          </div>
+
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-purple-600 font-bold uppercase tracking-wider truncate">Teams</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-black text-purple-600 mt-0.5 sm:mt-1">{participantsCount}</p>
+              </div>
+              <div className="p-1.5 sm:p-2 bg-purple-50 rounded-lg sm:rounded-xl text-purple-600 shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs Selector */}
-        <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-2 shadow-sm">
-          <div className="flex gap-2 overflow-x-auto font-mono scrollbar-thin">
+        <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 shadow-sm">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto font-mono scrollbar-none pb-0.5 sm:pb-0 touch-pan-x">
             {[
               { tab: 'overview', label: <><BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Overview</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'teams', label: <><Users className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Teams</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
@@ -1626,7 +1626,7 @@ export function TournamentDashboardPageContent() {
               <button
                 key={tab}
                 onClick={() => handleTabChange(tab as TabType)}
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer ${
+                className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-wider transition-all whitespace-nowrap border cursor-pointer shrink-0 ${
                   activeTab === tab
                     ? `${activeClass} shadow-sm`
                     : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -2897,23 +2897,23 @@ export function TournamentDashboardPageContent() {
         {activeTab === 'management' && (
           <div className="space-y-6">
             {/* Create Tournament Form */}
-            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
                   Create New Tournament
                 </h2>
                 <button
                   onClick={() => setShowCreateForm(!showCreateForm)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center"
                 >
                   {showCreateForm ? 'Hide Form' : 'Show Form'}
                 </button>
               </div>
 
               {showCreateForm && (
-                <form onSubmit={handleCreateTournament} className="space-y-6">
+                <form onSubmit={handleCreateTournament} className="space-y-5 sm:space-y-6">
                   {/* Basic Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Type
@@ -3184,13 +3184,13 @@ export function TournamentDashboardPageContent() {
 
                       {/* Group Stage Configuration */}
                       {newTournament.has_group_stage && (
-                        <div className="ml-8 p-4 bg-blue-50/50 rounded-xl border border-blue-200 space-y-3">
+                        <div className="ml-0 sm:ml-6 lg:ml-8 mt-3 p-3.5 sm:p-5 bg-blue-50/50 rounded-xl border border-blue-200 space-y-3 sm:space-y-4">
                           <h4 className="font-semibold text-gray-900 text-sm">Group Stage Settings</h4>
 
                           {/* Group Assignment Mode */}
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">Group Assignment Mode</label>
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-4">
                               <label className="flex items-center cursor-pointer">
                                 <input
                                   type="radio"
@@ -3254,7 +3254,7 @@ export function TournamentDashboardPageContent() {
 
                       {/* Knockout Stage Configuration - ONLY for League+Knockout (not Group+Knockout) */}
                       {newTournament.has_knockout_stage && !newTournament.has_group_stage && (
-                        <div className="ml-8 p-4 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3">
+                        <div className="ml-0 sm:ml-6 lg:ml-8 mt-3 p-3.5 sm:p-5 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3 sm:space-y-4">
                           <h4 className="font-semibold text-gray-900 text-sm">Knockout Stage Settings</h4>
                           <p className="text-xs text-gray-600 mb-2"><Lightbulb className="w-4 h-4 text-amber-500" /> These settings control the playoff bracket after league stage</p>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -3300,7 +3300,7 @@ export function TournamentDashboardPageContent() {
 
                       {/* Info for Group+Knockout */}
                       {newTournament.has_knockout_stage && newTournament.has_group_stage && (
-                        <div className="ml-8 p-4 bg-purple-50/50 rounded-xl border border-purple-200">
+                        <div className="ml-0 sm:ml-6 lg:ml-8 mt-3 p-3.5 sm:p-5 bg-purple-50/50 rounded-xl border border-purple-200">
                           <h4 className="font-semibold text-gray-900 text-sm mb-2"><Info className="w-4 h-4 text-blue-500" /> Knockout Stage (Auto-configured)</h4>
                           <p className="text-xs text-gray-700">
                             Knockout bracket is automatically created based on group results:
@@ -3386,13 +3386,13 @@ export function TournamentDashboardPageContent() {
 
                   {/* Lineup Category Requirements */}
                   <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-1">Lineup Category Requirements</h3>
-                        <p className="text-sm text-gray-600">Set minimum players required from each category in starting XI</p>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">Lineup Category Requirements</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">Set minimum players required from each category in starting XI</p>
                       </div>
-                      <label className="flex items-center gap-3 bg-white/50 px-4 py-2.5 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-blue-500/50 transition-all">
-                        <span className="text-sm font-medium text-gray-700">Enable Requirements</span>
+                      <label className="self-start sm:self-auto flex items-center gap-3 bg-white/50 px-4 py-2.5 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-blue-500/50 transition-all shrink-0">
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">Enable Requirements</span>
                         <div className="relative">
                           <input
                             type="checkbox"
@@ -3414,21 +3414,21 @@ export function TournamentDashboardPageContent() {
                     </div>
 
                     {!newTournament.enable_category_requirements ? (
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-                        <div className="text-4xl mb-3"><CheckCircle className="w-4 h-4 inline-block text-emerald-500 mr-1 align-text-bottom" /></div>
-                        <p className="text-gray-700 font-medium mb-1">Category Requirements Disabled</p>
-                        <p className="text-sm text-gray-600">Teams can create lineups without category restrictions</p>
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 sm:p-6 text-center">
+                        <div className="text-3xl sm:text-4xl mb-2 sm:mb-3"><CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 inline-block text-emerald-500 mr-1 align-text-bottom" /></div>
+                        <p className="text-gray-700 font-medium mb-1 text-sm sm:text-base">Category Requirements Disabled</p>
+                        <p className="text-xs sm:text-sm text-gray-600">Teams can create lineups without category restrictions</p>
                       </div>
                     ) : categories.length === 0 ? (
                       <div className="text-center py-8 bg-gray-50 rounded-xl">
-                        <p className="text-gray-500">No categories available</p>
+                        <p className="text-gray-500 text-sm">No categories available</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                         {categories.map((category) => (
-                          <div key={category.id} className="p-4 bg-white/50 rounded-xl border border-gray-200">
+                          <div key={category.id} className="p-3.5 sm:p-4 bg-white/50 rounded-xl border border-gray-200">
                             <label className="flex flex-col">
-                              <span className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
+                              <span className="font-medium text-gray-900 mb-2 flex items-center gap-1.5 text-xs sm:text-sm">
                                 <span className={`w-2.5 h-2.5 rounded-full ring-2 ${getColorDotStyles(category.name)} inline-block flex-shrink-0`} /> {category.name}
                               </span>
                               <input
@@ -3446,7 +3446,7 @@ export function TournamentDashboardPageContent() {
                                     }
                                   });
                                 }}
-                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-sm"
                                 placeholder="0"
                               />
                               <span className="text-xs text-gray-500 mt-1">Min players in starting XI</span>
@@ -3458,27 +3458,27 @@ export function TournamentDashboardPageContent() {
                   </div>
 
                   {/* Submit Button */}
-                  <div className="flex justify-end gap-3 pt-4">
+                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
                     <button
                       type="button"
                       onClick={() => setShowCreateForm(false)}
-                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium"
+                      className="w-full sm:w-auto px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium text-xs sm:text-sm text-center"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isCreatingTournament}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                      className="w-full sm:w-auto px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                     >
                       {isCreatingTournament ? (
                         <>
-                          <RefreshCw className="animate-spin h-5 w-5 mr-2" />
+                          <RefreshCw className="animate-spin h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                           Creating...
                         </>
                       ) : (
                         <>
-                          <Plus className="w-5 h-5 mr-2" />
+                          <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                           Create Tournament
                         </>
                       )}
@@ -3490,14 +3490,14 @@ export function TournamentDashboardPageContent() {
 
             {/* Edit Tournament Form */}
             {editingTournament && (
-              <div className="glass rounded-3xl p-4 sm:p-6 shadow-xl border border-blue-300 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">
+              <div className="console-card bg-white border border-blue-300 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
                     Edit Tournament: {editingTournament.tournament_name}
                   </h2>
                   <button
                     onClick={() => setEditingTournament(null)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all text-sm font-medium"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all text-xs sm:text-sm font-medium text-center"
                   >
                     Cancel
                   </button>
@@ -3585,9 +3585,9 @@ export function TournamentDashboardPageContent() {
                       message: 'Failed to update tournament: ' + error.message
                     });
                   }
-                }} className="space-y-6">
+                }} className="space-y-5 sm:space-y-6">
                   {/* Basic Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
                         Tournament Type
@@ -3811,13 +3811,13 @@ export function TournamentDashboardPageContent() {
 
                       {/* Group Stage Configuration */}
                       {editingTournament.has_group_stage && (
-                        <div className="ml-8 p-4 bg-blue-50/50 rounded-xl border border-blue-200 space-y-3">
+                        <div className="ml-0 sm:ml-6 lg:ml-8 mt-3 p-3.5 sm:p-5 bg-blue-50/50 rounded-xl border border-blue-200 space-y-3 sm:space-y-4">
                           <h4 className="font-semibold text-gray-900 text-sm">Group Stage Settings</h4>
 
                           {/* Group Assignment Mode */}
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">Group Assignment Mode</label>
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-4">
                               <label className="flex items-center cursor-pointer">
                                 <input
                                   type="radio"
@@ -3881,7 +3881,7 @@ export function TournamentDashboardPageContent() {
 
                       {/* Knockout Stage Configuration */}
                       {editingTournament.has_knockout_stage && (
-                        <div className="ml-8 p-4 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3">
+                        <div className="ml-0 sm:ml-6 lg:ml-8 mt-3 p-3.5 sm:p-5 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3 sm:space-y-4">
                           <h4 className="font-semibold text-gray-900 text-sm">Knockout Stage Settings</h4>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
@@ -3991,19 +3991,19 @@ export function TournamentDashboardPageContent() {
 
                   {/* Lineup Category Requirements */}
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Lineup Category Requirements</h3>
-                    <p className="text-sm text-gray-600 mb-4">Set the minimum number of players required from each category in the starting 11</p>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1">Lineup Category Requirements</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-4">Set the minimum number of players required from each category in the starting 11</p>
 
                     {categories.length === 0 ? (
                       <div className="text-center py-8 bg-gray-50 rounded-xl">
-                        <p className="text-gray-500">No categories available</p>
+                        <p className="text-gray-500 text-sm">No categories available</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                         {categories.map((category) => (
-                          <div key={category.id} className="p-4 bg-white/50 rounded-xl border border-gray-200">
+                          <div key={category.id} className="p-3.5 sm:p-4 bg-white/50 rounded-xl border border-gray-200">
                             <label className="flex flex-col">
-                              <span className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
+                              <span className="font-medium text-gray-900 mb-2 flex items-center gap-1.5 text-xs sm:text-sm">
                                 <span className={`w-2.5 h-2.5 rounded-full ring-2 ${getColorDotStyles(category.name)} inline-block flex-shrink-0`} /> {category.name}
                               </span>
                               <input
@@ -4021,7 +4021,7 @@ export function TournamentDashboardPageContent() {
                                     }
                                   });
                                 }}
-                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-sm"
                                 placeholder="0"
                               />
                               <span className="text-xs text-gray-500 mt-1">Min players in starting XI</span>
@@ -4032,17 +4032,17 @@ export function TournamentDashboardPageContent() {
                     )}
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium"
+                      className="w-full sm:w-auto px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-xs sm:text-sm text-center"
                     >
                       Save Changes
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingTournament(null)}
-                      className="px-6 py-3 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 transition-all font-medium"
+                      className="w-full sm:w-auto px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-medium text-xs sm:text-sm text-center"
                     >
                       Cancel
                     </button>
@@ -4052,8 +4052,8 @@ export function TournamentDashboardPageContent() {
             )}
 
             {/* Existing Tournaments */}
-            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Existing Tournaments ({tournaments.length})
               </h2>
 
@@ -4066,17 +4066,17 @@ export function TournamentDashboardPageContent() {
               ) : (
                 <div className="space-y-4">
                   {tournaments.map((tournament) => (
-                    <div key={tournament.id} className="p-5 bg-white/50 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-bold text-gray-900">{tournament.tournament_name}</h3>
+                    <div key={tournament.id} className="p-4 sm:p-5 bg-white/70 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900 break-words">{tournament.tournament_name}</h3>
                             {tournament.is_primary && (
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium shrink-0">
                                 Primary
                               </span>
                             )}
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tournament.status === 'active' ? 'bg-green-100 text-green-700' :
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${tournament.status === 'active' ? 'bg-green-100 text-green-700' :
                               tournament.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
                                 tournament.status === 'completed' ? 'bg-gray-100 text-gray-700' :
                                   'bg-red-100 text-red-700'
@@ -4085,19 +4085,19 @@ export function TournamentDashboardPageContent() {
                             </span>
                           </div>
 
-                          <p className="text-sm text-gray-600 mb-2">
-                            <span className="font-medium">Code:</span> {tournament.tournament_code} •{' '}
-                            <span className="font-medium">Type:</span> {tournament.tournament_type}
+                          <p className="text-xs sm:text-sm text-gray-600 mb-2 font-mono">
+                            <span className="font-medium text-slate-800">Code:</span> {tournament.tournament_code} •{' '}
+                            <span className="font-medium text-slate-800">Type:</span> {tournament.tournament_type}
                           </p>
 
                           {tournament.description && (
-                            <p className="text-xs text-gray-500 mb-2">{tournament.description}</p>
+                            <p className="text-xs text-gray-500 mb-2 leading-relaxed">{tournament.description}</p>
                           )}
 
-                          <div className="flex flex-wrap gap-2 text-xs">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs">
                             {tournament.has_knockout_stage && (
                               <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium">
-                                <Swords className="w-4 h-4 text-rose-500" /> Knockout
+                                <Swords className="w-4 h-4 text-rose-500 inline-block mr-1 align-text-bottom" /> Knockout
                               </span>
                             )}
                             {tournament.has_group_stage && (
@@ -4118,7 +4118,7 @@ export function TournamentDashboardPageContent() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 ml-4 flex-wrap">
+                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-3 border-t border-slate-100 lg:border-t-0 lg:pt-0 lg:ml-4 shrink-0">
                           <button
                             onClick={async () => {
                               try {
@@ -4146,9 +4146,9 @@ export function TournamentDashboardPageContent() {
                                 });
                               }
                             }}
-                            className={`px-3 py-2 rounded-lg transition-colors text-xs font-medium ${tournament.include_in_fantasy
+                            className={`w-full sm:w-auto px-3 py-2 rounded-lg transition-colors text-xs font-medium text-center inline-flex items-center justify-center gap-1 ${tournament.include_in_fantasy
                               ? 'bg-green-600 text-white hover:bg-green-700'
-                              : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                               }`}
                             title={tournament.include_in_fantasy ? 'Fantasy Enabled - Click to disable' : 'Fantasy Disabled - Click to enable'}
                           >
@@ -4181,19 +4181,19 @@ export function TournamentDashboardPageContent() {
                                 });
                               }
                             }}
-                            className={`px-3 py-2 rounded-lg transition-colors text-xs font-medium ${tournament.include_in_awards
+                            className={`w-full sm:w-auto px-3 py-2 rounded-lg transition-colors text-xs font-medium text-center inline-flex items-center justify-center gap-1 ${tournament.include_in_awards
                               ? 'bg-amber-600 text-white hover:bg-amber-700'
-                              : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                               }`}
                             title={tournament.include_in_awards ? 'Awards Enabled - Click to disable' : 'Awards Disabled - Click to enable'}
                           >
                             {tournament.include_in_awards ? (
                               <>
-                                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Awards
+                                <Trophy className="w-3.5 h-3.5 inline-block text-amber-200" /> Awards
                               </>
                             ) : (
                               <>
-                                <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Off
+                                <Trophy className="w-3.5 h-3.5 inline-block text-gray-400" /> Off
                               </>
                             )}
                           </button>
@@ -4229,13 +4229,13 @@ export function TournamentDashboardPageContent() {
                                 });
                               }
                             }}
-                            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
+                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium text-center inline-flex items-center justify-center gap-1"
                           >
-                            <Pencil className="w-4 h-4 text-slate-500" /> Edit
+                            <Pencil className="w-3.5 h-3.5 text-blue-100" /> Edit
                           </button>
                           <button
                             onClick={() => handleDeleteTournament(tournament.id, tournament.tournament_name)}
-                            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium"
+                            className="w-full sm:w-auto px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium text-center inline-flex items-center justify-center gap-1"
                           >
                             Delete
                           </button>
