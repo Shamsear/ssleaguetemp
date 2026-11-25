@@ -2953,7 +2953,6 @@ export function TournamentDashboardPageContent() {
                         <option value="super_cup">🏅 Super Cup</option>
                         <option value="league_cup">🏆 League Cup</option>
                         <option value="triple_threat">⚡ SS Triple Threat</option>
-                        <option value="triple_threat">⚡ SS Triple Threat</option>
                       </select>
                     </div>
 
