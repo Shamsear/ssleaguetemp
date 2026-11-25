@@ -29,55 +29,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tournamentScoringType = scoring_type || 'goals';
-
-    // Calculate goals for team stats (WITHOUT substitution penalties)
-    // Substitution penalties affect match result but not player/team goal stats
-    let homeTeamGoals = 0;
-    let awayTeamGoals = 0;
-
-    if (matchups && Array.isArray(matchups)) {
-      for (const matchup of matchups as MatchupResult[]) {
-        if (matchup.home_goals !== null && matchup.away_goals !== null) {
-          homeTeamGoals += matchup.home_goals;
-          awayTeamGoals += matchup.away_goals;
-        }
-      }
-    }
-
-    // Add fine/violation penalty goals to team stats (these DO count as goals)
-    homeTeamGoals += (Number(home_penalty_goals) || 0);
-    awayTeamGoals += (Number(away_penalty_goals) || 0);
-
-    // Determine match result based on scoring type
-    let homeWon: boolean;
-    let awayWon: boolean;
-    let draw: boolean;
-
-    if (tournamentScoringType === 'wins') {
-      // WIN-BASED SCORING: Use the provided scores (which include sub penalties for determining winner)
-      // But goals_for/goals_against should NOT include sub penalties
-      homeWon = home_score > away_score;
-      awayWon = away_score > home_score;
-      draw = home_score === away_score;
-
-      console.log(`✓ Win-based scoring: Home ${home_score} points - ${away_score} points Away | Result: ${homeWon ? 'Home Win' : awayWon ? 'Away Win' : 'Draw'}`);
-      console.log(`✓ Team goals (without sub penalties): Home ${homeTeamGoals} - ${awayTeamGoals} Away`);
-    } else {
-      // GOAL-BASED SCORING: Use total goals (current/default behavior)
-      homeWon = homeTeamGoals > awayTeamGoals;
-      awayWon = awayTeamGoals > homeTeamGoals;
-      draw = homeTeamGoals === awayTeamGoals;
-
-      console.log(`✓ Goal-based scoring: Home ${homeTeamGoals} goals - ${awayTeamGoals} goals Away | Result: ${homeWon ? 'Home Win' : awayWon ? 'Away Win' : 'Draw'}`);
-    }
-
-    // Fetch tournament_id from fixture
+    // Fetch tournament_id and settings from fixture
     const sql = getTournamentDb();
     const fixtureData = await sql`
-      SELECT tournament_id
-      FROM fixtures
-      WHERE id = ${fixture_id}
+      SELECT f.tournament_id, t.tournament_type, ts.matchday_format, ts.scoring_type
+      FROM fixtures f
+      JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.id = ${fixture_id}
       LIMIT 1
     `;
 
@@ -86,6 +45,62 @@ export async function POST(request: NextRequest) {
         { error: 'Fixture not found' },
         { status: 404 }
       );
+    }
+
+    const isTripleThreat = tournamentScoringType === 'triple_threat' || 
+                           fixtureData[0]?.tournament_type === 'triple_threat' || 
+                           fixtureData[0]?.matchday_format === 'triple_threat';
+
+    // Calculate goals for team stats (WITHOUT substitution penalties)
+    // Substitution penalties affect match result but not player/team goal stats
+    let homeTeamGoals = 0;
+    let awayTeamGoals = 0;
+
+    // Determine match result based on scoring type
+    let homeWon: boolean;
+    let awayWon: boolean;
+    let draw: boolean;
+
+    if (isTripleThreat) {
+      // TRIPLE THREAT: Points earned across 3 modes (including bonus) count as goals_for/goals_against
+      homeTeamGoals = Number(home_score) || 0;
+      awayTeamGoals = Number(away_score) || 0;
+      homeWon = homeTeamGoals > awayTeamGoals;
+      awayWon = awayTeamGoals > homeTeamGoals;
+      draw = homeTeamGoals === awayTeamGoals;
+
+      console.log(`✓ Triple Threat scoring: Home ${homeTeamGoals} points - ${awayTeamGoals} points Away | Result: ${homeWon ? 'Home Win' : awayWon ? 'Away Win' : 'Draw'}`);
+    } else {
+      if (matchups && Array.isArray(matchups)) {
+        for (const matchup of matchups as MatchupResult[]) {
+          if (matchup.home_goals !== null && matchup.away_goals !== null) {
+            homeTeamGoals += matchup.home_goals;
+            awayTeamGoals += matchup.away_goals;
+          }
+        }
+      }
+
+      // Add fine/violation penalty goals to team stats (these DO count as goals)
+      homeTeamGoals += (Number(home_penalty_goals) || 0);
+      awayTeamGoals += (Number(away_penalty_goals) || 0);
+
+      if (tournamentScoringType === 'wins') {
+        // WIN-BASED SCORING: Use the provided scores (which include sub penalties for determining winner)
+        // But goals_for/goals_against should NOT include sub penalties
+        homeWon = home_score > away_score;
+        awayWon = away_score > home_score;
+        draw = home_score === away_score;
+
+        console.log(`✓ Win-based scoring: Home ${home_score} points - ${away_score} points Away | Result: ${homeWon ? 'Home Win' : awayWon ? 'Away Win' : 'Draw'}`);
+        console.log(`✓ Team goals (without sub penalties): Home ${homeTeamGoals} - ${awayTeamGoals} Away`);
+      } else {
+        // GOAL-BASED SCORING: Use total goals (current/default behavior)
+        homeWon = homeTeamGoals > awayTeamGoals;
+        awayWon = awayTeamGoals > homeTeamGoals;
+        draw = homeTeamGoals === awayTeamGoals;
+
+        console.log(`✓ Goal-based scoring: Home ${homeTeamGoals} goals - ${awayTeamGoals} goals Away | Result: ${homeWon ? 'Home Win' : awayWon ? 'Away Win' : 'Draw'}`);
+      }
     }
 
     // Update home team stats (goals WITHOUT sub penalties)
@@ -101,7 +116,8 @@ export async function POST(request: NextRequest) {
       won: homeWon,
       draw,
       lost: awayWon,
-      is_edit: is_edit || false
+      is_edit: is_edit || false,
+      is_triple_threat: isTripleThreat
     });
 
     // Update away team stats (goals WITHOUT sub penalties)
@@ -117,7 +133,8 @@ export async function POST(request: NextRequest) {
       won: awayWon,
       draw,
       lost: homeWon,
-      is_edit: is_edit || false
+      is_edit: is_edit || false,
+      is_triple_threat: isTripleThreat
     });
 
     // Get tournament_id from fixture to recalculate positions for this tournament only
@@ -201,9 +218,10 @@ async function updateTeamStats(data: {
   draw: boolean;
   lost: boolean;
   is_edit?: boolean;
+  is_triple_threat?: boolean;
 }) {
   const sql = getTournamentDb();
-  const { team_id, season_id, tournament_id, fixture_id, goals_for, goals_against, penalty_goals_for, penalty_goals_against, won, draw, lost, is_edit } = data;
+  const { team_id, season_id, tournament_id, fixture_id, goals_for, goals_against, penalty_goals_for, penalty_goals_against, won, draw, lost, is_edit, is_triple_threat } = data;
 
   // Construct composite ID: teamid_seasonid_tournamentid (NEW FORMAT)
   const statsId = `${team_id}_${season_id}_${tournament_id}`;
@@ -245,7 +263,7 @@ async function updateTeamStats(data: {
       current.wins = oldWins;
       current.draws = oldDraws;
       current.losses = oldLosses;
-      current.points = (oldWins * 3) + oldDraws;
+      current.points = is_triple_threat ? (current.points - (oldFixture.points_earned ?? oldFixture.goals_for)) : (oldWins * 3) + oldDraws;
 
       // Remove from processed fixtures
       processedFixtures.splice(existingFixtureIndex, 1);
@@ -257,6 +275,7 @@ async function updateTeamStats(data: {
       fixture_id,
       goals_for,
       goals_against,
+      points_earned: is_triple_threat ? goals_for : (won ? 3 : draw ? 1 : 0),
       won,
       draw,
       lost
@@ -269,7 +288,7 @@ async function updateTeamStats(data: {
     const newDraws = (current.draws || 0) + (draw ? 1 : 0);
     const newLosses = (current.losses || 0) + (lost ? 1 : 0);
     const newGoalDifference = newGoalsFor - newGoalsAgainst;
-    const newPoints = (newWins * 3) + newDraws;
+    const newPoints = is_triple_threat ? ((current.points || 0) + goals_for) : (newWins * 3) + newDraws;
 
     // Calculate current form (last 5 results, most recent last)
     const currentFormStr = current.current_form || '';

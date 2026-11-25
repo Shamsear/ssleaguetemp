@@ -234,6 +234,7 @@ export async function POST(request: NextRequest) {
       team_id,
       starting_xi,
       substitutes,
+      triple_threat_lineup,
       submitted_by,
       submitted_by_name,
       bypass_deadline, // NEW: Allow committee admins to bypass deadline
@@ -244,15 +245,28 @@ export async function POST(request: NextRequest) {
       team_id,
       starting_xi_count: starting_xi?.length,
       substitutes_count: substitutes?.length,
+      has_triple_threat: !!triple_threat_lineup,
       starting_xi,
       substitutes,
       submitted_by,
       bypass_deadline
     });
 
+    // Determine starting_xi and substitutes if triple_threat_lineup is provided
+    let finalStartingXi = starting_xi;
+    let finalSubstitutes = substitutes || [];
+
+    if (triple_threat_lineup && (!finalStartingXi || finalStartingXi.length === 0)) {
+      finalStartingXi = [
+        ...(triple_threat_lineup.coop || []).map((id: string, idx: number) => ({ player_id: id, mode: 'coop', slot: idx + 1 })),
+        ...(triple_threat_lineup.duo || []).map((id: string, idx: number) => ({ player_id: id, mode: 'duo', slot: idx + 1 })),
+        ...(triple_threat_lineup.single || []).map((id: string, idx: number) => ({ player_id: id, mode: 'single', slot: idx + 1 })),
+      ];
+    }
+
     // Validation
-    if (!fixture_id || !team_id || !starting_xi || !substitutes || !submitted_by) {
-      console.error('❌ Missing required fields:', { fixture_id, team_id, starting_xi, substitutes, submitted_by });
+    if (!fixture_id || !team_id || (!finalStartingXi && !triple_threat_lineup) || !submitted_by) {
+      console.error('❌ Missing required fields:', { fixture_id, team_id, starting_xi: finalStartingXi, submitted_by });
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -338,7 +352,7 @@ export async function POST(request: NextRequest) {
     // Validate lineup
     console.log('🔍 Validating lineup for:', { season_id: fixture.season_id, team_id, tournament_id: fixture.tournament_id });
     const validation = await validateLineup(
-      { starting_xi, substitutes },
+      { starting_xi: finalStartingXi, substitutes: finalSubstitutes, triple_threat_lineup },
       fixture.season_id,
       team_id,
       fixture.tournament_id
@@ -389,6 +403,7 @@ export async function POST(request: NextRequest) {
         tournament_id,
         starting_xi,
         substitutes,
+        triple_threat_lineup,
         classic_player_count,
         is_valid,
         validation_errors,
@@ -403,8 +418,9 @@ export async function POST(request: NextRequest) {
         ${fixture.round_number},
         ${fixture.season_id},
         ${fixture.tournament_id},
-        ${JSON.stringify(starting_xi)},
-        ${JSON.stringify(substitutes)},
+        ${JSON.stringify(finalStartingXi)},
+        ${JSON.stringify(finalSubstitutes)},
+        ${triple_threat_lineup ? JSON.stringify(triple_threat_lineup) : null},
         ${validation.classicPlayerCount},
         ${validation.isValid},
         ${JSON.stringify(validation.errors)},
@@ -416,11 +432,110 @@ export async function POST(request: NextRequest) {
       ON CONFLICT (id) DO UPDATE SET
         starting_xi = EXCLUDED.starting_xi,
         substitutes = EXCLUDED.substitutes,
+        triple_threat_lineup = EXCLUDED.triple_threat_lineup,
         classic_player_count = EXCLUDED.classic_player_count,
         is_valid = EXCLUDED.is_valid,
         validation_errors = EXCLUDED.validation_errors,
         updated_at = NOW()
     `;
+
+    // Also mark lineup as submitted on the fixture itself
+    try {
+      if (team_id === home_team_id) {
+        await sql`
+          UPDATE fixtures
+          SET home_lineup_submitted = true,
+              home_lineup_submitted_at = NOW(),
+              home_lineup_submitted_by = ${submitted_by}
+          WHERE id = ${fixture_id}
+        `;
+      } else if (team_id === away_team_id) {
+        await sql`
+          UPDATE fixtures
+          SET away_lineup_submitted = true,
+              away_lineup_submitted_at = NOW(),
+              away_lineup_submitted_by = ${submitted_by}
+          WHERE id = ${fixture_id}
+        `;
+      }
+    } catch (fixErr) {
+      console.warn('Could not update fixture submission flags:', fixErr);
+    }
+
+    // For Triple Threat, auto-create the 3 mode matchups if both teams have submitted
+    if (triple_threat_lineup) {
+      try {
+        const otherTeamId = (team_id === home_team_id) ? away_team_id : home_team_id;
+        const otherLineup = await sql`
+          SELECT triple_threat_lineup FROM lineups
+          WHERE fixture_id = ${fixture_id} AND team_id = ${otherTeamId}
+          LIMIT 1
+        `;
+
+        if (otherLineup.length > 0 && otherLineup[0].triple_threat_lineup) {
+          const homeTT = (team_id === home_team_id) ? triple_threat_lineup : otherLineup[0].triple_threat_lineup;
+          const awayTT = (team_id === away_team_id) ? triple_threat_lineup : otherLineup[0].triple_threat_lineup;
+
+          // Delete old matchups for this fixture
+          await sql`DELETE FROM matchups WHERE fixture_id = ${fixture_id}`;
+
+          // Mode 1: Co-op Match (2v2)
+          await sql`
+            INSERT INTO matchups (
+              fixture_id, season_id, tournament_id, round_number, position, match_mode,
+              home_player_id, home_player_name, away_player_id, away_player_name,
+              home_player_ids, home_player_names, away_player_ids, away_player_names,
+              match_duration, created_at, updated_at
+            ) VALUES (
+              ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 1, 'coop',
+              ${homeTT.coop[0]?.player_id || ''}, ${homeTT.coop[0]?.player_name || ''},
+              ${awayTT.coop[0]?.player_id || ''}, ${awayTT.coop[0]?.player_name || ''},
+              ${homeTT.coop.map((p: any) => p.player_id)}, ${homeTT.coop.map((p: any) => p.player_name)},
+              ${awayTT.coop.map((p: any) => p.player_id)}, ${awayTT.coop.map((p: any) => p.player_name)},
+              6, NOW(), NOW()
+            )
+          `;
+
+          // Mode 2: Duo Match (2v2)
+          await sql`
+            INSERT INTO matchups (
+              fixture_id, season_id, tournament_id, round_number, position, match_mode,
+              home_player_id, home_player_name, away_player_id, away_player_name,
+              home_player_ids, home_player_names, away_player_ids, away_player_names,
+              match_duration, created_at, updated_at
+            ) VALUES (
+              ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 2, 'duo',
+              ${homeTT.duo[0]?.player_id || ''}, ${homeTT.duo[0]?.player_name || ''},
+              ${awayTT.duo[0]?.player_id || ''}, ${awayTT.duo[0]?.player_name || ''},
+              ${homeTT.duo.map((p: any) => p.player_id)}, ${homeTT.duo.map((p: any) => p.player_name)},
+              ${awayTT.duo.map((p: any) => p.player_id)}, ${awayTT.duo.map((p: any) => p.player_name)},
+              6, NOW(), NOW()
+            )
+          `;
+
+          // Mode 3: Single Match (1v1)
+          await sql`
+            INSERT INTO matchups (
+              fixture_id, season_id, tournament_id, round_number, position, match_mode,
+              home_player_id, home_player_name, away_player_id, away_player_name,
+              home_player_ids, home_player_names, away_player_ids, away_player_names,
+              match_duration, created_at, updated_at
+            ) VALUES (
+              ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 3, 'single',
+              ${homeTT.single[0]?.player_id || ''}, ${homeTT.single[0]?.player_name || ''},
+              ${awayTT.single[0]?.player_id || ''}, ${awayTT.single[0]?.player_name || ''},
+              ${[homeTT.single[0]?.player_id || '']}, ${[homeTT.single[0]?.player_name || '']},
+              ${[awayTT.single[0]?.player_id || '']}, ${[awayTT.single[0]?.player_name || '']},
+              6, NOW(), NOW()
+            )
+          `;
+
+          console.log(`✅ Auto-created 3 Triple Threat matchups for fixture ${fixture_id}`);
+        }
+      } catch (ttErr) {
+        console.error('Failed to auto-create Triple Threat matchups:', ttErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

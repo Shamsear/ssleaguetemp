@@ -4,6 +4,7 @@ import { getAuctionDb } from '@/lib/neon/auction-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
+import { calculateTripleThreatFixture } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Distribute match rewards (eCoin & SSCoin) to teams based on match result
@@ -638,7 +639,7 @@ export async function PATCH(
     // Calculate total scores from all matchups
     // Need to check tournament scoring type and knockout format
     const tournamentInfo = await sql`
-      SELECT t.id as tournament_id, ts.scoring_type, f.knockout_format
+      SELECT t.id as tournament_id, t.tournament_type, ts.scoring_type, ts.matchday_format, ts.clean_sweep_bonus, ts.points_as_gd, f.knockout_format
       FROM fixtures f
       JOIN tournaments t ON f.tournament_id = t.id
       LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
@@ -646,7 +647,8 @@ export async function PATCH(
       LIMIT 1
     `;
     
-    const scoringType = tournamentInfo[0]?.scoring_type || 'goals';
+    const isTripleThreat = tournamentInfo[0]?.tournament_type === 'triple_threat' || tournamentInfo[0]?.matchday_format === 'triple_threat';
+    const scoringType = isTripleThreat ? 'triple_threat' : (tournamentInfo[0]?.scoring_type || 'goals');
     const knockoutFormat = tournamentInfo[0]?.knockout_format;
     
     // Get substitution penalties from matchups
@@ -671,9 +673,41 @@ export async function PATCH(
     
     let totalHomeScore = 0;
     let totalAwayScore = 0;
+    let homePointsDiff = 0;
+    let awayPointsDiff = 0;
+    let cleanSweepWinner: string | null = null;
     
-    // For round_robin with goal-based scoring, use hybrid approach: goals + wins
-    if (knockoutFormat === 'round_robin' && scoringType === 'goals') {
+    if (isTripleThreat) {
+      const ttResult = calculateTripleThreatFixture(
+        results.map((r: any) => ({
+          position: r.position,
+          mode: r.position === 1 ? 'coop' : r.position === 2 ? 'duo' : 'single',
+          home_goals: r.home_goals || 0,
+          away_goals: r.away_goals || 0,
+          home_penalty_goals: 0,
+          away_penalty_goals: 0,
+        }))
+      );
+
+      totalHomeScore = ttResult.home_total_points;
+      totalAwayScore = ttResult.away_total_points;
+      homePointsDiff = ttResult.home_points_difference;
+      awayPointsDiff = ttResult.away_points_difference;
+      cleanSweepWinner = ttResult.clean_sweep_winner;
+
+      // Update points and bonus on individual matchups
+      for (const mRes of ttResult.matchResults) {
+        await sql`
+          UPDATE matchups
+          SET
+            points_awarded_home = ${mRes.home_points},
+            points_awarded_away = ${mRes.away_points},
+            bonus_awarded_home = ${mRes.home_bonus},
+            bonus_awarded_away = ${mRes.away_bonus}
+          WHERE fixture_id = ${fixtureId} AND position = ${mRes.position}
+        `;
+      }
+    } else if (knockoutFormat === 'round_robin' && scoringType === 'goals') {
       // Round Robin Goal-Based: Count total goals AND wins
       // Primary: Total goals scored
       // Tiebreaker: Number of matchups won
@@ -779,6 +813,11 @@ export async function PATCH(
       SET 
         home_score = ${totalHomeScore},
         away_score = ${totalAwayScore},
+        home_points_earned = ${totalHomeScore},
+        away_points_earned = ${totalAwayScore},
+        home_points_difference = ${homePointsDiff},
+        away_points_difference = ${awayPointsDiff},
+        clean_sweep_winner = ${cleanSweepWinner},
         result = ${matchResult},
         status = 'completed', 
         updated_at = NOW()

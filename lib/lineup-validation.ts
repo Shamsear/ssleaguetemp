@@ -1,4 +1,5 @@
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { validateTripleThreatLineup, TripleThreatLineupSubmission } from '@/lib/tournament/triple-threat-engine';
 
 export interface LineupValidationResult {
   isValid: boolean;
@@ -9,6 +10,7 @@ export interface LineupValidationResult {
 export interface LineupData {
   starting_xi: string[];
   substitutes: string[];
+  triple_threat_lineup?: TripleThreatLineupSubmission;
 }
 
 /**
@@ -31,6 +33,90 @@ export async function validateLineup(
     seasonId,
     teamId
   });
+
+  // Check if this is a Triple Threat tournament
+  if (tournamentId) {
+    try {
+      const tourCheck = await sql`
+        SELECT t.tournament_type, ts.matchday_format
+        FROM tournaments t
+        LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+        WHERE t.id = ${tournamentId}
+        LIMIT 1
+      `;
+      const isTripleThreat = tourCheck.length > 0 && (
+        tourCheck[0].tournament_type === 'triple_threat' || 
+        tourCheck[0].matchday_format === 'triple_threat'
+      );
+
+      if (isTripleThreat) {
+        let ttLineup = lineup.triple_threat_lineup;
+        if (!ttLineup && Array.isArray(lineup.starting_xi)) {
+          const coop = lineup.starting_xi.filter((p: any) => p && typeof p === 'object' && p.mode === 'coop').map((p: any) => String(p.player_id || p.id));
+          const duo = lineup.starting_xi.filter((p: any) => p && typeof p === 'object' && p.mode === 'duo').map((p: any) => String(p.player_id || p.id));
+          const single = lineup.starting_xi.filter((p: any) => p && typeof p === 'object' && p.mode === 'single').map((p: any) => String(p.player_id || p.id));
+          if (coop.length === 2 && duo.length === 2 && single.length === 1) {
+            ttLineup = { coop, duo, single };
+          }
+        }
+
+        if (!ttLineup) {
+          return {
+            isValid: false,
+            errors: ['Triple Threat tournament requires selecting 2 players for Co-op, 2 for Duo, and 1 for Single match.'],
+            classicPlayerCount: 0
+          };
+        }
+
+        const ttValidation = validateTripleThreatLineup(ttLineup);
+        if (!ttValidation.valid) {
+          return {
+            isValid: false,
+            errors: [ttValidation.error || 'Invalid Triple Threat lineup'],
+            classicPlayerCount: 0
+          };
+        }
+
+        const allTtPlayers = [...ttLineup.coop, ...ttLineup.duo, ...ttLineup.single];
+        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
+        const isModern = seasonNum === 16 || seasonNum === 17 || seasonNum === 18 || seasonNum === 19;
+
+        const playerChecks = isModern
+          ? await sql`
+              SELECT player_id, category
+              FROM player_seasons
+              WHERE player_id = ANY(${allTtPlayers})
+              AND season_id = ${seasonId}
+              AND team_id = ${teamId}
+            `
+          : await sql`
+              SELECT player_id, category
+              FROM realplayerstats
+              WHERE player_id = ANY(${allTtPlayers})
+              AND season_id = ${seasonId}
+              AND team_id = ${teamId}
+            `;
+
+        if (playerChecks.length !== allTtPlayers.length) {
+          const foundIds = new Set(playerChecks.map((p: any) => String(p.player_id)));
+          const missing = allTtPlayers.filter((p) => !foundIds.has(String(p)));
+          return {
+            isValid: false,
+            errors: [`Some selected players are not registered to your squad: ${missing.join(', ')}`],
+            classicPlayerCount: 0
+          };
+        }
+
+        return {
+          isValid: true,
+          errors: [],
+          classicPlayerCount: 0
+        };
+      }
+    } catch (ttErr) {
+      console.error('Error checking tournament format for lineup:', ttErr);
+    }
+  }
 
   // 1. Check starting XI count
   if (!lineup.starting_xi || lineup.starting_xi.length !== 5) {

@@ -2374,10 +2374,40 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const homeSubPenalties = matchups.reduce((sum, m) => sum + (m.home_sub_penalty ?? 0), 0);
                     const awaySubPenalties = matchups.reduce((sum, m) => sum + (m.away_sub_penalty ?? 0), 0);
 
+                    const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat';
+
                     // Calculate scores based on tournament system
                     let homeTotalScore, awayTotalScore;
                     
-                    if (tournamentSystem === 'wins') {
+                    if (isTT) {
+                      let homePoints = 0;
+                      let awayPoints = 0;
+                      let homeWins = 0;
+                      let awayWins = 0;
+
+                      matchups.forEach(m => {
+                        if (m.home_goals !== null && m.away_goals !== null) {
+                          const hg = m.home_goals ?? 0;
+                          const ag = m.away_goals ?? 0;
+                          if (hg > ag) {
+                            homePoints += 3;
+                            homeWins++;
+                          } else if (ag > hg) {
+                            awayPoints += 3;
+                            awayWins++;
+                          } else {
+                            homePoints += 1;
+                            awayPoints += 1;
+                          }
+                        }
+                      });
+
+                      if (homeWins === 3) homePoints += 1;
+                      if (awayWins === 3) awayPoints += 1;
+
+                      homeTotalScore = (fixture as any)?.home_points_earned ?? homePoints;
+                      awayTotalScore = (fixture as any)?.away_points_earned ?? awayPoints;
+                    } else if (tournamentSystem === 'wins') {
                       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                       // Substitution penalties are added to MATCHUP score to determine winner
                       let homePoints = 0;
@@ -2423,10 +2453,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const homeFineGoals = Number(fixture?.home_penalty_goals ?? homePenaltyGoals ?? 0);
                     const awayFineGoals = Number(fixture?.away_penalty_goals ?? awayPenaltyGoals ?? 0);
 
+                    const cleanSweep = (fixture as any)?.clean_sweep_winner || (homeTotalScore === 10 ? fixture.home_team_name : awayTotalScore === 10 ? fixture.away_team_name : null);
+                    const homeGD = (fixture as any)?.home_points_difference ?? (homeTotalScore - awayTotalScore);
+                    const awayGD = (fixture as any)?.away_points_difference ?? (awayTotalScore - homeTotalScore);
+
                     return (
                       <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm font-mono relative overflow-hidden">
                         <div className="text-center text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-4">
-                          🏆 {tournamentSystem === 'wins' ? 'Points Summary (Win-Based System)' : 'Final Score Summary (Goal-Based System)'}
+                          🏆 {isTT ? 'SS TRIPLE THREAT (Three Modes • One Champion)' : tournamentSystem === 'wins' ? 'Points Summary (Win-Based System)' : 'Final Score Summary (Goal-Based System)'}
                         </div>
                         <div className="flex items-center justify-center gap-6 sm:gap-12">
                           {/* Home Score */}
@@ -2439,7 +2473,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             }`}>
                               {homeTotalScore}
                             </div>
-                            {tournamentSystem === 'goals' && (
+                            {isTT && (
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                                Points
+                              </div>
+                            )}
+                            {tournamentSystem === 'goals' && !isTT && (
                               (awaySubPenalties > 0 || homeFineGoals > 0) && (
                                 <div className="text-xs mt-2 opacity-90">
                                   ({homePlayerGoals}
@@ -2464,7 +2503,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             }`}>
                               {awayTotalScore}
                             </div>
-                            {tournamentSystem === 'goals' && (
+                            {isTT && (
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                                Points
+                              </div>
+                            )}
+                            {tournamentSystem === 'goals' && !isTT && (
                               (homeSubPenalties > 0 || awayFineGoals > 0) && (
                                 <div className="text-xs mt-2 opacity-90">
                                   ({awayPlayerGoals}
@@ -2475,8 +2519,23 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             )}
                           </div>
                         </div>
+
+                        {/* Triple Threat Extra Indicators */}
+                        {isTT && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col items-center gap-1.5 text-center">
+                            {cleanSweep && (
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">
+                                🔥 Clean Sweep (+1 Bonus Point)
+                              </div>
+                            )}
+                            <div className="text-xs font-mono font-bold text-slate-500">
+                              Points GD: {homeGD > 0 ? `+${homeGD}` : homeGD} vs {awayGD > 0 ? `+${awayGD}` : awayGD}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Legend - only show for goal-based system */}
-                        {tournamentSystem === 'goals' && (homeSubPenalties > 0 || awaySubPenalties > 0 || homeFineGoals > 0 || awayPenaltyGoals > 0) && (
+                        {tournamentSystem === 'goals' && !isTT && (homeSubPenalties > 0 || awaySubPenalties > 0 || homeFineGoals > 0 || awayPenaltyGoals > 0) && (
                           <div className="text-center text-xs text-gray-600 pt-2 border-t border-gray-300">
                             s = sub penalty, f = fine
                           </div>
@@ -2548,9 +2607,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {/* Match Header */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center px-2.5 py-1 bg-gray-800 text-white text-xs font-bold rounded-lg">
-                                Match #{matchup.position}
-                              </span>
+                              {(() => {
+                                const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
+                                const modeLabel = ((matchup as any).match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP (2v2)', icon: '🎮', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' } :
+                                                  ((matchup as any).match_mode === 'duo' || (isTT && matchup.position === 2)) ? { title: 'DUO (2v2)', icon: '🤝', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' } :
+                                                  ((matchup as any).match_mode === 'single' || (isTT && matchup.position === 3)) ? { title: 'SINGLE (1v1)', icon: '⚔️', badge: 'bg-amber-100 text-amber-800 border-amber-200' } :
+                                                  null;
+                                return (
+                                  <>
+                                    <span className="inline-flex items-center px-2.5 py-1 bg-gray-800 text-white text-xs font-bold rounded-lg">
+                                      Match #{matchup.position}
+                                    </span>
+                                    {isTT && modeLabel && (
+                                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeLabel.badge}`}>
+                                        <span>{modeLabel.icon}</span>
+                                        <span>{modeLabel.title}</span>
+                                      </span>
+                                    )}
+                                  </>
+                                );
+                              })()}
                               {matchup.match_duration && (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md">
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2626,7 +2702,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.home_team_name}</span>
                                   </div>
                                   <span className={`font-extrabold text-sm text-slate-900 truncate ${homePOTD ? 'text-amber-900' : ''}`}>
-                                    {matchup.home_player_name}
+                                    {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
                                   </span>
                                   {homeCategory && (
                                     <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
@@ -2638,7 +2714,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
                                         homeWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
                                       }`}>
-                                        {homeWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'} ({matchup.home_goals} goals)
+                                        {homeWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
+                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat')
+                                          ? ` (${homeWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`
+                                          : ` (${matchup.home_goals} goals)`}
                                       </span>
                                     </div>
                                   )}
@@ -2697,7 +2776,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.away_team_name}</span>
                                   </div>
                                   <span className={`font-extrabold text-sm text-slate-900 truncate ${awayPOTD ? 'text-amber-900' : ''}`}>
-                                    {matchup.away_player_name}
+                                    {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
                                   </span>
                                   {awayCategory && (
                                     <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
@@ -2709,7 +2788,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
                                         awayWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
                                       }`}>
-                                        {awayWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'} ({matchup.away_goals} goals)
+                                        {awayWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
+                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat')
+                                          ? ` (${awayWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`
+                                          : ` (${matchup.away_goals} goals)`}
                                       </span>
                                     </div>
                                   )}
@@ -2807,10 +2889,40 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const homeSubPenalties = matchups.reduce((sum, m) => sum + (m.home_sub_penalty ?? 0), 0);
                     const awaySubPenalties = matchups.reduce((sum, m) => sum + (m.away_sub_penalty ?? 0), 0);
 
+                    const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat';
+
                     // Calculate scores based on tournament system
                     let homeTotalScore, awayTotalScore;
+                    let homeTTWins = 0, awayTTWins = 0, ttDraws = 0;
                     
-                    if (tournamentSystem === 'wins') {
+                    if (isTT) {
+                      let homePoints = 0;
+                      let awayPoints = 0;
+
+                      Object.entries(matchResults).forEach(([positionStr, result]: [string, any]) => {
+                        if (result && result.home_goals !== null && result.away_goals !== null && result.home_goals !== '' && result.away_goals !== '') {
+                          const hg = Number(result.home_goals);
+                          const ag = Number(result.away_goals);
+                          if (hg > ag) {
+                            homePoints += 3;
+                            homeTTWins++;
+                          } else if (ag > hg) {
+                            awayPoints += 3;
+                            awayTTWins++;
+                          } else {
+                            homePoints += 1;
+                            awayPoints += 1;
+                            ttDraws++;
+                          }
+                        }
+                      });
+
+                      if (homeTTWins === 3) homePoints += 1;
+                      if (awayTTWins === 3) awayPoints += 1;
+
+                      homeTotalScore = homePoints;
+                      awayTotalScore = awayPoints;
+                    } else if (tournamentSystem === 'wins') {
                       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                       // Substitution penalties are added to MATCHUP score to determine winner
                       let homePoints = 0;
@@ -2849,18 +2961,25 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     }
                     
                     const winner = homeTotalScore > awayTotalScore ? 'home' : awayTotalScore > homeTotalScore ? 'away' : 'draw';
+                    const homeGD = homeTotalScore - awayTotalScore;
+                    const awayGD = awayTotalScore - homeTotalScore;
 
                     return (
                       <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono">
                         <div className="text-center text-xs font-semibold text-gray-600 mb-2">
-                          Current Score {tournamentSystem === 'wins' && '(Points)'}
+                          Current Score {isTT ? '(Triple Threat Points)' : tournamentSystem === 'wins' ? '(Points)' : ''}
                         </div>
                         <div className="grid grid-cols-3 gap-3 items-center">
                           <div className="text-center">
                             <div className="text-xs text-gray-600 mb-1">{fixture.home_team_name}</div>
                             <div className={`text-2xl font-bold ${winner === 'home' ? 'text-green-600' : 'text-gray-700'
                               }`}>{homeTotalScore}</div>
-                            {tournamentSystem === 'wins' ? (
+                            {isTT ? (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {homeTTWins}W-{ttDraws}D-{3 - homeTTWins - ttDraws}L
+                                {homeTTWins === 3 && <div className="text-[10px] text-amber-600 font-bold">🔥 Clean Sweep (+1)</div>}
+                              </div>
+                            ) : tournamentSystem === 'wins' ? (
                               // Show matchup wins for win-based system
                               <div className="text-xs text-gray-500 mt-1">
                                 {Object.values(matchResults).filter((m: any) => (m?.home_goals ?? 0) > (m?.away_goals ?? 0)).length}W-
@@ -2883,7 +3002,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             <div className="text-xs text-gray-600 mb-1">{fixture.away_team_name}</div>
                             <div className={`text-2xl font-bold ${winner === 'away' ? 'text-green-600' : 'text-gray-700'
                               }`}>{awayTotalScore}</div>
-                            {tournamentSystem === 'wins' ? (
+                            {isTT ? (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {awayTTWins}W-{ttDraws}D-{3 - awayTTWins - ttDraws}L
+                                {awayTTWins === 3 && <div className="text-[10px] text-amber-600 font-bold">🔥 Clean Sweep (+1)</div>}
+                              </div>
+                            ) : tournamentSystem === 'wins' ? (
                               // Show matchup wins for win-based system
                               <div className="text-xs text-gray-500 mt-1">
                                 {Object.values(matchResults).filter((m: any) => (m?.away_goals ?? 0) > (m?.home_goals ?? 0)).length}W-
@@ -2902,12 +3026,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             )}
                           </div>
                         </div>
+                        {isTT && (
+                          <div className="text-center mt-2 text-xs font-mono font-bold text-slate-500 border-t border-slate-100 pt-1.5">
+                            Points GD: {homeGD > 0 ? `+${homeGD}` : homeGD} vs {awayGD > 0 ? `+${awayGD}` : awayGD}
+                          </div>
+                        )}
                         {winner === 'draw' && (
                           <div className="text-center mt-2">
                             <span className="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full font-semibold">Draw</span>
                           </div>
                         )}
-                        {tournamentSystem === 'goals' && (
+                        {tournamentSystem === 'goals' && !isTT && (
                           <div className="text-center mt-2 text-xs text-gray-500">
                             s = sub penalty, f = fine
                           </div>
@@ -4053,10 +4182,40 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         const homeSubPenalties = matchups.reduce((sum, m) => sum + (m.home_sub_penalty ?? 0), 0);
                         const awaySubPenalties = matchups.reduce((sum, m) => sum + (m.away_sub_penalty ?? 0), 0);
 
+                        const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat';
+
                         // Calculate scores based on tournament system
                         let homeTotalScore, awayTotalScore;
+                        let homeTTWins = 0, awayTTWins = 0, ttDraws = 0;
                         
-                        if (tournamentSystem === 'wins') {
+                        if (isTT) {
+                          let homePoints = 0;
+                          let awayPoints = 0;
+
+                          matchups.forEach(m => {
+                            if (m.home_goals !== null && m.away_goals !== null) {
+                              const hg = m.home_goals ?? 0;
+                              const ag = m.away_goals ?? 0;
+                              if (hg > ag) {
+                                homePoints += 3;
+                                homeTTWins++;
+                              } else if (ag > hg) {
+                                awayPoints += 3;
+                                awayTTWins++;
+                              } else {
+                                homePoints += 1;
+                                awayPoints += 1;
+                                ttDraws++;
+                              }
+                            }
+                          });
+
+                          if (homeTTWins === 3) homePoints += 1;
+                          if (awayTTWins === 3) awayPoints += 1;
+
+                          homeTotalScore = (fixture as any)?.home_points_earned ?? homePoints;
+                          awayTotalScore = (fixture as any)?.away_points_earned ?? awayPoints;
+                        } else if (tournamentSystem === 'wins') {
                           // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                           let homePoints = 0;
                           let awayPoints = 0;
@@ -4087,11 +4246,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }
 
                         const winner = homeTotalScore > awayTotalScore ? 'home' : awayTotalScore > homeTotalScore ? 'away' : 'draw';
+                        const homeGD = (fixture as any)?.home_points_difference ?? (homeTotalScore - awayTotalScore);
+                        const awayGD = (fixture as any)?.away_points_difference ?? (awayTotalScore - homeTotalScore);
 
                         return (
                           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm font-mono mb-4">
                             <h3 className="text-center text-sm font-semibold text-gray-600 mb-4">
-                              Match Result {tournamentSystem === 'wins' && '(Points)'}
+                              Match Result {isTT ? '(Triple Threat Points)' : tournamentSystem === 'wins' ? '(Points)' : ''}
                             </h3>
                             <div className="grid grid-cols-3 gap-4 items-center mb-4">
                               {/* Home Total */}
@@ -4101,7 +4262,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 <div className="text-3xl sm:text-4xl font-bold">{homeTotalScore}</div>
                                 {winner === 'home' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
                                 {/* Breakdown */}
-                                {tournamentSystem === 'wins' ? (
+                                {isTT ? (
+                                  <div className="text-xs mt-2 opacity-90">
+                                    {homeTTWins}W-{ttDraws}D-{3 - homeTTWins - ttDraws}L
+                                    {homeTTWins === 3 && <div className="text-[10px] font-bold text-amber-200 mt-0.5">🔥 Clean Sweep (+1)</div>}
+                                  </div>
+                                ) : tournamentSystem === 'wins' ? (
                                   // Show W-D-L for win-based system
                                   <div className="text-xs mt-2 opacity-90">
                                     {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.home_goals ?? 0) > (m.away_goals ?? 0)).length}W-
@@ -4138,7 +4304,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 <div className="text-3xl sm:text-4xl font-bold">{awayTotalScore}</div>
                                 {winner === 'away' && <div className="text-xs mt-1 font-semibold"><Check className="w-4 h-4 text-emerald-500" /> WINNER</div>}
                                 {/* Breakdown */}
-                                {tournamentSystem === 'wins' ? (
+                                {isTT ? (
+                                  <div className="text-xs mt-2 opacity-90">
+                                    {awayTTWins}W-{ttDraws}D-{3 - awayTTWins - ttDraws}L
+                                    {awayTTWins === 3 && <div className="text-[10px] font-bold text-amber-200 mt-0.5">🔥 Clean Sweep (+1)</div>}
+                                  </div>
+                                ) : tournamentSystem === 'wins' ? (
                                   // Show W-D-L for win-based system
                                   <div className="text-xs mt-2 opacity-90">
                                     {matchups.filter(m => m.home_goals !== null && m.away_goals !== null && (m.away_goals ?? 0) > (m.home_goals ?? 0)).length}W-
@@ -4157,8 +4328,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 )}
                               </div>
                             </div>
+                            {isTT && (
+                              <div className="text-center mt-2 text-xs font-mono font-bold text-slate-500 border-t border-slate-100 pt-1.5">
+                                Points GD: {homeGD > 0 ? `+${homeGD}` : homeGD} vs {awayGD > 0 ? `+${awayGD}` : awayGD}
+                              </div>
+                            )}
                             {/* Legend - only show for goal-based system */}
-                            {tournamentSystem === 'goals' && (homeSubPenalties > 0 || awaySubPenalties > 0 || homePenaltyGoals > 0 || awayPenaltyGoals > 0) && (
+                            {tournamentSystem === 'goals' && !isTT && (homeSubPenalties > 0 || awaySubPenalties > 0 || homePenaltyGoals > 0 || awayPenaltyGoals > 0) && (
                               <div className="text-center text-xs text-gray-600 pt-2 border-t border-gray-300">
                                 s = sub penalty, f = fine
                               </div>

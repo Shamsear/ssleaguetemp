@@ -206,6 +206,7 @@ export async function POST(
 
     // Create round_deadlines for each round
     const uniqueRounds = [...new Set(fixtures.map((f: any) => `${f.round_number}_${f.leg}`))];
+    const isTT = tournamentData.tournament_type === 'triple_threat' || tournamentData.matchday_format === 'triple_threat';
 
     for (const roundKey of uniqueRounds) {
       const [roundNumber, leg] = roundKey.split('_');
@@ -216,6 +217,8 @@ export async function POST(
           season_id,
           round_number,
           leg,
+          away_fixture_deadline_time,
+          result_entry_deadline_time,
           status,
           created_at,
           updated_at
@@ -224,6 +227,8 @@ export async function POST(
           ${tournamentData.season_id},
           ${parseInt(roundNumber)},
           ${leg},
+          ${isTT ? '14:00' : '17:00'},
+          '00:30',
           'pending',
           NOW(),
           NOW()

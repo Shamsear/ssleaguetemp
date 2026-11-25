@@ -18,15 +18,19 @@ export async function GET(
     // Get tournament info to determine format
     const tournaments = await sql`
       SELECT 
-        tournament_name,
-        has_league_stage,
-        has_group_stage,
-        has_knockout_stage,
-        is_pure_knockout,
-        teams_advancing_per_group,
-        season_id
-      FROM tournaments
-      WHERE id = ${tournamentId}
+        t.tournament_name,
+        t.tournament_type,
+        t.has_league_stage,
+        t.has_group_stage,
+        t.has_knockout_stage,
+        t.is_pure_knockout,
+        t.teams_advancing_per_group,
+        t.season_id,
+        ts.matchday_format,
+        ts.points_as_gd
+      FROM tournaments t
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE t.id = ${tournamentId}
     `;
 
     if (tournaments.length === 0) {
@@ -55,6 +59,8 @@ export async function GET(
       }
     }
 
+    const isTripleThreat = tournament.tournament_type === 'triple_threat' || tournament.matchday_format === 'triple_threat';
+
     // Get all completed fixtures for this tournament from Neon
     // If upToRound is specified, filter by round_number
     let fixtures;
@@ -68,6 +74,10 @@ export async function GET(
           away_team_name,
           home_score,
           away_score,
+          home_points_earned,
+          away_points_earned,
+          home_points_difference,
+          away_points_difference,
           status,
           result,
           group_name,
@@ -89,6 +99,10 @@ export async function GET(
           away_team_name,
           home_score,
           away_score,
+          home_points_earned,
+          away_points_earned,
+          home_points_difference,
+          away_points_difference,
           status,
           result,
           group_name,
@@ -128,13 +142,14 @@ export async function GET(
     // Handle different tournament formats
     if (tournament.has_group_stage) {
       // Group Stage format - calculate standings per group
-      const groupStandings = await calculateGroupStandings(fixtures, tournament.teams_advancing_per_group || 2, sql, tournamentId);
+      const groupStandings = await calculateGroupStandings(fixtures, tournament.teams_advancing_per_group || 2, sql, tournamentId, isTripleThreat);
       
       return NextResponse.json({
         success: true,
         tournament_name: tournament.tournament_name,
         season_name: seasonName,
         format: 'group_stage',
+        is_triple_threat: isTripleThreat,
         has_knockout: tournament.has_knockout_stage,
         groupStandings,
         knockoutFixtures: tournament.has_knockout_stage ? getKnockoutFixtures(knockoutFixturesList) : null,
@@ -146,12 +161,13 @@ export async function GET(
         tournament_name: tournament.tournament_name,
         season_name: seasonName,
         format: 'knockout',
+        is_triple_threat: isTripleThreat,
         knockoutFixtures: getKnockoutFixtures(knockoutFixturesList),
       });
     } else {
       // League format (or League + Knockout)
       const leagueFixtures = fixtures.filter((f: any) => !f.knockout_round);
-      const standings = await calculateLeagueStandings(leagueFixtures, sql, tournamentId, tournament.season_id);
+      const standings = await calculateLeagueStandings(leagueFixtures, sql, tournamentId, tournament.season_id, isTripleThreat);
       
       // Get playoff teams from tournament settings
       const tournamentSettings = await sql`
@@ -166,6 +182,7 @@ export async function GET(
         tournament_name: tournament.tournament_name,
         season_name: seasonName,
         format: 'league',
+        is_triple_threat: isTripleThreat,
         has_knockout: tournament.has_knockout_stage,
         playoff_spots: playoffSpots,
         standings,
@@ -184,7 +201,7 @@ export async function GET(
   }
 }
 
-async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId: string, seasonId?: string) {
+async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId: string, seasonId?: string, isTripleThreat: boolean = false) {
   const teamStats: Record<string, any> = {};
 
   try {
@@ -252,27 +269,45 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
     }
 
     // Update stats
+    const homeVal = isTripleThreat ? (fixture.home_points_earned ?? homeScore) : homeScore;
+    const awayVal = isTripleThreat ? (fixture.away_points_earned ?? awayScore) : awayScore;
+
     teamStats[homeTeamId].matches_played++;
     teamStats[awayTeamId].matches_played++;
-    teamStats[homeTeamId].goals_for += homeScore;
-    teamStats[homeTeamId].goals_against += awayScore;
-    teamStats[awayTeamId].goals_for += awayScore;
-    teamStats[awayTeamId].goals_against += homeScore;
+    teamStats[homeTeamId].goals_for += homeVal;
+    teamStats[homeTeamId].goals_against += awayVal;
+    teamStats[awayTeamId].goals_for += awayVal;
+    teamStats[awayTeamId].goals_against += homeVal;
 
     // Determine result and update points
-    if (homeScore > awayScore) {
-      teamStats[homeTeamId].wins++;
-      teamStats[homeTeamId].points += 3;
-      teamStats[awayTeamId].losses++;
-    } else if (awayScore > homeScore) {
-      teamStats[awayTeamId].wins++;
-      teamStats[awayTeamId].points += 3;
-      teamStats[homeTeamId].losses++;
+    if (isTripleThreat) {
+      teamStats[homeTeamId].points += homeVal;
+      teamStats[awayTeamId].points += awayVal;
+      if (homeVal > awayVal) {
+        teamStats[homeTeamId].wins++;
+        teamStats[awayTeamId].losses++;
+      } else if (awayVal > homeVal) {
+        teamStats[awayTeamId].wins++;
+        teamStats[homeTeamId].losses++;
+      } else {
+        teamStats[homeTeamId].draws++;
+        teamStats[awayTeamId].draws++;
+      }
     } else {
-      teamStats[homeTeamId].draws++;
-      teamStats[awayTeamId].draws++;
-      teamStats[homeTeamId].points += 1;
-      teamStats[awayTeamId].points += 1;
+      if (homeScore > awayScore) {
+        teamStats[homeTeamId].wins++;
+        teamStats[homeTeamId].points += 3;
+        teamStats[awayTeamId].losses++;
+      } else if (awayScore > homeScore) {
+        teamStats[awayTeamId].wins++;
+        teamStats[awayTeamId].points += 3;
+        teamStats[homeTeamId].losses++;
+      } else {
+        teamStats[homeTeamId].draws++;
+        teamStats[awayTeamId].draws++;
+        teamStats[homeTeamId].points += 1;
+        teamStats[awayTeamId].points += 1;
+      }
     }
   });
 
@@ -364,7 +399,7 @@ async function calculateLeagueStandings(fixtures: any[], sql: any, tournamentId:
   return standings;
 }
 
-async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, sql: any, tournamentId: string) {
+async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, sql: any, tournamentId: string, isTripleThreat: boolean = false) {
   const groups: Record<string, any> = {};
 
   try {
@@ -454,26 +489,44 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
     const homeTeam = groups[groupName][homeTeamId];
     const awayTeam = groups[groupName][awayTeamId];
 
+    const homeVal = isTripleThreat ? (fixture.home_points_earned ?? homeScore) : homeScore;
+    const awayVal = isTripleThreat ? (fixture.away_points_earned ?? awayScore) : awayScore;
+
     homeTeam.matches_played++;
     awayTeam.matches_played++;
-    homeTeam.goals_for += homeScore;
-    homeTeam.goals_against += awayScore;
-    awayTeam.goals_for += awayScore;
-    awayTeam.goals_against += homeScore;
+    homeTeam.goals_for += homeVal;
+    homeTeam.goals_against += awayVal;
+    awayTeam.goals_for += awayVal;
+    awayTeam.goals_against += homeVal;
 
-    if (homeScore > awayScore) {
-      homeTeam.wins++;
-      homeTeam.points += 3;
-      awayTeam.losses++;
-    } else if (awayScore > homeScore) {
-      awayTeam.wins++;
-      awayTeam.points += 3;
-      homeTeam.losses++;
+    if (isTripleThreat) {
+      homeTeam.points += homeVal;
+      awayTeam.points += awayVal;
+      if (homeVal > awayVal) {
+        homeTeam.wins++;
+        awayTeam.losses++;
+      } else if (awayVal > homeVal) {
+        awayTeam.wins++;
+        homeTeam.losses++;
+      } else {
+        homeTeam.draws++;
+        awayTeam.draws++;
+      }
     } else {
-      homeTeam.draws++;
-      awayTeam.draws++;
-      homeTeam.points += 1;
-      awayTeam.points += 1;
+      if (homeScore > awayScore) {
+        homeTeam.wins++;
+        homeTeam.points += 3;
+        awayTeam.losses++;
+      } else if (awayScore > homeScore) {
+        awayTeam.wins++;
+        awayTeam.points += 3;
+        homeTeam.losses++;
+      } else {
+        homeTeam.draws++;
+        awayTeam.draws++;
+        homeTeam.points += 1;
+        awayTeam.points += 1;
+      }
     }
   });
 

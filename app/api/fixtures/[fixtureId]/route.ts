@@ -23,7 +23,11 @@ export async function GET(
     let fixtures = await sql`
       SELECT 
         f.*,
-        ts.scoring_type
+        ts.scoring_type,
+        ts.matchday_format,
+        ts.clean_sweep_bonus,
+        ts.points_as_gd,
+        t.tournament_type
       FROM fixtures f
       LEFT JOIN tournaments t ON f.tournament_id = t.id
       LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
@@ -36,7 +40,11 @@ export async function GET(
       fixtures = await sql`
         SELECT 
           f.*,
-          ts.scoring_type
+          ts.scoring_type,
+          ts.matchday_format,
+          ts.clean_sweep_bonus,
+          ts.points_as_gd,
+          t.tournament_type
         FROM fixtures f
         LEFT JOIN tournaments t ON f.tournament_id = t.id
         LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id

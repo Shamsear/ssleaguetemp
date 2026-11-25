@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
       'uel': 'EL',
       'super_cup': 'SC',
       'league_cup': 'LC',
+      'triple_threat': 'TT',
     };
 
     const typeCode = typeCodeMap[tournament_type.toLowerCase()] || tournament_type.toUpperCase();
@@ -213,6 +214,10 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `;
 
+    const resolvedMatchdayFormat = body.matchday_format || (tournament_type === 'triple_threat' ? 'triple_threat' : 'standard');
+    const resolvedCleanSweepBonus = body.clean_sweep_bonus ?? (tournament_type === 'triple_threat' ? 1 : 0);
+    const resolvedPointsAsGd = body.points_as_gd !== undefined ? body.points_as_gd : (tournament_type === 'triple_threat');
+
     // Create tournament_settings record
     await sql`
       INSERT INTO tournament_settings (
@@ -231,6 +236,9 @@ export async function POST(request: NextRequest) {
         qualification_threshold,
         enable_category_requirements,
         lineup_category_requirements,
+        matchday_format,
+        clean_sweep_bonus,
+        points_as_gd,
         created_at,
         updated_at
       ) VALUES (
@@ -249,6 +257,9 @@ export async function POST(request: NextRequest) {
         ${qualification_threshold ?? 75},
         ${enable_category_requirements ?? false},
         ${lineup_category_requirements ? JSON.stringify(lineup_category_requirements) : '{}'},
+        ${resolvedMatchdayFormat},
+        ${resolvedCleanSweepBonus},
+        ${resolvedPointsAsGd},
         NOW(),
         NOW()
       )
@@ -267,6 +278,9 @@ export async function POST(request: NextRequest) {
         qualification_threshold = EXCLUDED.qualification_threshold,
         enable_category_requirements = EXCLUDED.enable_category_requirements,
         lineup_category_requirements = EXCLUDED.lineup_category_requirements,
+        matchday_format = EXCLUDED.matchday_format,
+        clean_sweep_bonus = EXCLUDED.clean_sweep_bonus,
+        points_as_gd = EXCLUDED.points_as_gd,
         updated_at = NOW()
     `;
 

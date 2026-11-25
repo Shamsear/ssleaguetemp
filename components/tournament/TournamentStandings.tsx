@@ -259,6 +259,7 @@ export default function TournamentStandings({ tournamentId, currentUserId }: Tou
             <GroupStageStandings 
               groupStandings={groupStandings}
               currentUserId={currentUserId}
+              isTripleThreat={data.is_triple_threat}
             />
           )}
         </>

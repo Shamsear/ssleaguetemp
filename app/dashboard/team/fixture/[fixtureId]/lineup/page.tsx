@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import LineupSubmission from '@/components/LineupSubmission';
+import TripleThreatLineupSubmission from '@/components/TripleThreatLineupSubmission';
 import { useAutoLockLineups } from '@/hooks/useAutoLockLineups';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -216,13 +217,23 @@ export default function FixtureLineupPage() {
 
         {/* Lineup Submission Component */}
         <div className="glass rounded-2xl p-6 shadow-lg">
-          <LineupSubmission
-            fixtureId={fixtureId}
-            teamId={teamId}
-            seasonId={fixture.season_id}
-            existingLineup={existingLineup}
-            onSubmitSuccess={handleSubmitSuccess}
-          />
+          {fixture.tournament_type === 'triple_threat' || fixture.matchday_format === 'triple_threat' ? (
+            <TripleThreatLineupSubmission
+              fixtureId={fixtureId}
+              teamId={teamId}
+              seasonId={fixture.season_id}
+              existingLineup={existingLineup}
+              onSubmitSuccess={handleSubmitSuccess}
+            />
+          ) : (
+            <LineupSubmission
+              fixtureId={fixtureId}
+              teamId={teamId}
+              seasonId={fixture.season_id}
+              existingLineup={existingLineup}
+              onSubmitSuccess={handleSubmitSuccess}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { triggerNews } from '@/lib/news/trigger';
 import { triggerPlayerOfMatchPoll } from '@/lib/polls/auto-trigger';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
+import { calculateTripleThreatFixture } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Revert match rewards that were previously distributed
@@ -320,7 +321,12 @@ export async function PATCH(
 
     // Fetch fixture and old matchups
     const fixtures = await sql`
-      SELECT * FROM fixtures WHERE id = ${fixtureId} LIMIT 1
+      SELECT f.*, t.tournament_type, ts.matchday_format
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.id = ${fixtureId}
+      LIMIT 1
     `;
 
     if (fixtures.length === 0) {
@@ -364,20 +370,61 @@ export async function PATCH(
     `;
 
     // Step 4: Calculate new fixture totals
-    const matchupHomeGoals = matchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
-    const matchupAwayGoals = matchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
+    const isTripleThreat = fixture.tournament_type === 'triple_threat' || fixture.matchday_format === 'triple_threat';
+    let totalHomeScore = 0;
+    let totalAwayScore = 0;
+    let homePointsDiff = 0;
+    let awayPointsDiff = 0;
+    let cleanSweepWinner: string | null = null;
+    let homePenaltyGoalsVal = 0;
+    let awayPenaltyGoalsVal = 0;
 
-    // Get sub penalties from updated matchups
-    const totalHomeSubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.home_sub_penalty) || 0), 0);
-    const totalAwaySubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.away_sub_penalty) || 0), 0);
+    if (isTripleThreat) {
+      const ttResult = calculateTripleThreatFixture(
+        matchups.map((m: any) => ({
+          position: m.position,
+          mode: m.match_mode || (m.position === 1 ? 'coop' : m.position === 2 ? 'duo' : 'single'),
+          home_goals: m.home_goals || 0,
+          away_goals: m.away_goals || 0,
+          home_penalty_goals: 0,
+          away_penalty_goals: 0,
+        }))
+      );
 
-    // Get fine penalty goals
-    const homePenaltyGoalsVal = home_penalty_goals !== undefined ? Number(home_penalty_goals) || 0 : Number(fixture.home_penalty_goals) || 0;
-    const awayPenaltyGoalsVal = away_penalty_goals !== undefined ? Number(away_penalty_goals) || 0 : Number(fixture.away_penalty_goals) || 0;
+      totalHomeScore = ttResult.home_total_points;
+      totalAwayScore = ttResult.away_total_points;
+      homePointsDiff = ttResult.home_points_difference;
+      awayPointsDiff = ttResult.away_points_difference;
+      cleanSweepWinner = ttResult.clean_sweep_winner;
 
-    // Calculate final scores including penalties
-    const totalHomeScore = matchupHomeGoals + totalAwaySubPenalty + homePenaltyGoalsVal;
-    const totalAwayScore = matchupAwayGoals + totalHomeSubPenalty + awayPenaltyGoalsVal;
+      // Update points and bonus on individual matchups
+      for (const mRes of ttResult.matchResults) {
+        await sql`
+          UPDATE matchups
+          SET
+            points_awarded_home = ${mRes.home_points},
+            points_awarded_away = ${mRes.away_points},
+            bonus_awarded_home = ${mRes.home_bonus},
+            bonus_awarded_away = ${mRes.away_bonus}
+          WHERE fixture_id = ${fixtureId} AND position = ${mRes.position}
+        `;
+      }
+    } else {
+      const matchupHomeGoals = matchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
+      const matchupAwayGoals = matchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
+
+      // Get sub penalties from updated matchups
+      const totalHomeSubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.home_sub_penalty) || 0), 0);
+      const totalAwaySubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.away_sub_penalty) || 0), 0);
+
+      // Get fine penalty goals
+      homePenaltyGoalsVal = home_penalty_goals !== undefined ? Number(home_penalty_goals) || 0 : Number(fixture.home_penalty_goals) || 0;
+      awayPenaltyGoalsVal = away_penalty_goals !== undefined ? Number(away_penalty_goals) || 0 : Number(fixture.away_penalty_goals) || 0;
+
+      // Calculate final scores including penalties
+      totalHomeScore = matchupHomeGoals + totalAwaySubPenalty + homePenaltyGoalsVal;
+      totalAwayScore = matchupAwayGoals + totalHomeSubPenalty + awayPenaltyGoalsVal;
+    }
 
     // Determine result
     const newResult = totalHomeScore > totalAwayScore ? 'home_win' : 
@@ -439,6 +486,11 @@ export async function PATCH(
       SET 
         home_score = ${totalHomeScore},
         away_score = ${totalAwayScore},
+        home_points_earned = ${totalHomeScore},
+        away_points_earned = ${totalAwayScore},
+        home_points_difference = ${homePointsDiff},
+        away_points_difference = ${awayPointsDiff},
+        clean_sweep_winner = ${cleanSweepWinner},
         result = ${newResult},
         status = 'completed',
         home_penalty_goals = ${homePenaltyGoalsVal},
@@ -533,6 +585,7 @@ export async function PATCH(
           away_score: totalAwayScore,
           home_penalty_goals: homePenaltyGoalsVal,
           away_penalty_goals: awayPenaltyGoalsVal,
+          scoring_type: isTripleThreat ? 'triple_threat' : 'goals',
           matchups: matchups,
           is_edit: true  // Flag to indicate this is an edit
         })

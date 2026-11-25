@@ -23,9 +23,10 @@ interface GroupTeam {
 interface GroupStageStandingsProps {
   groupStandings: Record<string, GroupTeam[]>;
   currentUserId?: string;
+  isTripleThreat?: boolean;
 }
 
-export default function GroupStageStandings({ groupStandings, currentUserId }: GroupStageStandingsProps) {
+export default function GroupStageStandings({ groupStandings, currentUserId, isTripleThreat }: GroupStageStandingsProps) {
   const groups = Object.keys(groupStandings).sort();
   const [selectedGroup, setSelectedGroup] = useState<string>(groups[0] || 'A');
 
@@ -79,6 +80,12 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
               <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{currentGroupStandings.length} teams</p>
             </div>
           </div>
+          {isTripleThreat && (
+            <div className="mt-2.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl text-[11px] font-bold text-amber-900 flex items-center gap-2">
+              <span>⚡</span>
+              <span><strong>Triple Threat Scoring:</strong> 3 match modes (Co-op 3pts, Duo 3pts, Single 3pts + 1pt Clean Sweep Bonus). Standings GD is Points Difference (PF - PA).</span>
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -103,14 +110,14 @@ export default function GroupStageStandings({ groupStandings, currentUserId }: G
                 <th className="px-6 py-4 font-bold uppercase tracking-wider">
                   L
                 </th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider">
-                  GF
+                <th className="px-6 py-4 font-bold uppercase tracking-wider" title={isTripleThreat ? "Points For" : "Goals For"}>
+                  {isTripleThreat ? 'PF' : 'GF'}
                 </th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider">
-                  GA
+                <th className="px-6 py-4 font-bold uppercase tracking-wider" title={isTripleThreat ? "Points Against" : "Goals Against"}>
+                  {isTripleThreat ? 'PA' : 'GA'}
                 </th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider">
-                  GD
+                <th className="px-6 py-4 font-bold uppercase tracking-wider" title={isTripleThreat ? "Points Difference (Points For - Points Against)" : "Goal Difference"}>
+                  {isTripleThreat ? 'PD' : 'GD'}
                 </th>
                 <th className="px-6 py-4 font-bold uppercase tracking-wider text-amber-600">
                   PTS

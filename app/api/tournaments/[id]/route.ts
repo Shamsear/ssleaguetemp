@@ -113,6 +113,18 @@ export async function PATCH(
     const updatedTournament = result[0];
     const seasonName = updatedTournament.season_id.replace('SSPSLS', 'Season ');
 
+    if (tournament_type === 'triple_threat') {
+      await sql`
+        UPDATE tournament_settings
+        SET
+          matchday_format = 'triple_threat',
+          clean_sweep_bonus = 1,
+          points_as_gd = true,
+          updated_at = NOW()
+        WHERE tournament_id = ${id}
+      `;
+    }
+
     // Auto-generate news on status change (non-blocking)
     if (status && updatedTournament.is_primary) {
       if (status === 'active') {

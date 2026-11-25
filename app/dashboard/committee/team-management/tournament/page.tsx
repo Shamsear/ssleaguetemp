@@ -129,7 +129,7 @@ export function TournamentDashboardPageContent() {
   const [isGeneratingKnockout, setIsGeneratingKnockout] = useState(false);
 
   // Round-wise knockout generation state
-  const [knockoutRoundType, setKnockoutRoundType] = useState<'playoff' | 'quarter_finals' | 'semi_finals' | 'finals' | 'third_place'>('quarter_finals');
+  const [knockoutRoundType, setKnockoutRoundType] = useState<'tiebreaker' | 'playoff' | 'quarter_finals' | 'semi_finals' | 'finals' | 'third_place'>('quarter_finals');
   const [knockoutRoundNumber, setKnockoutRoundNumber] = useState<number>(12);
   const [knockoutNumTeams, setKnockoutNumTeams] = useState<number>(8);
   const [knockoutSelectedTeams, setKnockoutSelectedTeams] = useState<string[]>([]);
@@ -231,6 +231,7 @@ export function TournamentDashboardPageContent() {
       'uel': { code: 'EL', name: 'Europa League' },
       'super_cup': { code: 'SC', name: 'Super Cup' },
       'league_cup': { code: 'LC', name: 'League Cup' },
+      'triple_threat': { code: 'TT', name: 'Triple Threat' },
     };
 
     const typeInfo = typeMap[newTournament.tournament_type.toLowerCase()] ||
@@ -272,6 +273,7 @@ export function TournamentDashboardPageContent() {
   // Auto-update number of teams when knockout round type changes
   useEffect(() => {
     const teamsByRoundType = {
+      'tiebreaker': 2,
       'playoff': 4, // Typically 4 teams (3rd-6th place) competing for 2 spots
       'quarter_finals': 8,
       'semi_finals': 4,
@@ -688,7 +690,8 @@ export function TournamentDashboardPageContent() {
       return;
     }
 
-    const roundNames = {
+    const roundNames: Record<string, string> = {
+      tiebreaker: '3v3 Tiebreaker Match',
       playoff: 'Playoff',
       quarter_finals: 'Quarter Finals',
       semi_finals: 'Semi Finals',
@@ -1697,6 +1700,10 @@ export function TournamentDashboardPageContent() {
                             <>
                               <Star className="w-4 h-4 inline-block text-amber-400 fill-amber-400 mr-1 align-text-bottom" /> Europa League
                             </>
+                          ) : tournament.tournament_type === 'triple_threat' ? (
+                            <>
+                              <Flame className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Triple Threat
+                            </>
                           ) : (
                             tournament.tournament_type
                           )}
@@ -2222,11 +2229,12 @@ export function TournamentDashboardPageContent() {
                           onChange={(e) => setKnockoutRoundType(e.target.value as any)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                         >
+                          <option value="quarter_finals">Quarter Finals (8 teams)</option>
+                          <option value="semi_finals">Semi Finals (4 teams)</option>
+                          <option value="finals">Finals (2 teams)</option>
+                          <option value="third_place">Third Place Playoff (2 teams)</option>
                           <option value="playoff">Playoff (4 teams &rarr; 2 winners)</option>
-                          <option value="quarter_finals">Quarter Finals</option>
-                          <option value="semi_finals">Semi Finals</option>
-                          <option value="finals">Finals</option>
-                          <option value="third_place">Third Place Playoff</option>
+                          <option value="tiebreaker">⚔️ 3v3 Tiebreaker Match (2 teams)</option>
                         </select>
                       </div>
 
@@ -2256,6 +2264,7 @@ export function TournamentDashboardPageContent() {
                         </label>
                         <div className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-700 font-medium">
                           {knockoutNumTeams} teams
+                          {knockoutRoundType === 'tiebreaker' && ' (3v3 Tiebreaker)'}
                           {knockoutRoundType === 'quarter_finals' && ' (Quarter Finals)'}
                           {knockoutRoundType === 'semi_finals' && ' (Semi Finals)'}
                           {knockoutRoundType === 'finals' && ' (Finals)'}
@@ -2911,7 +2920,29 @@ export function TournamentDashboardPageContent() {
                       </label>
                       <select
                         value={newTournament.tournament_type}
-                        onChange={(e) => setNewTournament({ ...newTournament, tournament_type: e.target.value })}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'triple_threat') {
+                            setNewTournament(prev => ({
+                              ...prev,
+                              tournament_type: val,
+                              has_group_stage: true,
+                              has_league_stage: false,
+                              has_knockout_stage: true,
+                              number_of_groups: 4,
+                              teams_per_group: 4,
+                              teams_advancing_per_group: 2,
+                              number_of_teams: 16,
+                              playoff_teams: 8,
+                              direct_semifinal_teams: 0,
+                              is_two_legged: true,
+                              away_deadline_time: '14:00',
+                              result_deadline_time: '00:30',
+                            }));
+                          } else {
+                            setNewTournament(prev => ({ ...prev, tournament_type: val }));
+                          }
+                        }}
                         className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                         required
                       >
@@ -2921,6 +2952,8 @@ export function TournamentDashboardPageContent() {
                         <option value="uel">⭐ Europa League</option>
                         <option value="super_cup">🏅 Super Cup</option>
                         <option value="league_cup">🏆 League Cup</option>
+                        <option value="triple_threat">⚡ SS Triple Threat</option>
+                        <option value="triple_threat">⚡ SS Triple Threat</option>
                       </select>
                     </div>
 
@@ -3572,6 +3605,7 @@ export function TournamentDashboardPageContent() {
                         <option value="uel">⭐ Europa League</option>
                         <option value="super_cup">🏅 Super Cup</option>
                         <option value="league_cup">🏆 League Cup</option>
+                        <option value="triple_threat">⚡ SS Triple Threat</option>
                       </select>
                     </div>
 

@@ -28,6 +28,15 @@ interface Matchup {
   away_sub_penalty?: number;
   home_substituted?: boolean;
   away_substituted?: boolean;
+  match_mode?: 'coop' | 'duo' | 'single' | 'individual' | string;
+  home_player_ids?: string[];
+  home_player_names?: string[];
+  away_player_ids?: string[];
+  away_player_names?: string[];
+  points_awarded_home?: number;
+  points_awarded_away?: number;
+  bonus_awarded_home?: number;
+  bonus_awarded_away?: number;
 }
 
 interface Fixture {
@@ -56,6 +65,13 @@ interface Fixture {
   result_submitted_at?: string;
   result_submitted_by_name?: string;
   scoring_type?: string;
+  tournament_type?: string;
+  matchday_format?: string;
+  home_points_earned?: number;
+  away_points_earned?: number;
+  home_points_difference?: number;
+  away_points_difference?: number;
+  clean_sweep_winner?: string;
 }
 
 export default function CommitteeFixtureDetailPage() {
@@ -576,6 +592,21 @@ export default function CommitteeFixtureDetailPage() {
                 <div className="text-3xl font-black text-slate-800 tracking-tight">
                   {fixture.home_score ?? '-'} : {fixture.away_score ?? '-'}
                 </div>
+                {fixture.tournament_type === 'triple_threat' && (
+                  <div className="text-[10px] font-mono font-extrabold text-amber-600 uppercase tracking-wider mt-0.5">
+                    Matchday Points
+                  </div>
+                )}
+                {fixture.clean_sweep_winner && (
+                  <div className="mt-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                    🔥 Clean Sweep (+1 Pt)
+                  </div>
+                )}
+                {fixture.tournament_type === 'triple_threat' && (fixture.home_points_difference !== undefined) && (
+                  <div className="text-[10px] font-mono font-bold text-slate-500 mt-1">
+                    GD: {fixture.home_points_difference > 0 ? `+${fixture.home_points_difference}` : fixture.home_points_difference} vs {fixture.away_points_difference > 0 ? `+${fixture.away_points_difference}` : fixture.away_points_difference}
+                  </div>
+                )}
                 <div className="mt-1">
                   <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase ${
                     fixture.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-250' :
@@ -812,15 +843,46 @@ export default function CommitteeFixtureDetailPage() {
                 const isHomeMotm = (fixture?.motm_player_id && matchup.home_player_id === fixture.motm_player_id) || (displayMotmName && matchup.home_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase());
                 const isAwayMotm = (fixture?.motm_player_id && matchup.away_player_id === fixture.motm_player_id) || (displayMotmName && matchup.away_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase());
 
+                const isTT = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || !!matchup.match_mode;
+                const modeLabel = (matchup.match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP MATCH (2v2)', icon: '🎮', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' } :
+                                  (matchup.match_mode === 'duo' || (isTT && matchup.position === 2)) ? { title: 'DUO MATCH (2v2)', icon: '🤝', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
+                                  (matchup.match_mode === 'single' || (isTT && matchup.position === 3)) ? { title: 'SINGLE MATCH (1v1)', icon: '⚔️', badge: 'bg-amber-50 text-amber-700 border-amber-200' } :
+                                  null;
+
+                const homeName = (matchup.home_player_names && matchup.home_player_names.length > 0)
+                  ? matchup.home_player_names.join(' & ')
+                  : matchup.home_player_name;
+                const awayName = (matchup.away_player_names && matchup.away_player_names.length > 0)
+                  ? matchup.away_player_names.join(' & ')
+                  : matchup.away_player_name;
+
+                const homeGoalsVal = isEditMode ? (editedScores[matchup.position]?.home ?? 0) : (matchup.home_goals ?? 0);
+                const awayGoalsVal = isEditMode ? (editedScores[matchup.position]?.away ?? 0) : (matchup.away_goals ?? 0);
+                const modeHomePts = (matchup.home_goals !== null || isEditMode) ? (homeGoalsVal > awayGoalsVal ? 3 : homeGoalsVal === awayGoalsVal ? 1 : 0) : null;
+                const modeAwayPts = (matchup.away_goals !== null || isEditMode) ? (awayGoalsVal > homeGoalsVal ? 3 : awayGoalsVal === homeGoalsVal ? 1 : 0) : null;
+
                 return (
                   <div key={matchup.id} className={`rounded-2xl p-4 transition-all ${
                     isHomeMotm || isAwayMotm 
                       ? 'bg-amber-50/40 border-2 border-amber-300 shadow-xs' 
                       : 'bg-slate-50/60 border border-slate-100 hover:bg-slate-50'
                   }`}>
+                    {isTT && modeLabel && (
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/50">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase font-mono border ${modeLabel.badge}`}>
+                          <span>{modeLabel.icon}</span>
+                          <span>{modeLabel.title}</span>
+                        </span>
+                        {modeHomePts !== null && (
+                          <span className="text-[10px] font-mono font-bold text-slate-500">
+                            Points Awarded: <span className="text-slate-800 font-extrabold">{modeHomePts} pts</span> - <span className="text-slate-800 font-extrabold">{modeAwayPts} pts</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                        <p className="font-bold text-slate-800 text-sm truncate">{matchup.home_player_name}</p>
+                        <p className="font-bold text-slate-800 text-sm truncate">{homeName}</p>
                         {isHomeMotm && (
                           <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
                             <Star className="w-3 h-3 fill-white" /> MOTM
@@ -864,7 +926,7 @@ export default function CommitteeFixtureDetailPage() {
                             <Star className="w-3 h-3 fill-white" /> MOTM
                           </span>
                         )}
-                        <p className="font-bold text-slate-800 text-sm truncate">{matchup.away_player_name}</p>
+                        <p className="font-bold text-slate-800 text-sm truncate">{awayName}</p>
                       </div>
                     </div>
 
