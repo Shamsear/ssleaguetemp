@@ -46,7 +46,7 @@ export async function POST(
 
     // Verify tournament exists
     const tournaments = await sql`
-      SELECT id, season_id, tournament_name
+      SELECT id, season_id, tournament_name, tournament_type
       FROM tournaments
       WHERE id = ${tournamentId}
     `;
@@ -226,6 +226,36 @@ export async function POST(
           NOW(),
           NOW()
         )
+      `;
+    }
+
+    // Ensure round_deadlines entries exist for generated knockout rounds
+    const isTT = tournament.tournament_type === 'triple_threat';
+    const uniqueKnockoutLegs = [...new Set(fixturesToCreate.map(f => f.leg))];
+    for (const leg of uniqueKnockoutLegs) {
+      await sql`
+        INSERT INTO round_deadlines (
+          tournament_id,
+          season_id,
+          round_number,
+          leg,
+          away_fixture_deadline_time,
+          result_entry_deadline_time,
+          status,
+          created_at,
+          updated_at
+        ) VALUES (
+          ${tournamentId},
+          ${tournament.season_id},
+          ${round_number},
+          ${leg},
+          ${isTT ? '14:00' : '17:00'},
+          '00:30',
+          'pending',
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT (tournament_id, round_number, leg) DO NOTHING
       `;
     }
 

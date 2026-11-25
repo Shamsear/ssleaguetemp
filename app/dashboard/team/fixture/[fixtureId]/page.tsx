@@ -2591,9 +2591,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       const homeWon = hasResult && matchup.home_goals! > matchup.away_goals!;
                       const awayWon = hasResult && matchup.away_goals! > matchup.home_goals!;
                       const isDraw = hasResult && matchup.home_goals === matchup.away_goals;
-                      const isPOTD = fixture.motm_player_id && (fixture.motm_player_id === matchup.home_player_id || fixture.motm_player_id === matchup.away_player_id);
-                      const homePOTD = fixture.motm_player_id === matchup.home_player_id;
-                      const awayPOTD = fixture.motm_player_id === matchup.away_player_id;
+                      const motmId = fixture.motm_player_id;
+                      const homePlayerIds = (matchup as any).home_player_ids || (matchup.home_player_id ? [matchup.home_player_id] : []);
+                      const awayPlayerIds = (matchup as any).away_player_ids || (matchup.away_player_id ? [matchup.away_player_id] : []);
+                      const homePOTD = !!motmId && homePlayerIds.includes(motmId);
+                      const awayPOTD = !!motmId && awayPlayerIds.includes(motmId);
+                      const isPOTD = homePOTD || awayPOTD;
 
                       const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
                       const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
@@ -3637,58 +3640,73 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {fixture.home_team_name} Players
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {matchups.map((m, idx) => {
-                            const isSelected = motmPlayerId === m.home_player_id;
-                            const goals = matchResults[idx]?.home_goals ?? 0;
-                            const conceded = matchResults[idx]?.away_goals ?? 0;
-                            const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
-                            const category = (m as any).home_category || homeMatch?.category;
+                          {(() => {
+                            const homeCandidates: { id: string; name: string; matchupIndex: number }[] = [];
+                            matchups.forEach((m, idx) => {
+                              const ids = (m as any).home_player_ids;
+                              const names = (m as any).home_player_names;
+                              if (ids && ids.length > 0) {
+                                ids.forEach((id: string, pIdx: number) => {
+                                  homeCandidates.push({ id, name: names?.[pIdx] || id, matchupIndex: idx });
+                                });
+                              } else if (m.home_player_id) {
+                                homeCandidates.push({ id: m.home_player_id, name: m.home_player_name, matchupIndex: idx });
+                              }
+                            });
 
-                            return (
-                              <div
-                                key={`motm-home-${idx}-${m.home_player_id}`}
-                                onClick={() => setMotmPlayerId(isSelected ? null : m.home_player_id)}
-                                className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
-                                  isSelected
-                                    ? 'bg-amber-50 border-amber-400 shadow-sm'
-                                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <PlayerPhoto
-                                    photoUrl={homeMatch?.photo_url || (m as any).home_photo_url}
-                                    playerName={m.home_player_name}
-                                    size={36}
-                                    shape="circle"
-                                    posXCircle={homeMatch?.photo_position_x_circle}
-                                    posYCircle={homeMatch?.photo_position_y_circle}
-                                    scaleCircle={homeMatch?.photo_scale_circle}
-                                    className="border border-slate-300 flex-shrink-0"
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-extrabold text-xs text-slate-900 truncate">
-                                      {m.home_player_name}
+                            return homeCandidates.map((cand, cIdx) => {
+                              const isSelected = motmPlayerId === cand.id;
+                              const goals = matchResults[cand.matchupIndex]?.home_goals ?? 0;
+                              const conceded = matchResults[cand.matchupIndex]?.away_goals ?? 0;
+                              const homeMatch = homeSquadById.get(cand.id) || homeSquadByName.get(cand.name?.toLowerCase());
+                              const category = homeMatch?.category;
+
+                              return (
+                                <div
+                                  key={`motm-home-${cIdx}-${cand.id}`}
+                                  onClick={() => setMotmPlayerId(isSelected ? null : cand.id)}
+                                  className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'bg-amber-50 border-amber-400 shadow-sm'
+                                      : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <PlayerPhoto
+                                      photoUrl={homeMatch?.photo_url}
+                                      playerName={cand.name}
+                                      size={36}
+                                      shape="circle"
+                                      posXCircle={homeMatch?.photo_position_x_circle}
+                                      posYCircle={homeMatch?.photo_position_y_circle}
+                                      scaleCircle={homeMatch?.photo_scale_circle}
+                                      className="border border-slate-300 flex-shrink-0"
+                                    />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-extrabold text-xs text-slate-900 truncate">
+                                        {cand.name}
+                                      </span>
+                                      {category && (
+                                        <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
+                                          {category}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                                      {goals}G {conceded}C
                                     </span>
-                                    {category && (
-                                      <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
-                                        {category}
+                                    {isSelected && (
+                                      <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded">
+                                        ⭐ MOTM
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
-                                    {goals}G {conceded}C
-                                  </span>
-                                  {isSelected && (
-                                    <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded">
-                                      ⭐ MOTM
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
 
@@ -3698,58 +3716,73 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           {fixture.away_team_name} Players
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {matchups.map((m, idx) => {
-                            const isSelected = motmPlayerId === m.away_player_id;
-                            const goals = matchResults[idx]?.away_goals ?? 0;
-                            const conceded = matchResults[idx]?.home_goals ?? 0;
-                            const awayMatch = awaySquadById.get(m.away_player_id) || awaySquadByName.get(m.away_player_name?.toLowerCase());
-                            const category = (m as any).away_category || awayMatch?.category;
+                          {(() => {
+                            const awayCandidates: { id: string; name: string; matchupIndex: number }[] = [];
+                            matchups.forEach((m, idx) => {
+                              const ids = (m as any).away_player_ids;
+                              const names = (m as any).away_player_names;
+                              if (ids && ids.length > 0) {
+                                ids.forEach((id: string, pIdx: number) => {
+                                  awayCandidates.push({ id, name: names?.[pIdx] || id, matchupIndex: idx });
+                                });
+                              } else if (m.away_player_id) {
+                                awayCandidates.push({ id: m.away_player_id, name: m.away_player_name, matchupIndex: idx });
+                              }
+                            });
 
-                            return (
-                              <div
-                                key={`motm-away-${idx}-${m.away_player_id}`}
-                                onClick={() => setMotmPlayerId(isSelected ? null : m.away_player_id)}
-                                className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
-                                  isSelected
-                                    ? 'bg-amber-50 border-amber-400 shadow-sm'
-                                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <PlayerPhoto
-                                    photoUrl={awayMatch?.photo_url || (m as any).away_photo_url}
-                                    playerName={m.away_player_name}
-                                    size={36}
-                                    shape="circle"
-                                    posXCircle={awayMatch?.photo_position_x_circle}
-                                    posYCircle={awayMatch?.photo_position_y_circle}
-                                    scaleCircle={awayMatch?.photo_scale_circle}
-                                    className="border border-slate-300 flex-shrink-0"
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-extrabold text-xs text-slate-900 truncate">
-                                      {m.away_player_name}
+                            return awayCandidates.map((cand, cIdx) => {
+                              const isSelected = motmPlayerId === cand.id;
+                              const goals = matchResults[cand.matchupIndex]?.away_goals ?? 0;
+                              const conceded = matchResults[cand.matchupIndex]?.home_goals ?? 0;
+                              const awayMatch = awaySquadById.get(cand.id) || awaySquadByName.get(cand.name?.toLowerCase());
+                              const category = awayMatch?.category;
+
+                              return (
+                                <div
+                                  key={`motm-away-${cIdx}-${cand.id}`}
+                                  onClick={() => setMotmPlayerId(isSelected ? null : cand.id)}
+                                  className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'bg-amber-50 border-amber-400 shadow-sm'
+                                      : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <PlayerPhoto
+                                      photoUrl={awayMatch?.photo_url}
+                                      playerName={cand.name}
+                                      size={36}
+                                      shape="circle"
+                                      posXCircle={awayMatch?.photo_position_x_circle}
+                                      posYCircle={awayMatch?.photo_position_y_circle}
+                                      scaleCircle={awayMatch?.photo_scale_circle}
+                                      className="border border-slate-300 flex-shrink-0"
+                                    />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-extrabold text-xs text-slate-900 truncate">
+                                        {cand.name}
+                                      </span>
+                                      {category && (
+                                        <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
+                                          {category}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                                      {goals}G {conceded}C
                                     </span>
-                                    {category && (
-                                      <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
-                                        {category}
+                                    {isSelected && (
+                                      <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded">
+                                        ⭐ MOTM
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
-                                    {goals}G {conceded}C
-                                  </span>
-                                  {isSelected && (
-                                    <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded">
-                                      ⭐ MOTM
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -3899,10 +3932,25 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           console.log('Result submission response:', resultData);
 
                           // Save MOTM and penalty goals at fixture level
-                          const motmPlayerName = motmPlayerId ?
-                            matchups.find(m => m.home_player_id === motmPlayerId)?.home_player_name ||
-                            matchups.find(m => m.away_player_id === motmPlayerId)?.away_player_name || null
-                            : null;
+                          let motmPlayerName: string | null = null;
+                          if (motmPlayerId) {
+                            for (const m of matchups) {
+                              const hIds: string[] = (m as any).home_player_ids || (m.home_player_id ? [m.home_player_id] : []);
+                              const hNames: string[] = (m as any).home_player_names || (m.home_player_name ? [m.home_player_name] : []);
+                              const hIdx = hIds.indexOf(motmPlayerId);
+                              if (hIdx !== -1) {
+                                motmPlayerName = hNames[hIdx] || m.home_player_name || null;
+                                break;
+                              }
+                              const aIds: string[] = (m as any).away_player_ids || (m.away_player_id ? [m.away_player_id] : []);
+                              const aNames: string[] = (m as any).away_player_names || (m.away_player_name ? [m.away_player_name] : []);
+                              const aIdx = aIds.indexOf(motmPlayerId);
+                              if (aIdx !== -1) {
+                                motmPlayerName = aNames[aIdx] || m.away_player_name || null;
+                                break;
+                              }
+                            }
+                          }
 
                           console.log('Saving MOTM and penalty goals:', { motmPlayerId, motmPlayerName, homePenaltyGoals, awayPenaltyGoals });
 
@@ -4108,10 +4156,25 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             away_goals: matchResults[idx]?.away_goals ?? 0,
                           }));
 
-                          const motmPlayerName = motmPlayerId ?
-                            matchups.find(m => m.home_player_id === motmPlayerId)?.home_player_name ||
-                            matchups.find(m => m.away_player_id === motmPlayerId)?.away_player_name || null
-                            : null;
+                          let motmPlayerName: string | null = null;
+                          if (motmPlayerId) {
+                            for (const m of matchups) {
+                              const hIds: string[] = (m as any).home_player_ids || (m.home_player_id ? [m.home_player_id] : []);
+                              const hNames: string[] = (m as any).home_player_names || (m.home_player_name ? [m.home_player_name] : []);
+                              const hIdx = hIds.indexOf(motmPlayerId);
+                              if (hIdx !== -1) {
+                                motmPlayerName = hNames[hIdx] || m.home_player_name || null;
+                                break;
+                              }
+                              const aIds: string[] = (m as any).away_player_ids || (m.away_player_id ? [m.away_player_id] : []);
+                              const aNames: string[] = (m as any).away_player_names || (m.away_player_name ? [m.away_player_name] : []);
+                              const aIdx = aIds.indexOf(motmPlayerId);
+                              if (aIdx !== -1) {
+                                motmPlayerName = aNames[aIdx] || m.away_player_name || null;
+                                break;
+                              }
+                            }
+                          }
 
                           const response = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/draft-results`, {
                             method: 'PUT',
@@ -4346,8 +4409,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       {/* Man of the Match Display */}
                       {fixture.motm_player_name && (() => {
                         const motmId = fixture.motm_player_id;
-                        const motmMatch = matchups.find(m => m.home_player_id === motmId || m.away_player_id === motmId);
-                        const isHomeMotm = motmMatch?.home_player_id === motmId;
+                        const motmMatch = matchups.find(m => {
+                          const hIds = (m as any).home_player_ids || (m.home_player_id ? [m.home_player_id] : []);
+                          const aIds = (m as any).away_player_ids || (m.away_player_id ? [m.away_player_id] : []);
+                          return (motmId && (hIds.includes(motmId) || aIds.includes(motmId))) ||
+                            m.home_player_name === fixture.motm_player_name ||
+                            m.away_player_name === fixture.motm_player_name;
+                        });
+                        const isHomeMotm = motmMatch ? (
+                          ((motmMatch as any).home_player_ids || (motmMatch.home_player_id ? [motmMatch.home_player_id] : [])).includes(motmId || '') ||
+                          motmMatch.home_player_name === fixture.motm_player_name
+                        ) : false;
                         const squadMap = isHomeMotm ? homeSquadById : awaySquadById;
                         const squadByName = isHomeMotm ? homeSquadByName : awaySquadByName;
                         const playerMatch = squadMap.get(motmId || '') || squadByName.get(fixture.motm_player_name?.toLowerCase() || '');
@@ -4390,9 +4462,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         const homeWon = hasResult && matchup.home_goals! > matchup.away_goals!;
                         const awayWon = hasResult && matchup.away_goals! > matchup.home_goals!;
                         const isDraw = hasResult && matchup.home_goals === matchup.away_goals;
-                        const isPOTD = fixture.motm_player_id && (fixture.motm_player_id === matchup.home_player_id || fixture.motm_player_id === matchup.away_player_id);
-                        const homePOTD = fixture.motm_player_id === matchup.home_player_id;
-                        const awayPOTD = fixture.motm_player_id === matchup.away_player_id;
+                        const motmId = fixture.motm_player_id;
+                        const homePlayerIds = (matchup as any).home_player_ids || (matchup.home_player_id ? [matchup.home_player_id] : []);
+                        const awayPlayerIds = (matchup as any).away_player_ids || (matchup.away_player_id ? [matchup.away_player_id] : []);
+                        const homePOTD = !!motmId && homePlayerIds.includes(motmId);
+                        const awayPOTD = !!motmId && awayPlayerIds.includes(motmId);
+                        const isPOTD = homePOTD || awayPOTD;
 
                         const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
                         const awayMatch = awaySquadById.get(matchup.away_player_id) || awaySquadByName.get(matchup.away_player_name?.toLowerCase());
@@ -4409,6 +4484,20 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 <span className="inline-flex items-center px-2.5 py-1 bg-gray-800 text-white text-xs font-bold rounded-lg">
                                   Match #{matchup.position}
                                 </span>
+                                {(() => {
+                                  const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
+                                  const modeLabel = ((matchup as any).match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP (2v2)', icon: '🎮', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' } :
+                                                    ((matchup as any).match_mode === 'duo' || (isTT && matchup.position === 2)) ? { title: 'DUO (2v2)', icon: '🤝', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' } :
+                                                    ((matchup as any).match_mode === 'single' || (isTT && matchup.position === 3)) ? { title: 'SINGLE (1v1)', icon: '⚔️', badge: 'bg-amber-100 text-amber-800 border-amber-200' } :
+                                                    null;
+                                  if (!isTT || !modeLabel) return null;
+                                  return (
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeLabel.badge}`}>
+                                      <span>{modeLabel.icon}</span>
+                                      <span>{modeLabel.title}</span>
+                                    </span>
+                                  );
+                                })()}
                                 {matchup.match_duration && (
                                   <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md">
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4476,7 +4565,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   />
                                   <div className="flex flex-col min-w-0">
                                     <span className="font-extrabold text-sm text-slate-900 truncate">
-                                      {matchup.home_player_name}
+                                      {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
                                     </span>
                                     {homeCategory && (
                                       <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
@@ -4526,7 +4615,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   />
                                   <div className="flex flex-col min-w-0">
                                     <span className="font-extrabold text-sm text-slate-900 truncate">
-                                      {matchup.away_player_name}
+                                      {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
                                     </span>
                                     {awayCategory && (
                                       <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>

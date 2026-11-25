@@ -546,7 +546,8 @@ export async function PATCH(
     const fixtures = await sql`
       SELECT f.season_id, f.round_number, f.leg, 
              COALESCE(f.home_penalty_goals, 0) as home_penalty_goals,
-             COALESCE(f.away_penalty_goals, 0) as away_penalty_goals
+             COALESCE(f.away_penalty_goals, 0) as away_penalty_goals,
+             f.home_team_name, f.away_team_name
       FROM fixtures f
       WHERE f.id = ${fixtureId}
       LIMIT 1
@@ -693,10 +694,14 @@ export async function PATCH(
       totalAwayScore = ttResult.away_total_points;
       homePointsDiff = ttResult.home_points_difference;
       awayPointsDiff = ttResult.away_points_difference;
-      cleanSweepWinner = ttResult.clean_sweep_winner;
+      cleanSweepWinner = ttResult.clean_sweep_team === 'home' 
+        ? fixtures[0].home_team_name 
+        : ttResult.clean_sweep_team === 'away' 
+          ? fixtures[0].away_team_name 
+          : null;
 
       // Update points and bonus on individual matchups
-      for (const mRes of ttResult.matchResults) {
+      for (const mRes of (ttResult.matchResults || ttResult.matches)) {
         await sql`
           UPDATE matchups
           SET

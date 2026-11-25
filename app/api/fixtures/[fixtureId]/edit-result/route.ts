@@ -395,10 +395,14 @@ export async function PATCH(
       totalAwayScore = ttResult.away_total_points;
       homePointsDiff = ttResult.home_points_difference;
       awayPointsDiff = ttResult.away_points_difference;
-      cleanSweepWinner = ttResult.clean_sweep_winner;
+      cleanSweepWinner = ttResult.clean_sweep_team === 'home' 
+        ? fixture.home_team_name 
+        : ttResult.clean_sweep_team === 'away' 
+          ? fixture.away_team_name 
+          : null;
 
       // Update points and bonus on individual matchups
-      for (const mRes of ttResult.matchResults) {
+      for (const mRes of (ttResult.matchResults || ttResult.matches)) {
         await sql`
           UPDATE matchups
           SET

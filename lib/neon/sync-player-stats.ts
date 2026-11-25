@@ -172,18 +172,51 @@ export async function syncPlayerStatsForSeason(
   for (const m of matchups) {
     if (m.is_null) continue;
 
-    const homePId = m.home_player_id ? String(m.home_player_id) : null;
-    const awayPId = m.away_player_id ? String(m.away_player_id) : null;
     const homeGoals = Number(m.home_goals) || 0;
     const awayGoals = Number(m.away_goals) || 0;
 
-    // Home player
-    if (homePId) {
+    const homePlayerEntries: Array<{ id: string; name: string }> = [];
+    if (m.home_player_ids && Array.isArray(m.home_player_ids) && m.home_player_ids.length > 0) {
+      m.home_player_ids.forEach((id: string, idx: number) => {
+        if (id) {
+          homePlayerEntries.push({
+            id: String(id),
+            name: m.home_player_names?.[idx] || m.home_player_name || `Player ${id}`
+          });
+        }
+      });
+    } else if (m.home_player_id) {
+      homePlayerEntries.push({
+        id: String(m.home_player_id),
+        name: m.home_player_name || `Player ${m.home_player_id}`
+      });
+    }
+
+    const awayPlayerEntries: Array<{ id: string; name: string }> = [];
+    if (m.away_player_ids && Array.isArray(m.away_player_ids) && m.away_player_ids.length > 0) {
+      m.away_player_ids.forEach((id: string, idx: number) => {
+        if (id) {
+          awayPlayerEntries.push({
+            id: String(id),
+            name: m.away_player_names?.[idx] || m.away_player_name || `Player ${id}`
+          });
+        }
+      });
+    } else if (m.away_player_id) {
+      awayPlayerEntries.push({
+        id: String(m.away_player_id),
+        name: m.away_player_name || `Player ${m.away_player_id}`
+      });
+    }
+
+    // Home players
+    for (const hp of homePlayerEntries) {
+      const homePId = hp.id;
       if (!playerAccumulators.has(homePId)) {
         playerAccumulators.set(homePId, {
           statsId: `${homePId}_${seasonId}`,
           playerId: homePId,
-          playerName: m.home_player_name || `Player ${homePId}`,
+          playerName: hp.name,
           seasonId: seasonId,
           team: m.home_team_name || '',
           teamId: m.home_team_id || '',
@@ -194,7 +227,7 @@ export async function syncPlayerStatsForSeason(
       }
       const acc = playerAccumulators.get(homePId)!;
       acc.matches.push({
-        opponentId: awayPId || '',
+        opponentId: awayPlayerEntries[0]?.id || '',
         goalsScored: homeGoals,
         goalsConceded: awayGoals,
         isMotm: fixtureMotmMap.get(m.fixture_id) === homePId,
@@ -206,13 +239,14 @@ export async function syncPlayerStatsForSeason(
       }
     }
 
-    // Away player
-    if (awayPId) {
+    // Away players
+    for (const ap of awayPlayerEntries) {
+      const awayPId = ap.id;
       if (!playerAccumulators.has(awayPId)) {
         playerAccumulators.set(awayPId, {
           statsId: `${awayPId}_${seasonId}`,
           playerId: awayPId,
-          playerName: m.away_player_name || `Player ${awayPId}`,
+          playerName: ap.name,
           seasonId: seasonId,
           team: m.away_team_name || '',
           teamId: m.away_team_id || '',
@@ -223,7 +257,7 @@ export async function syncPlayerStatsForSeason(
       }
       const acc = playerAccumulators.get(awayPId)!;
       acc.matches.push({
-        opponentId: homePId || '',
+        opponentId: homePlayerEntries[0]?.id || '',
         goalsScored: awayGoals,
         goalsConceded: homeGoals,
         isMotm: fixtureMotmMap.get(m.fixture_id) === awayPId,

@@ -26,6 +26,7 @@
 export type TripleThreatMode = 'coop' | 'duo' | 'single';
 
 export interface TripleThreatMatchInput {
+  position?: number;
   mode: TripleThreatMode;
   home_goals: number | null | undefined;
   away_goals: number | null | undefined;
@@ -36,16 +37,20 @@ export interface TripleThreatMatchInput {
 }
 
 export interface TripleThreatMatchResult {
+  position?: number;
   mode: TripleThreatMode;
   home_goals: number;
   away_goals: number;
   home_points: number; // 3, 1, or 0
   away_points: number; // 3, 1, or 0
+  home_bonus?: number; // 1 if clean sweep, else 0
+  away_bonus?: number; // 1 if clean sweep, else 0
   outcome: 'home_win' | 'away_win' | 'draw';
 }
 
 export interface TripleThreatFixtureResult {
   matches: TripleThreatMatchResult[];
+  matchResults: TripleThreatMatchResult[]; // Alias for backward compatibility
   home_matches_won: number;
   away_matches_won: number;
   draws: number;
@@ -60,12 +65,19 @@ export interface TripleThreatFixtureResult {
   fixture_winner: 'home' | 'away' | 'draw';
   is_clean_sweep: boolean;
   clean_sweep_team: 'home' | 'away' | null;
+  clean_sweep_winner: 'home' | 'away' | null;
 }
 
 export interface TripleThreatLineupSubmission {
-  coop: string[];   // Exactly 2 player IDs
-  duo: string[];    // Exactly 2 player IDs
-  single: string[]; // Exactly 1 player ID
+  coop: (string | { player_id?: string; id?: string; player_name?: string; name?: string })[];
+  duo: (string | { player_id?: string; id?: string; player_name?: string; name?: string })[];
+  single: (string | { player_id?: string; id?: string; player_name?: string; name?: string })[];
+}
+
+function extractPlayerId(item: any): string {
+  if (!item) return '';
+  if (typeof item === 'string') return item.trim();
+  return String(item.player_id || item.id || '').trim();
 }
 
 /**
@@ -80,21 +92,23 @@ export function validateTripleThreatLineup(
     return { valid: false, error: 'Lineup data is required' };
   }
 
-  const { coop = [], duo = [], single = [] } = lineup;
+  const coopIds = (lineup.coop || []).map(extractPlayerId).filter(Boolean);
+  const duoIds = (lineup.duo || []).map(extractPlayerId).filter(Boolean);
+  const singleIds = (lineup.single || []).map(extractPlayerId).filter(Boolean);
 
-  if (coop.length !== 2) {
-    return { valid: false, error: `Co-op mode requires exactly 2 players (selected ${coop.length})` };
+  if (coopIds.length !== 2) {
+    return { valid: false, error: `Co-op mode requires exactly 2 players (selected ${coopIds.length})` };
   }
 
-  if (duo.length !== 2) {
-    return { valid: false, error: `Duo mode requires exactly 2 players (selected ${duo.length})` };
+  if (duoIds.length !== 2) {
+    return { valid: false, error: `Duo mode requires exactly 2 players (selected ${duoIds.length})` };
   }
 
-  if (single.length !== 1) {
-    return { valid: false, error: `Single (1v1) mode requires exactly 1 player (selected ${single.length})` };
+  if (singleIds.length !== 1) {
+    return { valid: false, error: `Single (1v1) mode requires exactly 1 player (selected ${singleIds.length})` };
   }
 
-  const allPlayers = [...coop, ...duo, ...single];
+  const allPlayers = [...coopIds, ...duoIds, ...singleIds];
   const uniquePlayers = new Set(allPlayers);
 
   if (uniquePlayers.size !== 5) {
@@ -131,7 +145,7 @@ export function calculateTripleThreatFixture(
   let homeBasePoints = 0;
   let awayBasePoints = 0;
 
-  const processedMatches: TripleThreatMatchResult[] = matches.map((match) => {
+  const rawMatches = matches.map((match, idx) => {
     const homeGoals = Number(match.home_goals ?? 0);
     const awayGoals = Number(match.away_goals ?? 0);
 
@@ -160,6 +174,7 @@ export function calculateTripleThreatFixture(
     awayBasePoints += awayPts;
 
     return {
+      position: match.position || idx + 1,
       mode: match.mode,
       home_goals: homeGoals,
       away_goals: awayGoals,
@@ -176,6 +191,12 @@ export function calculateTripleThreatFixture(
   const homeBonus = isHomeCleanSweep ? 1 : 0;
   const awayBonus = isAwayCleanSweep ? 1 : 0;
 
+  const processedMatches: TripleThreatMatchResult[] = rawMatches.map((m) => ({
+    ...m,
+    home_bonus: isHomeCleanSweep ? 1 : 0,
+    away_bonus: isAwayCleanSweep ? 1 : 0,
+  }));
+
   const homeTotalPoints = homeBasePoints + homeBonus;
   const awayTotalPoints = awayBasePoints + awayBonus;
 
@@ -190,8 +211,11 @@ export function calculateTripleThreatFixture(
     fixtureWinner = 'away';
   }
 
+  const cleanSweepTeam = isHomeCleanSweep ? 'home' : isAwayCleanSweep ? 'away' : null;
+
   return {
     matches: processedMatches,
+    matchResults: processedMatches,
     home_matches_won: homeMatchesWon,
     away_matches_won: awayMatchesWon,
     draws,
@@ -205,6 +229,7 @@ export function calculateTripleThreatFixture(
     away_points_difference: awayPointsDiff,
     fixture_winner: fixtureWinner,
     is_clean_sweep: isHomeCleanSweep || isAwayCleanSweep,
-    clean_sweep_team: isHomeCleanSweep ? 'home' : isAwayCleanSweep ? 'away' : null,
+    clean_sweep_team: cleanSweepTeam,
+    clean_sweep_winner: cleanSweepTeam,
   };
 }

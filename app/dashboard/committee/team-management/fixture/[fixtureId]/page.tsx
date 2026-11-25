@@ -489,10 +489,20 @@ export default function CommitteeFixtureDetailPage() {
   }
 
   const displayMotmName = fixture?.motm_player_name || motmPlayerName || (
-    (fixture?.motm_player_id || motmPlayerId) ? matchups.flatMap(m => [
-      { id: m.home_player_id, name: m.home_player_name },
-      { id: m.away_player_id, name: m.away_player_name }
-    ]).find(p => p.id === (fixture?.motm_player_id || motmPlayerId))?.name : null
+    (fixture?.motm_player_id || motmPlayerId) ? matchups.flatMap(m => {
+      const list: { id: string; name: string }[] = [];
+      if (m.home_player_ids && m.home_player_ids.length > 0) {
+        m.home_player_ids.forEach((id, idx) => list.push({ id, name: m.home_player_names?.[idx] || id }));
+      } else if (m.home_player_id) {
+        list.push({ id: m.home_player_id, name: m.home_player_name });
+      }
+      if (m.away_player_ids && m.away_player_ids.length > 0) {
+        m.away_player_ids.forEach((id, idx) => list.push({ id, name: m.away_player_names?.[idx] || id }));
+      } else if (m.away_player_id) {
+        list.push({ id: m.away_player_id, name: m.away_player_name });
+      }
+      return list;
+    }).find(p => p.id === (fixture?.motm_player_id || motmPlayerId))?.name : null
   );
 
   return (
@@ -783,28 +793,51 @@ export default function CommitteeFixtureDetailPage() {
                       if (!selectedId) {
                         setMotmPlayerName(null);
                       } else {
-                        const allPlayersMap = new Map(
-                          matchups.flatMap(m => [
-                            [m.home_player_id, m.home_player_name],
-                            [m.away_player_id, m.away_player_name]
-                          ])
-                        );
+                        const allPlayersMap = new Map<string, string>();
+                        matchups.forEach(m => {
+                          if (m.home_player_ids && m.home_player_ids.length > 0) {
+                            m.home_player_ids.forEach((id, idx) => {
+                              allPlayersMap.set(id, m.home_player_names?.[idx] || id);
+                            });
+                          } else if (m.home_player_id) {
+                            allPlayersMap.set(m.home_player_id, m.home_player_name);
+                          }
+                          if (m.away_player_ids && m.away_player_ids.length > 0) {
+                            m.away_player_ids.forEach((id, idx) => {
+                              allPlayersMap.set(id, m.away_player_names?.[idx] || id);
+                            });
+                          } else if (m.away_player_id) {
+                            allPlayersMap.set(m.away_player_id, m.away_player_name);
+                          }
+                        });
                         setMotmPlayerName(allPlayersMap.get(selectedId) || null);
                       }
                     }}
                     className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
                   >
                     <option value="">-- None Selected --</option>
-                    {Array.from(
-                      new Map(
-                        matchups.flatMap(m => [
-                          [m.home_player_id, `${m.home_player_name} (${fixture.home_team_name})`],
-                          [m.away_player_id, `${m.away_player_name} (${fixture.away_team_name})`]
-                        ])
-                      )
-                    ).map(([id, name]) => (
-                      <option key={id} value={id}>{name}</option>
-                    ))}
+                    {(() => {
+                      const optionsMap = new Map<string, string>();
+                      matchups.forEach(m => {
+                        if (m.home_player_ids && m.home_player_ids.length > 0) {
+                          m.home_player_ids.forEach((id, idx) => {
+                            optionsMap.set(id, `${m.home_player_names?.[idx] || id} (${fixture.home_team_name})`);
+                          });
+                        } else if (m.home_player_id) {
+                          optionsMap.set(m.home_player_id, `${m.home_player_name} (${fixture.home_team_name})`);
+                        }
+                        if (m.away_player_ids && m.away_player_ids.length > 0) {
+                          m.away_player_ids.forEach((id, idx) => {
+                            optionsMap.set(id, `${m.away_player_names?.[idx] || id} (${fixture.away_team_name})`);
+                          });
+                        } else if (m.away_player_id) {
+                          optionsMap.set(m.away_player_id, `${m.away_player_name} (${fixture.away_team_name})`);
+                        }
+                      });
+                      return Array.from(optionsMap.entries()).map(([id, name]) => (
+                        <option key={id} value={id}>{name}</option>
+                      ));
+                    })()}
                   </select>
                 </div>
 
@@ -840,8 +873,11 @@ export default function CommitteeFixtureDetailPage() {
 
             <div className="space-y-3">
               {matchups.map((matchup) => {
-                const isHomeMotm = (fixture?.motm_player_id && matchup.home_player_id === fixture.motm_player_id) || (displayMotmName && matchup.home_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase());
-                const isAwayMotm = (fixture?.motm_player_id && matchup.away_player_id === fixture.motm_player_id) || (displayMotmName && matchup.away_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase());
+                const motmId = fixture?.motm_player_id;
+                const isHomeMotm = (motmId && (matchup.home_player_id === motmId || matchup.home_player_ids?.includes(motmId))) || 
+                                   (displayMotmName && (matchup.home_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase() || matchup.home_player_names?.some(n => n.trim().toLowerCase() === displayMotmName.trim().toLowerCase())));
+                const isAwayMotm = (motmId && (matchup.away_player_id === motmId || matchup.away_player_ids?.includes(motmId))) || 
+                                   (displayMotmName && (matchup.away_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase() || matchup.away_player_names?.some(n => n.trim().toLowerCase() === displayMotmName.trim().toLowerCase())));
 
                 const isTT = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || !!matchup.match_mode;
                 const modeLabel = (matchup.match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP MATCH (2v2)', icon: '🎮', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' } :

@@ -57,28 +57,35 @@ export default function TripleThreatLineupSubmission({
     checkEditability();
   }, [fixtureId, teamId, seasonId]);
 
+  // Helper to extract player ID whether input is string or object
+  const getPlayerId = (val: any): string => {
+    if (!val) return '';
+    if (typeof val === 'string') return val.trim();
+    return String(val.player_id || val.id || '').trim();
+  };
+
   // Load existing lineup if available
   useEffect(() => {
     if (existingLineup) {
       const tt = existingLineup.triple_threat_lineup;
       if (tt) {
         if (Array.isArray(tt.coop)) {
-          setCoopPlayers([tt.coop[0] || '', tt.coop[1] || '']);
+          setCoopPlayers([getPlayerId(tt.coop[0]), getPlayerId(tt.coop[1])]);
         }
         if (Array.isArray(tt.duo)) {
-          setDuoPlayers([tt.duo[0] || '', tt.duo[1] || '']);
+          setDuoPlayers([getPlayerId(tt.duo[0]), getPlayerId(tt.duo[1])]);
         }
         if (Array.isArray(tt.single)) {
-          setSinglePlayer(tt.single[0] || '');
-        } else if (typeof tt.single === 'string') {
-          setSinglePlayer(tt.single);
+          setSinglePlayer(getPlayerId(tt.single[0]));
+        } else if (tt.single) {
+          setSinglePlayer(getPlayerId(tt.single));
         }
       } else if (Array.isArray(existingLineup.starting_xi)) {
         // Fallback: extract from starting_xi if items have mode or sequential slots
         const sXi = existingLineup.starting_xi;
-        const coopItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'coop').map((p: any) => String(p.player_id || p.id));
-        const duoItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'duo').map((p: any) => String(p.player_id || p.id));
-        const singleItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'single').map((p: any) => String(p.player_id || p.id));
+        const coopItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'coop').map(getPlayerId);
+        const duoItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'duo').map(getPlayerId);
+        const singleItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'single').map(getPlayerId);
 
         if (coopItems.length > 0 || duoItems.length > 0 || singleItems.length > 0) {
           setCoopPlayers([coopItems[0] || '', coopItems[1] || '']);
@@ -86,9 +93,9 @@ export default function TripleThreatLineupSubmission({
           setSinglePlayer(singleItems[0] || '');
         } else if (sXi.length >= 5) {
           // Sequential fallback: 0-1 coop, 2-3 duo, 4 single
-          setCoopPlayers([String(sXi[0]?.player_id || sXi[0]), String(sXi[1]?.player_id || sXi[1])]);
-          setDuoPlayers([String(sXi[2]?.player_id || sXi[2]), String(sXi[3]?.player_id || sXi[3])]);
-          setSinglePlayer(String(sXi[4]?.player_id || sXi[4]));
+          setCoopPlayers([getPlayerId(sXi[0]), getPlayerId(sXi[1])]);
+          setDuoPlayers([getPlayerId(sXi[2]), getPlayerId(sXi[3])]);
+          setSinglePlayer(getPlayerId(sXi[4]));
         }
       }
     }
@@ -201,20 +208,31 @@ export default function TripleThreatLineupSubmission({
       setError(null);
       setSuccessMessage(null);
 
+      const rosterMap = new Map(roster.map(p => [String(p.player_id || p.id), p.player_name || p.name]));
+      const getPlayerName = (id: string) => rosterMap.get(id) || `Player ${id}`;
+
       const payload = {
         fixture_id: fixtureId,
         team_id: teamId,
         triple_threat_lineup: {
-          coop: [coopPlayers[0], coopPlayers[1]],
-          duo: [duoPlayers[0], duoPlayers[1]],
-          single: [singlePlayer],
+          coop: [
+            { player_id: coopPlayers[0], player_name: getPlayerName(coopPlayers[0]) },
+            { player_id: coopPlayers[1], player_name: getPlayerName(coopPlayers[1]) },
+          ],
+          duo: [
+            { player_id: duoPlayers[0], player_name: getPlayerName(duoPlayers[0]) },
+            { player_id: duoPlayers[1], player_name: getPlayerName(duoPlayers[1]) },
+          ],
+          single: [
+            { player_id: singlePlayer, player_name: getPlayerName(singlePlayer) },
+          ],
         },
         starting_xi: [
-          { player_id: coopPlayers[0], mode: 'coop', slot: 1 },
-          { player_id: coopPlayers[1], mode: 'coop', slot: 2 },
-          { player_id: duoPlayers[0], mode: 'duo', slot: 1 },
-          { player_id: duoPlayers[1], mode: 'duo', slot: 2 },
-          { player_id: singlePlayer, mode: 'single', slot: 1 },
+          { player_id: coopPlayers[0], player_name: getPlayerName(coopPlayers[0]), mode: 'coop', slot: 1 },
+          { player_id: coopPlayers[1], player_name: getPlayerName(coopPlayers[1]), mode: 'coop', slot: 2 },
+          { player_id: duoPlayers[0], player_name: getPlayerName(duoPlayers[0]), mode: 'duo', slot: 1 },
+          { player_id: duoPlayers[1], player_name: getPlayerName(duoPlayers[1]), mode: 'duo', slot: 2 },
+          { player_id: singlePlayer, player_name: getPlayerName(singlePlayer), mode: 'single', slot: 1 },
         ],
         substitutes: [],
         submitted_by: user?.uid || 'anonymous',

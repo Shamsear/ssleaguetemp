@@ -33,7 +33,7 @@ export async function POST(
 
     // Get tournament details with format settings
     const tournament = await sql`
-      SELECT t.*, ts.tournament_system
+      SELECT t.*, ts.tournament_system, ts.matchday_format, ts.clean_sweep_bonus, ts.points_as_gd
       FROM tournaments t
       LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
       WHERE t.id = ${tournamentId}

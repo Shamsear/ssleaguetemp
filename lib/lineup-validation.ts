@@ -77,9 +77,15 @@ export async function validateLineup(
           };
         }
 
-        const allTtPlayers = [...ttLineup.coop, ...ttLineup.duo, ...ttLineup.single];
+        const extractId = (item: any): string => {
+          if (!item) return '';
+          if (typeof item === 'string') return item.trim();
+          return String(item.player_id || item.id || '').trim();
+        };
+
+        const allTtPlayers = [...ttLineup.coop, ...ttLineup.duo, ...ttLineup.single].map(extractId).filter(Boolean);
         const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-        const isModern = seasonNum === 16 || seasonNum === 17 || seasonNum === 18 || seasonNum === 19;
+        const isModern = seasonNum >= 16;
 
         const playerChecks = isModern
           ? await sql`
@@ -151,7 +157,7 @@ export async function validateLineup(
   // 4. Check if all players belong to the team and are registered for season
   console.log('🔍 Checking player eligibility:', { allPlayers, seasonId, teamId });
   const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-  const isModern = seasonNum === 16 || seasonNum === 17;
+  const isModern = seasonNum >= 16;
 
   const playerChecks = isModern
     ? await sql`

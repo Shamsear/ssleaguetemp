@@ -476,6 +476,76 @@ export async function POST(request: NextRequest) {
           const homeTT = (team_id === home_team_id) ? triple_threat_lineup : otherLineup[0].triple_threat_lineup;
           const awayTT = (team_id === away_team_id) ? triple_threat_lineup : otherLineup[0].triple_threat_lineup;
 
+          const extractId = (item: any): string => {
+            if (!item) return '';
+            if (typeof item === 'string') return item.trim();
+            return String(item.player_id || item.id || '').trim();
+          };
+
+          const homeCoopIds = (homeTT.coop || []).map(extractId).filter(Boolean);
+          const homeDuoIds = (homeTT.duo || []).map(extractId).filter(Boolean);
+          const homeSingleIds = (homeTT.single || []).map(extractId).filter(Boolean);
+
+          const awayCoopIds = (awayTT.coop || []).map(extractId).filter(Boolean);
+          const awayDuoIds = (awayTT.duo || []).map(extractId).filter(Boolean);
+          const awaySingleIds = (awayTT.single || []).map(extractId).filter(Boolean);
+
+          const allPlayerIds = [
+            ...homeCoopIds, ...homeDuoIds, ...homeSingleIds,
+            ...awayCoopIds, ...awayDuoIds, ...awaySingleIds
+          ];
+
+          const nameMap = new Map<string, string>();
+
+          // Pre-populate with names if objects were provided in lineup
+          const gatherObjNames = (arr: any[]) => {
+            if (!Array.isArray(arr)) return;
+            arr.forEach((item: any) => {
+              if (item && typeof item === 'object') {
+                const id = extractId(item);
+                const name = item.player_name || item.name;
+                if (id && name) nameMap.set(id, name);
+              }
+            });
+          };
+
+          gatherObjNames(homeTT.coop);
+          gatherObjNames(homeTT.duo);
+          gatherObjNames(homeTT.single);
+          gatherObjNames(awayTT.coop);
+          gatherObjNames(awayTT.duo);
+          gatherObjNames(awayTT.single);
+
+          // Fetch any remaining/verified player names from DB
+          if (allPlayerIds.length > 0) {
+            try {
+              const playerRows = await sql`
+                SELECT player_id::text, player_name FROM player_seasons WHERE player_id::text = ANY(${allPlayerIds})
+                UNION
+                SELECT id::text as player_id, name as player_name FROM realplayers WHERE id::text = ANY(${allPlayerIds})
+                UNION
+                SELECT id::text as player_id, name as player_name FROM players WHERE id::text = ANY(${allPlayerIds})
+              `;
+              playerRows.forEach((r: any) => {
+                if (r.player_id && r.player_name) {
+                  nameMap.set(String(r.player_id), r.player_name);
+                }
+              });
+            } catch (pErr) {
+              console.warn('Could not query player names for Triple Threat matchups:', pErr);
+            }
+          }
+
+          const getNames = (ids: string[]) => ids.map(id => nameMap.get(id) || `Player ${id}`);
+
+          const homeCoopNames = getNames(homeCoopIds);
+          const homeDuoNames = getNames(homeDuoIds);
+          const homeSingleNames = getNames(homeSingleIds);
+
+          const awayCoopNames = getNames(awayCoopIds);
+          const awayDuoNames = getNames(awayDuoIds);
+          const awaySingleNames = getNames(awaySingleIds);
+
           // Delete old matchups for this fixture
           await sql`DELETE FROM matchups WHERE fixture_id = ${fixture_id}`;
 
@@ -488,10 +558,10 @@ export async function POST(request: NextRequest) {
               match_duration, created_at, updated_at
             ) VALUES (
               ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 1, 'coop',
-              ${homeTT.coop[0]?.player_id || ''}, ${homeTT.coop[0]?.player_name || ''},
-              ${awayTT.coop[0]?.player_id || ''}, ${awayTT.coop[0]?.player_name || ''},
-              ${homeTT.coop.map((p: any) => p.player_id)}, ${homeTT.coop.map((p: any) => p.player_name)},
-              ${awayTT.coop.map((p: any) => p.player_id)}, ${awayTT.coop.map((p: any) => p.player_name)},
+              ${homeCoopIds[0] || ''}, ${homeCoopNames.join(' & ') || ''},
+              ${awayCoopIds[0] || ''}, ${awayCoopNames.join(' & ') || ''},
+              ${homeCoopIds}, ${homeCoopNames},
+              ${awayCoopIds}, ${awayCoopNames},
               6, NOW(), NOW()
             )
           `;
@@ -505,10 +575,10 @@ export async function POST(request: NextRequest) {
               match_duration, created_at, updated_at
             ) VALUES (
               ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 2, 'duo',
-              ${homeTT.duo[0]?.player_id || ''}, ${homeTT.duo[0]?.player_name || ''},
-              ${awayTT.duo[0]?.player_id || ''}, ${awayTT.duo[0]?.player_name || ''},
-              ${homeTT.duo.map((p: any) => p.player_id)}, ${homeTT.duo.map((p: any) => p.player_name)},
-              ${awayTT.duo.map((p: any) => p.player_id)}, ${awayTT.duo.map((p: any) => p.player_name)},
+              ${homeDuoIds[0] || ''}, ${homeDuoNames.join(' & ') || ''},
+              ${awayDuoIds[0] || ''}, ${awayDuoNames.join(' & ') || ''},
+              ${homeDuoIds}, ${homeDuoNames},
+              ${awayDuoIds}, ${awayDuoNames},
               6, NOW(), NOW()
             )
           `;
@@ -522,10 +592,10 @@ export async function POST(request: NextRequest) {
               match_duration, created_at, updated_at
             ) VALUES (
               ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 3, 'single',
-              ${homeTT.single[0]?.player_id || ''}, ${homeTT.single[0]?.player_name || ''},
-              ${awayTT.single[0]?.player_id || ''}, ${awayTT.single[0]?.player_name || ''},
-              ${[homeTT.single[0]?.player_id || '']}, ${[homeTT.single[0]?.player_name || '']},
-              ${[awayTT.single[0]?.player_id || '']}, ${[awayTT.single[0]?.player_name || '']},
+              ${homeSingleIds[0] || ''}, ${homeSingleNames[0] || ''},
+              ${awaySingleIds[0] || ''}, ${awaySingleNames[0] || ''},
+              ${homeSingleIds}, ${homeSingleNames},
+              ${awaySingleIds}, ${awaySingleNames},
               6, NOW(), NOW()
             )
           `;
