@@ -167,6 +167,8 @@ export async function POST(
       );
     }
 
+    const isTT = tournamentData.tournament_type === 'triple_threat' || tournamentData.matchday_format === 'triple_threat';
+
     // Insert fixtures in batch
     for (const fixture of fixtures) {
       await sql`
@@ -183,6 +185,8 @@ export async function POST(
           status,
           leg,
           matchup_mode,
+          knockout_format,
+          scoring_system,
           created_at,
           updated_at
         ) VALUES (
@@ -198,6 +202,8 @@ export async function POST(
           ${fixture.status},
           ${fixture.leg},
           ${fixture.matchup_mode || 'manual'},
+          ${isTT ? 'triple_threat' : (fixture.knockout_format || null)},
+          ${isTT ? 'triple_threat' : (tournamentData.scoring_system || 'goals')},
           NOW(),
           NOW()
         )
@@ -206,7 +212,6 @@ export async function POST(
 
     // Create round_deadlines for each round
     const uniqueRounds = [...new Set(fixtures.map((f: any) => `${f.round_number}_${f.leg}`))];
-    const isTT = tournamentData.tournament_type === 'triple_threat' || tournamentData.matchday_format === 'triple_threat';
 
     for (const roundKey of uniqueRounds) {
       const [roundNumber, leg] = roundKey.split('_');

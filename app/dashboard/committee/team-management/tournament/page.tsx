@@ -124,8 +124,8 @@ export function TournamentDashboardPageContent() {
   const [selectedRound, setSelectedRound] = useState<number>(1);
   const [isTwoLegged, setIsTwoLegged] = useState(true);
   const [matchupMode, setMatchupMode] = useState<'manual' | 'blind_lineup'>('manual');
-  const [knockoutFormat, setKnockoutFormat] = useState<'single_leg' | 'two_leg' | 'round_robin'>('single_leg');
-  const [scoringSystem, setScoringSystem] = useState<'goals' | 'wins'>('goals');
+  const [knockoutFormat, setKnockoutFormat] = useState<'single_leg' | 'two_leg' | 'round_robin' | 'triple_threat'>('single_leg');
+  const [scoringSystem, setScoringSystem] = useState<'goals' | 'wins' | 'triple_threat'>('goals');
   const [isGeneratingKnockout, setIsGeneratingKnockout] = useState(false);
 
   // Round-wise knockout generation state
@@ -299,6 +299,16 @@ export function TournamentDashboardPageContent() {
       }
     }
   }, [selectedTournamentForFixtures, tournamentFixtures]);
+
+  // Auto-preset Triple Threat format & scoring when Triple Threat tournament is selected
+  useEffect(() => {
+    if (!selectedTournamentForFixtures || tournaments.length === 0) return;
+    const tour = tournaments.find(t => t.id === selectedTournamentForFixtures);
+    if (tour && (tour.tournament_type === 'triple_threat' || tour.matchday_format === 'triple_threat')) {
+      setKnockoutFormat('triple_threat');
+      setScoringSystem('triple_threat');
+    }
+  }, [selectedTournamentForFixtures, tournaments]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -699,10 +709,17 @@ export function TournamentDashboardPageContent() {
       third_place: 'Third Place Playoff'
     };
 
+    const formatLabel = knockoutFormat === 'triple_threat'
+      ? '⚡ SS Triple Threat (3 matchups: Co-op, Duo, Single)'
+      : `${knockoutFormat} format`;
+    const scoringLabel = scoringSystem === 'triple_threat'
+      ? '⚡ Triple Threat Points (+Clean Sweep Bonus)'
+      : `${scoringSystem} scoring`;
+
     const confirmed = await showConfirm({
       type: 'info',
       title: `Generate ${roundNames[knockoutRoundType]}`,
-      message: `This will create ${roundNames[knockoutRoundType]} fixtures for Round ${knockoutRoundNumber} with ${knockoutNumTeams} teams using ${knockoutFormat} format and ${scoringSystem} scoring.`,
+      message: `This will create ${roundNames[knockoutRoundType]} fixtures for Round ${knockoutRoundNumber} with ${knockoutNumTeams} teams using ${formatLabel} and ${scoringLabel}.`,
       confirmText: 'Generate',
       cancelText: 'Cancel'
     });
@@ -1500,6 +1517,12 @@ export function TournamentDashboardPageContent() {
 
   // Get selected tournament details
   const selectedTournament = tournaments.find(t => t.id === selectedTournamentForFixtures);
+  const isTripleThreatTournament = Boolean(
+    selectedTournament && (
+      selectedTournament.tournament_type === 'triple_threat' || 
+      selectedTournament.matchday_format === 'triple_threat'
+    )
+  );
 
   // Calculate max rounds from fixtures
   const fixturesForSelectedTournament = tournamentFixtures.filter(f => f.tournament_id === selectedTournamentForFixtures);
@@ -2069,7 +2092,7 @@ export function TournamentDashboardPageContent() {
                           }`}
                       >
                         <div className="font-semibold">Single Leg</div>
-                        <div className="text-xs mt-1">Each team plays once</div>
+                        <div className="text-xs mt-1">{isTripleThreatTournament ? 'Each team plays 3 matchups once' : 'Each team plays once'}</div>
                       </button>
                       <button
                         onClick={() => setIsTwoLegged(true)}
@@ -2079,7 +2102,7 @@ export function TournamentDashboardPageContent() {
                           }`}
                       >
                         <div className="font-semibold">Two Legs (Home & Away)</div>
-                        <div className="text-xs mt-1">Each team plays twice</div>
+                        <div className="text-xs mt-1">{isTripleThreatTournament ? 'Home + Away ties (3 matchups each)' : 'Each team plays twice'}</div>
                       </button>
                     </div>
                   </div>
@@ -2098,7 +2121,7 @@ export function TournamentDashboardPageContent() {
                           }`}
                       >
                         <div className="font-semibold">Manual Matchups</div>
-                        <div className="text-xs mt-1">Teams create matchups manually</div>
+                        <div className="text-xs mt-1">{isTripleThreatTournament ? 'Set via Triple Threat Lineups' : 'Teams create matchups manually'}</div>
                       </button>
                       <button
                         onClick={() => setMatchupMode('blind_lineup')}
@@ -2111,7 +2134,14 @@ export function TournamentDashboardPageContent() {
                         <div className="text-xs mt-1">Auto-matchups from player order</div>
                       </button>
                     </div>
-                    {matchupMode === 'blind_lineup' && (
+                    {isTripleThreatTournament && (
+                      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-xs text-amber-800">
+                          <strong>⚡ SS Triple Threat Matchup Engine:</strong> In Triple Threat tournaments, 3 matchups (Co-op 2v2, Duo 2v2, Single 1v1) are automatically generated when home and away lineups are submitted.
+                        </p>
+                      </div>
+                    )}
+                    {!isTripleThreatTournament && matchupMode === 'blind_lineup' && (
                       <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
                         <p className="text-xs text-purple-700">
                           <strong>Blind Lineup Mode:</strong> Teams submit player order during home fixture phase.
@@ -2125,41 +2155,78 @@ export function TournamentDashboardPageContent() {
                 {/* Knockout Format Selection */}
                 {selectedTournamentForFixtures && (
                   <div className="mb-4">
-                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
-                      Knockout Format <span className="text-xs text-gray-500">(for knockout generation)</span>
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider">
+                        Knockout Format <span className="text-xs text-gray-500 font-normal">(for knockout generation)</span>
+                      </label>
+                      {isTripleThreatTournament && (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-xs">
+                          ⚡ SS Triple Threat Preset
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <button
+                        onClick={() => setKnockoutFormat('triple_threat')}
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left relative ${knockoutFormat === 'triple_threat'
+                            ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/40 shadow-xs'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-amber-200'
+                          }`}
+                      >
+                        {isTripleThreatTournament && (
+                          <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shadow-xs">
+                            Recommended
+                          </span>
+                        )}
+                        <div className="font-semibold flex items-center gap-1.5">
+                          <span className="text-amber-500 font-bold">⚡</span> SS Triple Threat
+                        </div>
+                        <div className="text-xs mt-1 opacity-80">3 matchups (Co-op, Duo, Single)</div>
+                      </button>
                       <button
                         onClick={() => setKnockoutFormat('single_leg')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all ${knockoutFormat === 'single_leg'
-                            ? 'border-green-500 bg-green-50 text-green-700'
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${knockoutFormat === 'single_leg'
+                            ? 'border-green-500 bg-green-50 text-green-700 ring-2 ring-green-400/40 shadow-xs'
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
                         <div className="font-semibold">Single Leg</div>
-                        <div className="text-xs mt-1">5 matchups (1v1, 2v2...)</div>
+                        <div className="text-xs mt-1 opacity-80">
+                          {isTripleThreatTournament ? '3 matchups (Co-op, Duo, Single)' : '5 matchups (1v1, 2v2...)'}
+                        </div>
                       </button>
                       <button
                         onClick={() => setKnockoutFormat('two_leg')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all ${knockoutFormat === 'two_leg'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${knockoutFormat === 'two_leg'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-400/40 shadow-xs'
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
                         <div className="font-semibold">Two Legs</div>
-                        <div className="text-xs mt-1">Home + Away fixtures</div>
+                        <div className="text-xs mt-1 opacity-80">
+                          {isTripleThreatTournament ? 'Home + Away (3 matchups each)' : 'Home + Away fixtures'}
+                        </div>
                       </button>
                       <button
                         onClick={() => setKnockoutFormat('round_robin')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all ${knockoutFormat === 'round_robin'
-                            ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${knockoutFormat === 'round_robin'
+                            ? 'border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-400/40 shadow-xs'
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
                         <div className="font-semibold">Round Robin</div>
-                        <div className="text-xs mt-1">25 matchups (all vs all)</div>
+                        <div className="text-xs mt-1 opacity-80">25 matchups (all vs all)</div>
                       </button>
                     </div>
+                    {knockoutFormat === 'triple_threat' && (
+                      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-xs text-amber-800">
+                          <strong>⚡ SS Triple Threat Format:</strong> Each knockout tie contains exactly 3 matchups: 
+                          <strong> Matchup 1 (Co-op 2v2)</strong>, <strong>Matchup 2 (Duo 2v2)</strong>, and <strong>Matchup 3 (Single 1v1)</strong>. 
+                          Teams field exactly 5 unique players with no position overlap.
+                        </p>
+                      </div>
+                    )}
                     {knockoutFormat === 'round_robin' && (
                       <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                         <p className="text-xs text-orange-700">
@@ -2176,36 +2243,76 @@ export function TournamentDashboardPageContent() {
                 {/* Scoring System Selection */}
                 {selectedTournamentForFixtures && (
                   <div className="mb-4">
-                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
-                      Scoring System <span className="text-xs text-gray-500">(applies to all formats)</span>
-                    </label>
-                    <div className="flex gap-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider">
+                        Scoring System <span className="text-xs text-gray-500 font-normal">(applies to all formats)</span>
+                      </label>
+                      {isTripleThreatTournament && (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-xs">
+                          ⚡ Clean Sweep (+1 pt) Enabled
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setScoringSystem('triple_threat')}
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left relative ${scoringSystem === 'triple_threat'
+                            ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/40 shadow-xs'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-amber-200'
+                          }`}
+                      >
+                        {isTripleThreatTournament && (
+                          <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shadow-xs">
+                            Recommended
+                          </span>
+                        )}
+                        <div className="font-semibold flex items-center gap-1.5">
+                          <span className="text-amber-500 font-bold">⚡</span> Triple Threat Points
+                        </div>
+                        <div className="text-xs mt-1 opacity-80">3 pts win, 1 draw + Sweep (+1)</div>
+                      </button>
                       <button
                         onClick={() => setScoringSystem('goals')}
-                        className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${scoringSystem === 'goals'
-                            ? 'border-green-500 bg-green-50 text-green-700'
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${scoringSystem === 'goals'
+                            ? 'border-green-500 bg-green-50 text-green-700 ring-2 ring-green-400/40 shadow-xs'
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
                         <div className="font-semibold">Goal-Based</div>
-                        <div className="text-xs mt-1">Winner by total goals scored</div>
+                        <div className="text-xs mt-1 opacity-80">Winner by total goals scored</div>
                       </button>
                       <button
                         onClick={() => setScoringSystem('wins')}
-                        className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${scoringSystem === 'wins'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${scoringSystem === 'wins'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-400/40 shadow-xs'
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                           }`}
                       >
                         <div className="font-semibold">Win-Based</div>
-                        <div className="text-xs mt-1">3 pts for win, 1 for draw</div>
+                        <div className="text-xs mt-1 opacity-80">3 pts for win, 1 for draw</div>
                       </button>
                     </div>
-                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs text-blue-700">
-                        <strong>{scoringSystem === 'goals' ? 'Goal-Based' : 'Win-Based'}:</strong> {scoringSystem === 'goals' 
-                          ? 'Team with most total goals wins. Penalties and substitution penalties count as goals.' 
-                          : 'Each matchup win = 3 points, draw = 1 point. Team with most points wins. Penalties and substitution penalties count as points.'}
+                    <div className={`mt-2 p-3 rounded-lg border ${
+                      scoringSystem === 'triple_threat' 
+                        ? 'bg-amber-50 border-amber-200 text-amber-900' 
+                        : 'bg-blue-50 border-blue-200 text-blue-700'
+                    }`}>
+                      <p className="text-xs">
+                        {scoringSystem === 'triple_threat' && (
+                          <>
+                            <strong>⚡ Triple Threat Scoring:</strong> Matchup win = 3 points, draw = 1 point. If a team wins all 3 matchups (3-0 clean sweep), they receive a <strong>+1 Clean Sweep Bonus</strong> (max 10 pts per tie). Points difference counts directly as Goal Difference (GD).
+                          </>
+                        )}
+                        {scoringSystem === 'goals' && (
+                          <>
+                            <strong>Goal-Based:</strong> Team with most total goals wins. Penalties and substitution penalties count as goals.
+                          </>
+                        )}
+                        {scoringSystem === 'wins' && (
+                          <>
+                            <strong>Win-Based:</strong> Each matchup win = 3 points, draw = 1 point. Team with most points wins. Penalties and substitution penalties count as points.
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -2629,8 +2736,24 @@ export function TournamentDashboardPageContent() {
                             </span>
                           )}
                           {(fixture as any).scoring_system && (
-                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                              {(fixture as any).scoring_system === 'wins' ? 'Wins' : 'Goals'}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              (fixture as any).scoring_system === 'triple_threat'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
+                                : (fixture as any).scoring_system === 'wins'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              {(fixture as any).scoring_system === 'triple_threat' ? '⚡ Triple Threat' : (fixture as any).scoring_system === 'wins' ? 'Wins' : 'Goals'}
+                            </span>
+                          )}
+                          {(fixture as any).knockout_format === 'triple_threat' && (
+                            <span className="text-xs bg-slate-100 text-slate-700 border border-slate-300 px-2 py-0.5 rounded-full font-semibold">
+                              3 Matchups
+                            </span>
+                          )}
+                          {(fixture as any).clean_sweep_winner && (
+                            <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-black shadow-xs">
+                              ⚡ CLEAN SWEEP
                             </span>
                           )}
                           {fixture.group_name && (

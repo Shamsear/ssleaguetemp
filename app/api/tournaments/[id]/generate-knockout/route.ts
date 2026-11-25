@@ -19,13 +19,14 @@ export async function POST(
             pairing_method = 'standard',
             matchup_mode = 'manual', // Allow changing from blind_lineup to manual
             is_two_legged = false, // Allow changing leg configuration
-            knockout_format = 'single_leg' // New: single_leg, two_leg, or round_robin
+            knockout_format = 'single_leg', // single_leg, two_leg, round_robin, triple_threat
+            scoring_system
         } = body;
 
         // Get tournament details
         const [tournament] = await sql`
       SELECT 
-        id, tournament_name, season_id,
+        id, tournament_name, tournament_type, matchday_format, season_id,
         has_group_stage, has_knockout_stage,
         number_of_groups, teams_advancing_per_group,
         playoff_teams
@@ -228,17 +229,22 @@ export async function POST(
             // Determine fixture format based on knockout_format parameter
             // Finals are ALWAYS 1 leg, regardless of settings
             const isFinalRound = currentKnockoutRound === 'final';
+            const isTT = tournament.tournament_type === 'triple_threat' || tournament.matchday_format === 'triple_threat' || knockout_format === 'triple_threat';
+            const effectiveScoringSystem = scoring_system || (isTT ? 'triple_threat' : 'goals');
             
             let legsToCreate = 1;
             let actualKnockoutFormat = knockout_format;
             
             if (isFinalRound) {
                 // Finals are always single leg
-                actualKnockoutFormat = 'single_leg';
+                actualKnockoutFormat = isTT ? 'triple_threat' : 'single_leg';
                 legsToCreate = 1;
+            } else if (knockout_format === 'triple_threat') {
+                actualKnockoutFormat = 'triple_threat';
+                legsToCreate = (is_two_legged) ? 2 : 1;
             } else if (knockout_format === 'two_leg' || is_two_legged) {
                 // Two-legged format
-                actualKnockoutFormat = 'two_leg';
+                actualKnockoutFormat = isTT ? 'triple_threat' : 'two_leg';
                 legsToCreate = 2;
             } else if (knockout_format === 'round_robin') {
                 // Round robin format (all vs all)
@@ -246,7 +252,7 @@ export async function POST(
                 legsToCreate = 1;
             } else {
                 // Single leg format
-                actualKnockoutFormat = 'single_leg';
+                actualKnockoutFormat = isTT ? 'triple_threat' : 'single_leg';
                 legsToCreate = 1;
             }
 
@@ -270,6 +276,7 @@ export async function POST(
             round_number, match_number, leg,
             knockout_round,
             knockout_format,
+            scoring_system,
             matchup_mode,
             scheduled_date,
             status,
@@ -286,7 +293,8 @@ export async function POST(
             ${legNum},
             ${currentKnockoutRound},
             ${actualKnockoutFormat},
-            ${matchup_mode},
+            ${effectiveScoringSystem},
+            ${isTT ? 'manual' : matchup_mode},
             ${scheduledDate.toISOString().split('T')[0]},
             'scheduled',
             NOW(), NOW()
@@ -302,12 +310,43 @@ export async function POST(
                     match_number: i + 1,
                     leg: legNum,
                     knockout_format: actualKnockoutFormat,
+                    scoring_system: effectiveScoringSystem,
                     home_team: homeTeam.team_name,
                     away_team: awayTeam.team_name,
                     scheduled_date: scheduledDate.toISOString().split('T')[0],
-                    matchup_mode: matchup_mode
+                    matchup_mode: isTT ? 'manual' : matchup_mode
                 });
             }
+        }
+
+        // Ensure round_deadlines entries exist for generated knockout fixtures
+        const isTripleThreat = tournament.tournament_type === 'triple_threat' || tournament.matchday_format === 'triple_threat' || knockout_format === 'triple_threat';
+        const uniqueKnockoutLegs = [...new Set(createdFixtures.map(f => f.leg))];
+        for (const leg of uniqueKnockoutLegs) {
+            await sql`
+                INSERT INTO round_deadlines (
+                    tournament_id,
+                    season_id,
+                    round_number,
+                    leg,
+                    away_fixture_deadline_time,
+                    result_entry_deadline_time,
+                    status,
+                    created_at,
+                    updated_at
+                ) VALUES (
+                    ${tournamentId},
+                    ${tournament.season_id},
+                    ${currentRound},
+                    ${leg},
+                    ${isTripleThreat ? '14:00' : '17:00'},
+                    '00:30',
+                    'pending',
+                    NOW(),
+                    NOW()
+                )
+                ON CONFLICT (tournament_id, round_number, leg) DO NOTHING
+            `;
         }
 
         return NextResponse.json({

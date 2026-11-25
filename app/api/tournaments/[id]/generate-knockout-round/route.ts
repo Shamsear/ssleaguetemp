@@ -93,10 +93,40 @@ export async function POST(
       }
     }
 
+    // Check if tournament is Triple Threat or Triple Threat format requested
+    const isTT = tournament.tournament_type === 'triple_threat' || knockout_format === 'triple_threat';
+    const effectiveFormat = (knockout_format === 'triple_threat' || (isTT && knockout_format === 'single_leg'))
+      ? 'triple_threat'
+      : knockout_format;
+    const effectiveScoring = scoring_system === 'triple_threat' || isTT
+      ? 'triple_threat'
+      : scoring_system;
+
     // Generate fixtures based on knockout format
     const fixturesToCreate: any[] = [];
 
-    if (knockout_format === 'single_leg') {
+    if (effectiveFormat === 'triple_threat') {
+      // Triple Threat single leg fixture (3 matchups: Co-op 2v2, Duo 2v2, Single 1v1)
+      pairings.forEach((pair, idx) => {
+        fixturesToCreate.push({
+          tournament_id: tournamentId,
+          season_id: tournament.season_id,
+          round_number,
+          match_number: idx + 1,
+          home_team_id: pair.home.team_id,
+          home_team_name: pair.home.team_name,
+          away_team_id: pair.away.team_id,
+          away_team_name: pair.away.team_name,
+          knockout_round,
+          knockout_format: 'triple_threat',
+          scoring_system: effectiveScoring,
+          matchup_mode: 'manual',
+          leg: 'first',
+          status: 'scheduled',
+          scheduled_date: start_date || null,
+        });
+      });
+    } else if (knockout_format === 'single_leg') {
       // One fixture per pairing
       pairings.forEach((pair, idx) => {
         fixturesToCreate.push({
@@ -110,7 +140,7 @@ export async function POST(
           away_team_name: pair.away.team_name,
           knockout_round,
           knockout_format,
-          scoring_system,
+          scoring_system: effectiveScoring,
           matchup_mode,
           leg: 'first',
           status: 'scheduled',
@@ -131,9 +161,9 @@ export async function POST(
           away_team_id: pair.away.team_id,
           away_team_name: pair.away.team_name,
           knockout_round,
-          knockout_format,
-          scoring_system,
-          matchup_mode,
+          knockout_format: isTT ? 'triple_threat' : knockout_format,
+          scoring_system: effectiveScoring,
+          matchup_mode: isTT ? 'manual' : matchup_mode,
           leg: 'first',
           status: 'scheduled',
           scheduled_date: start_date || null,
@@ -150,9 +180,9 @@ export async function POST(
           away_team_id: pair.home.team_id,
           away_team_name: pair.home.team_name,
           knockout_round,
-          knockout_format,
-          scoring_system,
-          matchup_mode,
+          knockout_format: isTT ? 'triple_threat' : knockout_format,
+          scoring_system: effectiveScoring,
+          matchup_mode: isTT ? 'manual' : matchup_mode,
           leg: 'second',
           status: 'scheduled',
           scheduled_date: start_date || null,
@@ -230,7 +260,6 @@ export async function POST(
     }
 
     // Ensure round_deadlines entries exist for generated knockout rounds
-    const isTT = tournament.tournament_type === 'triple_threat';
     const uniqueKnockoutLegs = [...new Set(fixturesToCreate.map(f => f.leg))];
     for (const leg of uniqueKnockoutLegs) {
       await sql`
