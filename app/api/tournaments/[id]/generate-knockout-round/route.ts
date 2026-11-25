@@ -46,7 +46,7 @@ export async function POST(
 
     // Verify tournament exists
     const tournaments = await sql`
-      SELECT id, season_id, tournament_name, tournament_type
+      SELECT id, season_id, tournament_name, tournament_type, matchday_format
       FROM tournaments
       WHERE id = ${tournamentId}
     `;
@@ -94,7 +94,7 @@ export async function POST(
     }
 
     // Check if tournament is Triple Threat or Triple Threat format requested
-    const isTT = tournament.tournament_type === 'triple_threat' || knockout_format === 'triple_threat';
+    const isTT = tournament.tournament_type === 'triple_threat' || tournament.matchday_format === 'triple_threat' || knockout_format === 'triple_threat' || tournament.tournament_name?.toLowerCase().includes('triple threat');
     const effectiveFormat = (knockout_format === 'triple_threat' || (isTT && knockout_format === 'single_leg'))
       ? 'triple_threat'
       : knockout_format;

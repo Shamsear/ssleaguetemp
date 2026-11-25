@@ -229,7 +229,7 @@ export async function POST(
             // Determine fixture format based on knockout_format parameter
             // Finals are ALWAYS 1 leg, regardless of settings
             const isFinalRound = currentKnockoutRound === 'final';
-            const isTT = tournament.tournament_type === 'triple_threat' || tournament.matchday_format === 'triple_threat' || knockout_format === 'triple_threat';
+            const isTT = tournament.tournament_type === 'triple_threat' || tournament.matchday_format === 'triple_threat' || knockout_format === 'triple_threat' || tournament.tournament_name?.toLowerCase().includes('triple threat');
             const effectiveScoringSystem = scoring_system || (isTT ? 'triple_threat' : 'goals');
             
             let legsToCreate = 1;

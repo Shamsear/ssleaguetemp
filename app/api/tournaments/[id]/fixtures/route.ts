@@ -167,7 +167,7 @@ export async function POST(
       );
     }
 
-    const isTT = tournamentData.tournament_type === 'triple_threat' || tournamentData.matchday_format === 'triple_threat';
+    const isTT = tournamentData.tournament_type === 'triple_threat' || tournamentData.matchday_format === 'triple_threat' || tournamentData.tournament_name?.toLowerCase().includes('triple threat');
 
     // Insert fixtures in batch
     for (const fixture of fixtures) {

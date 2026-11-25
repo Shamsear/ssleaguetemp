@@ -304,7 +304,12 @@ export function TournamentDashboardPageContent() {
   useEffect(() => {
     if (!selectedTournamentForFixtures || tournaments.length === 0) return;
     const tour = tournaments.find(t => t.id === selectedTournamentForFixtures);
-    if (tour && (tour.tournament_type === 'triple_threat' || tour.matchday_format === 'triple_threat')) {
+    if (tour && (
+      tour.tournament_type === 'triple_threat' || 
+      tour.matchday_format === 'triple_threat' ||
+      tour.tournament_name?.toLowerCase().includes('triple threat') ||
+      tour.id?.toLowerCase().includes('triple_threat')
+    )) {
       setKnockoutFormat('triple_threat');
       setScoringSystem('triple_threat');
     }
@@ -377,7 +382,16 @@ export function TournamentDashboardPageContent() {
       const res = await fetchWithTokenRefresh(`/api/tournaments?season_id=${seasonId}`);
       const data = await res.json();
       if (data.success) {
-        setTournaments(data.tournaments || []);
+        const loadedTournaments = data.tournaments || [];
+        setTournaments(loadedTournaments);
+
+        if (loadedTournaments.length > 0) {
+          const activeTour = loadedTournaments.find((t: any) => t.status === 'active') || loadedTournaments[0];
+          setSelectedTournamentForFixtures(prev => prev || activeTour.id);
+          setSelectedTournamentForTeams(prev => prev || activeTour.id);
+          setSelectedTournamentForStandings(prev => prev || activeTour.id);
+          setSelectedTournamentForGroups(prev => prev || activeTour.id);
+        }
 
         // Load fixtures from all tournaments
         const allTournamentFixtures: any[] = [];
@@ -1520,7 +1534,9 @@ export function TournamentDashboardPageContent() {
   const isTripleThreatTournament = Boolean(
     selectedTournament && (
       selectedTournament.tournament_type === 'triple_threat' || 
-      selectedTournament.matchday_format === 'triple_threat'
+      selectedTournament.matchday_format === 'triple_threat' ||
+      selectedTournament.tournament_name?.toLowerCase().includes('triple threat') ||
+      selectedTournament.id?.toLowerCase().includes('triple_threat')
     )
   );
 
@@ -2026,26 +2042,30 @@ export function TournamentDashboardPageContent() {
         {activeTab === 'fixtures' && (
           <div className="space-y-6">
             {/* Tournament Selector & Actions */}
-            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Layers className="w-6 h-6 text-blue-600" />
-                    Fixtures Management
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Configure tournament match rules, knockout brackets, and fixture generation settings.
-                  </p>
+            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 shadow-2xs">
+                    <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                      Fixtures Management
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      Configure tournament match rules, knockout brackets, and automated matchup generation.
+                    </p>
+                  </div>
                 </div>
 
                 {selectedTournamentForFixtures && (
                   <button
                     type="button"
                     onClick={() => setIsFixturesManagementExpanded(!isFixturesManagementExpanded)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-200/80 shadow-xs cursor-pointer"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border border-slate-200/80 shadow-2xs cursor-pointer w-full sm:w-auto"
                   >
                     <Settings className="w-4 h-4 text-slate-500" />
-                    <span>{isFixturesManagementExpanded ? 'Collapse Settings' : 'Expand Settings & Generation'}</span>
+                    <span>{isFixturesManagementExpanded ? 'Hide Settings & Generator' : 'Configure & Generate'}</span>
                     {isFixturesManagementExpanded ? (
                       <ChevronUp className="w-4 h-4 text-slate-500" />
                     ) : (
@@ -2055,358 +2075,438 @@ export function TournamentDashboardPageContent() {
                 )}
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Tournament Selector */}
                 <div>
-                  <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
-                    Select Tournament
+                  <label className="block text-xs font-black uppercase text-slate-600 tracking-wider mb-2">
+                    Active Tournament
                   </label>
-                  <select
-                    value={selectedTournamentForFixtures}
-                    onChange={(e) => handleTournamentChange(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
-                  >
-                    <option value="">-- Select a tournament --</option>
-                    {tournaments.map((tournament) => (
-                      <option key={tournament.id} value={tournament.id}>
-                        {tournament.tournament_name} ({tournament.status})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={selectedTournamentForFixtures}
+                      onChange={(e) => handleTournamentChange(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all cursor-pointer appearance-none"
+                    >
+                      <option value="">-- Select a tournament --</option>
+                      {tournaments.map((tournament) => (
+                        <option key={tournament.id} value={tournament.id}>
+                          {tournament.tournament_name} ({tournament.status})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
                 </div>
 
-                {/* Collapsible Settings & Generation Section */}
-                {selectedTournamentForFixtures && isFixturesManagementExpanded && (
-                  <div className="pt-4 border-t border-slate-100 space-y-4">
-
-                {/* Fixture Type Selection */}
-                {selectedTournamentForFixtures && (
-                  <div className="mb-4">
-                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Fixture Type</label>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setIsTwoLegged(false)}
-                        className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${!isTwoLegged
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Single Leg</div>
-                        <div className="text-xs mt-1">{isTripleThreatTournament ? 'Each team plays 3 matchups once' : 'Each team plays once'}</div>
-                      </button>
-                      <button
-                        onClick={() => setIsTwoLegged(true)}
-                        className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${isTwoLegged
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Two Legs (Home & Away)</div>
-                        <div className="text-xs mt-1">{isTripleThreatTournament ? 'Home + Away ties (3 matchups each)' : 'Each team plays twice'}</div>
-                      </button>
-                    </div>
+                {/* Live Tournament Badges Strip */}
+                {selectedTournament && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                    <span className={`px-2.5 py-1 rounded-lg font-bold border ${
+                      selectedTournament.status === 'active'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200'
+                    }`}>
+                      ● {selectedTournament.status.toUpperCase()}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                      CODE: {selectedTournament.tournament_code}
+                    </span>
+                    {isTripleThreatTournament ? (
+                      <span className="px-2.5 py-1 rounded-lg font-bold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-2xs">
+                        ⚡ SS TRIPLE THREAT (3 MATCHUPS)
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-lg font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        {selectedTournament.tournament_type.toUpperCase()}
+                      </span>
+                    )}
+                    <span className="px-2.5 py-1 rounded-lg font-medium bg-slate-50 text-slate-600 border border-slate-200 ml-auto">
+                      {fixturesForSelectedTournament.length} total fixtures
+                    </span>
                   </div>
                 )}
+              </div>
 
-                {/* Matchup Mode Selection */}
-                {selectedTournamentForFixtures && (
-                  <div className="mb-4">
-                    <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Matchup Creation Mode</label>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setMatchupMode('manual')}
-                        className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${matchupMode === 'manual'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Manual Matchups</div>
-                        <div className="text-xs mt-1">{isTripleThreatTournament ? 'Set via Triple Threat Lineups' : 'Teams create matchups manually'}</div>
-                      </button>
-                      <button
-                        onClick={() => setMatchupMode('blind_lineup')}
-                        className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${matchupMode === 'blind_lineup'
-                            ? 'border-purple-500 bg-purple-50 text-purple-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Blind Lineup</div>
-                        <div className="text-xs mt-1">Auto-matchups from player order</div>
-                      </button>
+              {/* Collapsible Settings & Generation Section */}
+              {selectedTournamentForFixtures && isFixturesManagementExpanded && (
+                <div className="mt-5 pt-5 border-t border-slate-100 space-y-6">
+
+                  {/* Section A: Match & Lineup Configuration */}
+                  <div className="p-4 sm:p-5 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-blue-600" /> Match & Lineup Rules
+                      </span>
+                      {isTripleThreatTournament && (
+                        <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 rounded shadow-2xs">
+                          ⚡ Triple Threat Preset Active
+                        </span>
+                      )}
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Fixture Type */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Fixture Type</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsTwoLegged(false)}
+                            className={`p-3 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                              !isTwoLegged
+                                ? 'border-blue-500 bg-blue-50/80 text-blue-900 shadow-2xs ring-2 ring-blue-400/20'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="font-bold text-xs sm:text-sm">Single Leg</div>
+                            <div className="text-[11px] mt-0.5 opacity-75">
+                              {isTripleThreatTournament ? '3 matchups once' : 'Each team plays once'}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsTwoLegged(true)}
+                            className={`p-3 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                              isTwoLegged
+                                ? 'border-blue-500 bg-blue-50/80 text-blue-900 shadow-2xs ring-2 ring-blue-400/20'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="font-bold text-xs sm:text-sm">Two Legs</div>
+                            <div className="text-[11px] mt-0.5 opacity-75">
+                              {isTripleThreatTournament ? 'Home + Away (3 each)' : 'Home & Away fixtures'}
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Matchup Creation Mode */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Matchup Creation Mode</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setMatchupMode('manual')}
+                            className={`p-3 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                              matchupMode === 'manual'
+                                ? 'border-blue-500 bg-blue-50/80 text-blue-900 shadow-2xs ring-2 ring-blue-400/20'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="font-bold text-xs sm:text-sm">Manual Matchups</div>
+                            <div className="text-[11px] mt-0.5 opacity-75">
+                              {isTripleThreatTournament ? 'Set via Triple Threat Lineups' : 'Teams create matchups manually'}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMatchupMode('blind_lineup')}
+                            className={`p-3 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                              matchupMode === 'blind_lineup'
+                                ? 'border-purple-500 bg-purple-50/80 text-purple-900 shadow-2xs ring-2 ring-purple-400/20'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="font-bold text-xs sm:text-sm">Blind Lineup</div>
+                            <div className="text-[11px] mt-0.5 opacity-75">Auto-matchups from player order</div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     {isTripleThreatTournament && (
-                      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-xs text-amber-800">
-                          <strong>⚡ SS Triple Threat Matchup Engine:</strong> In Triple Threat tournaments, 3 matchups (Co-op 2v2, Duo 2v2, Single 1v1) are automatically generated when home and away lineups are submitted.
-                        </p>
+                      <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+                        <span className="text-amber-600 text-sm font-bold">⚡</span>
+                        <div>
+                          <strong>Triple Threat Matchup Engine:</strong> In SS Triple Threat, 3 distinct matchups (Co-op 2v2, Duo 2v2, Single 1v1) are automatically generated as soon as lineups are submitted by teams (or the committee on their behalf).
+                        </div>
                       </div>
                     )}
                     {!isTripleThreatTournament && matchupMode === 'blind_lineup' && (
-                      <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                        <p className="text-xs text-purple-700">
-                          <strong>Blind Lineup Mode:</strong> Teams submit player order during home fixture phase.
-                          Matchups are auto-created when phase ends (Player 1 vs Player 1, etc.).
-                        </p>
+                      <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-800">
+                        <strong>Blind Lineup Mode:</strong> Teams submit ordered rosters during the home fixture phase. Matchups are paired automatically (Player 1 vs Player 1, Player 2 vs Player 2, etc.).
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Knockout Format Selection */}
-                {selectedTournamentForFixtures && (
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider">
-                        Knockout Format <span className="text-xs text-gray-500 font-normal">(for knockout generation)</span>
-                      </label>
-                      {isTripleThreatTournament && (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-xs">
-                          ⚡ SS Triple Threat Preset
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      <button
-                        onClick={() => setKnockoutFormat('triple_threat')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left relative ${knockoutFormat === 'triple_threat'
-                            ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-amber-200'
-                          }`}
-                      >
+                  {/* Section B: Knockout Format & Scoring Rules */}
+                  <div className="p-4 sm:p-5 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-4">
+                    {/* Knockout Format Selection */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[11px] font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                          <Trophy className="w-3.5 h-3.5 text-amber-500" /> Knockout Format (For Knockout Generation)
+                        </label>
                         {isTripleThreatTournament && (
-                          <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shadow-xs">
-                            Recommended
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-2xs">
+                            ⚡ SS Triple Threat Preset
                           </span>
                         )}
-                        <div className="font-semibold flex items-center gap-1.5">
-                          <span className="text-amber-500 font-bold">⚡</span> SS Triple Threat
-                        </div>
-                        <div className="text-xs mt-1 opacity-80">3 matchups (Co-op, Duo, Single)</div>
-                      </button>
-                      <button
-                        onClick={() => setKnockoutFormat('single_leg')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${knockoutFormat === 'single_leg'
-                            ? 'border-green-500 bg-green-50 text-green-700 ring-2 ring-green-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Single Leg</div>
-                        <div className="text-xs mt-1 opacity-80">
-                          {isTripleThreatTournament ? '3 matchups (Co-op, Duo, Single)' : '5 matchups (1v1, 2v2...)'}
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => setKnockoutFormat('two_leg')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${knockoutFormat === 'two_leg'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Two Legs</div>
-                        <div className="text-xs mt-1 opacity-80">
-                          {isTripleThreatTournament ? 'Home + Away (3 matchups each)' : 'Home + Away fixtures'}
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => setKnockoutFormat('round_robin')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${knockoutFormat === 'round_robin'
-                            ? 'border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                      >
-                        <div className="font-semibold">Round Robin</div>
-                        <div className="text-xs mt-1 opacity-80">25 matchups (all vs all)</div>
-                      </button>
-                    </div>
-                    {knockoutFormat === 'triple_threat' && (
-                      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-xs text-amber-800">
-                          <strong>⚡ SS Triple Threat Format:</strong> Each knockout tie contains exactly 3 matchups: 
-                          <strong> Matchup 1 (Co-op 2v2)</strong>, <strong>Matchup 2 (Duo 2v2)</strong>, and <strong>Matchup 3 (Single 1v1)</strong>. 
-                          Teams field exactly 5 unique players with no position overlap.
-                        </p>
                       </div>
-                    )}
-                    {knockoutFormat === 'round_robin' && (
-                      <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <p className="text-xs text-orange-700">
-                          <strong>Round Robin:</strong> Each of 5 players from home team plays against each of 5 players from away team (5×5 = 25 matchups). 
-                          {scoringSystem === 'goals' 
-                            ? ' Winner determined by total goals scored (with matchup wins as tiebreaker).'
-                            : ' Winner determined by total matchup wins.'}
-                        </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setKnockoutFormat('triple_threat')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left relative cursor-pointer ${
+                            knockoutFormat === 'triple_threat'
+                              ? 'border-amber-500 bg-amber-50/90 text-amber-950 ring-2 ring-amber-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-amber-200'
+                          }`}
+                        >
+                          {isTripleThreatTournament && (
+                            <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shadow-2xs">
+                              Recommended
+                            </span>
+                          )}
+                          <div className="font-bold text-xs sm:text-sm flex items-center gap-1">
+                            <span className="text-amber-500 font-bold">⚡</span> SS Triple Threat
+                          </div>
+                          <div className="text-[11px] mt-0.5 opacity-80">3 matchups (Co-op, Duo, Single)</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnockoutFormat('single_leg')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                            knockoutFormat === 'single_leg'
+                              ? 'border-emerald-500 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="font-bold text-xs sm:text-sm">Single Leg</div>
+                          <div className="text-[11px] mt-0.5 opacity-80">
+                            {isTripleThreatTournament ? '3 matchups (Co-op, Duo, Single)' : '5 matchups (1v1, 2v2...)'}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnockoutFormat('two_leg')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                            knockoutFormat === 'two_leg'
+                              ? 'border-blue-500 bg-blue-50/90 text-blue-950 ring-2 ring-blue-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="font-bold text-xs sm:text-sm">Two Legs</div>
+                          <div className="text-[11px] mt-0.5 opacity-80">
+                            {isTripleThreatTournament ? 'Home + Away (3 matchups each)' : 'Home + Away fixtures'}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnockoutFormat('round_robin')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                            knockoutFormat === 'round_robin'
+                              ? 'border-orange-500 bg-orange-50/90 text-orange-950 ring-2 ring-orange-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="font-bold text-xs sm:text-sm">Round Robin</div>
+                          <div className="text-[11px] mt-0.5 opacity-80">25 matchups (all vs all)</div>
+                        </button>
                       </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Scoring System Selection */}
-                {selectedTournamentForFixtures && (
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-xs font-black uppercase text-slate-700 tracking-wider">
-                        Scoring System <span className="text-xs text-gray-500 font-normal">(applies to all formats)</span>
-                      </label>
-                      {isTripleThreatTournament && (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-xs">
-                          ⚡ Clean Sweep (+1 pt) Enabled
-                        </span>
+                      {knockoutFormat === 'triple_threat' && (
+                        <div className="mt-2.5 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900">
+                          <p>
+                            <strong>⚡ SS Triple Threat Format:</strong> Each knockout tie contains exactly 3 matchups: 
+                            <strong> Matchup 1 (Co-op 2v2)</strong>, <strong>Matchup 2 (Duo 2v2)</strong>, and <strong>Matchup 3 (Single 1v1)</strong>. 
+                            Teams field exactly 5 unique players with no position overlap.
+                          </p>
+                        </div>
+                      )}
+                      {knockoutFormat === 'round_robin' && (
+                        <div className="mt-2.5 p-3 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-900">
+                          <p>
+                            <strong>Round Robin:</strong> Each of 5 players from home team plays against each of 5 players from away team (5×5 = 25 matchups). 
+                            {scoringSystem === 'goals' 
+                              ? ' Winner determined by total goals scored (with matchup wins as tiebreaker).'
+                              : ' Winner determined by total matchup wins.'}
+                          </p>
+                        </div>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button
-                        onClick={() => setScoringSystem('triple_threat')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left relative ${scoringSystem === 'triple_threat'
-                            ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-amber-200'
-                          }`}
-                      >
+
+                    {/* Scoring System Selection */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[11px] font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                          <Target className="w-3.5 h-3.5 text-blue-600" /> Scoring System (Applies To All Formats)
+                        </label>
                         {isTripleThreatTournament && (
-                          <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shadow-xs">
-                            Recommended
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-2xs">
+                            ⚡ Clean Sweep (+1 pt) Enabled
                           </span>
                         )}
-                        <div className="font-semibold flex items-center gap-1.5">
-                          <span className="text-amber-500 font-bold">⚡</span> Triple Threat Points
-                        </div>
-                        <div className="text-xs mt-1 opacity-80">3 pts win, 1 draw + Sweep (+1)</div>
-                      </button>
-                      <button
-                        onClick={() => setScoringSystem('goals')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${scoringSystem === 'goals'
-                            ? 'border-green-500 bg-green-50 text-green-700 ring-2 ring-green-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setScoringSystem('triple_threat')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left relative cursor-pointer ${
+                            scoringSystem === 'triple_threat'
+                              ? 'border-amber-500 bg-amber-50/90 text-amber-950 ring-2 ring-amber-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-amber-200'
                           }`}
-                      >
-                        <div className="font-semibold">Goal-Based</div>
-                        <div className="text-xs mt-1 opacity-80">Winner by total goals scored</div>
-                      </button>
-                      <button
-                        onClick={() => setScoringSystem('wins')}
-                        className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${scoringSystem === 'wins'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-400/40 shadow-xs'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        >
+                          {isTripleThreatTournament && (
+                            <span className="absolute -top-2 right-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shadow-2xs">
+                              Recommended
+                            </span>
+                          )}
+                          <div className="font-bold text-xs sm:text-sm flex items-center gap-1">
+                            <span className="text-amber-500 font-bold">⚡</span> Triple Threat Points
+                          </div>
+                          <div className="text-[11px] mt-0.5 opacity-80">3 pts win, 1 draw + Sweep (+1)</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScoringSystem('goals')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                            scoringSystem === 'goals'
+                              ? 'border-emerald-500 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                           }`}
-                      >
-                        <div className="font-semibold">Win-Based</div>
-                        <div className="text-xs mt-1 opacity-80">3 pts for win, 1 for draw</div>
-                      </button>
-                    </div>
-                    <div className={`mt-2 p-3 rounded-lg border ${
-                      scoringSystem === 'triple_threat' 
-                        ? 'bg-amber-50 border-amber-200 text-amber-900' 
-                        : 'bg-blue-50 border-blue-200 text-blue-700'
-                    }`}>
-                      <p className="text-xs">
+                        >
+                          <div className="font-bold text-xs sm:text-sm">Goal-Based</div>
+                          <div className="text-[11px] mt-0.5 opacity-80">Winner by total goals scored</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScoringSystem('wins')}
+                          className={`p-3.5 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                            scoringSystem === 'wins'
+                              ? 'border-blue-500 bg-blue-50/90 text-blue-950 ring-2 ring-blue-400/30 shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="font-bold text-xs sm:text-sm">Win-Based</div>
+                          <div className="text-[11px] mt-0.5 opacity-80">3 pts for win, 1 for draw</div>
+                        </button>
+                      </div>
+                      <div className={`mt-2.5 p-3 rounded-xl border text-xs ${
+                        scoringSystem === 'triple_threat' 
+                          ? 'bg-amber-50 border-amber-200 text-amber-900' 
+                          : 'bg-blue-50/80 border-blue-200 text-blue-900'
+                      }`}>
                         {scoringSystem === 'triple_threat' && (
-                          <>
+                          <p>
                             <strong>⚡ Triple Threat Scoring:</strong> Matchup win = 3 points, draw = 1 point. If a team wins all 3 matchups (3-0 clean sweep), they receive a <strong>+1 Clean Sweep Bonus</strong> (max 10 pts per tie). Points difference counts directly as Goal Difference (GD).
-                          </>
+                          </p>
                         )}
                         {scoringSystem === 'goals' && (
-                          <>
+                          <p>
                             <strong>Goal-Based:</strong> Team with most total goals wins. Penalties and substitution penalties count as goals.
-                          </>
+                          </p>
                         )}
                         {scoringSystem === 'wins' && (
-                          <>
+                          <p>
                             <strong>Win-Based:</strong> Each matchup win = 3 points, draw = 1 point. Team with most points wins. Penalties and substitution penalties count as points.
-                          </>
+                          </p>
                         )}
-                      </p>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* Round-Wise Knockout Generation */}
-                {selectedTournamentForFixtures && (
-                  <div className="mb-6 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl">
-                    <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-amber-500" />
-                      Round-Wise Knockout Generation
-                    </h3>
-                    <p className="text-sm text-purple-700 mb-4">Generate one knockout round at a time with custom settings for each round.</p>
+                  {/* Section C: Round-Wise Knockout Generation */}
+                  <div className="p-4 sm:p-6 bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                            Round-Wise Knockout Generator
+                          </h3>
+                          <p className="text-[11px] text-slate-400">
+                            Generate one knockout round at a time with custom seeding and matchup pairing.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 w-fit">
+                        Step-by-Step
+                      </span>
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       {/* Round Type */}
                       <div>
-                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Round Type</label>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                          Round Type
+                        </label>
                         <select
                           value={knockoutRoundType}
                           onChange={(e) => setKnockoutRoundType(e.target.value as any)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-100 focus:ring-2 focus:ring-purple-500 focus:outline-none cursor-pointer"
                         >
                           <option value="quarter_finals">Quarter Finals (8 teams)</option>
                           <option value="semi_finals">Semi Finals (4 teams)</option>
                           <option value="finals">Finals (2 teams)</option>
                           <option value="third_place">Third Place Playoff (2 teams)</option>
-                          <option value="playoff">Playoff (4 teams &rarr; 2 winners)</option>
-                          <option value="tiebreaker">⚔️ 3v3 Tiebreaker Match (2 teams)</option>
+                          <option value="playoff">Playoff (4 teams → 2)</option>
+                          <option value="tiebreaker">⚔️ 3v3 Tiebreaker (2 teams)</option>
                         </select>
                       </div>
 
-                      {/* Round Number - Auto-calculated */}
+                      {/* Round Number */}
                       <div>
-                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
-                          Round Number
-                          <span className="ml-2 text-xs text-purple-600 font-normal">(Auto-set to next round)</span>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                          Round # <span className="text-purple-400 font-normal">(Auto-calculated)</span>
                         </label>
                         <input
                           type="number"
                           value={knockoutRoundNumber}
                           onChange={(e) => setKnockoutRoundNumber(parseInt(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-purple-50"
-                          placeholder="Auto-calculated"
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-100 focus:ring-2 focus:ring-purple-500 focus:outline-none"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Automatically set to {knockoutRoundNumber} (next available round)
-                        </p>
                       </div>
 
-                      {/* Number of Teams - Auto-determined by Round Type */}
+                      {/* Number of Teams */}
                       <div>
-                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">
-                          Number of Teams
-                          <span className="ml-2 text-xs text-purple-600 font-normal">(Auto-set by round type)</span>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                          Teams Required
                         </label>
-                        <div className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-700 font-medium">
-                          {knockoutNumTeams} teams
-                          {knockoutRoundType === 'tiebreaker' && ' (3v3 Tiebreaker)'}
-                          {knockoutRoundType === 'quarter_finals' && ' (Quarter Finals)'}
-                          {knockoutRoundType === 'semi_finals' && ' (Semi Finals)'}
-                          {knockoutRoundType === 'finals' && ' (Finals)'}
-                          {knockoutRoundType === 'third_place' && ' (Third Place)'}
+                        <div className="w-full px-3 py-2 bg-slate-800/60 border border-slate-700/80 rounded-xl text-xs font-bold text-slate-300">
+                          {knockoutNumTeams} teams ({knockoutRoundType.replace('_', ' ').toUpperCase()})
                         </div>
                       </div>
 
                       {/* Pairing Method */}
-                      <div>     
-                        <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Pairing Method</label>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                          Pairing Method
+                        </label>
                         <select
                           value={knockoutPairingMethod}
                           onChange={(e) => setKnockoutPairingMethod(e.target.value as any)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-100 focus:ring-2 focus:ring-purple-500 focus:outline-none cursor-pointer"
                         >
                           <option value="standard">Standard (1 vs 8, 2 vs 7...)</option>
-                          <option value="manual">Manual (selection order)</option>
+                          <option value="manual">Manual (Selection Order)</option>
                           <option value="random">Random Draw</option>
                         </select>
                       </div>
                     </div>
 
                     {/* Team Selection with Structure Preview */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Select Teams ({knockoutSelectedTeams.length}/{knockoutNumTeams})
+                    <div className="space-y-3 pt-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                          <span>Select Teams</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                            knockoutSelectedTeams.length === knockoutNumTeams
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}>
+                            {knockoutSelectedTeams.length} / {knockoutNumTeams} Selected
+                          </span>
                         </label>
                         <button
-                          onClick={() => {
-                            loadAvailableTeamsForKnockout(selectedTournamentForFixtures);
-                          }}
-                          className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 font-medium transition-colors"
+                          type="button"
+                          onClick={() => loadAvailableTeamsForKnockout(selectedTournamentForFixtures)}
+                          className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded-xl font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer w-fit"
                         >
-                          <BarChart2 className="w-4 h-4 inline-block text-slate-500 mr-1 align-text-bottom" /> Load & Auto-Select Top Teams
+                          <BarChart2 className="w-3.5 h-3.5" />
+                          <span>Load & Auto-Select Top Teams</span>
                         </button>
                       </div>
 
@@ -2414,84 +2514,78 @@ export function TournamentDashboardPageContent() {
                         <>
                           {/* Knockout Structure Preview */}
                           {knockoutSelectedTeams.length === knockoutNumTeams && (
-                            <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-                              <h4 className="text-xs font-bold text-purple-900 mb-2"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Knockout Structure Preview</h4>
-                              <div className="space-y-1 text-xs">
+                            <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 space-y-2">
+                              <h4 className="text-[11px] font-black uppercase text-amber-400 tracking-wider flex items-center gap-1">
+                                <Trophy className="w-3.5 h-3.5" /> Knockout Structure Preview
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                 {knockoutPairingMethod === 'standard' && (
-                                  <>
-                                    {Array.from({ length: knockoutNumTeams / 2 }, (_, i) => {
-                                      const team1 = availableTeamsForKnockout.find(t => t.team_id === knockoutSelectedTeams[i]);
-                                      const team2 = availableTeamsForKnockout.find(t => t.team_id === knockoutSelectedTeams[knockoutNumTeams - 1 - i]);
-                                      return (
-                                        <div key={i} className="flex items-center justify-between py-1 px-2 bg-white rounded">
-                                          <span className="font-medium text-gray-700">
-                                            #{i + 1} {team1?.team_name || 'Team'}
-                                          </span>
-                                          <span className="text-purple-600 font-bold">VS</span>
-                                          <span className="font-medium text-gray-700">
-                                            #{knockoutNumTeams - i} {team2?.team_name || 'Team'}
-                                          </span>
-                                        </div>
-                                      );
-                                    })}
-                                  </>
+                                  Array.from({ length: knockoutNumTeams / 2 }, (_, i) => {
+                                    const team1 = availableTeamsForKnockout.find(t => t.team_id === knockoutSelectedTeams[i]);
+                                    const team2 = availableTeamsForKnockout.find(t => t.team_id === knockoutSelectedTeams[knockoutNumTeams - 1 - i]);
+                                    return (
+                                      <div key={i} className="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800 text-[11px]">
+                                        <span className="font-bold text-slate-200 truncate max-w-[42%]">
+                                          #{i + 1} {team1?.team_name || 'Team'}
+                                        </span>
+                                        <span className="text-amber-400 font-black px-1.5">VS</span>
+                                        <span className="font-bold text-slate-200 truncate max-w-[42%] text-right">
+                                          #{knockoutNumTeams - i} {team2?.team_name || 'Team'}
+                                        </span>
+                                      </div>
+                                    );
+                                  })
                                 )}
                                 {knockoutPairingMethod === 'manual' && (
-                                  <p className="text-gray-600">Manual pairing: Teams will be paired in selection order</p>
+                                  <p className="text-[11px] text-slate-400 col-span-2">Manual pairing: Teams will be paired in order of your click selection.</p>
                                 )}
                                 {knockoutPairingMethod === 'random' && (
-                                  <p className="text-gray-600">Random draw: Teams will be randomly paired</p>
+                                  <p className="text-[11px] text-slate-400 col-span-2">Random draw: Teams will be randomly shuffled into pairings.</p>
                                 )}
                               </div>
                             </div>
                           )}
 
                           {/* Team Grid */}
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-60 overflow-y-auto p-3 bg-white rounded-lg border border-gray-200">
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-2 bg-slate-950/60 rounded-xl border border-slate-800 scrollbar-thin">
                             {availableTeamsForKnockout.map((team, index) => {
                               const isSelected = knockoutSelectedTeams.includes(team.team_id);
                               const selectionOrder = knockoutSelectedTeams.indexOf(team.team_id) + 1;
                               const isTopTeam = index < knockoutNumTeams;
-                              
+
                               return (
                                 <button
                                   key={team.team_id}
+                                  type="button"
                                   onClick={() => toggleKnockoutTeam(team.team_id)}
-                                  className={`p-2 rounded-lg text-xs font-medium transition-all relative ${
+                                  className={`p-2.5 rounded-xl text-left text-xs transition-all relative border cursor-pointer ${
                                     isSelected
-                                      ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-400'
+                                      ? 'bg-purple-600 text-white border-purple-400 shadow-xs ring-1 ring-purple-300/40'
                                       : isTopTeam
-                                        ? 'bg-green-50 text-gray-700 hover:bg-green-100 border border-green-200'
-                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        ? 'bg-slate-800/90 hover:bg-slate-800 text-slate-200 border-emerald-500/30'
+                                        : 'bg-slate-900 hover:bg-slate-800/80 text-slate-400 border-slate-800'
                                   }`}
                                 >
-                                  <div className="flex flex-col items-start gap-1">
-                                    <div className="flex items-center gap-1 w-full">
-                                      <span className={`text-xs font-bold ${isSelected ? 'text-purple-200' : 'text-gray-400'}`}>
-                                        #{team.position || index + 1}
+                                  <div className="flex items-center justify-between gap-1 mb-1">
+                                    <span className={`text-[10px] font-bold ${isSelected ? 'text-purple-200' : 'text-slate-400'}`}>
+                                      #{team.position || index + 1}
+                                    </span>
+                                    {team.group_name && (
+                                      <span className={`text-[10px] px-1 py-0.2 rounded font-black ${
+                                        isSelected ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'
+                                      }`}>
+                                        GRP {team.group_name}
                                       </span>
-                                      {team.group_name && (
-                                        <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${
-                                          isSelected 
-                                            ? 'bg-white/20 text-white' 
-                                            : 'bg-blue-100 text-blue-700'
-                                        }`}>
-                                          {team.group_name}
-                                        </span>
-                                      )}
-                                      {isSelected && (
-                                        <span className="ml-auto bg-white text-purple-600 px-1.5 py-0.5 rounded text-xs font-bold">
-                                          {selectionOrder}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="truncate w-full text-left">{team.team_name}</span>
-                                    <div className="flex items-center gap-2 text-xs opacity-75">
-                                      <span>{team.points || 0} pts</span>
-                                      {team.matches_played > 0 && (
-                                        <span>• {team.wins || 0}W</span>
-                                      )}
-                                    </div>
+                                    )}
+                                    {isSelected && (
+                                      <span className="ml-auto bg-white text-purple-700 px-1.5 py-0.2 rounded text-[10px] font-black">
+                                        #{selectionOrder}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="font-bold text-xs truncate">{team.team_name}</div>
+                                  <div className="text-[10px] opacity-70 mt-0.5">
+                                    {team.points || 0} pts {team.matches_played > 0 && `• ${team.wins || 0}W`}
                                   </div>
                                 </button>
                               );
@@ -2499,136 +2593,153 @@ export function TournamentDashboardPageContent() {
                           </div>
                         </>
                       ) : (
-                        <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 text-center">
-                          <Users className="w-12 h-12 mx-auto text-slate-400 mb-3" />
-                          <p className="text-sm font-medium text-gray-700 mb-1">No teams loaded</p>
-                          <p className="text-xs text-gray-500 mb-3">Click the button above to load teams from standings</p>
-                          <p className="text-xs text-gray-400">Top {knockoutNumTeams} teams will be auto-selected</p>
+                        <div className="p-6 bg-slate-950/40 rounded-xl border border-slate-800 text-center">
+                          <Users className="w-8 h-8 mx-auto text-slate-600 mb-2" />
+                          <p className="text-xs font-bold text-slate-300">No teams loaded yet</p>
+                          <p className="text-[11px] text-slate-500">Click &ldquo;Load & Auto-Select Top Teams&rdquo; to pull the latest standings.</p>
                         </div>
                       )}
                     </div>
 
-                    {/* Generate Button */}
+                    {/* Generate Knockout Round Button */}
                     <button
+                      type="button"
                       onClick={handleGenerateKnockoutRound}
                       disabled={isGeneratingKnockoutRound || knockoutSelectedTeams.length !== knockoutNumTeams}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isGeneratingKnockoutRound ? (
                         <>
-                          <RefreshCw className="animate-spin h-5 w-5 mr-2" />
-                          Generating Round...
+                          <RefreshCw className="animate-spin h-4 w-4" />
+                          <span>Generating Knockout Round...</span>
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-5 h-5 text-amber-500" />
-                          Generate Knockout Round
+                          <Sparkles className="w-4 h-4 text-amber-300" />
+                          <span>Generate {knockoutRoundType.replace('_', ' ').toUpperCase()} ({knockoutNumTeams} Teams)</span>
                         </>
                       )}
                     </button>
                   </div>
-                )}
 
-                {/* Regular Fixture Generation Buttons */}
-                {selectedTournamentForFixtures && (
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={handleGenerateTournamentFixtures}
-                      disabled={isGeneratingFixtures}
-                      className="px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                    >
-                      {isGeneratingFixtures ? (
-                        <>
-                          <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Generate Fixtures
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={handleGenerateKnockoutFixtures}
-                      disabled={isGeneratingKnockout}
-                      className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                    >
-                      {isGeneratingKnockout ? (
-                        <>
-                          <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Generate Knockout
-                        </>
-                      )}
-                    </button>
-
-                    {fixturesForSelectedTournament.length > 0 && (
+                  {/* Section D: Action Toolbar */}
+                  <div className="p-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
                       <button
-                        onClick={handleDeleteTournamentFixtures}
-                        disabled={isDeletingFixtures}
-                        className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                        type="button"
+                        onClick={handleGenerateTournamentFixtures}
+                        disabled={isGeneratingFixtures}
+                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                       >
-                        {isDeletingFixtures ? (
+                        {isGeneratingFixtures ? (
                           <>
-                            <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-                            Deleting...
+                            <RefreshCw className="animate-spin h-4 w-4" />
+                            <span>Generating...</span>
                           </>
                         ) : (
                           <>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete All Fixtures
+                            <Plus className="w-4 h-4" />
+                            <span>Generate Fixtures</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleGenerateKnockoutFixtures}
+                        disabled={isGeneratingKnockout}
+                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                      >
+                        {isGeneratingKnockout ? (
+                          <>
+                            <RefreshCw className="animate-spin h-4 w-4" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Trophy className="w-4 h-4 text-amber-300" />
+                            <span>Generate Knockout Bracket</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {fixturesForSelectedTournament.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteTournamentFixtures}
+                        disabled={isDeletingFixtures}
+                        className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs sm:text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer ml-auto"
+                      >
+                        {isDeletingFixtures ? (
+                          <>
+                            <RefreshCw className="animate-spin h-4 w-4" />
+                            <span>Deleting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="w-4 h-4 text-rose-600" />
+                            <span>Delete All Fixtures</span>
                           </>
                         )}
                       </button>
                     )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+                </div>
+              )}
+            </div>
 
-            {/* Info Box */}
+            {/* Empty State when no fixtures generated */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length === 0 && (
-              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm bg-blue-50/30">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg shrink-0">
-                    <Info className="w-5 h-5 text-amber-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 mb-1">Ready to Generate Fixtures?</h3>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Make sure you've assigned teams to this tournament in the <strong>Teams tab</strong> first.
-                    </p>
-                    <button
-                      onClick={() => handleTabChange('teams')}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      Go to Teams Tab
-                    </button>
-                  </div>
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-8 shadow-sm text-center">
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-2xl w-fit mx-auto mb-3">
+                  <ClipboardList className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-base font-bold text-gray-900 mb-1">No Fixtures Generated Yet</h3>
+                <p className="text-xs text-gray-500 max-w-md mx-auto mb-4">
+                  Make sure you have assigned teams to this tournament in the Teams or Groups tab, then click &ldquo;Configure & Generate&rdquo; above.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('teams')}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Go to Teams Tab</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('groups')}
+                    className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>Go to Groups Tab</span>
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Fixtures List */}
+            {/* Fixtures List Section */}
             {selectedTournamentForFixtures && fixturesForSelectedTournament.length > 0 && (
-              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm">
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
                 
-                {/* Header & Controls */}
-                <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-slate-100">
+                {/* Header & Controls Toolbar */}
+                <div className="flex flex-col gap-3 pb-3 border-b border-slate-100">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <ClipboardList className="w-5 h-5 text-blue-600" />
-                      <span>Fixtures ({fixturesForSelectedTournament.length})</span>
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                        <ClipboardList className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                          <span>Scheduled Fixtures</span>
+                          <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {filteredFixtures.length} of {fixturesForSelectedTournament.length}
+                          </span>
+                        </h3>
+                      </div>
+                    </div>
 
                     {selectedRound > 0 && filteredFixtures.length > 0 && (
                       <div className="shrink-0">
@@ -2641,173 +2752,236 @@ export function TournamentDashboardPageContent() {
                     )}
                   </div>
 
-                  {/* Round Filter Section - Mobile & Desktop Optimized */}
-                  <div className="bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-slate-200/70 space-y-3">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                      {/* Round Selector Dropdown + Prev/Next Controls */}
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <button
-                          type="button"
-                          onClick={() => handleRoundChange(selectedRound > 1 ? selectedRound - 1 : maxRounds)}
-                          className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
-                          title="Previous Round"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
+                  {/* Round Filter Toolbar */}
+                  <div className="bg-slate-50 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                    {/* Round Dropdown + Prev/Next Controls */}
+                    <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => handleRoundChange(selectedRound > 1 ? selectedRound - 1 : maxRounds)}
+                        className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0"
+                        title="Previous Round"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
 
-                        <div className="relative flex-1 sm:w-56">
-                          <label className="sr-only">Select Round</label>
-                          <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs">
-                            <Calendar className="w-4 h-4 text-blue-600 mr-2 shrink-0" />
-                            <select
-                              value={selectedRound}
-                              onChange={(e) => handleRoundChange(parseInt(e.target.value))}
-                              className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer"
-                            >
-                              <option value={0}>All Rounds ({fixturesForSelectedTournament.length} matches)</option>
-                              {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => {
-                                const count = fixturesForSelectedTournament.filter(f => f.round_number === round).length;
-                                return (
-                                  <option key={round} value={round}>
-                                    Round {round} ({count} {count === 1 ? 'match' : 'matches'})
-                                  </option>
-                                );
-                              })}
-                            </select>
-                          </div>
+                      <div className="relative flex-1 sm:w-56">
+                        <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+                          <Calendar className="w-4 h-4 text-blue-600 mr-2 shrink-0" />
+                          <select
+                            value={selectedRound}
+                            onChange={(e) => handleRoundChange(parseInt(e.target.value))}
+                            className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer"
+                          >
+                            <option value={0}>All Rounds ({fixturesForSelectedTournament.length})</option>
+                            {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => {
+                              const count = fixturesForSelectedTournament.filter(f => f.round_number === round).length;
+                              return (
+                                <option key={round} value={round}>
+                                  Round {round} ({count} {count === 1 ? 'match' : 'matches'})
+                                </option>
+                              );
+                            })}
+                          </select>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRoundChange(selectedRound > 0 && selectedRound < maxRounds ? selectedRound + 1 : 1)}
-                          className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
-                          title="Next Round"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
                       </div>
 
-                      {/* Quick Round Pills (Scrollable on small screens) */}
-                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-none w-full sm:max-w-md">
+                      <button
+                        type="button"
+                        onClick={() => handleRoundChange(selectedRound > 0 && selectedRound < maxRounds ? selectedRound + 1 : 1)}
+                        className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0"
+                        title="Next Round"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Quick Round Pills */}
+                    <div className="flex items-center gap-1 overflow-x-auto pb-0.5 pt-0.5 scrollbar-none w-full sm:max-w-md">
+                      <button
+                        type="button"
+                        onClick={() => handleRoundChange(0)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                          selectedRound === 0
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => (
                         <button
+                          key={round}
                           type="button"
-                          onClick={() => handleRoundChange(0)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                            selectedRound === 0
-                              ? 'bg-blue-600 text-white shadow-xs'
+                          onClick={() => handleRoundChange(round)}
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                            selectedRound === round
+                              ? 'bg-blue-600 text-white shadow-2xs'
                               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
                           }`}
                         >
-                          All
+                          R{round}
                         </button>
-                        {Array.from({ length: maxRounds }, (_, i) => i + 1).map(round => (
-                          <button
-                            key={round}
-                            type="button"
-                            onClick={() => handleRoundChange(round)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                              selectedRound === round
-                                ? 'bg-blue-600 text-white shadow-xs'
-                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
-                            }`}
-                          >
-                            R{round}
-                          </button>
-                        ))}
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
 
+                {/* Fixture Cards List */}
                 <div className="space-y-3">
-                  {filteredFixtures.map((fixture: any) => (
-                    <div key={fixture.id} className="p-4 bg-white/50 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                            R{fixture.round_number}
-                          </span>
-                          {(fixture as any).knockout_round && (
-                            <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full font-bold">
-                              {(fixture as any).knockout_round === 'quarter_finals' && 'QF'}
-                              {(fixture as any).knockout_round === 'semi_finals' && 'SF'}
-                              {(fixture as any).knockout_round === 'finals' && 'FINAL'}
-                              {(fixture as any).knockout_round === 'third_place' && '3rd'}
-                            </span>
-                          )}
-                          {(fixture as any).scoring_system && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                              (fixture as any).scoring_system === 'triple_threat'
-                                ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
-                                : (fixture as any).scoring_system === 'wins'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-emerald-100 text-emerald-700'
-                            }`}>
-                              {(fixture as any).scoring_system === 'triple_threat' ? '⚡ Triple Threat' : (fixture as any).scoring_system === 'wins' ? 'Wins' : 'Goals'}
-                            </span>
-                          )}
-                          {(fixture as any).knockout_format === 'triple_threat' && (
-                            <span className="text-xs bg-slate-100 text-slate-700 border border-slate-300 px-2 py-0.5 rounded-full font-semibold">
-                              3 Matchups
-                            </span>
-                          )}
-                          {(fixture as any).clean_sweep_winner && (
-                            <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-black shadow-xs">
-                              ⚡ CLEAN SWEEP
-                            </span>
-                          )}
-                          {fixture.group_name && (
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                              Group {fixture.group_name}
-                            </span>
-                          )}
-                          <span className="text-xs text-gray-500">Match {fixture.match_number}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${fixture.status === 'completed' ? 'bg-green-100 text-green-700' :
-                            fixture.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                            {fixture.status}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/dashboard/committee/team-management/fixture/${fixture.id}`}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                          Manage  &rarr; 
-                        </Link>
-                      </div>
+                  {filteredFixtures.map((fixture: any) => {
+                    const isHomeWinner = fixture.result === 'home_win';
+                    const isAwayWinner = fixture.result === 'away_win';
+                    const isCompleted = fixture.status === 'completed';
+                    const isLive = fixture.status === 'in_progress';
+                    const isTTFixture = (fixture as any).scoring_system === 'triple_threat' || (fixture as any).knockout_format === 'triple_threat' || isTripleThreatTournament;
 
-                      <div className="flex items-center justify-between">
-                        <div className={`flex-1 flex items-center justify-end gap-2 ${fixture.result === 'home_win' ? 'font-bold text-green-600' : 'text-gray-900'}`}>
-                          <span className="text-sm">{fixture.home_team_name}</span>
-                          {(fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl) ? (
-                            <img
-                              src={fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl}
-                              alt=""
-                              className="w-5 h-5 rounded-full object-cover shrink-0"
-                            />
-                          ) : null}
-                          {fixture.home_score !== undefined && (
-                            <span className="ml-2 text-lg font-bold">{fixture.home_score}</span>
-                          )}
+                    return (
+                      <div
+                        key={fixture.id}
+                        className="group bg-slate-50/70 hover:bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-blue-400/60 shadow-2xs hover:shadow-md transition-all space-y-3"
+                      >
+                        {/* Top Meta Bar */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100 text-xs">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-black px-2 py-0.5 rounded-lg bg-slate-200/80 text-slate-800 text-[11px]">
+                              R{fixture.round_number}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-500">
+                              Match #{fixture.match_number}
+                            </span>
+                            {fixture.leg && fixture.leg !== 'single' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                                Leg {fixture.leg === 'first' ? '1' : fixture.leg === 'second' ? '2' : fixture.leg}
+                              </span>
+                            )}
+                            {(fixture as any).knockout_round && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-200 uppercase">
+                                {(fixture as any).knockout_round.replace('_', ' ')}
+                              </span>
+                            )}
+                            {fixture.group_name && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200">
+                                GRP {fixture.group_name}
+                              </span>
+                            )}
+                            {isTTFixture && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1 shadow-2xs">
+                                ⚡ Triple Threat
+                              </span>
+                            )}
+                            {(fixture as any).knockout_format === 'triple_threat' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-300">
+                                3 Matchups
+                              </span>
+                            )}
+                            {(fixture as any).clean_sweep_winner && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-2xs">
+                                ⚡ CLEAN SWEEP
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                              isCompleted
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : isLive
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse'
+                                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}>
+                              ● {fixture.status || 'scheduled'}
+                            </span>
+
+                            <Link
+                              href={`/dashboard/committee/team-management/fixture/${fixture.id}`}
+                              className="px-3 py-1 bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 font-bold text-xs rounded-lg border border-slate-200 hover:border-blue-200 transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+                            >
+                              <span>Manage</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </Link>
+                          </div>
                         </div>
-                        <span className="text-xs text-gray-400 mx-3">vs</span>
-                        <div className={`flex-1 flex items-center justify-start gap-2 ${fixture.result === 'away_win' ? 'font-bold text-green-600' : 'text-gray-900'}`}>
-                          {fixture.away_score !== undefined && (
-                            <span className="mr-2 text-lg font-bold">{fixture.away_score}</span>
-                          )}
-                          {(fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl) ? (
-                            <img
-                              src={fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl}
-                              alt=""
-                              className="w-5 h-5 rounded-full object-cover shrink-0"
-                            />
-                          ) : null}
-                          <span className="text-sm">{fixture.away_team_name}</span>
+
+                        {/* Matchup Teams & Score Center */}
+                        <div className="grid grid-cols-12 items-center gap-2 sm:gap-4 py-1">
+                          {/* Home Team */}
+                          <div className={`col-span-5 flex items-center justify-end gap-2 sm:gap-3 text-right ${
+                            isHomeWinner ? 'font-black text-emerald-700' : 'font-bold text-slate-800'
+                          }`}>
+                            <div className="truncate min-w-0">
+                              <span className="text-xs sm:text-base leading-tight block truncate">
+                                {fixture.home_team_name}
+                              </span>
+                              {isHomeWinner && (
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+                                  Winner
+                                </span>
+                              )}
+                            </div>
+                            {(fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl) ? (
+                              <img
+                                src={fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl}
+                                alt=""
+                                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300">
+                                {fixture.home_team_name?.slice(0, 2).toUpperCase() || 'H'}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Score / VS Display */}
+                          <div className="col-span-2 flex flex-col items-center justify-center text-center">
+                            {fixture.home_score !== undefined && fixture.away_score !== undefined && fixture.home_score !== null && fixture.away_score !== null ? (
+                              <div className="px-2 sm:px-3 py-1 bg-white border border-slate-200 rounded-xl shadow-2xs font-mono font-black text-xs sm:text-base text-slate-900 tracking-tight whitespace-nowrap">
+                                <span>{fixture.home_score}</span>
+                                <span className="text-slate-400 mx-1 font-normal">-</span>
+                                <span>{fixture.away_score}</span>
+                              </div>
+                            ) : (
+                              <div className="px-2 sm:px-3 py-1 bg-white border border-slate-200 rounded-xl shadow-2xs text-[11px] font-black text-slate-500 tracking-wider">
+                                VS
+                              </div>
+                            )}
+                            {fixture.scheduled_date && (
+                              <span className="text-[10px] text-slate-400 mt-1 font-mono hidden sm:block truncate max-w-full">
+                                {new Date(fixture.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Away Team */}
+                          <div className={`col-span-5 flex items-center justify-start gap-2 sm:gap-3 text-left ${
+                            isAwayWinner ? 'font-black text-emerald-700' : 'font-bold text-slate-800'
+                          }`}>
+                            {(fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl) ? (
+                              <img
+                                src={fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl}
+                                alt=""
+                                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300">
+                                {fixture.away_team_name?.slice(0, 2).toUpperCase() || 'A'}
+                              </div>
+                            )}
+                            <div className="truncate min-w-0">
+                              <span className="text-xs sm:text-base leading-tight block truncate">
+                                {fixture.away_team_name}
+                              </span>
+                              {isAwayWinner && (
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+                                  Winner
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
