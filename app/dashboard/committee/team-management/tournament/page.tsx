@@ -2734,87 +2734,145 @@ export function TournamentDashboardPageContent() {
         )}
 
         {activeTab === 'groups' && (
-          <div className="space-y-6">
-            <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                Manage Tournament Groups
-              </h2>
-              <p className="text-gray-600 text-sm mb-6">
-                Assign teams to groups for group stage tournaments. Teams must be assigned to the tournament first.
-              </p>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-sm">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-slate-800 border border-slate-900 rounded-xl flex items-center justify-center shadow-md shadow-amber-500/5 flex-shrink-0">
+                    <Layers className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">STAGE CONFIGURATION</span>
+                    <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                      Manage Tournament Groups
+                    </h2>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">
+                      Assign teams to groups for group stage tournaments. Teams must be assigned to the tournament first.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
+              {/* Tournament Selector */}
               <div className="mb-6">
-                <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2">Select Tournament</label>
-                <select
-                  value={selectedTournamentForGroups}
-                  onChange={(e) => handleTournamentChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/70 transition-all"
-                >
-                  <option value="">-- Select a tournament --</option>
-                  {tournaments.filter(t => t.has_group_stage).map((tournament) => (
-                    <option key={tournament.id} value={tournament.id}>
-                      {tournament.tournament_name} ({tournament.status})
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 font-mono flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-amber-500" /> Select Tournament
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedTournamentForGroups}
+                    onChange={(e) => handleTournamentChange(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-xs sm:text-sm font-bold text-slate-800 transition-all appearance-none cursor-pointer pr-10"
+                  >
+                    <option value="">-- Select a tournament --</option>
+                    {tournaments.filter(t => t.has_group_stage).map((tournament) => (
+                      <option key={tournament.id} value={tournament.id}>
+                        {tournament.tournament_name} ({tournament.status})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
 
               {selectedTournamentForGroups && (
                 <>
-                  <div className="flex flex-wrap gap-3 mb-6">
-                    <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
-                      <span className="text-sm font-medium text-blue-900">
-                        <ClipboardList className="w-4 h-4 text-slate-500" /> Groups: <strong>{numberOfGroups}</strong>
-                      </span>
-                      <span className="text-xs text-blue-600">(from tournament settings)</span>
+                  {/* Action Toolbar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 p-3 sm:p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 font-mono shadow-xs">
+                        <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Groups: <strong className="text-slate-900">{numberOfGroups}</strong></span>
+                        <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">(from settings)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAutoDistributeGroups}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Auto Distribute</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleClearGroups}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Clear All</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={handleAutoDistributeGroups}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
-                    >
-                      Auto Distribute
-                    </button>
-                    <button
-                      onClick={handleClearGroups}
-                      className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
-                    >
-                      Clear All
-                    </button>
-                    <button
-                      onClick={handleSaveGroups}
-                      disabled={isSavingGroups}
-                      className="ml-auto px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium disabled:opacity-50"
-                    >
-                      {isSavingGroups ? 'Saving...' : 'Save Groups'}
-                    </button>
+
+                    <div className="flex items-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleSaveGroups}
+                        disabled={isSavingGroups}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        {isSavingGroups ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span>Save Groups</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
+                  {/* Assigned Groups Section */}
                   {groupAssignments.length > 0 && (
                     <div className="mb-6">
-                      <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider mb-4 border-b border-slate-100 pb-2">Assigned Groups</h3>
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+                        <h3 className="text-xs sm:text-sm font-black uppercase text-slate-900 tracking-wider font-mono flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-blue-600" />
+                          <span>Assigned Groups</span>
+                        </h3>
+                        <span className="text-xs text-slate-500 font-mono">
+                          {groupAssignments.length} teams assigned
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {Array.from(new Set(groupAssignments.map(a => a.group_name))).sort().map(groupName => {
                           const teamsInGroup = groupAssignments.filter(a => a.group_name === groupName);
                           return (
-                            <div key={groupName} className="bg-white/50 rounded-xl border border-gray-200 p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="font-bold text-gray-900">{groupName}</h4>
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                                  {teamsInGroup.length} teams
+                            <div key={groupName} className="bg-slate-50/60 rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-slate-300 transition-all">
+                              <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/60">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 font-mono font-black text-xs flex items-center justify-center">
+                                    {groupName.replace('Group ', '')}
+                                  </span>
+                                  <h4 className="font-bold text-slate-900 text-sm">{groupName}</h4>
+                                </div>
+                                <span className="text-[11px] font-mono font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full shadow-2xs">
+                                  {teamsInGroup.length} {teamsInGroup.length === 1 ? 'team' : 'teams'}
                                 </span>
                               </div>
+
                               <div className="space-y-2">
                                 {teamsInGroup.map((assignment) => (
-                                  <div key={assignment.team_id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100">
-                                    <span className="text-sm font-medium text-gray-700">
-                                      {assignment.team_name || assignment.team_id}
-                                    </span>
+                                  <div key={assignment.team_id} className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-200/70 shadow-2xs hover:border-slate-300 transition-all">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                                      <Shield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                      <span className="text-xs font-bold text-slate-800 truncate">
+                                        {assignment.team_name || assignment.team_id}
+                                      </span>
+                                    </div>
                                     <button
+                                      type="button"
                                       onClick={() => {
                                         setGroupAssignments(groupAssignments.filter(a => a.team_id !== assignment.team_id));
                                         setUnassignedTeams([...unassignedTeams, { team_id: assignment.team_id, team_name: assignment.team_name }]);
                                       }}
-                                      className="text-red-500 hover:text-red-700 text-xs"
+                                      className="w-5 h-5 flex items-center justify-center rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors text-xs font-bold shrink-0 cursor-pointer"
+                                      title="Remove from group"
                                     >
                                       ✕
                                     </button>
@@ -2828,65 +2886,89 @@ export function TournamentDashboardPageContent() {
                     </div>
                   )}
 
+                  {/* Unassigned Teams Section */}
                   {unassignedTeams.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider mb-4 border-b border-slate-100 pb-2">
-                        Unassigned Teams ({unassignedTeams.length})
-                      </h3>
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+                        <h3 className="text-xs sm:text-sm font-black uppercase text-slate-900 tracking-wider font-mono flex items-center gap-2">
+                          <Users className="w-4 h-4 text-purple-600" />
+                          <span>Unassigned Teams</span>
+                        </h3>
+                        <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                          {unassignedTeams.length} unassigned
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {unassignedTeams.map((team) => (
-                          <div key={team.team_id} className="flex items-center justify-between p-3 bg-white/50 rounded-xl border border-gray-200">
-                            <span className="text-sm font-medium text-gray-900">{team.team_name}</span>
-                            <select
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  setGroupAssignments([...groupAssignments, {
-                                    team_id: team.team_id,
-                                    team_name: team.team_name,
-                                    group_name: e.target.value
-                                  }]);
-                                  setUnassignedTeams(unassignedTeams.filter(t => t.team_id !== team.team_id));
-                                }
-                              }}
-                              className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/30"
-                            >
-                              <option value="">Assign to...</option>
-                              {Array.from({ length: numberOfGroups }, (_, i) => (
-                                <option key={i} value={`Group ${String.fromCharCode(65 + i)}`}>
-                                  Group {String.fromCharCode(65 + i)}
-                                </option>
-                              ))}
-                            </select>
+                          <div key={team.team_id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                              <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                                <Shield className="w-3.5 h-3.5 text-slate-500" />
+                              </div>
+                              <span className="text-xs font-bold text-slate-800 truncate">{team.team_name}</span>
+                            </div>
+                            <div className="relative shrink-0">
+                              <select
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    setGroupAssignments([...groupAssignments, {
+                                      team_id: team.team_id,
+                                      team_name: team.team_name,
+                                      group_name: e.target.value
+                                    }]);
+                                    setUnassignedTeams(unassignedTeams.filter(t => t.team_id !== team.team_id));
+                                  }
+                                }}
+                                defaultValue=""
+                                className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-lg text-xs font-bold text-slate-700 transition-all cursor-pointer"
+                              >
+                                <option value="" disabled>Assign to...</option>
+                                {Array.from({ length: numberOfGroups }, (_, i) => (
+                                  <option key={i} value={`Group ${String.fromCharCode(65 + i)}`}>
+                                    Group {String.fromCharCode(65 + i)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
+                  {/* Empty state: No teams assigned to tournament */}
                   {groupAssignments.length === 0 && unassignedTeams.length === 0 && (
-                    <div className="text-center py-12">
-                      <Target className="w-16 h-16 text-rose-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">No Teams in Tournament</h3>
-                      <p className="text-gray-600 mb-4">
-                        Please assign teams to this tournament first in the Teams tab.
+                    <div className="text-center py-12 bg-slate-50/60 rounded-2xl border border-slate-200/80 p-6">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-3">
+                        <Target className="w-6 h-6 text-slate-400" />
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900 mb-1">No Teams in Tournament</h3>
+                      <p className="text-xs text-slate-500 font-mono mb-4 max-w-md mx-auto">
+                        Please assign teams to this tournament first in the Teams tab before configuring groups.
                       </p>
                       <button
+                        type="button"
                         onClick={() => handleTabChange('teams')}
-                        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all text-sm font-medium"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
                       >
-                        Go to Teams Tab
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Go to Teams Tab</span>
                       </button>
                     </div>
                   )}
                 </>
               )}
 
+              {/* Empty state: No tournament selected */}
               {!selectedTournamentForGroups && (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4"><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /></div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Tournament</h3>
-                  <p className="text-gray-600">
-                    Choose a tournament with group stage enabled to manage group assignments.
+                <div className="text-center py-12 bg-slate-50/60 rounded-2xl border border-slate-200/80 p-6">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto mb-3">
+                    <Trophy className="w-6 h-6 text-amber-500" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1">Select a Tournament</h3>
+                  <p className="text-xs text-slate-500 font-mono max-w-md mx-auto">
+                    Choose a tournament with group stage enabled from the dropdown above to view and manage group assignments.
                   </p>
                 </div>
               )}
