@@ -304,7 +304,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating tournament:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create tournament' },
+      { success: false, error: error?.message || 'Failed to create tournament' },
       { status: 500 }
     );
   }
