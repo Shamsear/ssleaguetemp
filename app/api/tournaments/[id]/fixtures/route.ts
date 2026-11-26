@@ -187,6 +187,7 @@ export async function POST(
           matchup_mode,
           knockout_format,
           scoring_system,
+          group_name,
           created_at,
           updated_at
         ) VALUES (
@@ -204,6 +205,7 @@ export async function POST(
           ${fixture.matchup_mode || 'manual'},
           ${isTT ? 'triple_threat' : (fixture.knockout_format || null)},
           ${isTT ? 'triple_threat' : (tournamentData.scoring_system || 'goals')},
+          ${fixture.group_name || null},
           NOW(),
           NOW()
         )
@@ -328,6 +330,7 @@ export async function GET(
 
     const fixturesWithLogos = fixtures.map((f: any) => ({
       ...f,
+      group_name: f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null,
       home_team_logo: logosMap[f.home_team_id] || (f.home_team_name ? logosMap[f.home_team_name.toLowerCase()] : null) || null,
       away_team_logo: logosMap[f.away_team_id] || (f.away_team_name ? logosMap[f.away_team_name.toLowerCase()] : null) || null,
     }));

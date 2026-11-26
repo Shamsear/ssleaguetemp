@@ -122,6 +122,7 @@ export function TournamentDashboardPageContent() {
   const [isDeletingFixtures, setIsDeletingFixtures] = useState(false);
   const [teamSearchTerm, setTeamSearchTerm] = useState('');
   const [selectedRound, setSelectedRound] = useState<number>(1);
+  const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [isTwoLegged, setIsTwoLegged] = useState(true);
   const [matchupMode, setMatchupMode] = useState<'manual' | 'blind_lineup'>('manual');
   const [knockoutFormat, setKnockoutFormat] = useState<'single_leg' | 'two_leg' | 'round_robin' | 'triple_threat'>('single_leg');
@@ -176,6 +177,7 @@ export function TournamentDashboardPageContent() {
     setSelectedTournamentForTeams(val);
     setSelectedTournamentForStandings(val);
     setSelectedTournamentForGroups(val);
+    setSelectedGroup('all');
     updateUrlParams({ tournament: val });
   };
 
@@ -1546,10 +1548,28 @@ export function TournamentDashboardPageContent() {
     ? Math.max(...fixturesForSelectedTournament.map(f => f.round_number || 0))
     : 14;
 
-  // Filter fixtures by selected round
-  const filteredFixtures = selectedRound === 0
-    ? fixturesForSelectedTournament
-    : fixturesForSelectedTournament.filter(f => f.round_number === selectedRound);
+  // Extract available groups for the selected tournament
+  const availableGroups = Array.from(
+    new Set(
+      fixturesForSelectedTournament
+        .map(f => f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1])
+        .filter(Boolean)
+    )
+  ).sort() as string[];
+
+  // Filter fixtures by selected round and group
+  const filteredFixtures = fixturesForSelectedTournament.filter(f => {
+    const roundMatch = selectedRound === 0 || f.round_number === selectedRound;
+    const fixtureGroup = f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null;
+    const groupMatch = selectedGroup === 'all' || !selectedGroup || (
+      fixtureGroup && (
+        fixtureGroup.toLowerCase() === selectedGroup.toLowerCase() ||
+        `group ${fixtureGroup.toLowerCase()}` === selectedGroup.toLowerCase() ||
+        fixtureGroup.toLowerCase() === `group ${selectedGroup.toLowerCase()}`
+      )
+    );
+    return roundMatch && groupMatch;
+  });
 
   return (
     <AuthGuard requiredRole="committee_admin">
@@ -2825,6 +2845,52 @@ export function TournamentDashboardPageContent() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Group Filter Toolbar (when tournament has groups) */}
+                  {availableGroups.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider mr-1 shrink-0 flex items-center gap-1">
+                        <Layers className="w-3.5 h-3.5 text-blue-500" /> Filter Group:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGroup('all')}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                          selectedGroup === 'all'
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                        }`}
+                      >
+                        All Groups
+                      </button>
+                      {availableGroups.map((grp: string) => {
+                        const label = grp.toUpperCase().startsWith('GROUP') ? grp.toUpperCase() : `Group ${grp.toUpperCase()}`;
+                        const isActive = selectedGroup.toLowerCase() === grp.toLowerCase();
+                        const count = fixturesForSelectedTournament.filter(f => {
+                          const fg = f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || '';
+                          return fg.toLowerCase() === grp.toLowerCase();
+                        }).length;
+
+                        return (
+                          <button
+                            key={grp}
+                            type="button"
+                            onClick={() => setSelectedGroup(isActive ? 'all' : grp)}
+                            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                              isActive
+                                ? 'bg-blue-600 text-white shadow-2xs'
+                                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                            }`}
+                          >
+                            <span>{label}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Fixture Cards List */}
@@ -2835,6 +2901,12 @@ export function TournamentDashboardPageContent() {
                     const isCompleted = fixture.status === 'completed';
                     const isLive = fixture.status === 'in_progress';
                     const isTTFixture = (fixture as any).scoring_system === 'triple_threat' || (fixture as any).knockout_format === 'triple_threat' || isTripleThreatTournament;
+                    const fixtureGroupName = fixture.group_name || fixture.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null;
+                    const formattedGroup = fixtureGroupName
+                      ? (fixtureGroupName.toUpperCase().startsWith('GROUP')
+                          ? fixtureGroupName.toUpperCase()
+                          : `GROUP ${fixtureGroupName.toUpperCase()}`)
+                      : null;
 
                     return (
                       <div
@@ -2860,9 +2932,10 @@ export function TournamentDashboardPageContent() {
                                 {(fixture as any).knockout_round.replace('_', ' ')}
                               </span>
                             )}
-                            {fixture.group_name && (
-                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200">
-                                GRP {fixture.group_name}
+                            {formattedGroup && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1 shadow-2xs tracking-wider">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                                {formattedGroup}
                               </span>
                             )}
                             {isTTFixture && (
