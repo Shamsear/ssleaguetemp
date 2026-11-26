@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 
 
@@ -1531,6 +1531,23 @@ export function TournamentDashboardPageContent() {
     normalizeStr(teamData.team.id).includes(normalizeStr(teamSearchTerm))
   );
 
+  // Map team IDs and names to logos from allTeams as client-side fallback
+  const teamLogoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allTeams.forEach((item: any) => {
+      const t = item.team;
+      const ts = item.teamSeason;
+      const logo = ts?.logo_url || ts?.team_logo || t?.logo_url || t?.team_logo || t?.logoUrl || null;
+      if (logo) {
+        if (t?.id) map.set(t.id, logo);
+        if (t?.name) map.set(t.name.toLowerCase(), logo);
+        if (ts?.team_id) map.set(ts.team_id, logo);
+        if (ts?.team_name) map.set(ts.team_name.toLowerCase(), logo);
+      }
+    });
+    return map;
+  }, [allTeams]);
+
   // Get selected tournament details
   const selectedTournament = tournaments.find(t => t.id === selectedTournamentForFixtures);
   const isTripleThreatTournament = Boolean(
@@ -2908,6 +2925,18 @@ export function TournamentDashboardPageContent() {
                           : `GROUP ${fixtureGroupName.toUpperCase()}`)
                       : null;
 
+                    const homeLogo = fixture.home_team_logo || 
+                      fixture.home_team_logo_url || 
+                      fixture.home_team_logoUrl || 
+                      (fixture.home_team_id ? teamLogoMap.get(fixture.home_team_id) : null) || 
+                      (fixture.home_team_name ? teamLogoMap.get(fixture.home_team_name.toLowerCase()) : null);
+
+                    const awayLogo = fixture.away_team_logo || 
+                      fixture.away_team_logo_url || 
+                      fixture.away_team_logoUrl || 
+                      (fixture.away_team_id ? teamLogoMap.get(fixture.away_team_id) : null) || 
+                      (fixture.away_team_name ? teamLogoMap.get(fixture.away_team_name.toLowerCase()) : null);
+
                     return (
                       <div
                         key={fixture.id}
@@ -2992,9 +3021,9 @@ export function TournamentDashboardPageContent() {
                                 </span>
                               )}
                             </div>
-                            {(fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl) ? (
+                            {homeLogo ? (
                               <img
-                                src={fixture.home_team_logo || fixture.home_team_logo_url || fixture.home_team_logoUrl}
+                                src={homeLogo}
                                 alt=""
                                 className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs"
                               />
@@ -3029,9 +3058,9 @@ export function TournamentDashboardPageContent() {
                           <div className={`col-span-5 flex items-center justify-start gap-2 sm:gap-3 text-left ${
                             isAwayWinner ? 'font-black text-emerald-700' : 'font-bold text-slate-800'
                           }`}>
-                            {(fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl) ? (
+                            {awayLogo ? (
                               <img
-                                src={fixture.away_team_logo || fixture.away_team_logo_url || fixture.away_team_logoUrl}
+                                src={awayLogo}
                                 alt=""
                                 className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs"
                               />

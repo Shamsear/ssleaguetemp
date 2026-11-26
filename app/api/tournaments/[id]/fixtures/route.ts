@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getMainDb } from '@/lib/neon/main-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 
@@ -297,34 +298,58 @@ export async function GET(
       ORDER BY round_number ASC, match_number ASC
     `;
 
-    // Fetch team logos from Neon SQL database
+    // Fetch team logos from Neon Main database (where teams and team_seasons reside)
     const logosMap: Record<string, string | null> = {};
     if (fixtures.length > 0) {
       try {
+        const mainSql = getMainDb();
         const seasonId = fixtures[0].season_id;
-        const tsRows = await sql`
-          SELECT team_id, team_name, team_logo, logo_url
+        const tsRows = await mainSql`
+          SELECT team_id, team_name, logo_url, raw_data
           FROM team_seasons
           WHERE season_id = ${seasonId}
         `;
-        const tRows = await sql`
-          SELECT id, name, logo_url
+        const tRows = await mainSql`
+          SELECT id, team_id, team_name, logo_url, raw_data
           FROM teams
         `;
 
         tsRows.forEach((r: any) => {
-          const logo = r.team_logo || r.logo_url || null;
-          if (r.team_id) logosMap[r.team_id] = logo;
-          if (r.team_name) logosMap[r.team_name.toLowerCase()] = logo;
+          const logo = r.logo_url || r.raw_data?.logo_url || r.raw_data?.team_logo || r.raw_data?.logoUrl || null;
+          if (logo) {
+            if (r.team_id) logosMap[r.team_id] = logo;
+            if (r.team_name) logosMap[r.team_name.toLowerCase()] = logo;
+          }
         });
 
         tRows.forEach((r: any) => {
-          const logo = r.logo_url || null;
-          if (r.id && !logosMap[r.id]) logosMap[r.id] = logo;
-          if (r.name && !logosMap[r.name.toLowerCase()]) logosMap[r.name.toLowerCase()] = logo;
+          const logo = r.logo_url || r.raw_data?.logo_url || r.raw_data?.team_logo || r.raw_data?.logoUrl || null;
+          if (logo) {
+            if (r.id && !logosMap[r.id]) logosMap[r.id] = logo;
+            if (r.team_id && !logosMap[r.team_id]) logosMap[r.team_id] = logo;
+            if (r.team_name && !logosMap[r.team_name.toLowerCase()]) logosMap[r.team_name.toLowerCase()] = logo;
+          }
         });
       } catch (e) {
-        console.error('Error fetching team logos from Neon:', e);
+        console.error('Error fetching team logos from mainDb:', e);
+      }
+
+      // Fallback to adminDb if mainSql didn't populate logos
+      if (Object.keys(logosMap).length === 0) {
+        try {
+          const teamDocs = await adminDb.collection('teams').get();
+          teamDocs.docs.forEach((doc: any) => {
+            const d = doc.data();
+            const logo = d.logo_url || d.team_logo || d.logoUrl || d.logoURL || null;
+            if (logo) {
+              logosMap[doc.id] = logo;
+              if (d.name) logosMap[d.name.toLowerCase()] = logo;
+              if (d.team_name) logosMap[d.team_name.toLowerCase()] = logo;
+            }
+          });
+        } catch (fbErr) {
+          console.error('Error fetching team logos from adminDb fallback:', fbErr);
+        }
       }
     }
 
