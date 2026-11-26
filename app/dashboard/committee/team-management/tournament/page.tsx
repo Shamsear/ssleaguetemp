@@ -13,6 +13,7 @@ import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import RoundFixturesShareButton from '@/components/RoundFixturesShareButton';
 import TournamentStandings from '@/components/tournament/TournamentStandings';
+import TripleThreatPosterHub from '@/components/tournament/TripleThreatPosterHub';
 import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Target, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -54,7 +55,7 @@ interface Match {
   updated_at?: string;
 }
 
-type TabType = 'overview' | 'teams' | 'groups' | 'fixtures' | 'standings' | 'management';
+type TabType = 'overview' | 'teams' | 'groups' | 'fixtures' | 'standings' | 'management' | 'posters';
 
 export function TournamentDashboardPageContent() {
   const { user, loading } = useAuth();
@@ -1697,6 +1698,13 @@ export function TournamentDashboardPageContent() {
               { tab: 'groups', label: <>🎯 Groups</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'fixtures', label: <><Calendar className="w-4 h-4 text-slate-500 mr-1 inline-block align-text-bottom" /> Fixtures</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
               { tab: 'standings', label: <><Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings</>, activeClass: 'bg-slate-800 text-white border-slate-900' },
+              ...(isTripleThreatTournament ? [
+                {
+                  tab: 'posters',
+                  label: <><Sparkles className="w-4 h-4 inline-block text-[#c5f018] mr-1 align-text-bottom" /> ⚡ Posters & Visuals</>,
+                  activeClass: 'bg-[#0b0f02] text-[#c5f018] border-[#c5f018]'
+                }
+              ] : []),
               { tab: 'management', label: <><Settings className="w-4 h-4 text-slate-500 mr-1 inline-block align-text-bottom" /> Manage</>, activeClass: 'bg-slate-800 text-white border-slate-900' }
             ].map(({ tab, label, activeClass }) => (
               <button
@@ -1825,6 +1833,21 @@ export function TournamentDashboardPageContent() {
                         >
                           <Trophy className="w-4 h-4 inline-block text-amber-500 mr-1 align-text-bottom" /> Standings
                         </button>
+                        {tournament.tournament_type === 'triple_threat' && (
+                          <button
+                            onClick={() => {
+                              setSelectedTournamentForFixtures(tournament.id);
+                              setSelectedTournamentForTeams(tournament.id);
+                              setSelectedTournamentForStandings(tournament.id);
+                              setSelectedTournamentForGroups(tournament.id);
+                              setActiveTab('posters');
+                              updateUrlParams({ tournament: tournament.id, tab: 'posters' });
+                            }}
+                            className="px-3 py-2 bg-gradient-to-r from-[#0b0f02] to-[#1a2208] border border-[#c5f018]/40 text-[#c5f018] font-bold text-xs rounded-lg hover:border-[#c5f018] transition-all flex items-center justify-center gap-1 shadow-2xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-[#c5f018]" /> Posters
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -2078,6 +2101,24 @@ export function TournamentDashboardPageContent() {
 
         {activeTab === 'fixtures' && (
           <div className="space-y-6">
+            {isTripleThreatTournament && (
+              <div className="p-4 bg-gradient-to-r from-[#0b0f02] to-[#141b07] border border-[#c5f018]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-[#c5f018] shrink-0" />
+                  <div>
+                    <h4 className="font-bold text-sm text-[#c5f018]">SS Triple Threat Fixtures & Results Poster Suite</h4>
+                    <p className="text-xs text-slate-300">Generate and download official broadcast posters with individual mode scores (Co-op, Duo, Solo) for each matchday.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('posters')}
+                  className="px-4 py-2 bg-[#c5f018] hover:bg-[#a6d40a] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shrink-0 cursor-pointer"
+                >
+                  ⚡ Export Matchday Posters
+                </button>
+              </div>
+            )}
             {/* Tournament Selector & Actions */}
             <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
@@ -3118,6 +3159,24 @@ export function TournamentDashboardPageContent() {
             </div>
 
             {/* Tournament Standings - Format-Aware */}
+            {isTripleThreatTournament && (
+              <div className="p-4 bg-gradient-to-r from-[#0b0f02] to-[#141b07] border border-[#c5f018]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-[#c5f018] shrink-0" />
+                  <div>
+                    <h4 className="font-bold text-sm text-[#c5f018]">SS Triple Threat Custom Visualizer & Poster Suite</h4>
+                    <p className="text-xs text-slate-300">View official dark/lime points table, matchday breakdown, and download 2X high-res posters.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('posters')}
+                  className="px-4 py-2 bg-[#c5f018] hover:bg-[#a6d40a] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shrink-0 cursor-pointer"
+                >
+                  ⚡ Open Poster Suite
+                </button>
+              </div>
+            )}
             {selectedTournamentForStandings ? (
               <TournamentStandings tournamentId={selectedTournamentForStandings} />
             ) : (
@@ -4727,6 +4786,19 @@ export function TournamentDashboardPageContent() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Triple Threat Visuals & Poster Suite */}
+        {activeTab === 'posters' && (
+          <div className="space-y-4">
+            {selectedTournament ? (
+              <TripleThreatPosterHub tournamentId={selectedTournament.id} />
+            ) : (
+              <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-8 text-center text-slate-500 font-mono">
+                <p>Please select a tournament first to view the poster suite.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
