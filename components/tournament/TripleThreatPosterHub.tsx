@@ -42,6 +42,11 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
     }
 
     fetchData();
+
+    return () => {
+      const el = document.getElementById(styleId);
+      if (el) el.remove();
+    };
   }, [tournamentId]);
 
   const fetchData = async () => {
@@ -102,6 +107,7 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
         onclone: (doc) => {
           const p = doc.getElementById('poster');
           if (!p) return;
+          p.classList.add('tt-scope');
           p.classList.add('export');
           p.classList.add('export-fixed');
           p.style.height = OUT_H + 'px';
@@ -214,7 +220,7 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
   };
 
   return (
-    <div className="triple-threat-hub-root space-y-4">
+    <div className="triple-threat-hub-root tt-scope space-y-4">
       {/* Top Controller Bar */}
       <div className="toolbar bg-[#0d1109] p-3 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-3">
         {/* Navigation Tabs */}
