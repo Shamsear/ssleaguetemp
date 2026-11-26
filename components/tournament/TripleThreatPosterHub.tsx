@@ -182,7 +182,7 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
   const KO_ROUNDS: Record<string, string> = { QF: 'Quarter-finals', SF: 'Semi-finals', FINAL: 'Final' };
   const fixLabel = (md: string) => KO_ROUNDS[md] || ('Matchday ' + md);
   const mdList = () => {
-    const mds: string[] = Array.from(new Set(matches.map((m: any) => String(m.md)))).filter(Boolean).sort((a: any, b: any) => Number(a) - Number(b));
+    const mds: string[] = Array.from(new Set<string>(matches.map((m: any) => String(m.md)))).filter(Boolean).sort((a, b) => Number(a) - Number(b));
     const ko = (knockout && knockout.matches) || [];
     Object.keys(KO_ROUNDS).forEach((k) => {
       if (ko.some((m: any) => m.id.indexOf(k) === 0 && (m.home || m.away))) mds.push(k);
