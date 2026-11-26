@@ -1,4 +1,4 @@
-import { toPng } from 'html-to-image';
+import { toCanvas, toPng } from 'html-to-image';
 
 export interface ExportContainerOptions {
   width?: number;
@@ -9,6 +9,8 @@ export interface ExportContainerOptions {
 }
 
 const fontEmbedCache = new Map<string, string>();
+// Cache resized base64 data URLs across exports keyed by `${src}::${bucketPx}`
+const resizedImageCache = new Map<string, string>();
 
 /**
  * Fetches a Google Fonts CSS stylesheet and inlines non-vietnamese woff2 font files as data URLs.
@@ -102,7 +104,7 @@ async function forceDecodeImage(img: HTMLImageElement): Promise<void> {
         const onDone = () => resolve();
         img.addEventListener('load', onDone, { once: true });
         img.addEventListener('error', onDone, { once: true });
-        setTimeout(onDone, 500);
+        setTimeout(onDone, 1000);
       });
     }
   } catch {
@@ -111,49 +113,185 @@ async function forceDecodeImage(img: HTMLImageElement): Promise<void> {
 }
 
 /**
- * Fetches an image src and returns a Base64 data URL. Tries proxy first, then direct, then canvas.
+ * Limits concurrent serverless proxy calls so mobile 4G networks don't saturate connections.
  */
-async function srcToDataUrl(src: string, liveImg?: HTMLImageElement): Promise<string | null> {
+function createConcurrencyLimiter(maxConcurrent: number) {
+  let active = 0;
+  const queue: Array<() => void> = [];
+  return async function limit<T>(fn: () => Promise<T>): Promise<T> {
+    if (active >= maxConcurrent) {
+      await new Promise<void>((resolve) => queue.push(resolve));
+    }
+    active += 1;
+    try {
+      return await fn();
+    } finally {
+      active -= 1;
+      const next = queue.shift();
+      if (next) next();
+    }
+  };
+}
+
+const limitProxyFetch = createConcurrencyLimiter(4);
+
+/**
+ * Downscales an image Blob on an offscreen canvas so SVG foreignObject stays compact
+ * (huge raw logos frequently get dropped or fail to decode on mobile browsers).
+ */
+async function blobToSizedDataUrl(blob: Blob, maxDimPx: number): Promise<string | null> {
+  if (!blob || blob.size === 0) return null;
+  if (blob.type === 'image/svg+xml') {
+    return blobToDataUrl(blob);
+  }
+
+  const objUrl = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    img.decoding = 'async';
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Image decode failed'));
+      img.src = objUrl;
+    });
+    if ('decode' in img && typeof img.decode === 'function') {
+      try {
+        await img.decode();
+      } catch {
+        // Ignore decode warning if image already loaded
+      }
+    }
+
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    if (!nw || !nh) return await blobToDataUrl(blob);
+
+    // Preserve PNG/JPEG if already compact cleanly under budget; convert WebP/AVIF via canvas for SVG compatibility
+    const isUniversalMime = blob.type === 'image/png' || blob.type === 'image/jpeg';
+    if (isUniversalMime && Math.max(nw, nh) <= maxDimPx && blob.size <= 160 * 1024) {
+      return await blobToDataUrl(blob);
+    }
+
+    const scale = Math.min(1, maxDimPx / Math.max(nw, nh));
+    const tw = Math.max(1, Math.round(nw * scale));
+    const th = Math.max(1, Math.round(nh * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = tw;
+    canvas.height = th;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return await blobToDataUrl(blob);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, tw, th);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return await blobToDataUrl(blob);
+  } finally {
+    URL.revokeObjectURL(objUrl);
+  }
+}
+
+function liveImgToSizedDataUrl(liveImg: HTMLImageElement, maxDimPx: number): string | null {
+  if (!liveImg || !liveImg.complete || !liveImg.naturalWidth || !liveImg.naturalHeight) {
+    return null;
+  }
+  try {
+    const nw = liveImg.naturalWidth;
+    const nh = liveImg.naturalHeight;
+    const scale = Math.min(1, maxDimPx / Math.max(nw, nh));
+    const tw = Math.max(1, Math.round(nw * scale));
+    const th = Math.max(1, Math.round(nh * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = tw;
+    canvas.height = th;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(liveImg, 0, 0, tw, th);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null; // Tainted canvas -> fall back to fetch/proxy
+  }
+}
+
+async function fetchBlobWithRetry(url: string, init?: RequestInit, retries = 1, timeoutMs = 8000): Promise<Blob | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      const res = await fetch(url, controller ? { ...init, signal: controller.signal } : init);
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 0) return blob;
+      }
+    } catch {
+      // Retry on transient mobile network drop or timeout
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    if (attempt < retries) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+  return null;
+}
+
+/**
+ * Fetches an image src and returns a compact Base64 data URL.
+ * Order: cache -> same-origin/live canvas -> direct CORS CDN -> bounded proxy with retry.
+ */
+async function srcToDataUrl(
+  src: string,
+  liveImg?: HTMLImageElement,
+  maxDimPx: number = 640
+): Promise<string | null> {
   if (!src) return null;
   if (src.startsWith('data:')) return src;
 
-  // Proxy fetch (bypasses CORS — works on both mobile and desktop)
-  if (src.startsWith('http://') || src.startsWith('https://')) {
-    try {
+  const bucketPx = maxDimPx <= 280 ? 280 : maxDimPx <= 640 ? 640 : 1600;
+  const cacheKey = `${src}::${bucketPx}`;
+  const cached = resizedImageCache.get(cacheKey);
+  if (cached) return cached;
+
+  let result: string | null = null;
+
+  // 1. Relative / same-origin asset (fetch directly from browser cache, resize to target)
+  if (src.startsWith('/') || (typeof window !== 'undefined' && src.startsWith(window.location.origin))) {
+    const blob = await fetchBlobWithRetry(src, { cache: 'force-cache' }, 1);
+    if (blob) result = await blobToSizedDataUrl(blob, bucketPx);
+  }
+
+  // 2. Live DOM canvas draw if same-origin or already CORS-decoded (zero network overhead)
+  if (!result && liveImg) {
+    result = liveImgToSizedDataUrl(liveImg, bucketPx);
+  }
+
+  // 3. Direct CORS fetch for CDN images (ImageKit etc. allow CORS) — bypasses Vercel proxy bottleneck
+  if (!result && (src.startsWith('http://') || src.startsWith('https://'))) {
+    // Only direct-fetch known CORS-safe CDNs without noisy failed CORS console errors; otherwise go straight to proxy
+    const isCorsFriendlyCdn =
+      src.includes('ik.imagekit.io') ||
+      src.includes('vercel-storage.com') ||
+      src.includes('googleusercontent.com');
+    if (isCorsFriendlyCdn) {
+      const blob = await fetchBlobWithRetry(src, { mode: 'cors', cache: 'reload' }, 1);
+      if (blob) result = await blobToSizedDataUrl(blob, bucketPx);
+    }
+
+    // 4. Same-origin image proxy fallback (rate-limited to 4 concurrent + retried once)
+    if (!result) {
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
-      const res = await fetch(proxyUrl, { cache: 'no-store' });
-      if (res.ok) return await blobToDataUrl(await res.blob());
-    } catch { /* proxy failed */ }
-
-    // Direct CORS fetch fallback
-    try {
-      const res = await fetch(src, { mode: 'cors', cache: 'no-store' });
-      if (res.ok) return await blobToDataUrl(await res.blob());
-    } catch { /* direct failed */ }
+      const blob = await limitProxyFetch(() => fetchBlobWithRetry(proxyUrl, { cache: 'force-cache' }, 1));
+      if (blob) result = await blobToSizedDataUrl(blob, bucketPx);
+    }
   }
 
-  // Relative URL
-  if (src.startsWith('/')) {
-    try {
-      const res = await fetch(src, { cache: 'no-store' });
-      if (res.ok) return await blobToDataUrl(await res.blob());
-    } catch { /* relative failed */ }
+  if (result && result.length > 100) {
+    resizedImageCache.set(cacheKey, result);
+    return result;
   }
-
-  // Canvas fallback: only works if the live img is already loaded (same-origin or CORS-ok)
-  if (liveImg && liveImg.naturalWidth && liveImg.naturalHeight) {
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = liveImg.naturalWidth;
-      canvas.height = liveImg.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(liveImg, 0, 0);
-        return canvas.toDataURL('image/png');
-      }
-    } catch { /* canvas tainted */ }
-  }
-
   return null;
 }
 
@@ -181,7 +319,7 @@ export async function generateContainerPng(
   container: HTMLElement,
   exportOptions?: ExportContainerOptions
 ): Promise<string> {
-  // Step 1 — wait for any currently loading images in the live element
+  // Step 1 — wait for any currently loading images in the live element (allow up to 4s on slow mobile 4G)
   const liveImages = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
   await Promise.all(
     liveImages.map((img) =>
@@ -190,10 +328,17 @@ export async function generateContainerPng(
         : new Promise<void>((resolve) => {
             img.addEventListener('load', () => resolve(), { once: true });
             img.addEventListener('error', () => resolve(), { once: true });
-            setTimeout(resolve, 1500);
+            setTimeout(resolve, 4000);
           })
     )
   );
+  const liveImgBySrc = new Map<string, HTMLImageElement>();
+  liveImages.forEach((img) => {
+    const raw = img.getAttribute('src') || '';
+    if (raw && img.naturalWidth > 0 && !liveImgBySrc.has(raw)) {
+      liveImgBySrc.set(raw, img);
+    }
+  });
 
   // Step 2 — measure before cloning (clone has no layout yet)
   const targetWidth = exportOptions?.width || container.scrollWidth || container.offsetWidth || 1200;
@@ -224,20 +369,49 @@ export async function generateContainerPng(
   document.body.appendChild(wrapper);
 
   try {
-    // Step 4 — inline images in the clone
+    // Allow CSS layout to settle so cloned image boxes have real rendered sizes
+    await waitForPaint();
+
+    // Step 4 — inline and compactly resize ALL images in the clone (deduplicated per src+size)
     const cloneImages = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
+    const inflightByKey = new Map<string, Promise<string | null>>();
+
     await Promise.all(
-      cloneImages.map(async (cloneImg, i) => {
+      cloneImages.map(async (cloneImg) => {
         const originalSrc = cloneImg.getAttribute('src') || '';
         if (!originalSrc || originalSrc.startsWith('data:')) return;
 
-        // Use the corresponding live image for canvas fallback
-        const liveImg = liveImages[i];
-        const dataUrl = await srcToDataUrl(originalSrc, liveImg);
+        // Ensure eager loading & remove crossOrigin so data URLs decode cleanly in SVG foreignObject
+        cloneImg.removeAttribute('crossorigin');
+        cloneImg.loading = 'eager';
+        cloneImg.decoding = 'sync';
+
+        const rect = cloneImg.getBoundingClientRect();
+        const parentRect = cloneImg.parentElement?.getBoundingClientRect();
+        const boxDim = Math.max(
+          rect.width,
+          rect.height,
+          parentRect?.width || 0,
+          parentRect?.height || 0
+        );
+        const maxDimPx = boxDim > 0 && boxDim <= 96 ? 256 : boxDim > 0 && boxDim <= 260 ? 640 : 1600;
+        const key = `${originalSrc}::${maxDimPx}`;
+
+        let pending = inflightByKey.get(key);
+        if (!pending) {
+          const liveImg = liveImgBySrc.get(originalSrc);
+          pending = srcToDataUrl(originalSrc, liveImg, maxDimPx);
+          inflightByKey.set(key, pending);
+        }
+
+        const dataUrl = await pending;
         if (dataUrl && dataUrl.length > 100) {
           cloneImg.setAttribute('src', dataUrl);
           cloneImg.src = dataUrl;
           await forceDecodeImage(cloneImg);
+        } else {
+          // Remove broken external URL so html-to-image never refetches or sets src=""
+          cloneImg.remove();
         }
       })
     );
@@ -247,17 +421,27 @@ export async function generateContainerPng(
     await new Promise((resolve) => setTimeout(resolve, 200));
     await waitForPaint();
 
-    // Step 6 — measure clone's true rendered dimensions
+    // Step 6 — measure clone's true rendered dimensions & keep canvas within mobile memory bounds
     const cloneWidth = clone.scrollWidth || clone.offsetWidth || targetWidth;
     const cloneHeight = clone.scrollHeight || clone.offsetHeight || targetHeight;
+    const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent);
+    let pixelRatio = 2;
+    if (isMobile) {
+      const area2x = cloneWidth * cloneHeight * 4;
+      if (cloneWidth * 2 > 4096 || cloneHeight * 2 > 4096 || area2x > 15_500_000) {
+        pixelRatio = Math.min(1.5, Math.floor((4096 / Math.max(cloneWidth, cloneHeight)) * 10) / 10);
+      }
+    }
 
     const options = {
       quality: 0.95,
-      pixelRatio: 2,
+      pixelRatio,
       width: cloneWidth,
       height: cloneHeight,
       backgroundColor: exportOptions?.backgroundColor || '#ffffff',
       cacheBust: false,
+      imagePlaceholder:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
       fontEmbedCSS: fontEmbedCss,
       skipFontFace: !fontEmbedCss,
       filter: (node: HTMLElement) => {
@@ -267,11 +451,21 @@ export async function generateContainerPng(
       },
     };
 
+    // Mobile WebKit / Chrome SVG foreignObject warm-up pass ensures inner data: URLs paint cleanly
+    if (isMobile && cloneImages.length > 0) {
+      try {
+        await toCanvas(clone, { ...options, pixelRatio: 1 });
+        await waitForPaint();
+      } catch {
+        // Ignore warm-up error and proceed to capture
+      }
+    }
+
     try {
       return await toPng(clone, options);
     } catch (err) {
       console.warn('toPng pass 1 failed, retrying at pixelRatio 1...', err);
-      return await toPng(clone, { ...options, pixelRatio: 1, cacheBust: true });
+      return await toPng(clone, { ...options, pixelRatio: 1 });
     }
   } finally {
     if (document.body.contains(wrapper)) document.body.removeChild(wrapper);

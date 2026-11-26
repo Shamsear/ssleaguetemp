@@ -166,7 +166,7 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
     if (t.logo) {
       return (
         <div className="logo">
-          <img src={t.logo} alt="" crossOrigin="anonymous" />
+          <img src={t.logo} alt="" loading="eager" decoding="async" />
         </div>
       );
     }
@@ -321,7 +321,7 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
             {/* Header / Hero */}
             <header className="hero" id="hero">
               {meta.logo ? (
-                <img className="hero-logo" src={meta.logo} alt="SS Triple Threat" crossOrigin="anonymous" />
+                <img className="hero-logo" src={meta.logo} alt="SS Triple Threat" loading="eager" decoding="async" />
               ) : (
                 <div className="hero-text">
                   <div className="league">{meta.league}</div>
