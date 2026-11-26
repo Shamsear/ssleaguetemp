@@ -155,6 +155,23 @@ export function TournamentDashboardPageContent() {
   const [isSavingGroups, setIsSavingGroups] = useState(false);
   const [numberOfGroups, setNumberOfGroups] = useState(4);
 
+  // Map team IDs and names to logos from allTeams as client-side fallback
+  const teamLogoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allTeams.forEach((item: any) => {
+      const t = item.team;
+      const ts = item.teamSeason;
+      const logo = ts?.logo_url || ts?.team_logo || t?.logo_url || t?.team_logo || t?.logoUrl || null;
+      if (logo) {
+        if (t?.id) map.set(t.id, logo);
+        if (t?.name) map.set(t.name.toLowerCase(), logo);
+        if (ts?.team_id) map.set(ts.team_id, logo);
+        if (ts?.team_name) map.set(ts.team_name.toLowerCase(), logo);
+      }
+    });
+    return map;
+  }, [allTeams]);
+
   // Synchronize selections with URL query parameters
   const updateUrlParams = (updates: { tab?: TabType; tournament?: string; round?: number }) => {
     const params = new URLSearchParams(window.location.search);
@@ -1530,23 +1547,6 @@ export function TournamentDashboardPageContent() {
     normalizeStr(teamData.team.name).includes(normalizeStr(teamSearchTerm)) ||
     normalizeStr(teamData.team.id).includes(normalizeStr(teamSearchTerm))
   );
-
-  // Map team IDs and names to logos from allTeams as client-side fallback
-  const teamLogoMap = useMemo(() => {
-    const map = new Map<string, string>();
-    allTeams.forEach((item: any) => {
-      const t = item.team;
-      const ts = item.teamSeason;
-      const logo = ts?.logo_url || ts?.team_logo || t?.logo_url || t?.team_logo || t?.logoUrl || null;
-      if (logo) {
-        if (t?.id) map.set(t.id, logo);
-        if (t?.name) map.set(t.name.toLowerCase(), logo);
-        if (ts?.team_id) map.set(ts.team_id, logo);
-        if (ts?.team_name) map.set(ts.team_name.toLowerCase(), logo);
-      }
-    });
-    return map;
-  }, [allTeams]);
 
   // Get selected tournament details
   const selectedTournament = tournaments.find(t => t.id === selectedTournamentForFixtures);

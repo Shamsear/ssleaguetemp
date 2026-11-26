@@ -214,9 +214,13 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `;
 
+    const tournament = result[0];
+    const actualTournamentId = tournament?.id || tournamentId;
+
     const resolvedMatchdayFormat = body.matchday_format || (tournament_type === 'triple_threat' ? 'triple_threat' : 'standard');
     const resolvedCleanSweepBonus = body.clean_sweep_bonus ?? (tournament_type === 'triple_threat' ? 1 : 0);
     const resolvedPointsAsGd = body.points_as_gd !== undefined ? body.points_as_gd : (tournament_type === 'triple_threat');
+    const resolvedScoringType = tournament_type === 'triple_threat' ? 'hybrid' : (body.scoring_type === 'wins' ? 'wins' : body.scoring_type === 'hybrid' ? 'hybrid' : 'goals');
 
     // Create tournament_settings record
     await sql`
@@ -242,11 +246,11 @@ export async function POST(request: NextRequest) {
         created_at,
         updated_at
       ) VALUES (
-        ${tournamentId},
+        ${actualTournamentId},
         ${season_id},
         ${squad_size ?? 11},
         ${tournament_system || 'match_round'},
-        'goals',
+        ${resolvedScoringType},
         ${home_deadline_time || '17:00'},
         ${away_deadline_time || '17:00'},
         ${result_day_offset ?? 2},
@@ -285,7 +289,6 @@ export async function POST(request: NextRequest) {
     `;
 
     // Auto-generate news for season creation
-    const tournament = result[0];
     const seasonName = season_id.replace('SSPSLS', 'Season ');
 
     // Generate news asynchronously (non-blocking)
