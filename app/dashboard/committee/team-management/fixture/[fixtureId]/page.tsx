@@ -1,5 +1,5 @@
 'use client';
-import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft, Star } from 'lucide-react';
+import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft, Star, CheckCircle2, Clock, Zap, Gamepad2, Users, Flame } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -12,6 +12,7 @@ import ConfirmModal from '@/components/modals/ConfirmModal';
 import PromptModal from '@/components/modals/PromptModal';
 import FixtureShareButton from '@/components/FixtureShareButton';
 import CommitteeMatchupCreator from '@/components/CommitteeMatchupCreator';
+import TripleThreatLineupSubmission from '@/components/TripleThreatLineupSubmission';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -82,6 +83,10 @@ export default function CommitteeFixtureDetailPage() {
 
   const [fixture, setFixture] = useState<Fixture | null>(null);
   const [matchups, setMatchups] = useState<Matchup[]>([]);
+  const [homeLineup, setHomeLineup] = useState<any>(null);
+  const [awayLineup, setAwayLineup] = useState<any>(null);
+  const [showTTLineupModal, setShowTTLineupModal] = useState<'home' | 'away' | null>(null);
+  const [isGeneratingTTMatchups, setIsGeneratingTTMatchups] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showTimeline, setShowTimeline] = useState(false);
   const [showMatchupCreator, setShowMatchupCreator] = useState(false);
@@ -132,6 +137,21 @@ export default function CommitteeFixtureDetailPage() {
         setMotmPlayerName(fixtureData.fixture.motm_player_name || null);
         setHomePenaltyGoals(fixtureData.fixture.home_penalty_goals || 0);
         setAwayPenaltyGoals(fixtureData.fixture.away_penalty_goals || 0);
+
+        // Fetch lineups for both teams
+        try {
+          const lineupsRes = await fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}`);
+          if (lineupsRes.ok) {
+            const lineupsData = await lineupsRes.json();
+            const allL = Array.isArray(lineupsData.lineups) ? lineupsData.lineups : [];
+            const hL = allL.find((l: any) => l.team_id === fixtureData.fixture.home_team_id);
+            const aL = allL.find((l: any) => l.team_id === fixtureData.fixture.away_team_id);
+            setHomeLineup(hL || null);
+            setAwayLineup(aL || null);
+          }
+        } catch (lErr) {
+          console.warn('Error fetching lineups for fixture:', lErr);
+        }
       }
 
       // Fetch matchups
@@ -367,6 +387,40 @@ export default function CommitteeFixtureDetailPage() {
     }
   };
 
+  const handleGenerateTripleThreatMatchups = async () => {
+    setIsGeneratingTTMatchups(true);
+    try {
+      const res = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/generate-triple-threat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert({
+          type: 'success',
+          title: 'Matchups Generated',
+          message: 'Successfully generated 3 Triple Threat mode matchups!'
+        });
+        fetchFixtureData();
+      } else {
+        showAlert({
+          type: 'error',
+          title: 'Generation Failed',
+          message: data.error || 'Failed to generate matchups'
+        });
+      }
+    } catch (err: any) {
+      console.error('Error generating TT matchups:', err);
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to generate Triple Threat matchups'
+      });
+    } finally {
+      setIsGeneratingTTMatchups(false);
+    }
+  };
+
   const handleSaveResults = async () => {
     if (!fixture) return;
 
@@ -488,6 +542,24 @@ export default function CommitteeFixtureDetailPage() {
     );
   }
 
+  const isTripleThreat = Boolean(
+    fixture && (
+      fixture.tournament_type === 'triple_threat' ||
+      fixture.matchday_format === 'triple_threat' ||
+      fixture.scoring_system === 'triple_threat' ||
+      fixture.knockout_format === 'triple_threat' ||
+      fixture.tournament_id?.toLowerCase().includes('triple_threat')
+    )
+  );
+
+  const formatPlayerArray = (arr: any) => {
+    if (!arr || !Array.isArray(arr) || arr.length === 0) return 'None';
+    return arr.map((item: any) => {
+      if (typeof item === 'object') return item.player_name || item.name || item.player_id || 'Player';
+      return String(item);
+    }).join(' & ');
+  };
+
   const displayMotmName = fixture?.motm_player_name || motmPlayerName || (
     (fixture?.motm_player_id || motmPlayerId) ? matchups.flatMap(m => {
       const list: { id: string; name: string }[] = [];
@@ -588,10 +660,16 @@ export default function CommitteeFixtureDetailPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
                   <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{fixture.home_team_name}</h2>
                   <button
-                    onClick={() => setShowLineupEditor('home')}
+                    onClick={() => {
+                      if (isTripleThreat) {
+                        setShowTTLineupModal('home');
+                      } else {
+                        setShowLineupEditor('home');
+                      }
+                    }}
                     className="self-center md:self-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Pencil className="w-3.5 h-3.5" /> Edit Lineup
+                    <Pencil className="w-3.5 h-3.5" /> {isTripleThreat ? (homeLineup?.triple_threat_lineup ? 'Edit Lineup' : 'Set Lineup') : 'Edit Lineup'}
                   </button>
                 </div>
                 <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Home Team</p>
@@ -599,10 +677,15 @@ export default function CommitteeFixtureDetailPage() {
 
               {/* Score / Status */}
               <div className="text-center px-6 py-4 bg-slate-50 border border-slate-100 rounded-3xl shrink-0 min-w-[140px]">
+                {isTripleThreat && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 mb-1.5 text-[9px] font-black uppercase font-mono tracking-wider bg-amber-500 text-white rounded shadow-2xs">
+                    ⚡ Triple Threat
+                  </span>
+                )}
                 <div className="text-3xl font-black text-slate-800 tracking-tight">
                   {fixture.home_score ?? '-'} : {fixture.away_score ?? '-'}
                 </div>
-                {fixture.tournament_type === 'triple_threat' && (
+                {isTripleThreat && (
                   <div className="text-[10px] font-mono font-extrabold text-amber-600 uppercase tracking-wider mt-0.5">
                     Matchday Points
                   </div>
@@ -612,7 +695,7 @@ export default function CommitteeFixtureDetailPage() {
                     🔥 Clean Sweep (+1 Pt)
                   </div>
                 )}
-                {fixture.tournament_type === 'triple_threat' && (fixture.home_points_difference !== undefined) && (
+                {isTripleThreat && (fixture.home_points_difference !== undefined) && (
                   <div className="text-[10px] font-mono font-bold text-slate-500 mt-1">
                     GD: {fixture.home_points_difference > 0 ? `+${fixture.home_points_difference}` : fixture.home_points_difference} vs {fixture.away_points_difference > 0 ? `+${fixture.away_points_difference}` : fixture.away_points_difference}
                   </div>
@@ -627,12 +710,25 @@ export default function CommitteeFixtureDetailPage() {
                   </span>
                 </div>
                 {matchups.length === 0 && fixture.status !== 'completed' && (
-                  <button
-                    onClick={() => setShowMatchupCreator(true)}
-                    className="mt-3 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold font-mono uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-1 mx-auto cursor-pointer"
-                  >
-                    <Swords className="w-3 h-3" /> Add Matchups
-                  </button>
+                  isTripleThreat ? (
+                    <button
+                      onClick={() => {
+                        if (!homeLineup?.triple_threat_lineup) setShowTTLineupModal('home');
+                        else if (!awayLineup?.triple_threat_lineup) setShowTTLineupModal('away');
+                        else handleGenerateTripleThreatMatchups();
+                      }}
+                      className="mt-3 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold font-mono uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-1 mx-auto cursor-pointer"
+                    >
+                      <Zap className="w-3 h-3 fill-white" /> {!homeLineup?.triple_threat_lineup ? 'Set Home Lineup' : !awayLineup?.triple_threat_lineup ? 'Set Away Lineup' : 'Generate Matchups'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowMatchupCreator(true)}
+                      className="mt-3 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold font-mono uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-1 mx-auto cursor-pointer"
+                    >
+                      <Swords className="w-3 h-3" /> Add Matchups
+                    </button>
+                  )
                 )}
               </div>
 
@@ -641,10 +737,16 @@ export default function CommitteeFixtureDetailPage() {
                 <div className="flex flex-col md:flex-row-reverse md:items-center justify-between gap-3 mb-2">
                   <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{fixture.away_team_name}</h2>
                   <button
-                    onClick={() => setShowLineupEditor('away')}
+                    onClick={() => {
+                      if (isTripleThreat) {
+                        setShowTTLineupModal('away');
+                      } else {
+                        setShowLineupEditor('away');
+                      }
+                    }}
                     className="self-center md:self-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Pencil className="w-3.5 h-3.5" /> Edit Lineup
+                    <Pencil className="w-3.5 h-3.5" /> {isTripleThreat ? (awayLineup?.triple_threat_lineup ? 'Edit Lineup' : 'Submit on Behalf') : 'Edit Lineup'}
                   </button>
                 </div>
                 <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Away Team</p>
@@ -871,6 +973,165 @@ export default function CommitteeFixtureDetailPage() {
               </div>
             )}
 
+            {/* Triple Threat Match Engine & Lineup Status (When 0 matchups) */}
+            {isTripleThreat && matchups.length === 0 && (
+              <div className="p-6 bg-gradient-to-br from-amber-500/5 via-slate-50 to-indigo-500/5 border-2 border-dashed border-amber-300 rounded-3xl space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="px-2.5 py-1 text-[10px] font-black uppercase font-mono tracking-wider bg-amber-500 text-white rounded-lg inline-flex items-center gap-1 shadow-xs">
+                      ⚡ Triple Threat Engine
+                    </span>
+                    <h4 className="text-base sm:text-lg font-black text-slate-900 mt-2 tracking-tight">
+                      3 Mode Matchups Awaiting Lineups
+                    </h4>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">
+                      Both teams submit 5 unique players across 3 distinct modes: Co-op (2v2), Duo (2v2), and Single (1v1).
+                    </p>
+                  </div>
+                  {homeLineup?.triple_threat_lineup && awayLineup?.triple_threat_lineup && (
+                    <button
+                      type="button"
+                      onClick={handleGenerateTripleThreatMatchups}
+                      disabled={isGeneratingTTMatchups}
+                      className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-mono text-xs font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                      <Zap className="w-4 h-4 fill-white" />
+                      {isGeneratingTTMatchups ? 'Generating...' : 'Generate 3 Matchups'}
+                    </button>
+                  )}
+                </div>
+
+                {/* 3 Modes Visual Overview */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3.5 bg-white border border-indigo-200/80 rounded-2xl shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎮</span>
+                      <div>
+                        <div className="text-xs font-black text-indigo-950 uppercase font-mono">Mode 1: Co-op</div>
+                        <div className="text-[11px] text-indigo-700/80 font-bold">2v2 Matchup (2 Players)</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3.5 bg-white border border-emerald-200/80 rounded-2xl shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🤝</span>
+                      <div>
+                        <div className="text-xs font-black text-emerald-950 uppercase font-mono">Mode 2: Duo</div>
+                        <div className="text-[11px] text-emerald-700/80 font-bold">2v2 Matchup (2 Players)</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3.5 bg-white border border-amber-200/80 rounded-2xl shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">⚔️</span>
+                      <div>
+                        <div className="text-xs font-black text-amber-950 uppercase font-mono">Mode 3: Single</div>
+                        <div className="text-[11px] text-amber-700/80 font-bold">1v1 Matchup (1 Player)</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Submission Statuses */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Home Team Card */}
+                  <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate max-w-[200px]">
+                        {fixture.home_team_name}
+                      </span>
+                      {homeLineup?.triple_threat_lineup ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Submitted
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Pending
+                        </span>
+                      )}
+                    </div>
+                    {homeLineup?.triple_threat_lineup ? (
+                      <div className="text-xs font-mono text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div><strong className="text-indigo-600">🎮 Co-op:</strong> {formatPlayerArray(homeLineup.triple_threat_lineup.coop)}</div>
+                        <div><strong className="text-emerald-600">🤝 Duo:</strong> {formatPlayerArray(homeLineup.triple_threat_lineup.duo)}</div>
+                        <div><strong className="text-amber-600">⚔️ Single:</strong> {formatPlayerArray(homeLineup.triple_threat_lineup.single)}</div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 font-mono italic">
+                        Home team has not submitted their 5 players yet.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowTTLineupModal('home')}
+                      className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      {homeLineup?.triple_threat_lineup ? 'Edit Home Lineup' : 'Set Home Lineup (5 Players)'}
+                    </button>
+                  </div>
+
+                  {/* Away Team Card */}
+                  <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate max-w-[200px]">
+                        {fixture.away_team_name}
+                      </span>
+                      {awayLineup?.triple_threat_lineup ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Submitted
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Pending
+                        </span>
+                      )}
+                    </div>
+                    {awayLineup?.triple_threat_lineup ? (
+                      <div className="text-xs font-mono text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div><strong className="text-indigo-600">🎮 Co-op:</strong> {formatPlayerArray(awayLineup.triple_threat_lineup.coop)}</div>
+                        <div><strong className="text-emerald-600">🤝 Duo:</strong> {formatPlayerArray(awayLineup.triple_threat_lineup.duo)}</div>
+                        <div><strong className="text-amber-600">⚔️ Single:</strong> {formatPlayerArray(awayLineup.triple_threat_lineup.single)}</div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 font-mono italic">
+                        Away team has not submitted. Committee can submit on their behalf.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowTTLineupModal('away')}
+                      className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      {awayLineup?.triple_threat_lineup ? 'Edit Away Lineup' : 'Submit Away Lineup (On Behalf)'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] font-mono text-amber-900 flex items-start gap-2">
+                  <span className="text-amber-600 text-sm">💡</span>
+                  <span>
+                    <strong>Option 2: Committee Submits on Their Behalf</strong> — If the Away Team (or Home Team) shared their lineup in WhatsApp or had a technical issue, use the buttons above to select 5 players from their active roster. The 3 matchups will be automatically generated immediately.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!isTripleThreat && matchups.length === 0 && (
+              <div className="p-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                <Swords className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-mono text-slate-500 uppercase tracking-wider">No matchups created yet</p>
+                <button
+                  type="button"
+                  onClick={() => setShowMatchupCreator(true)}
+                  className="mt-3 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                >
+                  Create Matchups
+                </button>
+              </div>
+            )}
+
             <div className="space-y-3">
               {matchups.map((matchup) => {
                 const motmId = fixture?.motm_player_id;
@@ -1086,12 +1347,43 @@ export default function CommitteeFixtureDetailPage() {
               {/* Create / Manage Matchups Button */}
               {fixture.status !== 'completed' && (
                 <>
-                  <button
-                    onClick={() => setShowMatchupCreator(true)}
-                    className="w-full px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Swords className="w-4 h-4 text-white" /> {matchups.length === 0 ? 'Create Matchups' : 'Manage / Edit Matchups'}
-                  </button>
+                  {!isTripleThreat && (
+                    <button
+                      onClick={() => setShowMatchupCreator(true)}
+                      className="w-full px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Swords className="w-4 h-4 text-white" /> {matchups.length === 0 ? 'Create Matchups' : 'Manage / Edit Matchups'}
+                    </button>
+                  )}
+
+                  {isTripleThreat && (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowTTLineupModal('home')}
+                        className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Gamepad2 className="w-4 h-4 text-white" /> {homeLineup?.triple_threat_lineup ? 'Edit Home Lineup' : 'Set Home Lineup (5 Players)'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowTTLineupModal('away')}
+                        className="w-full px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Users className="w-4 h-4 text-white" /> {awayLineup?.triple_threat_lineup ? 'Edit Away Lineup' : 'Submit Away Lineup (On Behalf)'}
+                      </button>
+                      {homeLineup?.triple_threat_lineup && awayLineup?.triple_threat_lineup && (
+                        <button
+                          type="button"
+                          onClick={handleGenerateTripleThreatMatchups}
+                          disabled={isGeneratingTTMatchups}
+                          className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <Zap className="w-4 h-4 text-white fill-white" /> {isGeneratingTTMatchups ? 'Generating...' : '⚡ Generate 3 Mode Matchups'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Round Robin Auto-Generate Button */}
                   {knockoutFormat === 'round_robin' && (
@@ -1245,6 +1537,53 @@ export default function CommitteeFixtureDetailPage() {
               onCancel={() => setShowLineupEditor(null)}
               initialTeamToEdit={showLineupEditor}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Triple Threat Lineup Editor Modal */}
+      {showTTLineupModal && fixture && user && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 overflow-y-auto transition-all animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-2xl w-full my-8 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+              <div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono tracking-wider bg-amber-500 text-white">
+                  ⚡ SS Triple Threat
+                </span>
+                <h3 className="text-base font-black tracking-tight mt-1">
+                  {showTTLineupModal === 'home' ? fixture.home_team_name : fixture.away_team_name} — Mode Lineup
+                </h3>
+                <p className="text-xs text-slate-400 font-mono">
+                  {showTTLineupModal === 'home' ? 'Home Team Lineup' : 'Away Team Lineup (Submitting on Behalf)'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTTLineupModal(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <TripleThreatLineupSubmission
+                fixtureId={fixtureId}
+                teamId={showTTLineupModal === 'home' ? fixture.home_team_id : fixture.away_team_id}
+                seasonId={fixture.season_id}
+                isHomeTeam={showTTLineupModal === 'home'}
+                opponentTeamName={showTTLineupModal === 'home' ? fixture.away_team_name : fixture.home_team_name}
+                existingLineup={showTTLineupModal === 'home' ? homeLineup : awayLineup}
+                onSubmitSuccess={() => {
+                  setShowTTLineupModal(null);
+                  showAlert({
+                    type: 'success',
+                    title: 'Lineup Submitted',
+                    message: `Triple Threat lineup for ${showTTLineupModal === 'home' ? fixture.home_team_name : fixture.away_team_name} was saved successfully!`
+                  });
+                  fetchFixtureData();
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

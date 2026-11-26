@@ -123,10 +123,16 @@ export default function TripleThreatLineupSubmission({
   };
 
   const checkEditability = async () => {
+    // Committee admin can always edit/submit lineups on behalf of teams
+    if (user?.role === 'committee_admin') {
+      setIsEditable(true);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/fixtures/${fixtureId}/editable?team_id=${teamId}`);
       const data = await res.json();
-      setIsEditable(data.editable ?? true);
+      setIsEditable(isOpponentSelection ? true : (data.editable ?? true));
       setDeadlineInfo(data);
     } catch (err) {
       console.error('Error checking lineup editability:', err);

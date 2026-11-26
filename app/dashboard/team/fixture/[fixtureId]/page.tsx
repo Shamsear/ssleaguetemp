@@ -1424,6 +1424,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     );
   }
 
+  const isTT = Boolean(
+    fixture && (
+      fixture.tournament_type === 'triple_threat' ||
+      fixture.matchday_format === 'triple_threat' ||
+      (fixture as any).scoring_system === 'triple_threat' ||
+      (fixture as any).knockout_format === 'triple_threat' ||
+      fixture.tournament_id?.toLowerCase().includes('triple_threat')
+    )
+  );
+
   const getPhaseInfo = () => {
     switch (phase) {
       case 'draft':
@@ -1870,8 +1880,138 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             </div>
           )}
 
-          {/* Create Matchups (Manual Mode) */}
-          {(!matchupMode || matchupMode === 'manual') && canCreateMatchups && matchups.length === 0 && (
+          {/* Triple Threat Pending Matchups & Lineup Actions */}
+          {isTT && matchups.length === 0 && (
+            <div className="p-5 sm:p-6 bg-gradient-to-br from-amber-500/5 via-slate-50 to-indigo-500/5 border-2 border-dashed border-amber-300 rounded-3xl space-y-5 font-mono mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/60">
+                <div>
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white inline-flex items-center gap-1 shadow-2xs">
+                    ⚡ SS Triple Threat
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight mt-1.5">
+                    Matchup Generation Engine
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Each fixture consists of 3 distinct matchups. Lineups of 5 unique players must be set across Co-op, Duo, and Single modes.
+                  </p>
+                </div>
+              </div>
+
+              {/* Mode Breakdown */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 bg-white border border-indigo-200/80 rounded-2xl shadow-3xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎮</span>
+                    <div>
+                      <div className="text-[11px] font-black text-indigo-950 uppercase">Mode 1: Co-op</div>
+                      <div className="text-[10px] text-indigo-700/80 font-bold">2v2 Match (2 Players)</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 bg-white border border-emerald-200/80 rounded-2xl shadow-3xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🤝</span>
+                    <div>
+                      <div className="text-[11px] font-black text-emerald-950 uppercase">Mode 2: Duo</div>
+                      <div className="text-[10px] text-emerald-700/80 font-bold">2v2 Match (2 Players)</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 bg-white border border-amber-200/80 rounded-2xl shadow-3xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">⚔️</span>
+                    <div>
+                      <div className="text-[11px] font-black text-amber-950 uppercase">Mode 3: Single</div>
+                      <div className="text-[10px] text-amber-700/80 font-bold">1v1 Match (1 Player)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Lineup Status & Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Home Team Card */}
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-3xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate max-w-[180px]">
+                      {fixture.home_team_name}
+                    </span>
+                    {homeLineupSubmitted ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ✓ Submitted
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+                        ⏳ Pending
+                      </span>
+                    )}
+                  </div>
+                  {isHomeTeam ? (
+                    <Link
+                      href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <span>✏️</span>
+                      <span>{homeLineupSubmitted ? 'Edit Home Lineup' : 'Submit Home Lineup (5 Players)'}</span>
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">
+                      {homeLineupSubmitted ? 'Home lineup submitted and locked.' : 'Awaiting submission by Home Team.'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Away Team Card */}
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-3xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate max-w-[180px]">
+                      {fixture.away_team_name}
+                    </span>
+                    {awayLineupSubmitted ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ✓ Submitted
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+                        ⏳ Pending
+                      </span>
+                    )}
+                  </div>
+                  {!isHomeTeam ? (
+                    <Link
+                      href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <span>✏️</span>
+                      <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup (5 Players)'}</span>
+                    </Link>
+                  ) : !awayLineupSubmitted ? (
+                    <Link
+                      href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
+                      className="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-mono text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <span>👥</span>
+                      <span>Submit Away Lineup on Their Behalf</span>
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">
+                      Away lineup submitted.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-blue-900 flex items-start gap-2">
+                <span className="text-blue-500 text-sm">💡</span>
+                <span>
+                  <strong>Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team / Committee submits on the Away Team&apos;s behalf), all 3 matchups will be automatically created.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Create Matchups (Manual Mode - Standard Tournaments Only) */}
+          {(!matchupMode || matchupMode === 'manual') && !isTT && canCreateMatchups && matchups.length === 0 && (
             <div className="space-y-3 sm:space-y-4">
               {/* Quick Actions Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl font-mono text-xs">
