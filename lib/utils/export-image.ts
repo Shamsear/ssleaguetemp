@@ -1,5 +1,66 @@
 import { toPng } from 'html-to-image';
 
+export interface ExportContainerOptions {
+  width?: number;
+  backgroundColor?: string;
+  fontEmbedUrl?: string;
+  beforeCapture?: (clone: HTMLElement) => void;
+  filter?: (node: HTMLElement) => boolean;
+}
+
+const fontEmbedCache = new Map<string, string>();
+
+/**
+ * Fetches a Google Fonts CSS stylesheet and inlines non-vietnamese woff2 font files as data URLs.
+ * Cached in-memory so subsequent exports don't refetch fonts and never read cross-origin styleSheets.
+ */
+async function buildFontEmbedCss(fontCssUrl: string): Promise<string> {
+  const cached = fontEmbedCache.get(fontCssUrl);
+  if (cached !== undefined) return cached;
+
+  try {
+    const res = await fetch(fontCssUrl, { mode: 'cors' });
+    if (!res.ok) return '';
+    const cssText = await res.text();
+    const faceBlocks = cssText.match(/@font-face\s*\{[^}]+\}/g) || [];
+    const subsetBlocks = faceBlocks.filter((block) => !block.toLowerCase().includes('vietnamese'));
+    const fontUrlMap = new Map<string, string>();
+
+    await Promise.all(
+      subsetBlocks.flatMap((block) =>
+        Array.from(block.matchAll(/url\((https?:\/\/[^)]+)\)/g)).map(async (match) => {
+          const url = match[1].replace(/["']/g, '');
+          if (fontUrlMap.has(url)) return;
+          fontUrlMap.set(url, url);
+          try {
+            const fontRes = await fetch(url, { mode: 'cors' });
+            if (fontRes.ok) {
+              const dataUrl = await blobToDataUrl(await fontRes.blob());
+              if (dataUrl) fontUrlMap.set(url, dataUrl);
+            }
+          } catch {
+            // Keep original URL fallback if single subset fetch fails
+          }
+        })
+      )
+    );
+
+    const embedded = subsetBlocks
+      .map((block) =>
+        block.replace(/url\((https?:\/\/[^)]+)\)/g, (_full, rawUrl) => {
+          const clean = rawUrl.replace(/["']/g, '');
+          return `url(${fontUrlMap.get(clean) || clean})`;
+        })
+      )
+      .join('\n');
+
+    if (embedded) fontEmbedCache.set(fontCssUrl, embedded);
+    return embedded;
+  } catch {
+    return '';
+  }
+}
+
 function blobToDataUrl(blob: Blob): Promise<string | null> {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -116,7 +177,10 @@ function waitForPaint(): Promise<void> {
  * 5. Run html-to-image on the clone — it never sees an external URL.
  * 6. Remove the clone and return the PNG.
  */
-export async function generateContainerPng(container: HTMLElement): Promise<string> {
+export async function generateContainerPng(
+  container: HTMLElement,
+  exportOptions?: ExportContainerOptions
+): Promise<string> {
   // Step 1 — wait for any currently loading images in the live element
   const liveImages = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
   await Promise.all(
@@ -132,8 +196,13 @@ export async function generateContainerPng(container: HTMLElement): Promise<stri
   );
 
   // Step 2 — measure before cloning (clone has no layout yet)
-  const targetWidth = container.scrollWidth || container.offsetWidth || 1200;
+  const targetWidth = exportOptions?.width || container.scrollWidth || container.offsetWidth || 1200;
   const targetHeight = container.scrollHeight || container.offsetHeight || 800;
+
+  // Optionally pre-resolve Google Font CSS without touching document.styleSheets
+  const fontEmbedCss = exportOptions?.fontEmbedUrl
+    ? await buildFontEmbedCss(exportOptions.fontEmbedUrl)
+    : '';
 
   // Step 3 — clone into an off-screen wrapper with a fixed pixel width
   const wrapper = document.createElement('div');
@@ -148,6 +217,9 @@ export async function generateContainerPng(container: HTMLElement): Promise<stri
     'z-index:-1',
   ].join(';');
   const clone = container.cloneNode(true) as HTMLElement;
+  if (exportOptions?.beforeCapture) {
+    exportOptions.beforeCapture(clone);
+  }
   wrapper.appendChild(clone);
   document.body.appendChild(wrapper);
 
@@ -184,13 +256,14 @@ export async function generateContainerPng(container: HTMLElement): Promise<stri
       pixelRatio: 2,
       width: cloneWidth,
       height: cloneHeight,
-      backgroundColor: '#ffffff',
+      backgroundColor: exportOptions?.backgroundColor || '#ffffff',
       cacheBust: false,
-      fontEmbedCSS: '',
-      skipFontFace: true,
+      fontEmbedCSS: fontEmbedCss,
+      skipFontFace: !fontEmbedCss,
       filter: (node: HTMLElement) => {
         const tag = (node as Element).tagName;
-        return tag !== 'SCRIPT' && tag !== 'NOSCRIPT' && tag !== 'IFRAME';
+        if (tag === 'SCRIPT' || tag === 'NOSCRIPT' || tag === 'IFRAME') return false;
+        return exportOptions?.filter ? exportOptions.filter(node) : true;
       },
     };
 

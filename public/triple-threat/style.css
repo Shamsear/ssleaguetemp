@@ -59,11 +59,11 @@
 .tt-scope .row.p1{border-left-color:var(--lime);background:linear-gradient(90deg,rgba(197,240,24,.26),rgba(14,18,9,.92) 58%);border-color:var(--line-lime)}
 .tt-scope .row.p2{border-left-color:var(--silver);background:linear-gradient(90deg,rgba(228,231,234,.16),rgba(14,18,9,.92) 58%)}
 .tt-scope .row.p3{border-left-color:var(--lime-2);background:linear-gradient(90deg,rgba(166,212,10,.12),rgba(14,18,9,.92) 58%)}
-.tt-scope .pos{width:34px;height:30px;display:grid;place-items:center;transform:skewX(-12deg);background:rgba(255,255,255,.06);border-radius:3px}
-.tt-scope .pos b{transform:skewX(12deg);font:italic 800 20px "Barlow Condensed",sans-serif;color:var(--muted)}
-.tt-scope .p1 .pos{background:var(--lime)} .p1 .pos b{color:#0b0f02}
-.tt-scope .p2 .pos{background:linear-gradient(180deg,#ffffff,#aeb4ba)} .p2 .pos b{color:#14170f}
-.tt-scope .p3 .pos{background:#5f7d06} .p3 .pos b{color:#fff}
+.tt-scope .pos{width:34px;height:30px;display:flex;align-items:center;justify-content:center;margin:0 auto;transform:skewX(-12deg);background:rgba(255,255,255,.06);border-radius:3px}
+.tt-scope .pos b{display:block;transform:skewX(12deg);font:italic 800 20px/1 "Barlow Condensed",sans-serif;color:var(--muted)}
+.tt-scope .p1 .pos{background:var(--lime)} .tt-scope .p1 .pos b{color:#0b0f02}
+.tt-scope .p2 .pos{background:linear-gradient(180deg,#ffffff,#aeb4ba)} .tt-scope .p2 .pos b{color:#14170f}
+.tt-scope .p3 .pos{background:#5f7d06} .tt-scope .p3 .pos b{color:#fff}
 .tt-scope .team{display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
 /* team logo: square box, no border/background, whole logo visible */
 .tt-scope .logo{width:40px;height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;
@@ -71,16 +71,16 @@
 /* logo shrinks to fit inside the box (never bigger than the box, keeps its shape) */
 .tt-scope .logo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
 .tt-scope .rank-row:not(.rank-th),.tt-scope .row{min-height:46px}
-.tt-scope .logo.ph{font:italic 800 15px "Barlow Condensed",sans-serif;color:#0b0f02;background:linear-gradient(180deg,#e9f9a6,#b6dd12);border-radius:4px}
+.tt-scope .logo.ph{font:italic 800 15px/1 "Barlow Condensed",sans-serif;color:#0b0f02;background:linear-gradient(180deg,#e9f9a6,#b6dd12);border-radius:4px}
 .tt-scope .tname{font-weight:800;font-size:14px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-scope .tsub{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;margin-top:2px;text-transform:uppercase}
 .tt-scope .dim{color:var(--muted)}
-.tt-scope .gd.up{color:var(--lime)} .gd.down{color:var(--loss)}
-.tt-scope .pts{display:grid;place-items:center;height:34px;transform:skewX(-12deg);background:var(--lime);border-radius:3px}
-.tt-scope .pts b{transform:skewX(12deg);font:italic 900 24px/1 "Barlow Condensed",sans-serif;color:#0b0f02}
-.tt-scope .form{display:flex;gap:4px;justify-content:center}
-.tt-scope .f{width:18px;height:18px;border-radius:3px;font:800 11px "Barlow Condensed",sans-serif;display:grid;place-items:center}
-.tt-scope .f.W{background:var(--lime);color:#0b0f02} .f.D{background:var(--draw);color:#0b0f02} .f.L{background:var(--loss);color:#fff} .f.N{background:rgba(255,255,255,.07)}
+.tt-scope .gd.up{color:var(--lime)} .tt-scope .gd.down{color:var(--loss)}
+.tt-scope .pts{display:flex;align-items:center;justify-content:center;width:100%;height:34px;transform:skewX(-12deg);background:var(--lime);border-radius:3px}
+.tt-scope .pts b{display:block;transform:skewX(12deg);font:italic 900 24px/1 "Barlow Condensed",sans-serif;color:#0b0f02}
+.tt-scope .form{display:flex;gap:4px;justify-content:center;align-items:center}
+.tt-scope .f{width:18px;height:18px;border-radius:3px;font:800 11px/1 "Barlow Condensed",sans-serif;display:flex;align-items:center;justify-content:center}
+.tt-scope .f.W{background:var(--lime);color:#0b0f02} .tt-scope .f.D{background:var(--draw);color:#0b0f02} .tt-scope .f.L{background:var(--loss);color:#fff} .tt-scope .f.N{background:rgba(255,255,255,.07)}
 
 /* breakdown */
 .tt-scope .tablewrap{overflow-x:auto;border-radius:8px;border:1px solid var(--line);background:var(--card)}
@@ -88,10 +88,10 @@
 .tt-scope .bd th,.tt-scope .bd td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
 .tt-scope .bd thead th{font:700 12px "Barlow Condensed",sans-serif;letter-spacing:.14em;color:var(--silver)}
 .tt-scope .bd thead tr:first-child th{font:italic 800 20px "Barlow Condensed",sans-serif;letter-spacing:.08em;padding-top:10px;color:#fff}
-.tt-scope .bd .mdA{background:rgba(197,240,24,.13)} .bd .mdB{background:rgba(228,231,234,.07)}
+.tt-scope .bd .mdA{background:rgba(197,240,24,.13)} .tt-scope .bd .mdB{background:rgba(228,231,234,.07)}
 .tt-scope .bd .sep{border-left:2px solid rgba(197,240,24,.55)}
 .tt-scope .bd td.tcell{text-align:left;position:sticky;left:0;background:#0b0e07;z-index:1}
-.tt-scope .bd td.tlogo{text-align:center;width:56px;padding:4px 6px} .bd td.tlogo .logo{margin:0 auto;width:36px;height:36px;flex-basis:36px}
+.tt-scope .bd td.tlogo{text-align:center;width:56px;padding:4px 6px} .tt-scope .bd td.tlogo .logo{margin:0 auto;width:36px;height:36px;flex-basis:36px}
 .tt-scope .bd th.tlogo-h{width:56px;font-size:10px}
 .tt-scope .bd td.tcell .team{gap:10px}
 .tt-scope .bd td.tcell .logo{width:30px;height:30px;flex-basis:30px}
@@ -127,8 +127,8 @@
 
 /* rules strip + footer */
 .tt-scope .rules{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:18px}
-.tt-scope .rule{font:700 12px "Barlow Condensed",sans-serif;letter-spacing:.14em;color:var(--silver);background:rgba(9,12,6,.8);
-  border:1px solid var(--line);padding:5px 10px;border-radius:4px;text-transform:uppercase}
+.tt-scope .rule{display:inline-flex;align-items:center;gap:5px;font:700 12px/1.1 "Barlow Condensed",sans-serif;letter-spacing:.14em;color:var(--silver);background:rgba(9,12,6,.8);
+  border:1px solid var(--line);padding:6px 10px;border-radius:4px;text-transform:uppercase}
 .tt-scope .rule em{font-style:normal;color:var(--lime)}
 .tt-scope footer{margin-top:14px;text-align:center;font:700 12px "Barlow Condensed",sans-serif;letter-spacing:.24em;color:var(--muted)}
 
@@ -148,6 +148,7 @@
 #poster.export .rank-row{overflow:visible !important}
 #poster.export .rank-row .team{overflow:visible !important}
 #poster.export .rank-row .tname{overflow:visible !important;text-overflow:clip !important}
+#poster.export .tablewrap,#poster.export .bracket-wrap{overflow:visible !important}
 .tt-scope .rank-head{font:italic 900 26px "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--lime);
   border-bottom:2px solid var(--lime);padding-bottom:4px;margin-bottom:8px}
 .tt-scope .rank-row{display:grid;grid-template-columns:34px minmax(0,1fr) repeat(7,28px) 50px 112px;align-items:center;gap:4px;margin-bottom:5px;padding:6px 8px;border-radius:6px;
@@ -160,17 +161,19 @@
 .tt-scope .rank-th .l{text-align:left}
 .tt-scope .rank-row .team{gap:8px}
 .tt-scope .rank-row .logo{width:38px;height:38px;flex-basis:38px}
-.tt-scope .rank-row .pos{width:28px}
+.tt-scope .rank-row .pos{width:28px;height:28px;margin:0 auto}
+.tt-scope .rank-row .pos b{font-size:19px;line-height:1}
 .tt-scope .rank-row .tname{white-space:normal;line-height:1.15;font-size:12.5px}
-.tt-scope .rank-row .pts{height:30px} .rank-row .pts b{font-size:21px}
+.tt-scope .rank-row .pts{height:30px}
+.tt-scope .rank-row .pts b{font-size:21px;line-height:1}
 @media (max-width:720px){
-.tt-scope .rank-row{grid-template-columns:30px minmax(0,1fr) repeat(5,24px) 44px;font-size:12px}
+#poster:not(.export) .rank-row{grid-template-columns:30px minmax(0,1fr) repeat(5,24px) 44px;font-size:12px}
 }
 /* ---------- Road to Final ---------- */
 .tt-scope .rf-sum4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:860px;margin:0 auto}
 .tt-scope .rf-top{text-align:center;margin-top:8px;font:italic 900 22px "Barlow Condensed",sans-serif;letter-spacing:.08em;color:#fff}
 #poster.export-final .rf-sum4{max-width:none}
-@media (max-width:720px){ .tt-scope .rf-sum4{grid-template-columns:repeat(2,1fr)} .tt-scope .rf-g{font-size:24px} }
+@media (max-width:720px){ #poster:not(.export) .rf-sum4{grid-template-columns:repeat(2,1fr)} #poster:not(.export) .rf-g{font-size:24px} }
 .tt-scope .rf-sum{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;max-width:760px;margin:0 auto}
 .tt-scope .rf-box{text-align:center;background:var(--card);border:1px solid var(--line-lime);border-radius:8px;padding:10px 8px}
 .tt-scope .rf-g{font:italic 900 30px/1 "Barlow Condensed",sans-serif;color:var(--lime);letter-spacing:.04em}
@@ -203,7 +206,7 @@
 .tt-scope .slot > .mc,.tt-scope .slot > .fcard{width:100%}
 .tt-scope .conn{position:relative;flex:1}
 .tt-scope .conn i{position:absolute;display:block;background:rgba(197,240,24,.75)}
-.tt-scope .conn i.h{height:2px;margin-top:-1px} .conn i.v{width:2px;margin-left:-1px}
+.tt-scope .conn i.h{height:2px;margin-top:-1px} .tt-scope .conn i.v{width:2px;margin-left:-1px}
 .tt-scope .fcard{position:relative}
 .tt-scope .fcard .champ{position:absolute;left:0;right:0;top:calc(100% + 14px)}
 .tt-scope .bhead{text-align:center;font:italic 800 18px "Barlow Condensed",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--silver);margin-bottom:6px}
@@ -212,7 +215,7 @@
 .tt-scope .mc.final{border-color:var(--lime);box-shadow:0 0 0 1px rgba(197,240,24,.25),0 10px 30px rgba(197,240,24,.12)}
 .tt-scope .mc-h{display:flex;justify-content:space-between;align-items:center;font:700 11px "Barlow Condensed",sans-serif;letter-spacing:.14em;color:var(--muted);margin-bottom:3px}
 .tt-scope .mc-h .st{padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.06)}
-.tt-scope .mc-h .st-FT{background:var(--lime-soft);color:var(--lime)} .mc-h .st-LIVE{background:rgba(255,255,255,.12);color:#fff}
+.tt-scope .mc-h .st-FT{background:var(--lime-soft);color:var(--lime)} .tt-scope .mc-h .st-LIVE{background:rgba(255,255,255,.12);color:#fff}
 .tt-scope .mt{display:grid;grid-template-columns:auto 26px minmax(0,1fr) 28px;align-items:center;gap:6px;padding:3px 2px;font-weight:800;font-size:12.5px}
 .tt-scope .mt.noseed{grid-template-columns:26px minmax(0,1fr) 28px}
 .tt-scope .mt em{font:700 11px "Barlow Condensed",sans-serif;font-style:normal;letter-spacing:.06em;color:#0b0f02;background:var(--silver);border-radius:3px;padding:0 4px;min-width:22px;text-align:center}
@@ -221,7 +224,7 @@
 .tt-scope .mt-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-scope .mt-n small{font:600 9px Montserrat,sans-serif;color:var(--muted);letter-spacing:.04em}
 .tt-scope .mt b{font:italic 900 20px "Barlow Condensed",sans-serif;text-align:center}
-.tt-scope .mt.win{color:var(--lime)} .mt.win b{color:var(--lime)}
+.tt-scope .mt.win{color:var(--lime)} .tt-scope .mt.win b{color:var(--lime)}
 .tt-scope .mt.tbd .mt-n{color:var(--muted);font-weight:600;font-style:italic}
 .tt-scope .mc-modes{font:600 10px Montserrat,sans-serif;color:var(--muted);margin-top:2px;letter-spacing:.02em}
 .tt-scope .fwrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px}
@@ -231,7 +234,7 @@
 .tt-scope .champ .logo{width:56px;height:56px;flex-basis:56px;margin:0 auto 4px}
 .tt-scope .champ .cn{font:italic 900 24px "Barlow Condensed",sans-serif;text-transform:uppercase}
 .tt-scope .champ.on{border-style:solid;background:linear-gradient(180deg,rgba(197,240,24,.18),rgba(197,240,24,.03))}
-@media (max-width:720px){ .tt-scope .rf-groups{grid-template-columns:1fr} }
+@media (max-width:720px){ #poster:not(.export) .rf-groups{grid-template-columns:1fr} }
 
 /* ---- landscape exports (1920 x 1080) ---- */
 #poster.export-land{padding:22px 56px 16px}
@@ -303,7 +306,7 @@
 .tt-scope .gt-t{min-width:0}
 .tt-scope .gt-n{font-weight:800;font-size:16px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-scope .gt-m{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
-@media (max-width:720px){ .tt-scope .gwrap{grid-template-columns:1fr} .tt-scope .gt-n{font-size:14px} }
+@media (max-width:720px){ #poster:not(.export) .gwrap{grid-template-columns:1fr} #poster:not(.export) .gt-n{font-size:14px} }
 /* Groups export: spacious layout, cards never squash */
 #poster.export-groups #v-groups{flex:1;display:flex;flex-direction:column;min-height:0}
 #poster.export-groups .gwrap{flex:1;max-width:none;min-height:0;gap:20px;grid-auto-rows:1fr}
@@ -338,7 +341,7 @@
 .tt-scope .fxv{text-align:center;font:italic 900 30px/1 "Barlow Condensed",sans-serif;color:var(--lime)}
 .tt-scope .fxv small{display:block;font:700 11px "Barlow Condensed",sans-serif;letter-spacing:.16em;color:var(--muted);font-style:normal;margin-top:2px}
 .tt-scope .fx-modes{text-align:center;margin-top:14px;font:700 13px "Barlow Condensed",sans-serif;letter-spacing:.22em;color:var(--silver)}
-@media (max-width:720px){ .tt-scope .fx-row{grid-template-columns:1fr 64px 1fr} .tt-scope .fxc{padding:8px} .tt-scope .fxv.sc{font-size:24px} .tt-scope .fxs .logo{width:32px;height:32px;flex-basis:32px} .tt-scope .fxn{font-size:12px;white-space:normal} .tt-scope .fxv{font-size:22px} .tt-scope .fx-md{font-size:40px} }
+@media (max-width:720px){ #poster:not(.export) .fx-row{grid-template-columns:1fr 64px 1fr} #poster:not(.export) .fxc{padding:8px} #poster:not(.export) .fxv.sc{font-size:24px} #poster:not(.export) .fxs .logo{width:32px;height:32px;flex-basis:32px} #poster:not(.export) .fxn{font-size:12px;white-space:normal} #poster:not(.export) .fxv{font-size:22px} #poster:not(.export) .fx-md{font-size:40px} }
 /* Fixtures export 1080 x 1350: cards stretch to fill */
 #poster.export-fixtures #v-fixtures{flex:1;display:flex;flex-direction:column;min-height:0}
 #poster.export-fixtures .fx-wrap{flex:1;max-width:none;min-height:0;gap:16px}
@@ -369,19 +372,19 @@
 
 @media (max-width:720px){
 .tt-scope .stage{padding:12px 10px 30px}
-#poster{padding:16px 10px 14px;border-radius:10px}
-.tt-scope .hero-logo{width:170px}
-.tt-scope .hero-text .title{font-size:44px}
-.tt-scope .section-title h2{font-size:28px}
-.tt-scope .grid{grid-template-columns:36px minmax(0,1fr) 28px 36px 50px;column-gap:4px}
-.tt-scope .hide-sm{display:none !important}
-.tt-scope .row{padding:7px 8px;font-size:13px}
-.tt-scope .logo{width:32px;height:32px;flex-basis:32px}
-.tt-scope .team{gap:8px}
-.tt-scope .tname{font-size:12px;white-space:normal;line-height:1.15}
-.tt-scope .pos{width:28px}
-.tt-scope .pts b{font-size:21px}
-.tt-scope .thead{padding:0 8px 6px}
+#poster:not(.export){padding:16px 10px 14px;border-radius:10px}
+#poster:not(.export) .hero-logo{width:170px}
+#poster:not(.export) .hero-text .title{font-size:44px}
+#poster:not(.export) .section-title h2{font-size:28px}
+#poster:not(.export) .grid{grid-template-columns:36px minmax(0,1fr) 28px 36px 50px;column-gap:4px}
+#poster:not(.export) .hide-sm{display:none !important}
+#poster:not(.export) .row{padding:7px 8px;font-size:13px}
+#poster:not(.export) .logo{width:32px;height:32px;flex-basis:32px}
+#poster:not(.export) .team{gap:8px}
+#poster:not(.export) .tname{font-size:12px;white-space:normal;line-height:1.15}
+#poster:not(.export) .pos{width:28px}
+#poster:not(.export) .pts b{font-size:21px}
+#poster:not(.export) .thead{padding:0 8px 6px}
 .tt-scope .tab{padding:8px 12px}
-.tt-scope .pill-note{display:none}
+#poster:not(.export) .pill-note{display:none}
 }

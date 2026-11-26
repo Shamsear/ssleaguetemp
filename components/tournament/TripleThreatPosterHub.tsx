@@ -3,7 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, RefreshCw, Layers, Trophy, Calendar, Sparkles, ChevronRight, Check, X } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { generateContainerPng, downloadPng } from '@/lib/utils/export-image';
+
+const TRIPLE_THREAT_FONT_URL =
+  'https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Montserrat:wght@400;500;600;700;800&display=swap';
 
 interface TripleThreatPosterHubProps {
   tournamentId: string;
@@ -33,7 +36,8 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
       const link = document.createElement('link');
       link.id = fontId;
       link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800;1,900&family=Montserrat:wght@500;600;700;800&display=swap';
+      link.crossOrigin = 'anonymous';
+      link.href = TRIPLE_THREAT_FONT_URL;
       document.head.appendChild(link);
     }
 
@@ -78,6 +82,8 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
     }
   };
 
+  const exportFilename = `SS Triple Threat - ${activeTab.toUpperCase()}${activeTab === 'fixtures' ? ` MD${fixtureMd}` : ''}.png`;
+
   const handleDownloadPng = async () => {
     if (!posterRef.current || !data) return;
 
@@ -89,84 +95,34 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
 
       const isPointsView = activeTab === 'points';
       const OUT_W = isPointsView ? 1920 : 1080;
-      const node = posterRef.current;
 
-      const big = await html2canvas(node, {
+      // Capture via native browser SVG foreignObject engine (html-to-image) so CSS grid,
+      // flex centering, skewX badges, and condensed font baselines match the live page 1:1.
+      const dataUrl = await generateContainerPng(posterRef.current, {
+        width: OUT_W,
         backgroundColor: '#050604',
-        scale: 2,
-        useCORS: true,
-        windowWidth: Math.max(OUT_W + 120, 1200),
-        ignoreElements: (el) => el.classList && el.classList.contains('chips'),
-        onclone: (doc) => {
-          // Ensure font link and stylesheet are present in cloned document
-          if (!doc.getElementById('triple-threat-external-fonts')) {
-            const fontLink = doc.createElement('link');
-            fontLink.id = 'triple-threat-external-fonts';
-            fontLink.rel = 'stylesheet';
-            fontLink.href =
-              'https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,800;1,900&family=Montserrat:wght@400;600;700;800&display=swap';
-            doc.head.appendChild(fontLink);
+        fontEmbedUrl: TRIPLE_THREAT_FONT_URL,
+        filter: (el) => !(el.classList && el.classList.contains('chips')),
+        beforeCapture: (clone) => {
+          clone.classList.add('tt-scope', 'export');
+          clone.classList.remove('export-fixed', 'export-fixtures', 'export-groups', 'export-final');
+
+          clone.style.width = `${OUT_W}px`;
+          clone.style.maxWidth = `${OUT_W}px`;
+          clone.style.borderRadius = '0';
+          clone.style.border = '0';
+          clone.style.margin = '0';
+          clone.style.height = 'auto';
+          clone.style.minHeight = 'auto';
+          clone.style.overflow = 'visible';
+
+          if (isPointsView) {
+            clone.classList.add('export-land', 'export-points');
           }
-          if (!doc.getElementById('triple-threat-external-css')) {
-            const cssLink = doc.createElement('link');
-            cssLink.id = 'triple-threat-external-css';
-            cssLink.rel = 'stylesheet';
-            cssLink.href = '/triple-threat/style.css';
-            doc.head.appendChild(cssLink);
-          }
-
-          const p = doc.getElementById('poster');
-          if (!p) return;
-          p.classList.add('tt-scope');
-          p.classList.add('export');
-          p.classList.remove('export-fixed');
-          p.classList.remove('export-fixtures');
-          p.classList.remove('export-groups');
-          p.classList.remove('export-final');
-
-          p.style.width = OUT_W + 'px';
-          p.style.maxWidth = OUT_W + 'px';
-          p.style.borderRadius = '0';
-          p.style.border = '0';
-          p.style.margin = '0 auto';
-          p.style.height = 'auto';
-          p.style.minHeight = 'auto';
-          p.style.overflow = 'visible';
-
-          if (isPointsView) p.classList.add('export-points');
         },
       });
 
-      const outW = big.width;
-      const outH = big.height;
-
-      const out = document.createElement('canvas');
-      out.width = outW;
-      out.height = outH;
-      const ctx = out.getContext('2d');
-      if (ctx) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.fillStyle = '#050604';
-        ctx.fillRect(0, 0, outW, outH);
-        ctx.drawImage(big, 0, 0, outW, outH);
-      }
-
-      const dataUrl = out.toDataURL('image/png');
-      const filename = `SS Triple Threat - ${activeTab.toUpperCase()}${activeTab === 'fixtures' ? ` MD${fixtureMd}` : ''}.png`;
-
-      // Trigger download
-      try {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      } catch (dErr) {
-        console.warn('Direct download blocked, opening preview:', dErr);
-      }
-
+      downloadPng(dataUrl, exportFilename);
       setPreviewImage(dataUrl);
     } catch (err: any) {
       console.error('Error generating poster image:', err);
@@ -1026,7 +982,11 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
             <div className="flex items-center gap-3">
               <a
                 href={previewImage}
-                download={`SS Triple Threat - ${activeTab}.png`}
+                download={exportFilename}
+                onClick={(e) => {
+                  e.preventDefault();
+                  downloadPng(previewImage, exportFilename);
+                }}
                 className="px-6 py-2.5 bg-[#c5f018] hover:bg-[#b0d912] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl shadow-lg cursor-pointer inline-flex items-center gap-2 transition-all active:scale-95"
               >
                 <Download className="w-4 h-4" /> Save PNG Image
