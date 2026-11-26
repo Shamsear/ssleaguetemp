@@ -142,7 +142,7 @@
 #poster.export-fixed .rank-row .f{width:24px;height:24px;font-size:14px}
 
 /* ---- image export (applied only to the copy that is turned into a PNG) ---- */
-#poster.export{border-radius:0;border:0}
+#poster.export{border-radius:0 !important;border:0 !important;padding:24px 32px 20px !important}
 /* Ranking export: spacious vertical poster, rows maintain fixed clear height */
 #poster.export-fixed{padding:32px 48px 24px;display:flex;flex-direction:column;box-sizing:border-box}
 #poster.export-fixed .inner{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-between;min-height:100%;height:100%}
