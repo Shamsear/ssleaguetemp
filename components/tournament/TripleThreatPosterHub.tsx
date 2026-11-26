@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, RefreshCw, Layers, Trophy, Calendar, Sparkles, ChevronRight, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Download, RefreshCw, Layers, Trophy, Calendar, Sparkles, ChevronRight, Check, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 interface TripleThreatPosterHubProps {
@@ -16,6 +17,11 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
   const [groupFilter, setGroupFilter] = useState<string>('ALL');
   const [fixtureMd, setFixtureMd] = useState<string>('1');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const posterRef = useRef<HTMLDivElement>(null);
 
@@ -72,14 +78,6 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
     }
   };
 
-  const getExportSize = (view: string): [number, number] => {
-    if (view === 'points') {
-      return [1920, 1080];
-    }
-    // 0 height means natural auto-height matching the live page exactly!
-    return [1080, 0];
-  };
-
   const handleDownloadPng = async () => {
     if (!posterRef.current || !data) return;
 
@@ -89,17 +87,15 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
         await document.fonts.ready;
       }
 
-      const size = getExportSize(activeTab);
-      const OUT_W = size[0];
-      const OUT_H = size[1];
+      const isPointsView = activeTab === 'points';
+      const OUT_W = isPointsView ? 1920 : 1080;
       const node = posterRef.current;
 
       const big = await html2canvas(node, {
         backgroundColor: '#050604',
         scale: 2,
         useCORS: true,
-        windowWidth: OUT_W > 1200 ? OUT_W + 120 : 1200,
-        windowHeight: 3200,
+        windowWidth: Math.max(OUT_W + 120, 1200),
         ignoreElements: (el) => el.classList && el.classList.contains('chips'),
         onclone: (doc) => {
           // Ensure font link and stylesheet are present in cloned document
@@ -123,25 +119,21 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
           if (!p) return;
           p.classList.add('tt-scope');
           p.classList.add('export');
+          p.classList.remove('export-fixed');
+          p.classList.remove('export-fixtures');
+          p.classList.remove('export-groups');
+          p.classList.remove('export-final');
+
           p.style.width = OUT_W + 'px';
           p.style.maxWidth = OUT_W + 'px';
           p.style.borderRadius = '0';
           p.style.border = '0';
           p.style.margin = '0 auto';
+          p.style.height = 'auto';
+          p.style.minHeight = 'auto';
           p.style.overflow = 'visible';
 
-          if (OUT_H > 0) {
-            p.classList.add('export-fixed');
-            p.style.height = OUT_H + 'px';
-          } else {
-            p.style.height = 'auto';
-            p.style.minHeight = 'auto';
-            p.classList.remove('export-fixed');
-          }
-
-          if (OUT_W > 1200) p.classList.add('export-land');
-          if (activeTab === 'points') p.classList.add('export-points');
-          if (activeTab === 'final') p.classList.add('export-final');
+          if (isPointsView) p.classList.add('export-points');
         },
       });
 
@@ -997,36 +989,59 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
       </div>
 
       {/* Preview Modal if Download is triggered */}
-      {previewImage && (
-        <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
-          <div className="bg-[#0b0f06] border border-[#c5f018]/30 rounded-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[94vh] overflow-y-auto space-y-3 font-mono text-white text-center shadow-2xl">
-            <h3 className="text-sm font-bold text-[#c5f018] uppercase tracking-wider flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#c5f018]" /> Poster Export Ready (2X High-Res)
-            </h3>
-            <p className="text-xs text-slate-400">
-              Download started! On mobile phones or tablets, you can also long-press the image below to save it directly to your Photos / Gallery.
-            </p>
-            <div className="rounded-xl overflow-hidden border border-white/10 max-h-[75vh] flex items-center justify-center bg-black/60 p-2 sm:p-4">
-              <img src={previewImage} alt="Generated Poster" className="max-h-[72vh] w-auto mx-auto object-contain rounded-lg shadow-2xl border border-white/5" />
+      {mounted && previewImage && createPortal(
+        <div className="fixed inset-0 z-[99999999] bg-black/92 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-5 overflow-hidden animate-fade-in">
+          {/* Header bar (always visible at top, completely above navbar!) */}
+          <div className="w-full max-w-5xl flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#c5f018]" />
+              <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider font-mono">
+                Poster Export Ready <span className="text-[#c5f018]">(2X Ultra HD)</span>
+              </h3>
             </div>
-            <div className="flex justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
+              title="Close Preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Central image display (scaled to viewport, crisp, high-res) */}
+          <div className="flex-1 w-full max-w-5xl min-h-0 flex items-center justify-center p-2 sm:p-4 overflow-auto">
+            <img
+              src={previewImage}
+              alt="Generated Poster"
+              className="max-h-full max-w-full w-auto h-auto object-contain rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.85)] border border-white/10"
+            />
+          </div>
+
+          {/* Bottom action bar (sticky, always visible on all screens!) */}
+          <div className="w-full max-w-5xl pt-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+            <p className="text-xs text-slate-400 font-mono text-center sm:text-left">
+              Download started automatically! On mobile phones or tablets, you can also long-press the image to save.
+            </p>
+            <div className="flex items-center gap-3">
               <a
                 href={previewImage}
                 download={`SS Triple Threat - ${activeTab}.png`}
-                className="px-6 py-2.5 bg-[#c5f018] hover:bg-[#b0d912] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl shadow-lg cursor-pointer inline-flex items-center gap-2 transition-all"
+                className="px-6 py-2.5 bg-[#c5f018] hover:bg-[#b0d912] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl shadow-lg cursor-pointer inline-flex items-center gap-2 transition-all active:scale-95"
               >
-                <Download className="w-4 h-4" /> Save Image
+                <Download className="w-4 h-4" /> Save PNG Image
               </a>
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
-                className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all"
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all"
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
