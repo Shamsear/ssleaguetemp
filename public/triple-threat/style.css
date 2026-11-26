@@ -143,30 +143,37 @@
 
 /* ---- image export (applied only to the copy that is turned into a PNG) ---- */
 #poster.export{border-radius:0;border:0}
-/* Ranking export: exactly 1080 x 1350, both groups stacked, rows stretch to fill the height */
-#poster.export-fixed{padding:26px 48px 20px;display:flex;flex-direction:column}
-#poster.export-fixed .inner{flex:1;display:flex;flex-direction:column;min-height:0}
-#poster.export-fixed header.hero{margin-bottom:6px}
-#poster.export-fixed .hero-logo{width:150px;max-width:none}
+/* Ranking export: spacious vertical poster, rows maintain fixed clear height */
+#poster.export-fixed{padding:28px 48px 24px;display:flex;flex-direction:column;box-sizing:border-box}
+#poster.export-fixed .inner{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-between;min-height:100%;height:100%}
+#poster.export-fixed header.hero{margin-bottom:8px;text-align:center}
+#poster.export-fixed .hero-logo{width:140px;max-width:none;height:auto;margin:0 auto;display:block}
 #poster.export-fixed .hero-text .title{font-size:56px}
-#poster.export-fixed .section-title{margin:4px 0 6px}
-#poster.export-fixed .section-title h2{font-size:32px}
-#poster.export-fixed #v-ranking{flex:1;display:flex;flex-direction:column;min-height:0}
-#poster.export-fixed .rank-wrap{flex:1;display:flex;flex-direction:column;gap:12px;max-width:none;width:100%;min-height:0}
-#poster.export-fixed .rank-col{flex:1;display:flex;flex-direction:column;min-height:0}
-#poster.export-fixed .rank-head{font-size:26px;margin-bottom:4px;padding-bottom:2px}
-#poster.export-fixed .rank-row{grid-template-columns:44px minmax(0,1fr) repeat(7,48px) 72px 150px;font-size:17px;gap:6px;padding:0 12px}
-#poster.export-fixed .rank-row:not(.rank-th){flex:1;min-height:0;margin-bottom:4px}
-#poster.export-fixed .rank-th{font-size:14px;padding:0 12px 3px}
-#poster.export-fixed .rank-row .tname{font-size:17px}
-#poster.export-fixed .rank-row .logo{width:40px;height:40px;flex-basis:40px}
-#poster.export-fixed .rank-row:not(.rank-th){min-height:46px}
-#poster.export-fixed .rank-row .pos{width:34px;height:32px}
-#poster.export-fixed .rank-row .pos b{font-size:22px}
-#poster.export-fixed .rank-row .pts{height:34px} #poster.export-fixed .rank-row .pts b{font-size:26px}
+#poster.export-fixed .section-title{margin:4px 0 10px;display:flex;align-items:center;gap:12px}
+#poster.export-fixed .section-title h2{font-size:32px;line-height:1}
+#poster.export-fixed .pill-note{font-size:13px}
+#poster.export-fixed #v-ranking{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;min-height:auto}
+#poster.export-fixed .rank-wrap{flex:0 0 auto;display:flex;flex-direction:column;gap:16px;max-width:none;width:100%;min-height:auto}
+#poster.export-fixed .rank-col{flex:0 0 auto;display:flex;flex-direction:column;min-height:auto}
+#poster.export-fixed .rank-head{font-size:24px;margin-bottom:4px;padding-bottom:2px;letter-spacing:.04em;border-bottom:2px solid var(--lime)}
+#poster.export-fixed .rank-row{grid-template-columns:44px minmax(0,1fr) repeat(7,44px) 68px 140px;font-size:16px;gap:6px;padding:0 14px;box-sizing:border-box;overflow:visible}
+#poster.export-fixed .rank-row:not(.rank-th){height:52px !important;min-height:52px !important;max-height:52px !important;flex:0 0 52px !important;margin-bottom:5px;display:grid !important;align-items:center !important;box-sizing:border-box !important;overflow:visible !important}
+#poster.export-fixed .rank-th{font-size:13px;padding:0 14px 4px;letter-spacing:.12em;min-height:22px;align-items:center}
+#poster.export-fixed .rank-row .team{display:flex;align-items:center;gap:12px;min-width:0;height:100%;overflow:visible}
+#poster.export-fixed .rank-row .tname{font-size:16px !important;font-weight:800 !important;letter-spacing:.02em !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;line-height:1.25 !important;display:block !important}
+#poster.export-fixed .rank-row .logo{width:38px !important;height:38px !important;flex:0 0 38px !important;display:flex !important;align-items:center !important;justify-content:center !important}
+#poster.export-fixed .rank-row .logo img{max-width:100% !important;max-height:100% !important;width:auto !important;height:auto !important;object-fit:contain !important;display:block !important}
+#poster.export-fixed .rank-row .pos{width:34px !important;height:32px !important;display:flex !important;align-items:center !important;justify-content:center !important;transform:skewX(-12deg) !important;margin:0 auto !important;background:rgba(255,255,255,.08) !important;border-radius:3px !important}
+#poster.export-fixed .rank-row .pos b{font-size:20px !important;line-height:1 !important;transform:skewX(12deg) !important;display:block !important}
+#poster.export-fixed .rank-row .pts{width:68px !important;height:36px !important;display:flex !important;align-items:center !important;justify-content:center !important;transform:skewX(-12deg) !important;border-radius:4px !important;background:var(--lime) !important}
+#poster.export-fixed .rank-row .pts b{font-size:24px !important;line-height:1 !important;transform:skewX(12deg) !important;color:#0b0f02 !important;display:block !important}
+#poster.export-fixed .rank-row > div:not(.pos):not(.team):not(.pts):not(.form){display:flex !important;align-items:center !important;justify-content:center !important;height:100% !important;font-size:16px !important;line-height:1 !important}
 #poster.export-fixed .hide-sm{display:block !important}
-#poster.export-fixed .form.hide-sm{display:flex !important;justify-content:center;gap:4px}
-#poster.export-fixed .rules{margin-top:10px} #poster.export-fixed footer{margin-top:8px}
+#poster.export-fixed .form.hide-sm{display:flex !important;justify-content:center !important;gap:4px !important;align-items:center !important}
+#poster.export-fixed .rank-row .f{width:22px !important;height:22px !important;font-size:12px !important;border-radius:3px !important;display:flex !important;align-items:center !important;justify-content:center !important;line-height:1 !important}
+#poster.export-fixed .rules{margin-top:14px !important;display:flex !important;flex-wrap:wrap !important;gap:8px !important;justify-content:center !important}
+#poster.export-fixed .rule{font-size:13px !important;padding:6px 12px !important}
+#poster.export-fixed footer{margin-top:10px !important;font-size:13px !important;letter-spacing:.24em !important}
 #poster.export-fixed .draw-note{margin:0 0 6px}
 .tt-scope .rank-head{font:italic 900 26px "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--lime);
   border-bottom:2px solid var(--lime);padding-bottom:4px;margin-bottom:8px}
@@ -324,16 +331,16 @@
 .tt-scope .gt-n{font-weight:800;font-size:16px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-scope .gt-m{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
 @media (max-width:720px){ .tt-scope .gwrap{grid-template-columns:1fr} .tt-scope .gt-n{font-size:14px} }
-/* Groups export 1080 x 1350: cards stretch to fill the height */
+/* Groups export: spacious layout, cards never squash */
 #poster.export-groups #v-groups{flex:1;display:flex;flex-direction:column;min-height:0}
-#poster.export-groups .gwrap{flex:1;max-width:none;min-height:0;gap:26px;grid-auto-rows:1fr}
+#poster.export-groups .gwrap{flex:1;max-width:none;min-height:0;gap:20px;grid-auto-rows:1fr}
 #poster.export-groups .gcol{min-height:0}
 #poster.export-groups .gcards{gap:10px}
-#poster.export-groups .gt{flex:1;min-height:0;padding:6px 16px}
-#poster.export-groups .gt .logo{width:62px;height:62px;flex-basis:62px}
-#poster.export-groups .gt-n{font-size:21px}
-#poster.export-groups .gt-m{font-size:13px}
-#poster.export-groups .ghead{font-size:44px}
+#poster.export-groups .gt{flex:1;min-height:72px;padding:8px 16px;box-sizing:border-box}
+#poster.export-groups .gt .logo{width:56px;height:56px;flex-basis:56px}
+#poster.export-groups .gt-n{font-size:20px}
+#poster.export-groups .gt-m{font-size:12px}
+#poster.export-groups .ghead{font-size:38px}
 #poster.export-groups .rf-note{margin:12px 0 0}
 /* ---------- Fixtures poster ---------- */
 .tt-scope .fx-title{text-align:center;margin:0 0 14px}

@@ -73,14 +73,25 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
   };
 
   const getExportSize = (view: string): [number, number] => {
-    const EXPORT_SIZE: Record<string, [number, number]> = {
-      ranking: [1080, 1350],
-      groups: [1080, 1350],
-      fixtures: [1080, 1350],
-      final: [1080, 1350],
-      points: [1920, 1080],
-    };
-    return EXPORT_SIZE[view] || [1080, 1350];
+    const visibleGroups = (data?.groups || []).filter((g: any) => groupFilter === 'ALL' || g.name === groupFilter);
+    const hasMultipleGroups = visibleGroups.length > 2;
+
+    if (view === 'ranking') {
+      return hasMultipleGroups ? [1080, 1920] : [1080, 1350];
+    }
+    if (view === 'groups') {
+      return hasMultipleGroups ? [1080, 1920] : [1080, 1350];
+    }
+    if (view === 'fixtures') {
+      return hasMultipleGroups ? [1080, 1800] : [1080, 1350];
+    }
+    if (view === 'points') {
+      return [1920, 1080];
+    }
+    if (view === 'final') {
+      return [1080, 1350];
+    }
+    return [1080, 1350];
   };
 
   const handleDownloadPng = async () => {
@@ -101,8 +112,8 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
         backgroundColor: '#050604',
         scale: 2,
         useCORS: true,
-        windowWidth: OUT_W + 120,
-        windowHeight: Math.max(OUT_H, 1500),
+        windowWidth: Math.max(OUT_W + 120, 1200),
+        windowHeight: OUT_H + 100,
         ignoreElements: (el) => el.classList && el.classList.contains('chips'),
         onclone: (doc) => {
           const p = doc.getElementById('poster');
@@ -112,6 +123,7 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
           p.classList.add('export-fixed');
           p.style.height = OUT_H + 'px';
           p.style.width = OUT_W + 'px';
+          p.style.overflow = 'hidden';
 
           if (OUT_W > OUT_H) p.classList.add('export-land');
           if (activeTab === 'final') p.classList.add('export-final');
@@ -338,9 +350,17 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
           </div>
         )}
 
-        <div className="text-[11px] text-slate-400 ml-auto hidden sm:block">
-          Export Aspect Ratio: <strong className="text-white">{activeTab === 'points' ? '16:9 (3840×2160)' : '4:5 (2160×2700)'}</strong>
-        </div>
+        {(() => {
+          const [w, h] = getExportSize(activeTab);
+          let ratio = '4:5';
+          if (w > h) ratio = '16:9';
+          else if (h >= 1800) ratio = '9:16';
+          return (
+            <div className="text-[11px] text-slate-400 ml-auto hidden sm:block">
+              Export Canvas: <strong className="text-[#c5f018]">{ratio} ({w * 2}×{h * 2} Sharp PNG)</strong>
+            </div>
+          );
+        })()}
       </div>
 
       {/* The Printable / Renderable Poster Node */}
