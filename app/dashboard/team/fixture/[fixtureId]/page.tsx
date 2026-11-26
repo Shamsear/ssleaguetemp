@@ -19,6 +19,16 @@ import BlindLineupSubmission from '@/components/BlindLineupSubmission';
 import AuthGuard from '@/components/auth/AuthGuard';
 import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
 import PlayerPhoto from '@/components/PlayerPhoto';
+import { calculateTripleThreatFixture, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+
+const isRealSubmittedLineup = (lineupData: any, isTripleThreatMode: boolean): boolean => {
+  const l = lineupData?.success ? lineupData.lineups : null;
+  if (!l || l.is_draft) return false;
+  if (isTripleThreatMode) {
+    return l.submitted_by !== 'system_auto' && Boolean(l.triple_threat_lineup);
+  }
+  return Array.isArray(l.starting_xi) && l.starting_xi.length > 0;
+};
 
 const getCategoryPriority = (category?: string): number => {
   if (!category) return 99;
@@ -93,10 +103,13 @@ interface Fixture {
   // Penalty/Fine goals
   home_penalty_goals?: number;
   away_penalty_goals?: number;
-  // Knockout fields
+  // Knockout & Tournament fields
+  tournament_id?: string;
+  tournament_type?: string;
+  matchday_format?: string;
   knockout_round?: 'quarter_finals' | 'semi_finals' | 'finals' | 'third_place' | null;
-  knockout_format?: 'round_robin' | 'single_matchup' | null;
-  scoring_system?: 'goals' | 'wins' | null;
+  knockout_format?: 'round_robin' | 'single_matchup' | 'triple_threat' | string | null;
+  scoring_system?: 'goals' | 'wins' | 'triple_threat' | string | null;
   matchup_mode?: 'manual' | 'blind_lineup' | null;
 }
 
@@ -361,8 +374,28 @@ export default function FixturePage() {
     
     // Use fixture-level scoring_system if available, otherwise fall back to tournament system
     const activeScoring = scoringSystem || tournamentSystem;
-    
-    if (activeScoring === 'wins') {
+    const isTTWhatsApp = Boolean(
+      activeScoring === 'triple_threat' ||
+      (fixture as any)?.tournament_type === 'triple_threat' ||
+      (fixture as any)?.matchday_format === 'triple_threat' ||
+      (fixture as any)?.knockout_format === 'triple_threat' ||
+      matchups.some((m: any) => !!m.match_mode)
+    );
+
+    if (isTTWhatsApp) {
+      const ttRes = calculateTripleThreatFixture(
+        matchups.map((m: any) => ({
+          position: m.position,
+          mode: resolveTripleThreatMode(m),
+          home_goals: m.home_goals,
+          away_goals: m.away_goals,
+        }))
+      );
+      homePlayerScore = (fixture as any)?.home_points_earned ?? ttRes.home_total_points;
+      awayPlayerScore = (fixture as any)?.away_points_earned ?? ttRes.away_total_points;
+      homeTotalScore = homePlayerScore;
+      awayTotalScore = awayPlayerScore;
+    } else if (activeScoring === 'wins') {
       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
       // Substitution penalties are added to MATCHUP score to determine winner
       let homePoints = 0;
@@ -644,6 +677,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
         // Fetch lineups & matchups in parallel
         try {
+          const isTTFixture = Boolean(
+            f.tournament_type === 'triple_threat' ||
+            f.matchday_format === 'triple_threat' ||
+            f.scoring_system === 'triple_threat' ||
+            f.knockout_format === 'triple_threat' ||
+            f.tournament_id?.toLowerCase().includes('triple_threat')
+          );
+
           const [homeLineupRes, awayLineupRes, matchupsRes] = await Promise.all([
             fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${f.home_team_id}`),
             fetch(`/api/lineups?fixture_id=${fixtureId}&team_id=${f.away_team_id}`),
@@ -651,17 +692,21 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           ]);
 
           let homeStarting: any[] = [];
+          let homeLineupValid = false;
           if (homeLineupRes.ok) {
             const hData = await homeLineupRes.json();
-            if (hData.success && hData.lineups && hData.lineups.starting_xi?.length > 0) {
+            homeLineupValid = isRealSubmittedLineup(hData, isTTFixture);
+            if (homeLineupValid && hData.lineups?.starting_xi?.length > 0) {
               homeStarting = hData.lineups.starting_xi;
             }
           }
 
           let awayStarting: any[] = [];
+          let awayLineupValid = false;
           if (awayLineupRes.ok) {
             const aData = await awayLineupRes.json();
-            if (aData.success && aData.lineups && aData.lineups.starting_xi?.length > 0) {
+            awayLineupValid = isRealSubmittedLineup(aData, isTTFixture);
+            if (awayLineupValid && aData.lineups?.starting_xi?.length > 0) {
               awayStarting = aData.lineups.starting_xi;
             }
           }
@@ -797,11 +842,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
           setHomeStartingXI(homeStarting);
           setHomePlayers(homeStarting);
-          setHomeLineupSubmitted(true);
+          setHomeLineupSubmitted(homeLineupValid);
 
           setAwayStartingXI(awayStarting);
           setAwayPlayers(awayStarting);
-          setAwayLineupSubmitted(true);
+          setAwayLineupSubmitted(awayLineupValid);
 
           if (matchupsRes.ok) {
             const mData = await matchupsRes.json();
@@ -887,24 +932,22 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           fetch(`/api/fixtures/${fixtureId}/matchups`)
         ]);
 
+        const isTTPoll = Boolean(
+          (fixture as any)?.tournament_type === 'triple_threat' ||
+          (fixture as any)?.matchday_format === 'triple_threat' ||
+          (fixture as any)?.scoring_system === 'triple_threat' ||
+          (fixture as any)?.knockout_format === 'triple_threat' ||
+          (fixture as any)?.tournament_id?.toLowerCase().includes('triple_threat')
+        );
+
         if (homeLineupResponse.ok) {
           const homeLineupData = await homeLineupResponse.json();
-          const hasHomeLineup = homeLineupData.success && homeLineupData.lineups && homeLineupData.lineups.starting_xi && homeLineupData.lineups.starting_xi.length > 0;
-          if (hasHomeLineup) {
-            setHomeLineupSubmitted(true);
-          } else {
-            setHomeLineupSubmitted(true);
-          }
+          setHomeLineupSubmitted(isRealSubmittedLineup(homeLineupData, isTTPoll));
         }
 
         if (awayLineupResponse.ok) {
           const awayLineupData = await awayLineupResponse.json();
-          const hasAwayLineup = awayLineupData.success && awayLineupData.lineups && awayLineupData.lineups.starting_xi && awayLineupData.lineups.starting_xi.length > 0;
-          if (hasAwayLineup) {
-            setAwayLineupSubmitted(true);
-          } else {
-            setAwayLineupSubmitted(true);
-          }
+          setAwayLineupSubmitted(isRealSubmittedLineup(awayLineupData, isTTPoll));
         }
 
         // Poll matchups - auto-update when created
@@ -1892,7 +1935,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     Matchup Generation Engine
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Each fixture consists of 3 distinct matchups. Lineups of 5 unique players must be set across Co-op, Duo, and Single modes.
+                    Each fixture consists of 3 modes (4 matches total). Lineups of 5 unique players must be set across Co-op, Duo, and Single modes.
                   </p>
                 </div>
               </div>
@@ -1913,7 +1956,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <span className="text-base">🤝</span>
                     <div>
                       <div className="text-[11px] font-black text-emerald-950 uppercase">Mode 2: Duo</div>
-                      <div className="text-[10px] text-emerald-700/80 font-bold">2v2 Match (2 Players)</div>
+                      <div className="text-[10px] text-emerald-700/80 font-bold">2 × 1v1 Goal Based (2 Players)</div>
                     </div>
                   </div>
                 </div>
@@ -1956,7 +1999,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </Link>
                   ) : (
                     <p className="text-xs text-slate-400 italic">
-                      {homeLineupSubmitted ? 'Home lineup submitted and locked.' : 'Awaiting submission by Home Team.'}
+                      {homeLineupSubmitted ? (isTT ? 'Home lineup submitted.' : 'Home lineup submitted and locked.') : 'Awaiting submission by Home Team.'}
                     </p>
                   )}
                 </div>
@@ -2004,7 +2047,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               <div className="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-blue-900 flex items-start gap-2">
                 <span className="text-blue-500 text-sm">💡</span>
                 <span>
-                  <strong>Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team / Committee submits on the Away Team&apos;s behalf), all 3 matchups will be automatically created.
+                  <strong>Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team / Committee submits on the Away Team&apos;s behalf), all 4 matchups across the 3 modes will be automatically created.
                 </span>
               </div>
             </div>
@@ -2558,33 +2601,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     let homeTotalScore, awayTotalScore;
                     
                     if (isTT) {
-                      let homePoints = 0;
-                      let awayPoints = 0;
-                      let homeWins = 0;
-                      let awayWins = 0;
-
-                      matchups.forEach(m => {
-                        if (m.home_goals !== null && m.away_goals !== null) {
-                          const hg = m.home_goals ?? 0;
-                          const ag = m.away_goals ?? 0;
-                          if (hg > ag) {
-                            homePoints += 3;
-                            homeWins++;
-                          } else if (ag > hg) {
-                            awayPoints += 3;
-                            awayWins++;
-                          } else {
-                            homePoints += 1;
-                            awayPoints += 1;
-                          }
-                        }
-                      });
-
-                      if (homeWins === 3) homePoints += 1;
-                      if (awayWins === 3) awayPoints += 1;
-
-                      homeTotalScore = (fixture as any)?.home_points_earned ?? homePoints;
-                      awayTotalScore = (fixture as any)?.away_points_earned ?? awayPoints;
+                      const ttRes = calculateTripleThreatFixture(
+                        matchups.map((m) => ({
+                          position: m.position,
+                          mode: resolveTripleThreatMode(m as any),
+                          home_goals: m.home_goals,
+                          away_goals: m.away_goals,
+                        }))
+                      );
+                      homeTotalScore = (fixture as any)?.home_points_earned ?? ttRes.home_total_points;
+                      awayTotalScore = (fixture as any)?.away_points_earned ?? ttRes.away_total_points;
                     } else if (tournamentSystem === 'wins') {
                       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                       // Substitution penalties are added to MATCHUP score to determine winner
@@ -2789,20 +2815,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               {(() => {
-                                const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
-                                const modeLabel = ((matchup as any).match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP (2v2)', icon: '🎮', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' } :
-                                                  ((matchup as any).match_mode === 'duo' || (isTT && matchup.position === 2)) ? { title: 'DUO (2v2)', icon: '🤝', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' } :
-                                                  ((matchup as any).match_mode === 'single' || (isTT && matchup.position === 3)) ? { title: 'SINGLE (1v1)', icon: '⚔️', badge: 'bg-amber-100 text-amber-800 border-amber-200' } :
-                                                  null;
+                                const isTTCard = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
+                                const modeMeta = isTTCard ? getTripleThreatModeDisplay(matchups as any[], matchup as any) : null;
                                 return (
                                   <>
                                     <span className="inline-flex items-center px-2.5 py-1 bg-gray-800 text-white text-xs font-bold rounded-lg">
                                       Match #{matchup.position}
                                     </span>
-                                    {isTT && modeLabel && (
-                                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeLabel.badge}`}>
-                                        <span>{modeLabel.icon}</span>
-                                        <span>{modeLabel.title}</span>
+                                    {isTTCard && modeMeta && (
+                                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeMeta.badgeClass}`}>
+                                        <span>{modeMeta.icon}</span>
+                                        <span>{modeMeta.title}</span>
                                       </span>
                                     )}
                                   </>
@@ -3077,32 +3100,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     let homeTTWins = 0, awayTTWins = 0, ttDraws = 0;
                     
                     if (isTT) {
-                      let homePoints = 0;
-                      let awayPoints = 0;
-
-                      Object.entries(matchResults).forEach(([positionStr, result]: [string, any]) => {
-                        if (result && result.home_goals !== null && result.away_goals !== null && result.home_goals !== '' && result.away_goals !== '') {
-                          const hg = Number(result.home_goals);
-                          const ag = Number(result.away_goals);
-                          if (hg > ag) {
-                            homePoints += 3;
-                            homeTTWins++;
-                          } else if (ag > hg) {
-                            awayPoints += 3;
-                            awayTTWins++;
-                          } else {
-                            homePoints += 1;
-                            awayPoints += 1;
-                            ttDraws++;
-                          }
-                        }
-                      });
-
-                      if (homeTTWins === 3) homePoints += 1;
-                      if (awayTTWins === 3) awayPoints += 1;
-
-                      homeTotalScore = homePoints;
-                      awayTotalScore = awayPoints;
+                      const ttRes = calculateTripleThreatFixture(
+                        matchups.map((m, idx) => ({
+                          position: m.position,
+                          mode: resolveTripleThreatMode(m as any),
+                          home_goals: matchResults[idx]?.home_goals,
+                          away_goals: matchResults[idx]?.away_goals,
+                        }))
+                      );
+                      homeTTWins = ttRes.home_matches_won;
+                      awayTTWins = ttRes.away_matches_won;
+                      ttDraws = ttRes.draws;
+                      homeTotalScore = ttRes.home_total_points;
+                      awayTotalScore = ttRes.away_total_points;
                     } else if (tournamentSystem === 'wins') {
                       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                       // Substitution penalties are added to MATCHUP score to determine winner
@@ -4430,32 +4440,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         let homeTTWins = 0, awayTTWins = 0, ttDraws = 0;
                         
                         if (isTT) {
-                          let homePoints = 0;
-                          let awayPoints = 0;
-
-                          matchups.forEach(m => {
-                            if (m.home_goals !== null && m.away_goals !== null) {
-                              const hg = m.home_goals ?? 0;
-                              const ag = m.away_goals ?? 0;
-                              if (hg > ag) {
-                                homePoints += 3;
-                                homeTTWins++;
-                              } else if (ag > hg) {
-                                awayPoints += 3;
-                                awayTTWins++;
-                              } else {
-                                homePoints += 1;
-                                awayPoints += 1;
-                                ttDraws++;
-                              }
-                            }
-                          });
-
-                          if (homeTTWins === 3) homePoints += 1;
-                          if (awayTTWins === 3) awayPoints += 1;
-
-                          homeTotalScore = (fixture as any)?.home_points_earned ?? homePoints;
-                          awayTotalScore = (fixture as any)?.away_points_earned ?? awayPoints;
+                          const ttRes = calculateTripleThreatFixture(
+                            matchups.map((m) => ({
+                              position: m.position,
+                              mode: resolveTripleThreatMode(m as any),
+                              home_goals: m.home_goals,
+                              away_goals: m.away_goals,
+                            }))
+                          );
+                          homeTTWins = ttRes.home_matches_won;
+                          awayTTWins = ttRes.away_matches_won;
+                          ttDraws = ttRes.draws;
+                          homeTotalScore = (fixture as any)?.home_points_earned ?? ttRes.home_total_points;
+                          awayTotalScore = (fixture as any)?.away_points_earned ?? ttRes.away_total_points;
                         } else if (tournamentSystem === 'wins') {
                           // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                           let homePoints = 0;
@@ -4663,16 +4660,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   Match #{matchup.position}
                                 </span>
                                 {(() => {
-                                  const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
-                                  const modeLabel = ((matchup as any).match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP (2v2)', icon: '🎮', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200' } :
-                                                    ((matchup as any).match_mode === 'duo' || (isTT && matchup.position === 2)) ? { title: 'DUO (2v2)', icon: '🤝', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' } :
-                                                    ((matchup as any).match_mode === 'single' || (isTT && matchup.position === 3)) ? { title: 'SINGLE (1v1)', icon: '⚔️', badge: 'bg-amber-100 text-amber-800 border-amber-200' } :
-                                                    null;
-                                  if (!isTT || !modeLabel) return null;
+                                  const isTTCard = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
+                                  const modeMeta = isTTCard ? getTripleThreatModeDisplay(matchups as any[], matchup as any) : null;
+                                  if (!isTTCard || !modeMeta) return null;
                                   return (
-                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeLabel.badge}`}>
-                                      <span>{modeLabel.icon}</span>
-                                      <span>{modeLabel.title}</span>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeMeta.badgeClass}`}>
+                                      <span>{modeMeta.icon}</span>
+                                      <span>{modeMeta.title}</span>
                                     </span>
                                   );
                                 })()}
@@ -4941,6 +4935,39 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </div>
 
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                        {homeLineupSubmitted && awayLineupSubmitted && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const res = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/generate-triple-threat`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                });
+                                const json = await res.json();
+                                if (res.ok && json.success) {
+                                  window.location.reload();
+                                } else {
+                                  showAlert({
+                                    type: 'error',
+                                    title: 'Matchup Generation Failed',
+                                    message: json.error || 'Could not generate matchups',
+                                  });
+                                }
+                              } catch {
+                                showAlert({
+                                  type: 'error',
+                                  title: 'Error',
+                                  message: 'Failed to trigger Triple Threat matchup generation',
+                                });
+                              }
+                            }}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                          >
+                            <span>⚡</span>
+                            <span>Generate Matchups Now</span>
+                          </button>
+                        )}
                         {isHomeTeam ? (
                           <>
                             <Link

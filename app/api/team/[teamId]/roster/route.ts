@@ -21,8 +21,12 @@ export async function GET(
 
     const sql = getTournamentDb();
     
-    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17;
+    const psCheck = await sql`
+      SELECT 1 FROM player_seasons
+      WHERE team_id = ${teamId} AND season_id = ${seasonId}
+      LIMIT 1
+    `;
+    const isModern = psCheck.length > 0;
 
     // Get all active players for this team in this season from correct database table
     let players;

@@ -32,9 +32,14 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const sql = getTournamentDb();
 
-    // Get fixture from Neon
+    // Get fixture from Neon (with tournament type to avoid auto-submitting Triple Threat lineups)
     const fixtures = await sql`
-      SELECT * FROM fixtures WHERE id = ${fixture_id} LIMIT 1
+      SELECT f.*, t.tournament_type, ts.matchday_format
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.id = ${fixture_id}
+      LIMIT 1
     `;
     
     if (fixtures.length === 0) {
@@ -45,6 +50,10 @@ export async function POST(request: NextRequest) {
     }
 
     const fixture = fixtures[0];
+    const isTripleThreat =
+      fixture.tournament_type === 'triple_threat' ||
+      fixture.matchday_format === 'triple_threat' ||
+      String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
     
     // Get round deadlines to calculate the actual deadline
     const roundDeadlines = await sql`
@@ -122,26 +131,23 @@ export async function POST(request: NextRequest) {
     const homeLineup = homeLineups.length > 0 ? homeLineups[0] : null;
     const homeSubmitted = homeLineup && homeLineup.starting_xi && homeLineup.starting_xi.length > 0;
     
-    if (!homeSubmitted && !matchupsExist) {
-      // Home team hasn't submitted and no matchups yet
-      // Check if they have exactly 5 players
-      const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-      const isModern = seasonNum === 16 || seasonNum === 17;
-
-      const homePlayers = isModern
-        ? await sql`
-            SELECT player_id, player_name 
-            FROM player_seasons 
-            WHERE team_id = ${homeTeamId} 
-              AND season_id = ${seasonId}
-              AND status = 'active'
-          `
-        : await sql`
-            SELECT player_id, player_name 
-            FROM realplayerstats 
-            WHERE team_id = ${homeTeamId} 
-              AND season_id = ${seasonId}
-          `;
+    if (!homeSubmitted && !matchupsExist && !isTripleThreat) {
+      // Standard tournaments only: check if home team has exactly 5 players
+      let homePlayers = await sql`
+        SELECT player_id, player_name
+        FROM player_seasons
+        WHERE team_id = ${homeTeamId}
+          AND season_id = ${seasonId}
+          AND registration_status = 'active'
+      `;
+      if (homePlayers.length === 0) {
+        homePlayers = await sql`
+          SELECT player_id, player_name
+          FROM realplayerstats
+          WHERE team_id = ${homeTeamId}
+            AND season_id = ${seasonId}
+        `;
+      }
       
       if (homePlayers.length === 5) {
         // Auto-submit all 5 players (no substitute, no warning)
@@ -221,24 +227,25 @@ export async function POST(request: NextRequest) {
     const awayLineup = awayLineups.length > 0 ? awayLineups[0] : null;
     const awaySubmitted = awayLineup && awayLineup.starting_xi && awayLineup.starting_xi.length > 0;
     
-    if (!awaySubmitted) {
+    if (!awaySubmitted && !isTripleThreat) {
       console.log('⚠️ Away team has not submitted lineup:', awayTeamId);
       
       // Get away team's player count
-      const awayPlayers = isModern
-        ? await sql`
-            SELECT player_id, player_name 
-            FROM player_seasons 
-            WHERE team_id = ${awayTeamId} 
-              AND season_id = ${seasonId}
-              AND status = 'active'
-          `
-        : await sql`
-            SELECT player_id, player_name 
-            FROM realplayerstats 
-            WHERE team_id = ${awayTeamId} 
-              AND season_id = ${seasonId}
-          `;
+      let awayPlayers = await sql`
+        SELECT player_id, player_name
+        FROM player_seasons
+        WHERE team_id = ${awayTeamId}
+          AND season_id = ${seasonId}
+          AND registration_status = 'active'
+      `;
+      if (awayPlayers.length === 0) {
+        awayPlayers = await sql`
+          SELECT player_id, player_name
+          FROM realplayerstats
+          WHERE team_id = ${awayTeamId}
+            AND season_id = ${seasonId}
+        `;
+      }
       
       const playerCount = awayPlayers.length;
       console.log(`📊 Away team has ${playerCount} active players`);

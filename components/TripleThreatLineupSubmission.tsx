@@ -68,39 +68,43 @@ export default function TripleThreatLineupSubmission({
     return String(val.player_id || val.id || '').trim();
   };
 
-  // Load existing lineup if available
+  // Load existing lineup ONLY if it is a genuine Triple Threat submission (never pre-fill system_auto stubs)
   useEffect(() => {
-    if (existingLineup) {
-      const tt = existingLineup.triple_threat_lineup;
-      if (tt) {
-        if (Array.isArray(tt.coop)) {
-          setCoopPlayers([getPlayerId(tt.coop[0]), getPlayerId(tt.coop[1])]);
-        }
-        if (Array.isArray(tt.duo)) {
-          setDuoPlayers([getPlayerId(tt.duo[0]), getPlayerId(tt.duo[1])]);
-        }
-        if (Array.isArray(tt.single)) {
-          setSinglePlayer(getPlayerId(tt.single[0]));
-        } else if (tt.single) {
-          setSinglePlayer(getPlayerId(tt.single));
-        }
-      } else if (Array.isArray(existingLineup.starting_xi)) {
-        // Fallback: extract from starting_xi if items have mode or sequential slots
-        const sXi = existingLineup.starting_xi;
-        const coopItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'coop').map(getPlayerId);
-        const duoItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'duo').map(getPlayerId);
-        const singleItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'single').map(getPlayerId);
+    if (!existingLineup || existingLineup.submitted_by === 'system_auto') {
+      setCoopPlayers(['', '']);
+      setDuoPlayers(['', '']);
+      setSinglePlayer('');
+      return;
+    }
 
-        if (coopItems.length > 0 || duoItems.length > 0 || singleItems.length > 0) {
-          setCoopPlayers([coopItems[0] || '', coopItems[1] || '']);
-          setDuoPlayers([duoItems[0] || '', duoItems[1] || '']);
-          setSinglePlayer(singleItems[0] || '');
-        } else if (sXi.length >= 5) {
-          // Sequential fallback: 0-1 coop, 2-3 duo, 4 single
-          setCoopPlayers([getPlayerId(sXi[0]), getPlayerId(sXi[1])]);
-          setDuoPlayers([getPlayerId(sXi[2]), getPlayerId(sXi[3])]);
-          setSinglePlayer(getPlayerId(sXi[4]));
-        }
+    const tt = existingLineup.triple_threat_lineup;
+    if (tt) {
+      setCoopPlayers([
+        Array.isArray(tt.coop) ? getPlayerId(tt.coop[0]) : '',
+        Array.isArray(tt.coop) ? getPlayerId(tt.coop[1]) : '',
+      ]);
+      setDuoPlayers([
+        Array.isArray(tt.duo) ? getPlayerId(tt.duo[0]) : '',
+        Array.isArray(tt.duo) ? getPlayerId(tt.duo[1]) : '',
+      ]);
+      if (Array.isArray(tt.single)) {
+        setSinglePlayer(getPlayerId(tt.single[0]));
+      } else {
+        setSinglePlayer(tt.single ? getPlayerId(tt.single) : '');
+      }
+      return;
+    }
+
+    if (Array.isArray(existingLineup.starting_xi)) {
+      const sXi = existingLineup.starting_xi;
+      const coopItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'coop').map(getPlayerId);
+      const duoItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'duo').map(getPlayerId);
+      const singleItems = sXi.filter((p: any) => p && typeof p === 'object' && p.mode === 'single').map(getPlayerId);
+
+      if (coopItems.length > 0 || duoItems.length > 0 || singleItems.length > 0) {
+        setCoopPlayers([coopItems[0] || '', coopItems[1] || '']);
+        setDuoPlayers([duoItems[0] || '', duoItems[1] || '']);
+        setSinglePlayer(singleItems[0] || '');
       }
     }
   }, [existingLineup]);
@@ -182,27 +186,43 @@ export default function TripleThreatLineupSubmission({
     return validateTripleThreatLineup({ coop, duo, single }, nameMap);
   }, [coopPlayers, duoPlayers, singlePlayer, roster]);
 
-  // Handle slot changes with dynamic exclusion
-  const handleCoopChange = (slotIndex: 0 | 1, value: string) => {
-    setCoopPlayers((prev) => {
-      const copy: [string, string] = [...prev];
-      copy[slotIndex] = value;
-      return copy;
-    });
-    setError(null);
-  };
+  // Handle slot changes with automatic swap when picking a player already assigned to another slot
+  type SlotKey = 'coop0' | 'coop1' | 'duo0' | 'duo1' | 'single';
 
-  const handleDuoChange = (slotIndex: 0 | 1, value: string) => {
-    setDuoPlayers((prev) => {
-      const copy: [string, string] = [...prev];
-      copy[slotIndex] = value;
-      return copy;
-    });
-    setError(null);
-  };
+  const slotLabelByPlayerId = useMemo(() => {
+    const map = new Map<string, string>();
+    if (coopPlayers[0]) map.set(coopPlayers[0], 'Co-op 1');
+    if (coopPlayers[1]) map.set(coopPlayers[1], 'Co-op 2');
+    if (duoPlayers[0]) map.set(duoPlayers[0], 'Duo 1');
+    if (duoPlayers[1]) map.set(duoPlayers[1], 'Duo 2');
+    if (singlePlayer) map.set(singlePlayer, 'Single');
+    return map;
+  }, [coopPlayers, duoPlayers, singlePlayer]);
 
-  const handleSingleChange = (value: string) => {
-    setSinglePlayer(value);
+  const handleSlotChange = (target: SlotKey, newValue: string) => {
+    const slots: Record<SlotKey, string> = {
+      coop0: coopPlayers[0],
+      coop1: coopPlayers[1],
+      duo0: duoPlayers[0],
+      duo1: duoPlayers[1],
+      single: singlePlayer,
+    };
+
+    const previousTargetVal = slots[target];
+    if (newValue && newValue !== previousTargetVal) {
+      // If newValue already sits in another slot, swap the two slots cleanly
+      const existingSlot = (Object.keys(slots) as SlotKey[]).find(
+        (k) => k !== target && slots[k] === newValue
+      );
+      if (existingSlot) {
+        slots[existingSlot] = previousTargetVal;
+      }
+    }
+    slots[target] = newValue;
+
+    setCoopPlayers([slots.coop0, slots.coop1]);
+    setDuoPlayers([slots.duo0, slots.duo1]);
+    setSinglePlayer(slots.single);
     setError(null);
   };
 
@@ -274,7 +294,7 @@ export default function TripleThreatLineupSubmission({
     }
   };
 
-  // Helper to render a player selection dropdown with exclusion
+  // Helper to render a player selection dropdown with swap support (never locks out assigned teammates)
   const renderPlayerDropdown = (
     currentValue: string,
     onChange: (val: string) => void,
@@ -295,18 +315,15 @@ export default function TripleThreatLineupSubmission({
           <option value="">{placeholder}</option>
           {roster.map((player) => {
             const pId = String(player.player_id || player.id);
-            const isAlreadySelectedElsewhere = selectedPlayerIds.has(pId) && pId !== currentValue;
+            const assignedSlot = slotLabelByPlayerId.get(pId);
+            const isAlreadySelectedElsewhere = Boolean(assignedSlot) && pId !== currentValue;
             const pName = player.player_name || player.name;
             const pPos = player.position ? `[${player.position}]` : '';
             const pCat = player.category ? `(${player.category})` : '';
 
             return (
-              <option
-                key={pId}
-                value={pId}
-                disabled={isAlreadySelectedElsewhere}
-              >
-                {pName} {pPos} {pCat} {isAlreadySelectedElsewhere ? '• (Assigned)' : ''}
+              <option key={pId} value={pId}>
+                {pName} {pPos} {pCat} {isAlreadySelectedElsewhere ? `• (in ${assignedSlot} — swap)` : ''}
               </option>
             );
           })}
@@ -409,9 +426,9 @@ export default function TripleThreatLineupSubmission({
               </span>
             </div>
             <div className="p-3 bg-white rounded-xl border border-emerald-200 shadow-2xs">
-              <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">🤝 Mode 2: Duo (2v2)</span>
+              <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">🤝 Mode 2: Duo (2 × 1v1 Goal Based)</span>
               <span className="font-extrabold text-slate-900">
-                {renderOpponentNames(opponentLineup.triple_threat_lineup.duo)}
+                1v1 #1: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[0])} • 1v1 #2: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[1])}
               </span>
             </div>
             <div className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs">
@@ -478,18 +495,18 @@ export default function TripleThreatLineupSubmission({
             <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
               Co-op Player 1
             </label>
-            {renderPlayerDropdown(coopPlayers[0], (v) => handleCoopChange(0, v), '-- SELECT CO-OP PLAYER 1 --')}
+            {renderPlayerDropdown(coopPlayers[0], (v) => handleSlotChange('coop0', v), '-- SELECT CO-OP PLAYER 1 --')}
           </div>
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
               Co-op Player 2
             </label>
-            {renderPlayerDropdown(coopPlayers[1], (v) => handleCoopChange(1, v), '-- SELECT CO-OP PLAYER 2 --')}
+            {renderPlayerDropdown(coopPlayers[1], (v) => handleSlotChange('coop1', v), '-- SELECT CO-OP PLAYER 2 --')}
           </div>
         </div>
       </div>
 
-      {/* Mode 2: Duo Match (2v2 Goal Based) */}
+      {/* Mode 2: Duo Match (2 × 1v1 Goal Based) */}
       <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4.5 shadow-xs transition-all hover:border-slate-300">
         <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
           <div className="flex items-center gap-2">
@@ -498,10 +515,10 @@ export default function TripleThreatLineupSubmission({
             </div>
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                Mode 2: Duo Match (2v2 Goal Based)
+                Mode 2: Duo Match (2 × 1v1 Goal Based)
               </h3>
               <p className="text-[9px] sm:text-[10px] text-slate-400 font-sans">
-                Win = 3 Pts • Draw = 1 Pt • Loss = 0 Pts (2 Players)
+                2 separate 1v1s (P1 vs P1 & P2 vs P2) • Most combined goals wins Mode (+3 Pts / Draw +1)
               </p>
             </div>
           </div>
@@ -513,15 +530,15 @@ export default function TripleThreatLineupSubmission({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-              Duo Player 1
+              Duo 1v1 Player 1 (Matches Away P1)
             </label>
-            {renderPlayerDropdown(duoPlayers[0], (v) => handleDuoChange(0, v), '-- SELECT DUO PLAYER 1 --')}
+            {renderPlayerDropdown(duoPlayers[0], (v) => handleSlotChange('duo0', v), '-- SELECT DUO 1v1 PLAYER 1 --')}
           </div>
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-              Duo Player 2
+              Duo 1v1 Player 2 (Matches Away P2)
             </label>
-            {renderPlayerDropdown(duoPlayers[1], (v) => handleDuoChange(1, v), '-- SELECT DUO PLAYER 2 --')}
+            {renderPlayerDropdown(duoPlayers[1], (v) => handleSlotChange('duo1', v), '-- SELECT DUO 1v1 PLAYER 2 --')}
           </div>
         </div>
       </div>
@@ -551,7 +568,7 @@ export default function TripleThreatLineupSubmission({
           <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
             Single (1v1) Player
           </label>
-          {renderPlayerDropdown(singlePlayer, handleSingleChange, '-- SELECT 1V1 PLAYER --')}
+          {renderPlayerDropdown(singlePlayer, (v) => handleSlotChange('single', v), '-- SELECT 1V1 PLAYER --')}
         </div>
       </div>
 

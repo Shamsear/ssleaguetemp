@@ -25,28 +25,23 @@ export async function GET(
 
     const sql = getTournamentDb();
 
-    const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17;
-
-    // 1. Fetch REALPLAYERS (tournament players) from correct database table
-    let playerSeasons;
-    if (isModern) {
-      playerSeasons = await sql`
-        SELECT 
-          player_id,
-          player_name,
-          team,
-          category,
-          star_rating,
-          points,
-          registration_status
-        FROM player_seasons
-        WHERE team_id = ${teamId} 
-          AND season_id = ${seasonId} 
-          AND registration_status = 'active'
-        ORDER BY player_name ASC
-      `;
-    } else {
+    // 1. Fetch REALPLAYERS (tournament players) from player_seasons with fallback to realplayerstats
+    let playerSeasons = await sql`
+      SELECT 
+        player_id,
+        player_name,
+        team,
+        category,
+        star_rating,
+        points,
+        registration_status
+      FROM player_seasons
+      WHERE team_id = ${teamId} 
+        AND season_id = ${seasonId} 
+        AND registration_status = 'active'
+      ORDER BY player_name ASC
+    `;
+    if (playerSeasons.length === 0) {
       playerSeasons = await sql`
         SELECT 
           player_id,

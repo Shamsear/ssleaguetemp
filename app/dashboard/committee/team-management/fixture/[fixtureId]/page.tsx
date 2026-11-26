@@ -15,6 +15,7 @@ import CommitteeMatchupCreator from '@/components/CommitteeMatchupCreator';
 import TripleThreatLineupSubmission from '@/components/TripleThreatLineupSubmission';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
+import { calculateTripleThreatFixture, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 interface Matchup {
   id: number;
@@ -66,6 +67,8 @@ interface Fixture {
   result_submitted_at?: string;
   result_submitted_by_name?: string;
   scoring_type?: string;
+  scoring_system?: string;
+  knockout_format?: string;
   tournament_type?: string;
   matchday_format?: string;
   home_points_earned?: number;
@@ -399,7 +402,7 @@ export default function CommitteeFixtureDetailPage() {
         showAlert({
           type: 'success',
           title: 'Matchups Generated',
-          message: 'Successfully generated 3 Triple Threat mode matchups!'
+          message: `Successfully generated ${data.matchups_count || 4} Triple Threat matchups across 3 modes!`
         });
         fetchFixtureData();
       } else {
@@ -982,10 +985,10 @@ export default function CommitteeFixtureDetailPage() {
                       ⚡ Triple Threat Engine
                     </span>
                     <h4 className="text-base sm:text-lg font-black text-slate-900 mt-2 tracking-tight">
-                      3 Mode Matchups Awaiting Lineups
+                      Triple Threat Matchups Awaiting Lineups
                     </h4>
                     <p className="text-xs text-slate-500 font-mono mt-0.5">
-                      Both teams submit 5 unique players across 3 distinct modes: Co-op (2v2), Duo (2v2), and Single (1v1).
+                      Both teams submit 5 unique players across 3 modes: Co-op (2v2), Duo (2 × 1v1 Goal Based), and Single (1v1).
                     </p>
                   </div>
                   {homeLineup?.triple_threat_lineup && awayLineup?.triple_threat_lineup && (
@@ -996,7 +999,7 @@ export default function CommitteeFixtureDetailPage() {
                       className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-mono text-xs font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
                     >
                       <Zap className="w-4 h-4 fill-white" />
-                      {isGeneratingTTMatchups ? 'Generating...' : 'Generate 3 Matchups'}
+                      {isGeneratingTTMatchups ? 'Generating...' : 'Generate 4 Matchups'}
                     </button>
                   )}
                 </div>
@@ -1017,7 +1020,7 @@ export default function CommitteeFixtureDetailPage() {
                       <span className="text-lg">🤝</span>
                       <div>
                         <div className="text-xs font-black text-emerald-950 uppercase font-mono">Mode 2: Duo</div>
-                        <div className="text-[11px] text-emerald-700/80 font-bold">2v2 Matchup (2 Players)</div>
+                        <div className="text-[11px] text-emerald-700/80 font-bold">2 × 1v1 Goal Based (2 Players)</div>
                       </div>
                     </div>
                   </div>
@@ -1112,7 +1115,7 @@ export default function CommitteeFixtureDetailPage() {
                 <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] font-mono text-amber-900 flex items-start gap-2">
                   <span className="text-amber-600 text-sm">💡</span>
                   <span>
-                    <strong>Option 2: Committee Submits on Their Behalf</strong> — If the Away Team (or Home Team) shared their lineup in WhatsApp or had a technical issue, use the buttons above to select 5 players from their active roster. The 3 matchups will be automatically generated immediately.
+                    <strong>Option 2: Committee Submits on Their Behalf</strong> — If the Away Team (or Home Team) shared their lineup in WhatsApp or had a technical issue, use the buttons above to select 5 players from their active roster. All 4 matchups across the 3 modes will be automatically generated immediately.
                   </span>
                 </div>
               </div>
@@ -1141,10 +1144,7 @@ export default function CommitteeFixtureDetailPage() {
                                    (displayMotmName && (matchup.away_player_name.trim().toLowerCase() === displayMotmName.trim().toLowerCase() || matchup.away_player_names?.some(n => n.trim().toLowerCase() === displayMotmName.trim().toLowerCase())));
 
                 const isTT = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || !!matchup.match_mode;
-                const modeLabel = (matchup.match_mode === 'coop' || (isTT && matchup.position === 1)) ? { title: 'CO-OP MATCH (2v2)', icon: '🎮', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' } :
-                                  (matchup.match_mode === 'duo' || (isTT && matchup.position === 2)) ? { title: 'DUO MATCH (2v2)', icon: '🤝', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
-                                  (matchup.match_mode === 'single' || (isTT && matchup.position === 3)) ? { title: 'SINGLE MATCH (1v1)', icon: '⚔️', badge: 'bg-amber-50 text-amber-700 border-amber-200' } :
-                                  null;
+                const modeDisplay = isTT ? getTripleThreatModeDisplay(matchups, matchup) : null;
 
                 const homeName = (matchup.home_player_names && matchup.home_player_names.length > 0)
                   ? matchup.home_player_names.join(' & ')
@@ -1155,8 +1155,21 @@ export default function CommitteeFixtureDetailPage() {
 
                 const homeGoalsVal = isEditMode ? (editedScores[matchup.position]?.home ?? 0) : (matchup.home_goals ?? 0);
                 const awayGoalsVal = isEditMode ? (editedScores[matchup.position]?.away ?? 0) : (matchup.away_goals ?? 0);
-                const modeHomePts = (matchup.home_goals !== null || isEditMode) ? (homeGoalsVal > awayGoalsVal ? 3 : homeGoalsVal === awayGoalsVal ? 1 : 0) : null;
-                const modeAwayPts = (matchup.away_goals !== null || isEditMode) ? (awayGoalsVal > homeGoalsVal ? 3 : awayGoalsVal === homeGoalsVal ? 1 : 0) : null;
+
+                // Compute mode-level points using Triple Threat engine (handles Duo 2x1v1 aggregate goals)
+                const ttComputed = isTT
+                  ? calculateTripleThreatFixture(
+                      matchups.map((m) => ({
+                        position: m.position,
+                        mode: resolveTripleThreatMode(m),
+                        home_goals: isEditMode ? (editedScores[m.position]?.home ?? 0) : m.home_goals,
+                        away_goals: isEditMode ? (editedScores[m.position]?.away ?? 0) : m.away_goals,
+                      }))
+                    )
+                  : null;
+                const modeSummary = isTT && ttComputed && modeDisplay ? ttComputed.modeResults[modeDisplay.mode] : null;
+                const modeHomePts = modeSummary && modeSummary.played ? modeSummary.home_points : null;
+                const modeAwayPts = modeSummary && modeSummary.played ? modeSummary.away_points : null;
 
                 return (
                   <div key={matchup.id} className={`rounded-2xl p-4 transition-all ${
@@ -1164,15 +1177,18 @@ export default function CommitteeFixtureDetailPage() {
                       ? 'bg-amber-50/40 border-2 border-amber-300 shadow-xs' 
                       : 'bg-slate-50/60 border border-slate-100 hover:bg-slate-50'
                   }`}>
-                    {isTT && modeLabel && (
-                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/50">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase font-mono border ${modeLabel.badge}`}>
-                          <span>{modeLabel.icon}</span>
-                          <span>{modeLabel.title}</span>
+                    {isTT && modeDisplay && (
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200/50 gap-2 flex-wrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase font-mono border ${modeDisplay.badgeClass}`}>
+                          <span>{modeDisplay.icon}</span>
+                          <span>{modeDisplay.longTitle}</span>
                         </span>
                         {modeHomePts !== null && (
                           <span className="text-[10px] font-mono font-bold text-slate-500">
-                            Points Awarded: <span className="text-slate-800 font-extrabold">{modeHomePts} pts</span> - <span className="text-slate-800 font-extrabold">{modeAwayPts} pts</span>
+                            {modeDisplay.mode === 'duo' && modeDisplay.isSubMatch && modeSummary
+                              ? `Duo Aggregate (${modeSummary.home_goals}-${modeSummary.away_goals}): `
+                              : 'Points Awarded: '}
+                            <span className="text-slate-800 font-extrabold">{modeHomePts} pts</span> - <span className="text-slate-800 font-extrabold">{modeAwayPts} pts</span>
                           </span>
                         )}
                       </div>
@@ -1379,7 +1395,7 @@ export default function CommitteeFixtureDetailPage() {
                           disabled={isGeneratingTTMatchups}
                           className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
-                          <Zap className="w-4 h-4 text-white fill-white" /> {isGeneratingTTMatchups ? 'Generating...' : '⚡ Generate 3 Mode Matchups'}
+                          <Zap className="w-4 h-4 text-white fill-white" /> {isGeneratingTTMatchups ? 'Generating...' : '⚡ Generate Mode Matchups'}
                         </button>
                       )}
                     </div>

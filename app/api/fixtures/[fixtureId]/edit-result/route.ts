@@ -5,7 +5,7 @@ import { triggerNews } from '@/lib/news/trigger';
 import { triggerPlayerOfMatchPoll } from '@/lib/polls/auto-trigger';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
-import { calculateTripleThreatFixture } from '@/lib/tournament/triple-threat-engine';
+import { calculateTripleThreatFixture, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Revert match rewards that were previously distributed
@@ -364,10 +364,14 @@ export async function PATCH(
       `;
     }
 
-    // Fetch updated matchups to get fresh sub penalties
+    // Fetch updated matchups to get fresh sub penalties and match_mode
     const updatedMatchupsRes = await sql`
-      SELECT home_sub_penalty, away_sub_penalty FROM matchups WHERE fixture_id = ${fixtureId}
+      SELECT position, match_mode, home_sub_penalty, away_sub_penalty FROM matchups WHERE fixture_id = ${fixtureId}
     `;
+    const dbModeByPos = new Map<number, string>();
+    updatedMatchupsRes.forEach((um: any) => {
+      if (um.match_mode) dbModeByPos.set(um.position, um.match_mode);
+    });
 
     // Step 4: Calculate new fixture totals
     const isTripleThreat = fixture.tournament_type === 'triple_threat' || fixture.matchday_format === 'triple_threat';
@@ -383,11 +387,12 @@ export async function PATCH(
       const ttResult = calculateTripleThreatFixture(
         matchups.map((m: any) => ({
           position: m.position,
-          mode: m.match_mode || (m.position === 1 ? 'coop' : m.position === 2 ? 'duo' : 'single'),
-          home_goals: m.home_goals || 0,
-          away_goals: m.away_goals || 0,
-          home_penalty_goals: 0,
-          away_penalty_goals: 0,
+          mode: resolveTripleThreatMode({
+            mode: m.match_mode || dbModeByPos.get(m.position),
+            position: m.position,
+          }),
+          home_goals: m.home_goals ?? 0,
+          away_goals: m.away_goals ?? 0,
         }))
       );
 

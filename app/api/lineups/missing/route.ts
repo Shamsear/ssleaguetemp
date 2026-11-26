@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     const fixtures = await sql`
       SELECT 
         f.id as fixture_id,
+        f.tournament_id,
         f.home_team_id,
         f.away_team_id,
         f.home_team_name,
@@ -32,8 +33,12 @@ export async function GET(request: NextRequest) {
         f.round_number,
         f.match_number,
         rd.scheduled_date,
-        rd.home_fixture_deadline_time
+        rd.home_fixture_deadline_time,
+        t.tournament_type,
+        ts.matchday_format
       FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
       LEFT JOIN round_deadlines rd ON 
         f.round_number = rd.round_number 
         AND f.season_id = rd.season_id
@@ -50,24 +55,38 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all lineups for these fixtures
+    // Get all genuine submitted lineups for these fixtures
     const fixtureIds = fixtures.map((f: any) => f.fixture_id);
     const lineups = await sql`
-      SELECT fixture_id, team_id, is_valid, warning_given
+      SELECT fixture_id, team_id, is_valid, warning_given, submitted_by, is_draft, triple_threat_lineup
       FROM lineups
       WHERE fixture_id = ANY(${fixtureIds})
     `;
+
+    const isSubmittedForFixture = (fixture: any, lineup: any) => {
+      if (!lineup || lineup.is_draft) return false;
+      const isTT =
+        fixture.tournament_type === 'triple_threat' ||
+        fixture.matchday_format === 'triple_threat' ||
+        String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+      if (isTT) {
+        return lineup.submitted_by !== 'system_auto' && Boolean(lineup.triple_threat_lineup);
+      }
+      return true;
+    };
 
     // Build missing lineups list
     const missing: any[] = [];
 
     fixtures.forEach((fixture: any) => {
-      const homeLineup = lineups.find(
+      const homeRow = lineups.find(
         (l: any) => l.fixture_id === fixture.fixture_id && l.team_id === fixture.home_team_id
       );
-      const awayLineup = lineups.find(
+      const awayRow = lineups.find(
         (l: any) => l.fixture_id === fixture.fixture_id && l.team_id === fixture.away_team_id
       );
+      const homeLineup = isSubmittedForFixture(fixture, homeRow) ? homeRow : null;
+      const awayLineup = isSubmittedForFixture(fixture, awayRow) ? awayRow : null;
 
       if (!homeLineup) {
         missing.push({

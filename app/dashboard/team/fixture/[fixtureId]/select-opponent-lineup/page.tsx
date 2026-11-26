@@ -76,12 +76,20 @@ export default function SelectOpponentLineupPage() {
       } else {
         setCanSelectLineup(true);
 
-        // Check if lineup already selected
+        // Check if lineup already selected (ignore unsubmitted system_auto stubs in Triple Threat)
+        const isTT =
+          fixtureData.fixture.tournament_type === 'triple_threat' ||
+          fixtureData.fixture.matchday_format === 'triple_threat';
         const lineupRes = await fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${opponentId}`);
         const lineupData = await lineupRes.json();
         
         if (lineupData.success && lineupData.lineups) {
-          setExistingLineup(lineupData.lineups);
+          const l = lineupData.lineups;
+          if (!isTT || (l.submitted_by !== 'system_auto' && l.triple_threat_lineup)) {
+            setExistingLineup(l);
+          } else {
+            setExistingLineup(null);
+          }
         }
       }
     } catch (err: any) {

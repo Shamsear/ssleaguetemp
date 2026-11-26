@@ -13,6 +13,45 @@ export interface LineupData {
   triple_threat_lineup?: TripleThreatLineupSubmission;
 }
 
+async function getTeamSeasonRosterTable(
+  sql: ReturnType<typeof getTournamentDb>,
+  seasonId: string,
+  teamId: string
+): Promise<'player_seasons' | 'realplayerstats'> {
+  const psCheck = await sql`
+    SELECT 1 FROM player_seasons
+    WHERE season_id = ${seasonId} AND team_id = ${teamId}
+    LIMIT 1
+  `;
+  return psCheck.length > 0 ? 'player_seasons' : 'realplayerstats';
+}
+
+async function fetchRegisteredTeamPlayers(
+  sql: ReturnType<typeof getTournamentDb>,
+  playerIds: string[],
+  seasonId: string,
+  teamId: string
+) {
+  if (playerIds.length === 0) return [];
+  const table = await getTeamSeasonRosterTable(sql, seasonId, teamId);
+  if (table === 'player_seasons') {
+    return await sql`
+      SELECT player_id, category
+      FROM player_seasons
+      WHERE player_id = ANY(${playerIds})
+      AND season_id = ${seasonId}
+      AND team_id = ${teamId}
+    `;
+  }
+  return await sql`
+    SELECT player_id, category
+    FROM realplayerstats
+    WHERE player_id = ANY(${playerIds})
+    AND season_id = ${seasonId}
+    AND team_id = ${teamId}
+  `;
+}
+
 /**
  * Validate lineup meets all requirements
  */
@@ -84,24 +123,7 @@ export async function validateLineup(
         };
 
         const allTtPlayers = [...ttLineup.coop, ...ttLineup.duo, ...ttLineup.single].map(extractId).filter(Boolean);
-        const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-        const isModern = seasonNum >= 16;
-
-        const playerChecks = isModern
-          ? await sql`
-              SELECT player_id, category
-              FROM player_seasons
-              WHERE player_id = ANY(${allTtPlayers})
-              AND season_id = ${seasonId}
-              AND team_id = ${teamId}
-            `
-          : await sql`
-              SELECT player_id, category
-              FROM realplayerstats
-              WHERE player_id = ANY(${allTtPlayers})
-              AND season_id = ${seasonId}
-              AND team_id = ${teamId}
-            `;
+        const playerChecks = await fetchRegisteredTeamPlayers(sql, allTtPlayers, seasonId, teamId);
 
         if (playerChecks.length !== allTtPlayers.length) {
           const foundIds = new Set(playerChecks.map((p: any) => String(p.player_id)));
@@ -156,24 +178,7 @@ export async function validateLineup(
 
   // 4. Check if all players belong to the team and are registered for season
   console.log('🔍 Checking player eligibility:', { allPlayers, seasonId, teamId });
-  const seasonNum = parseInt(seasonId.replace(/\D/g, '')) || 0;
-  const isModern = seasonNum >= 16;
-
-  const playerChecks = isModern
-    ? await sql`
-        SELECT player_id, category
-        FROM player_seasons
-        WHERE player_id = ANY(${allPlayers})
-        AND season_id = ${seasonId}
-        AND team_id = ${teamId}
-      `
-    : await sql`
-        SELECT player_id, category
-        FROM realplayerstats
-        WHERE player_id = ANY(${allPlayers})
-        AND season_id = ${seasonId}
-        AND team_id = ${teamId}
-      `;
+  const playerChecks = await fetchRegisteredTeamPlayers(sql, allPlayers, seasonId, teamId);
   console.log('🔍 Player checks result:', playerChecks);
   console.log('🔍 Unique category values found:', [...new Set(playerChecks.map((p: any) => p.category))]);
 

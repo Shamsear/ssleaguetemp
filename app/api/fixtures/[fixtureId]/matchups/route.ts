@@ -4,7 +4,7 @@ import { getAuctionDb } from '@/lib/neon/auction-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
-import { calculateTripleThreatFixture } from '@/lib/tournament/triple-threat-engine';
+import { calculateTripleThreatFixture, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Distribute match rewards (eCoin & SSCoin) to teams based on match result
@@ -652,10 +652,11 @@ export async function PATCH(
     const scoringType = isTripleThreat ? 'triple_threat' : (tournamentInfo[0]?.scoring_type || 'goals');
     const knockoutFormat = tournamentInfo[0]?.knockout_format;
     
-    // Get substitution penalties from matchups
+    // Get substitution penalties and match_mode from matchups
     const matchupsWithPenalties = await sql`
       SELECT 
         position,
+        match_mode,
         COALESCE(home_sub_penalty, 0) as home_sub_penalty,
         COALESCE(away_sub_penalty, 0) as away_sub_penalty
       FROM matchups
@@ -663,13 +664,17 @@ export async function PATCH(
       ORDER BY position ASC
     `;
 
-    // Create a map of penalties by position
+    // Create a map of penalties & mode by position
     const penaltiesMap = new Map();
+    const modeMap = new Map<number, string>();
     matchupsWithPenalties.forEach((m: any) => {
       penaltiesMap.set(m.position, {
         home_sub_penalty: Number(m.home_sub_penalty) || 0,
         away_sub_penalty: Number(m.away_sub_penalty) || 0
       });
+      if (m.match_mode) {
+        modeMap.set(m.position, m.match_mode);
+      }
     });
     
     let totalHomeScore = 0;
@@ -682,11 +687,12 @@ export async function PATCH(
       const ttResult = calculateTripleThreatFixture(
         results.map((r: any) => ({
           position: r.position,
-          mode: r.position === 1 ? 'coop' : r.position === 2 ? 'duo' : 'single',
-          home_goals: r.home_goals || 0,
-          away_goals: r.away_goals || 0,
-          home_penalty_goals: 0,
-          away_penalty_goals: 0,
+          mode: resolveTripleThreatMode({
+            mode: r.match_mode || modeMap.get(r.position),
+            position: r.position,
+          }),
+          home_goals: r.home_goals ?? 0,
+          away_goals: r.away_goals ?? 0,
         }))
       );
 

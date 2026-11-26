@@ -117,6 +117,22 @@ export default function CommitteeLineupMonitoringPage() {
           const awayLineupData = await awayLineupRes.json();
           const awayLineup = awayLineupData.success && awayLineupData.lineups ? awayLineupData.lineups : null;
 
+          const isTT =
+            fixture.tournament_type === 'triple_threat' ||
+            fixture.matchday_format === 'triple_threat' ||
+            String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+
+          const homeSubmitted = Boolean(
+            homeLineup &&
+            !homeLineup.is_draft &&
+            (!isTT || (homeLineup.submitted_by !== 'system_auto' && homeLineup.triple_threat_lineup))
+          );
+          const awaySubmitted = Boolean(
+            awayLineup &&
+            !awayLineup.is_draft &&
+            (!isTT || (awayLineup.submitted_by !== 'system_auto' && awayLineup.triple_threat_lineup))
+          );
+
           statuses.push({
             fixture_id: fixture.id,
             round_number: fixture.round_number,
@@ -126,10 +142,10 @@ export default function CommitteeLineupMonitoringPage() {
             away_team_id: fixture.away_team_id,
             away_team_name: fixture.away_team_name,
             scheduled_date: fixture.scheduled_date,
-            home_lineup_submitted: !!homeLineup,
+            home_lineup_submitted: homeSubmitted,
             home_lineup_locked: homeLineup?.is_locked || false,
             home_warning_given: homeLineup?.warning_given || false,
-            away_lineup_submitted: !!awayLineup,
+            away_lineup_submitted: awaySubmitted,
             away_lineup_locked: awayLineup?.is_locked || false,
             away_warning_given: awayLineup?.warning_given || false,
           });

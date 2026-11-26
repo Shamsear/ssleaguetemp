@@ -14,16 +14,16 @@ export async function POST(request: NextRequest) {
     const sql = getTournamentDb();
 
     // Get fixtures with passed deadlines from Neon
-    let fixturesQuery = `SELECT * FROM fixtures WHERE lineup_deadline <= $1`;
+    let fixturesQuery = `SELECT f.*, t.tournament_type, ts.matchday_format FROM fixtures f LEFT JOIN tournaments t ON f.tournament_id = t.id LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id WHERE f.lineup_deadline <= $1`;
     const params: any[] = [now.toISOString()];
 
     if (season_id) {
       params.push(season_id);
-      fixturesQuery += ` AND season_id = $${params.length}`;
+      fixturesQuery += ` AND f.season_id = $${params.length}`;
     }
     if (round_number) {
       params.push(parseInt(round_number));
-      fixturesQuery += ` AND round_number = $${params.length}`;
+      fixturesQuery += ` AND f.round_number = $${params.length}`;
     }
 
     const fixturesResult: any = await sql.query(fixturesQuery, params);
@@ -45,6 +45,10 @@ export async function POST(request: NextRequest) {
       const home_team_id = fixture.home_team_id;
       const away_team_id = fixture.away_team_id;
       const fixtureSeason = fixture.season_id;
+      const isTripleThreat =
+        fixture.tournament_type === 'triple_threat' ||
+        fixture.matchday_format === 'triple_threat' ||
+        String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
 
       try {
         // Lock home team lineup if exists and not already locked
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
             results.push({ team_id: home_team_id, status: 'locked' });
             processedCount++;
           }
-        } else {
+        } else if (!isTripleThreat) {
           // Check if team has exactly 5 players - auto-create lineup with all players
           const rosterResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/team/${home_team_id}/roster?season_id=${fixtureSeason}`);
           const rosterData = await rosterResponse.json();
@@ -95,7 +99,7 @@ export async function POST(request: NextRequest) {
             results.push({ team_id: away_team_id, status: 'locked' });
             processedCount++;
           }
-        } else {
+        } else if (!isTripleThreat) {
           // Check if team has exactly 5 players - auto-create lineup with all players
           const rosterResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/team/${away_team_id}/roster?season_id=${fixtureSeason}`);
           const rosterData = await rosterResponse.json();

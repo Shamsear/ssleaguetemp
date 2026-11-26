@@ -2,16 +2,16 @@
  * SS TRIPLE THREAT - Calculation & Rules Engine
  * 
  * Rules:
- * 1. Three Modes per matchday:
- *    - Co-op Match (2v2)
- *    - Duo Match (2v2 Goal based)
- *    - Single Match (1v1)
+ * 1. Three Modes per matchday (4 matches total):
+ *    - Co-op Match (2v2) — 1 match
+ *    - Duo Mode (2 x 1v1 Goal based) — 2 individual 1v1 matches combined on aggregate goals
+ *    - Single Match (1v1) — 1 match
  * 2. Exactly 5 unique players fielded per team per matchday:
  *    - Co-op: 2 players
- *    - Duo: 2 players
+ *    - Duo: 2 players (Duo P1 vs Away P1, Duo P2 vs Away P2)
  *    - Single: 1 player
  *    - All 5 players must be unique (no overlap across modes)
- * 3. Match Points:
+ * 3. Mode Points:
  *    - Win: 3 Points
  *    - Draw: 1 Point
  *    - Loss: 0 Points
@@ -41,23 +41,34 @@ export interface TripleThreatMatchResult {
   mode: TripleThreatMode;
   home_goals: number;
   away_goals: number;
-  home_points: number; // 3, 1, or 0
-  away_points: number; // 3, 1, or 0
+  home_points: number; // 3, 1, or 0 (awarded once per mode — 0 on secondary Duo leg)
+  away_points: number; // 3, 1, or 0 (awarded once per mode — 0 on secondary Duo leg)
   home_bonus?: number; // 1 if clean sweep, else 0
   away_bonus?: number; // 1 if clean sweep, else 0
   outcome: 'home_win' | 'away_win' | 'draw';
 }
 
+export interface TripleThreatModeSummary {
+  mode: TripleThreatMode;
+  played: boolean;
+  home_goals: number;
+  away_goals: number;
+  home_points: number;
+  away_points: number;
+  outcome: 'home_win' | 'away_win' | 'draw' | 'pending';
+}
+
 export interface TripleThreatFixtureResult {
   matches: TripleThreatMatchResult[];
   matchResults: TripleThreatMatchResult[]; // Alias for backward compatibility
+  modeResults: Record<TripleThreatMode, TripleThreatModeSummary>;
   home_matches_won: number;
   away_matches_won: number;
   draws: number;
   home_base_points: number;
   away_base_points: number;
-  home_clean_sweep_bonus: number; // 1 if won all 3, else 0
-  away_clean_sweep_bonus: number; // 1 if won all 3, else 0
+  home_clean_sweep_bonus: number; // 1 if won all 3 modes, else 0
+  away_clean_sweep_bonus: number; // 1 if won all 3 modes, else 0
   home_total_points: number; // base + bonus (0 - 10)
   away_total_points: number; // base + bonus (0 - 10)
   home_points_difference: number; // home_total_points - away_total_points
@@ -134,55 +145,254 @@ export function validateTripleThreatLineup(
 }
 
 /**
+ * Resolves the TripleThreatMode of a matchup record cleanly whether legacy 3-match (coop, duo 2v2, single)
+ * or current 4-match format (coop 2v2, duo 1v1 #1, duo 1v1 #2, single 1v1).
+ */
+export function resolveTripleThreatMode(match: {
+  match_mode?: string | null;
+  mode?: string | null;
+  position?: number;
+  home_player_ids?: any[];
+}): TripleThreatMode {
+  const explicit = (match.match_mode || match.mode || '').toLowerCase().trim();
+  if (explicit === 'coop' || explicit === 'duo' || explicit === 'single') {
+    return explicit;
+  }
+  if (match.position === 1) return 'coop';
+  if (match.position === 2) return 'duo';
+  if (match.position === 4) return 'single';
+  return 'single';
+}
+
+export interface TripleThreatModeDisplay {
+  mode: TripleThreatMode;
+  title: string;
+  longTitle: string;
+  icon: string;
+  badgeClass: string;
+  isSubMatch: boolean;
+}
+
+/**
+ * Shared badge/label metadata for any Triple Threat matchup row (supports both 2-leg 1v1 Duo and legacy 2v2 Duo).
+ */
+export function getTripleThreatModeDisplay(
+  allMatchups: Array<{ match_mode?: string | null; mode?: string | null; position?: number; home_player_ids?: any[] }>,
+  targetMatchup: { match_mode?: string | null; mode?: string | null; position?: number; home_player_ids?: any[] }
+): TripleThreatModeDisplay {
+  const mode = resolveTripleThreatMode(targetMatchup);
+  if (mode === 'coop') {
+    return {
+      mode,
+      title: 'CO-OP (2v2)',
+      longTitle: 'CO-OP MATCH (2v2)',
+      icon: '🎮',
+      badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      isSubMatch: false,
+    };
+  }
+  if (mode === 'duo') {
+    const duoMatchups = (allMatchups || []).filter((m) => resolveTripleThreatMode(m) === 'duo');
+    const isTwoLeg = duoMatchups.length > 1;
+    const legIndex = duoMatchups.findIndex((m) => m === targetMatchup || (targetMatchup.position !== undefined && m.position === targetMatchup.position));
+    const legNum = legIndex >= 0 ? legIndex + 1 : 1;
+    return {
+      mode,
+      title: isTwoLeg ? `DUO 1v1 #${legNum}` : 'DUO (2v2)',
+      longTitle: isTwoLeg ? `DUO 1v1 #${legNum} (GOAL AGG)` : 'DUO MATCH (2v2)',
+      icon: '🤝',
+      badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      isSubMatch: isTwoLeg,
+    };
+  }
+  return {
+    mode: 'single',
+    title: 'SINGLE (1v1)',
+    longTitle: 'SINGLE MATCH (1v1)',
+    icon: '⚔️',
+    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+    isSubMatch: false,
+  };
+}
+
+export interface BuiltTripleThreatMatchup {
+  position: number;
+  match_mode: TripleThreatMode;
+  home_player_id: string;
+  home_player_name: string;
+  away_player_id: string;
+  away_player_name: string;
+  home_player_ids: string[];
+  home_player_names: string[];
+  away_player_ids: string[];
+  away_player_names: string[];
+  match_duration: number;
+}
+
+/**
+ * Builds the 4 Triple Threat matchup rows from both submitted lineups:
+ * - Pos 1: Co-op (2v2)
+ * - Pos 2: Duo 1v1 #1 (Home Duo P1 vs Away Duo P1)
+ * - Pos 3: Duo 1v1 #2 (Home Duo P2 vs Away Duo P2)
+ * - Pos 4: Single (1v1)
+ */
+export function buildTripleThreatMatchups(
+  homeTT: TripleThreatLineupSubmission,
+  awayTT: TripleThreatLineupSubmission,
+  getNames: (ids: string[]) => string[]
+): BuiltTripleThreatMatchup[] {
+  const homeCoopIds = (homeTT.coop || []).map(extractPlayerId).filter(Boolean);
+  const homeDuoIds = (homeTT.duo || []).map(extractPlayerId).filter(Boolean);
+  const homeSingleIds = (homeTT.single || []).map(extractPlayerId).filter(Boolean);
+
+  const awayCoopIds = (awayTT.coop || []).map(extractPlayerId).filter(Boolean);
+  const awayDuoIds = (awayTT.duo || []).map(extractPlayerId).filter(Boolean);
+  const awaySingleIds = (awayTT.single || []).map(extractPlayerId).filter(Boolean);
+
+  const homeCoopNames = getNames(homeCoopIds);
+  const homeDuoNames = getNames(homeDuoIds);
+  const homeSingleNames = getNames(homeSingleIds);
+
+  const awayCoopNames = getNames(awayCoopIds);
+  const awayDuoNames = getNames(awayDuoIds);
+  const awaySingleNames = getNames(awaySingleIds);
+
+  return [
+    {
+      position: 1,
+      match_mode: 'coop',
+      home_player_id: homeCoopIds[0] || '',
+      home_player_name: homeCoopNames.join(' & ') || '',
+      away_player_id: awayCoopIds[0] || '',
+      away_player_name: awayCoopNames.join(' & ') || '',
+      home_player_ids: homeCoopIds,
+      home_player_names: homeCoopNames,
+      away_player_ids: awayCoopIds,
+      away_player_names: awayCoopNames,
+      match_duration: 6,
+    },
+    {
+      position: 2,
+      match_mode: 'duo',
+      home_player_id: homeDuoIds[0] || '',
+      home_player_name: homeDuoNames[0] || '',
+      away_player_id: awayDuoIds[0] || '',
+      away_player_name: awayDuoNames[0] || '',
+      home_player_ids: homeDuoIds[0] ? [homeDuoIds[0]] : [],
+      home_player_names: homeDuoNames[0] ? [homeDuoNames[0]] : [],
+      away_player_ids: awayDuoIds[0] ? [awayDuoIds[0]] : [],
+      away_player_names: awayDuoNames[0] ? [awayDuoNames[0]] : [],
+      match_duration: 6,
+    },
+    {
+      position: 3,
+      match_mode: 'duo',
+      home_player_id: homeDuoIds[1] || '',
+      home_player_name: homeDuoNames[1] || '',
+      away_player_id: awayDuoIds[1] || '',
+      away_player_name: awayDuoNames[1] || '',
+      home_player_ids: homeDuoIds[1] ? [homeDuoIds[1]] : [],
+      home_player_names: homeDuoNames[1] ? [homeDuoNames[1]] : [],
+      away_player_ids: awayDuoIds[1] ? [awayDuoIds[1]] : [],
+      away_player_names: awayDuoNames[1] ? [awayDuoNames[1]] : [],
+      match_duration: 6,
+    },
+    {
+      position: 4,
+      match_mode: 'single',
+      home_player_id: homeSingleIds[0] || '',
+      home_player_name: homeSingleNames[0] || '',
+      away_player_id: awaySingleIds[0] || '',
+      away_player_name: awaySingleNames[0] || '',
+      home_player_ids: homeSingleIds,
+      home_player_names: homeSingleNames,
+      away_player_ids: awaySingleIds,
+      away_player_names: awaySingleNames,
+      match_duration: 6,
+    },
+  ];
+}
+
+/**
  * Calculates matchday points, bonuses, and points-based GD for a Triple Threat fixture.
+ * Aggregates goals per mode so Duo (2 × 1v1) awards 3/1/0 points to whichever team scores more total Duo goals.
  */
 export function calculateTripleThreatFixture(
   matches: TripleThreatMatchInput[]
 ): TripleThreatFixtureResult {
+  const modeBuckets: Record<TripleThreatMode, TripleThreatMatchInput[]> = {
+    coop: [],
+    duo: [],
+    single: [],
+  };
+
+  matches.forEach((m, idx) => {
+    const resolvedMode = resolveTripleThreatMode({
+      mode: m.mode,
+      position: m.position ?? idx + 1,
+      home_player_ids: m.home_player_ids,
+    });
+    modeBuckets[resolvedMode].push({ ...m, mode: resolvedMode, position: m.position ?? idx + 1 });
+  });
+
   let homeMatchesWon = 0;
   let awayMatchesWon = 0;
   let draws = 0;
   let homeBasePoints = 0;
   let awayBasePoints = 0;
 
-  const rawMatches = matches.map((match, idx) => {
-    const homeGoals = Number(match.home_goals ?? 0);
-    const awayGoals = Number(match.away_goals ?? 0);
+  const isScored = (m: TripleThreatMatchInput) =>
+    m.home_goals !== null &&
+    m.home_goals !== undefined &&
+    m.away_goals !== null &&
+    m.away_goals !== undefined &&
+    String(m.home_goals) !== '' &&
+    String(m.away_goals) !== '';
 
-    let homePts = 0;
-    let awayPts = 0;
-    let outcome: 'home_win' | 'away_win' | 'draw' = 'draw';
+  const modeResults = {} as Record<TripleThreatMode, TripleThreatModeSummary>;
+  const modes: TripleThreatMode[] = ['coop', 'duo', 'single'];
 
-    if (homeGoals > awayGoals) {
-      homePts = 3;
-      awayPts = 0;
-      outcome = 'home_win';
-      homeMatchesWon++;
-    } else if (awayGoals > homeGoals) {
-      homePts = 0;
-      awayPts = 3;
-      outcome = 'away_win';
-      awayMatchesWon++;
-    } else {
-      homePts = 1;
-      awayPts = 1;
-      outcome = 'draw';
-      draws++;
+  for (const mode of modes) {
+    const bucket = modeBuckets[mode];
+    const allPlayed = bucket.length > 0 && bucket.every(isScored);
+    const homeGoals = bucket.reduce((sum, m) => sum + (isScored(m) ? Number(m.home_goals) : 0), 0);
+    const awayGoals = bucket.reduce((sum, m) => sum + (isScored(m) ? Number(m.away_goals) : 0), 0);
+
+    let hp = 0;
+    let ap = 0;
+    let outcome: 'home_win' | 'away_win' | 'draw' | 'pending' = 'pending';
+
+    if (allPlayed) {
+      if (homeGoals > awayGoals) {
+        hp = 3;
+        ap = 0;
+        outcome = 'home_win';
+        homeMatchesWon++;
+      } else if (awayGoals > homeGoals) {
+        hp = 0;
+        ap = 3;
+        outcome = 'away_win';
+        awayMatchesWon++;
+      } else {
+        hp = 1;
+        ap = 1;
+        outcome = 'draw';
+        draws++;
+      }
+      homeBasePoints += hp;
+      awayBasePoints += ap;
     }
 
-    homeBasePoints += homePts;
-    awayBasePoints += awayPts;
-
-    return {
-      position: match.position || idx + 1,
-      mode: match.mode,
+    modeResults[mode] = {
+      mode,
+      played: allPlayed,
       home_goals: homeGoals,
       away_goals: awayGoals,
-      home_points: homePts,
-      away_points: awayPts,
+      home_points: hp,
+      away_points: ap,
       outcome,
     };
-  });
+  }
 
   // Check Clean Sweep Bonus (+1 point if won all 3 modes)
   const isHomeCleanSweep = homeMatchesWon === 3;
@@ -191,11 +401,35 @@ export function calculateTripleThreatFixture(
   const homeBonus = isHomeCleanSweep ? 1 : 0;
   const awayBonus = isAwayCleanSweep ? 1 : 0;
 
-  const processedMatches: TripleThreatMatchResult[] = rawMatches.map((m) => ({
-    ...m,
-    home_bonus: isHomeCleanSweep ? 1 : 0,
-    away_bonus: isAwayCleanSweep ? 1 : 0,
-  }));
+  // Map per-matchup results cleanly (Duo mode awards its 3/1/0 points once on its primary row to prevent SUM double-counting)
+  const modeAwardedOnce = new Set<TripleThreatMode>();
+  const processedMatches: TripleThreatMatchResult[] = matches.map((match, idx) => {
+    const mode = resolveTripleThreatMode({
+      mode: match.mode,
+      position: match.position ?? idx + 1,
+      home_player_ids: match.home_player_ids,
+    });
+    const hg = Number(match.home_goals ?? 0);
+    const ag = Number(match.away_goals ?? 0);
+    const outcome: 'home_win' | 'away_win' | 'draw' =
+      hg > ag ? 'home_win' : ag > hg ? 'away_win' : 'draw';
+
+    const isPrimaryForMode = !modeAwardedOnce.has(mode);
+    modeAwardedOnce.add(mode);
+
+    const summary = modeResults[mode];
+    return {
+      position: match.position || idx + 1,
+      mode,
+      home_goals: hg,
+      away_goals: ag,
+      home_points: isPrimaryForMode ? summary.home_points : 0,
+      away_points: isPrimaryForMode ? summary.away_points : 0,
+      home_bonus: homeBonus,
+      away_bonus: awayBonus,
+      outcome,
+    };
+  });
 
   const homeTotalPoints = homeBasePoints + homeBonus;
   const awayTotalPoints = awayBasePoints + awayBonus;
@@ -216,6 +450,7 @@ export function calculateTripleThreatFixture(
   return {
     matches: processedMatches,
     matchResults: processedMatches,
+    modeResults,
     home_matches_won: homeMatchesWon,
     away_matches_won: awayMatchesWon,
     draws,

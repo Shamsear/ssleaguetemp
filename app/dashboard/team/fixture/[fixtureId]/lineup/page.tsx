@@ -110,22 +110,26 @@ export default function FixtureLineupPage() {
       
       console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Lineup API response:', lineupData);
       
-      // Verify the returned lineup belongs to this team
+      const isTripleThreatFixture =
+        fixtureData.fixture.tournament_type === 'triple_threat' ||
+        fixtureData.fixture.matchday_format === 'triple_threat';
+
+      // Verify the returned lineup belongs to this team and is not a system_auto stub in Triple Threat
       if (lineupData.success && lineupData.lineups !== null && lineupData.lineups !== undefined) {
-        console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Checking lineup team_id:', {
-          returned_team_id: lineupData.lineups.team_id,
-          expected_team_id: userTeamId,
-          match: lineupData.lineups.team_id === userTeamId,
-          lineupData: lineupData.lineups
-        });
-        
-        // Double-check that the lineup's team_id matches
-        if (lineupData.lineups.team_id === userTeamId) {
+        const returnedLineup = lineupData.lineups;
+        const isSystemAutoPhantom =
+          isTripleThreatFixture &&
+          (returnedLineup.submitted_by === 'system_auto' || !returnedLineup.triple_threat_lineup);
+
+        if (isSystemAutoPhantom) {
+          console.log('<Info className="w-4 h-4 text-blue-500" /> DEBUG - Ignoring unsubmitted system_auto stub for Triple Threat');
+          setExistingLineup(null);
+        } else if (returnedLineup.team_id === userTeamId) {
           console.log('✅ DEBUG - Team ID matches, setting lineup');
-          setExistingLineup(lineupData.lineups);
+          setExistingLineup(returnedLineup);
         } else {
           console.error('<XCircle className="w-4 h-4 text-rose-500" /> CRITICAL - Lineup team_id mismatch!', {
-            returned: lineupData.lineups.team_id,
+            returned: returnedLineup.team_id,
             expected: userTeamId
           });
         }

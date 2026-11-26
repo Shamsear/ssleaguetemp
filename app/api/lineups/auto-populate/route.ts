@@ -24,18 +24,23 @@ export async function POST(request: NextRequest) {
 
     console.log(`🤖 Auto-populating lineups for Season ${season_id}, Round ${round_number}, Leg ${legValue}`);
 
-    // Get all fixtures for this round
+    // Get all fixtures for this round (skip Triple Threat fixtures — they require explicit 3-mode assignment)
     const fixtures = await sql`
       SELECT 
-        id,
-        home_team_id,
-        home_team_name,
-        away_team_id,
-        away_team_name
-      FROM fixtures
-      WHERE season_id = ${season_id}
-        AND round_number = ${round_number}
-        AND leg = ${legValue}
+        f.id,
+        f.tournament_id,
+        f.home_team_id,
+        f.home_team_name,
+        f.away_team_id,
+        f.away_team_name,
+        t.tournament_type,
+        ts.matchday_format
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.season_id = ${season_id}
+        AND f.round_number = ${round_number}
+        AND f.leg = ${legValue}
     `;
 
     console.log(`Found ${fixtures.length} fixtures`);
@@ -44,6 +49,13 @@ export async function POST(request: NextRequest) {
     const results = [];
 
     for (const fixture of fixtures) {
+      const isTripleThreat =
+        fixture.tournament_type === 'triple_threat' ||
+        fixture.matchday_format === 'triple_threat' ||
+        String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+      if (isTripleThreat) {
+        continue;
+      }
       // Check home team lineup in Neon
       const homeLineupRows = await sql`
         SELECT id FROM fixture_lineups

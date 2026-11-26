@@ -9,6 +9,20 @@ export async function GET(
     const sql = getTournamentDb();
     const { id: tournamentId } = await params;
 
+    // Check tournament format so Triple Threat requires real triple_threat_lineup and excludes system_auto
+    const tourRows = await sql`
+      SELECT t.tournament_type, ts.matchday_format
+      FROM tournaments t
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE t.id = ${tournamentId}
+      LIMIT 1
+    `;
+    const isTripleThreat =
+      (tourRows.length > 0 &&
+        (tourRows[0].tournament_type === 'triple_threat' ||
+          tourRows[0].matchday_format === 'triple_threat')) ||
+      tournamentId.toLowerCase().includes('triple_threat');
+
     // Get all fixtures for the tournament with lineup status
     const fixtures = await sql`
       SELECT 
@@ -23,34 +37,46 @@ export async function GET(
         f.leg,
         f.group_name,
         f.knockout_round,
-        -- Check if home team has submitted lineup
+        -- Check if home team has submitted a real lineup (ignore system_auto stubs and drafts)
         EXISTS(
-          SELECT 1 FROM lineups 
-          WHERE fixture_id = f.id 
-            AND team_id = f.home_team_id
-            AND submitted_at IS NOT NULL
+          SELECT 1 FROM lineups l
+          WHERE l.fixture_id = f.id 
+            AND l.team_id = f.home_team_id
+            AND l.submitted_at IS NOT NULL
+            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND COALESCE(l.is_draft, false) = false
+            AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
         ) as home_lineup_submitted,
-        -- Check if away team has submitted lineup
+        -- Check if away team has submitted a real lineup (ignore system_auto stubs and drafts)
         EXISTS(
-          SELECT 1 FROM lineups 
-          WHERE fixture_id = f.id 
-            AND team_id = f.away_team_id
-            AND submitted_at IS NOT NULL
+          SELECT 1 FROM lineups l
+          WHERE l.fixture_id = f.id 
+            AND l.team_id = f.away_team_id
+            AND l.submitted_at IS NOT NULL
+            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND COALESCE(l.is_draft, false) = false
+            AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
         ) as away_lineup_submitted,
         -- Count home team lineup players
         COALESCE((
           SELECT jsonb_array_length(starting_xi) 
-          FROM lineups 
-          WHERE fixture_id = f.id 
-            AND team_id = f.home_team_id
+          FROM lineups l
+          WHERE l.fixture_id = f.id 
+            AND l.team_id = f.home_team_id
+            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND COALESCE(l.is_draft, false) = false
+            AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
           LIMIT 1
         ), 0) as home_lineup_count,
         -- Count away team lineup players
         COALESCE((
           SELECT jsonb_array_length(starting_xi) 
-          FROM lineups 
-          WHERE fixture_id = f.id 
-            AND team_id = f.away_team_id
+          FROM lineups l
+          WHERE l.fixture_id = f.id 
+            AND l.team_id = f.away_team_id
+            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND COALESCE(l.is_draft, false) = false
+            AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
           LIMIT 1
         ), 0) as away_lineup_count,
         -- Get home team total squad size

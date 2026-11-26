@@ -6,6 +6,7 @@ import {
   generateLineupId,
   hasSubmittedLineup
 } from '@/lib/lineup-validation';
+import { buildTripleThreatMatchups } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * GET - Fetch lineup(s)
@@ -27,15 +28,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Auto-create default team lineups in database if missing
+    // Auto-create default team lineups ONLY for standard (non-Triple Threat) tournaments
     try {
       const fixtureRes = await sql`
-        SELECT id, season_id, round_number, tournament_id, home_team_id, away_team_id
-        FROM fixtures
-        WHERE id = ${fixtureId}
+        SELECT f.id, f.season_id, f.round_number, f.tournament_id, f.home_team_id, f.away_team_id,
+               t.tournament_type, ts.matchday_format
+        FROM fixtures f
+        LEFT JOIN tournaments t ON f.tournament_id = t.id
+        LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+        WHERE f.id = ${fixtureId}
         LIMIT 1
       `;
-      if (fixtureRes.length > 0) {
+      const isTripleThreatFixture =
+        fixtureRes.length > 0 &&
+        (fixtureRes[0].tournament_type === 'triple_threat' ||
+          fixtureRes[0].matchday_format === 'triple_threat' ||
+          String(fixtureRes[0].tournament_id || '').toLowerCase().includes('triple_threat'));
+
+      if (fixtureRes.length > 0 && !isTripleThreatFixture) {
         const fix = fixtureRes[0];
         const teamsToEnsure = [fix.home_team_id, fix.away_team_id].filter((id: any) => id && id !== 'TBD' && id !== 'bye'
         );
@@ -47,18 +57,13 @@ export async function GET(request: NextRequest) {
             LIMIT 1
           `;
           if (existing.length === 0) {
-            const seasonNum = parseInt((fix.season_id || '').replace(/\D/g, '')) || 0;
-            const isModern = seasonNum === 16 || seasonNum === 17 || seasonNum === 18;
-
-            let players = [];
-            if (isModern) {
-              players = await sql`
-                SELECT player_id, player_name, category
-                FROM player_seasons
-                WHERE team_id = ${tid} AND season_id = ${fix.season_id} AND registration_status = 'active'
-                ORDER BY player_name ASC
-              `;
-            } else {
+            let players = await sql`
+              SELECT player_id, player_name, category
+              FROM player_seasons
+              WHERE team_id = ${tid} AND season_id = ${fix.season_id} AND registration_status = 'active'
+              ORDER BY player_name ASC
+            `;
+            if (players.length === 0) {
               players = await sql`
                 SELECT player_id, player_name, category
                 FROM realplayerstats
@@ -537,70 +542,30 @@ export async function POST(request: NextRequest) {
           }
 
           const getNames = (ids: string[]) => ids.map(id => nameMap.get(id) || `Player ${id}`);
-
-          const homeCoopNames = getNames(homeCoopIds);
-          const homeDuoNames = getNames(homeDuoIds);
-          const homeSingleNames = getNames(homeSingleIds);
-
-          const awayCoopNames = getNames(awayCoopIds);
-          const awayDuoNames = getNames(awayDuoIds);
-          const awaySingleNames = getNames(awaySingleIds);
+          const builtMatchups = buildTripleThreatMatchups(homeTT, awayTT, getNames);
 
           // Delete old matchups for this fixture
           await sql`DELETE FROM matchups WHERE fixture_id = ${fixture_id}`;
 
-          // Mode 1: Co-op Match (2v2)
-          await sql`
-            INSERT INTO matchups (
-              fixture_id, season_id, tournament_id, round_number, position, match_mode,
-              home_player_id, home_player_name, away_player_id, away_player_name,
-              home_player_ids, home_player_names, away_player_ids, away_player_names,
-              match_duration, created_at, updated_at
-            ) VALUES (
-              ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 1, 'coop',
-              ${homeCoopIds[0] || ''}, ${homeCoopNames.join(' & ') || ''},
-              ${awayCoopIds[0] || ''}, ${awayCoopNames.join(' & ') || ''},
-              ${homeCoopIds}, ${homeCoopNames},
-              ${awayCoopIds}, ${awayCoopNames},
-              6, NOW(), NOW()
-            )
-          `;
+          for (const m of builtMatchups) {
+            await sql`
+              INSERT INTO matchups (
+                fixture_id, season_id, tournament_id, round_number, position, match_mode,
+                home_player_id, home_player_name, away_player_id, away_player_name,
+                home_player_ids, home_player_names, away_player_ids, away_player_names,
+                match_duration, created_at, updated_at
+              ) VALUES (
+                ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, ${m.position}, ${m.match_mode},
+                ${m.home_player_id}, ${m.home_player_name},
+                ${m.away_player_id}, ${m.away_player_name},
+                ${m.home_player_ids}, ${m.home_player_names},
+                ${m.away_player_ids}, ${m.away_player_names},
+                ${m.match_duration}, NOW(), NOW()
+              )
+            `;
+          }
 
-          // Mode 2: Duo Match (2v2)
-          await sql`
-            INSERT INTO matchups (
-              fixture_id, season_id, tournament_id, round_number, position, match_mode,
-              home_player_id, home_player_name, away_player_id, away_player_name,
-              home_player_ids, home_player_names, away_player_ids, away_player_names,
-              match_duration, created_at, updated_at
-            ) VALUES (
-              ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 2, 'duo',
-              ${homeDuoIds[0] || ''}, ${homeDuoNames.join(' & ') || ''},
-              ${awayDuoIds[0] || ''}, ${awayDuoNames.join(' & ') || ''},
-              ${homeDuoIds}, ${homeDuoNames},
-              ${awayDuoIds}, ${awayDuoNames},
-              6, NOW(), NOW()
-            )
-          `;
-
-          // Mode 3: Single Match (1v1)
-          await sql`
-            INSERT INTO matchups (
-              fixture_id, season_id, tournament_id, round_number, position, match_mode,
-              home_player_id, home_player_name, away_player_id, away_player_name,
-              home_player_ids, home_player_names, away_player_ids, away_player_names,
-              match_duration, created_at, updated_at
-            ) VALUES (
-              ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, 3, 'single',
-              ${homeSingleIds[0] || ''}, ${homeSingleNames[0] || ''},
-              ${awaySingleIds[0] || ''}, ${awaySingleNames[0] || ''},
-              ${homeSingleIds}, ${homeSingleNames},
-              ${awaySingleIds}, ${awaySingleNames},
-              6, NOW(), NOW()
-            )
-          `;
-
-          console.log(`✅ Auto-created 3 Triple Threat matchups for fixture ${fixture_id}`);
+          console.log(`✅ Auto-created ${builtMatchups.length} Triple Threat matchups for fixture ${fixture_id}`);
         }
       } catch (ttErr) {
         console.error('Failed to auto-create Triple Threat matchups:', ttErr);

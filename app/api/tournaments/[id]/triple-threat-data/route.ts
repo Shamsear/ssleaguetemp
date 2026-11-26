@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { neon } from '@neondatabase/serverless';
+import { resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 export async function GET(
   request: NextRequest,
@@ -197,17 +198,17 @@ export async function GET(
 
       const fMatchups = matchupsByFixture.get(f.id) || [];
 
-      // Categorize the 3 modes
-      const coopM = fMatchups.find((m: any) => m.match_mode === 'coop' || m.position === 1);
-      const duoM = fMatchups.find((m: any) => m.match_mode === 'duo' || m.position === 2);
-      const singleM = fMatchups.find((m: any) => m.match_mode === 'single' || m.position === 3);
+      // Categorize the 3 modes (Duo supports both legacy 2v2 single-row and current 2 x 1v1 goal-aggregate)
+      const coopMs = fMatchups.filter((m: any) => resolveTripleThreatMode(m) === 'coop');
+      const duoMs = fMatchups.filter((m: any) => resolveTripleThreatMode(m) === 'duo');
+      const singleMs = fMatchups.filter((m: any) => resolveTripleThreatMode(m) === 'single');
 
-      const calcModePoints = (m: any) => {
-        if (!m || m.home_goals === null || m.away_goals === null) {
+      const calcModePoints = (ms: any[]) => {
+        if (!ms || ms.length === 0 || ms.some((m) => m.home_goals === null || m.away_goals === null)) {
           return { h: null, a: null, hp: null, ap: null };
         }
-        const hG = Number(m.home_goals);
-        const aG = Number(m.away_goals);
+        const hG = ms.reduce((sum, m) => sum + Number(m.home_goals), 0);
+        const aG = ms.reduce((sum, m) => sum + Number(m.away_goals), 0);
         let hp = 0;
         let ap = 0;
         if (hG > aG) { hp = 3; ap = 0; }
@@ -216,9 +217,9 @@ export async function GET(
         return { h: hG, a: aG, hp, ap };
       };
 
-      const coopRes = calcModePoints(coopM);
-      const duoRes = calcModePoints(duoM);
-      const singleRes = calcModePoints(singleM);
+      const coopRes = calcModePoints(coopMs);
+      const duoRes = calcModePoints(duoMs);
+      const singleRes = calcModePoints(singleMs);
 
       const modesArr = [
         { key: 'coop', label: 'CO-OP', ...coopRes },
