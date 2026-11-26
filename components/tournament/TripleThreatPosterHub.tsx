@@ -73,25 +73,11 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
   };
 
   const getExportSize = (view: string): [number, number] => {
-    const visibleGroups = (data?.groups || []).filter((g: any) => groupFilter === 'ALL' || g.name === groupFilter);
-    const hasMultipleGroups = visibleGroups.length > 2;
-
-    if (view === 'ranking') {
-      return hasMultipleGroups ? [1080, 1920] : [1080, 1350];
-    }
-    if (view === 'groups') {
-      return hasMultipleGroups ? [1080, 1920] : [1080, 1350];
-    }
-    if (view === 'fixtures') {
-      return hasMultipleGroups ? [1080, 1800] : [1080, 1350];
-    }
     if (view === 'points') {
       return [1920, 1080];
     }
-    if (view === 'final') {
-      return [1080, 1350];
-    }
-    return [1080, 1350];
+    // 0 height means natural auto-height matching the live page exactly!
+    return [1080, 0];
   };
 
   const handleDownloadPng = async () => {
@@ -112,201 +98,55 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
         backgroundColor: '#050604',
         scale: 2,
         useCORS: true,
-        windowWidth: Math.max(OUT_W + 120, 1200),
-        windowHeight: OUT_H + 100,
+        windowWidth: OUT_W > 1200 ? OUT_W + 120 : 1200,
+        windowHeight: 3200,
         ignoreElements: (el) => el.classList && el.classList.contains('chips'),
         onclone: (doc) => {
+          // Ensure font link and stylesheet are present in cloned document
+          if (!doc.getElementById('triple-threat-external-fonts')) {
+            const fontLink = doc.createElement('link');
+            fontLink.id = 'triple-threat-external-fonts';
+            fontLink.rel = 'stylesheet';
+            fontLink.href =
+              'https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,800;1,900&family=Montserrat:wght@400;600;700;800&display=swap';
+            doc.head.appendChild(fontLink);
+          }
+          if (!doc.getElementById('triple-threat-external-css')) {
+            const cssLink = doc.createElement('link');
+            cssLink.id = 'triple-threat-external-css';
+            cssLink.rel = 'stylesheet';
+            cssLink.href = '/triple-threat/style.css';
+            doc.head.appendChild(cssLink);
+          }
+
           const p = doc.getElementById('poster');
           if (!p) return;
           p.classList.add('tt-scope');
           p.classList.add('export');
-          p.classList.add('export-fixed');
-          p.style.height = OUT_H + 'px';
           p.style.width = OUT_W + 'px';
-          p.style.overflow = 'hidden';
+          p.style.maxWidth = OUT_W + 'px';
+          p.style.borderRadius = '0';
+          p.style.border = '0';
+          p.style.margin = '0 auto';
+          p.style.overflow = 'visible';
 
-          if (OUT_W > OUT_H) p.classList.add('export-land');
-          if (activeTab === 'final') p.classList.add('export-final');
-          if (activeTab === 'points') p.classList.add('export-points');
-          if (activeTab === 'groups') p.classList.add('export-groups');
-          if (activeTab === 'fixtures') p.classList.add('export-fixtures');
-
-          // Inject direct inline styles on ranking nodes to guarantee zero clipping & spacious vertical distribution
-          if (activeTab === 'ranking') {
-            const visibleGroups = (data?.groups || []).filter((g: any) => groupFilter === 'ALL' || g.name === groupFilter);
-            const isFourGroups = visibleGroups.length > 2;
-
-            // Direct style injection into doc.head to avoid any async <link> issues
-            const style = doc.createElement('style');
-            style.textContent = `
-              #poster.export-fixed .rank-row:not(.rank-th) {
-                height: ${isFourGroups ? '58px' : '64px'} !important;
-                min-height: ${isFourGroups ? '58px' : '64px'} !important;
-                max-height: ${isFourGroups ? '58px' : '64px'} !important;
-                flex: 0 0 ${isFourGroups ? '58px' : '64px'} !important;
-                display: grid !important;
-                grid-template-columns: 48px minmax(0,1fr) repeat(7, 44px) 76px 150px !important;
-                align-items: center !important;
-                margin-bottom: ${isFourGroups ? '6px' : '8px'} !important;
-                padding: 0 16px !important;
-                box-sizing: border-box !important;
-                overflow: visible !important;
-              }
-              #poster.export-fixed .rank-th {
-                display: grid !important;
-                grid-template-columns: 48px minmax(0,1fr) repeat(7, 44px) 76px 150px !important;
-                padding: 0 16px 6px !important;
-                font-size: 14px !important;
-                align-items: center !important;
-              }
-              #poster.export-fixed .rank-row .team {
-                display: flex !important;
-                align-items: center !important;
-                gap: 12px !important;
-                height: 100% !important;
-                min-width: 0 !important;
-                overflow: visible !important;
-              }
-              #poster.export-fixed .rank-row .logo {
-                width: 42px !important;
-                height: 42px !important;
-                flex: 0 0 42px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                overflow: visible !important;
-              }
-              #poster.export-fixed .rank-row .logo img {
-                max-width: 100% !important;
-                max-height: 100% !important;
-                width: auto !important;
-                height: auto !important;
-                object-fit: contain !important;
-                display: block !important;
-              }
-              #poster.export-fixed .rank-row .tname {
-                font-size: 19px !important;
-                font-weight: 800 !important;
-                font-family: 'Barlow Condensed', Montserrat, sans-serif !important;
-                letter-spacing: 0.04em !important;
-                text-transform: uppercase !important;
-                white-space: nowrap !important;
-                overflow: visible !important;
-                text-overflow: clip !important;
-                line-height: 1.2 !important;
-                display: block !important;
-              }
-              #poster.export-fixed .rank-row .pos {
-                width: 38px !important;
-                height: 38px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                transform: skewX(-12deg) !important;
-                margin: 0 auto !important;
-                overflow: visible !important;
-              }
-              #poster.export-fixed .rank-row .pos b {
-                font-size: 22px !important;
-                line-height: 1 !important;
-                transform: skewX(12deg) !important;
-                display: block !important;
-              }
-              #poster.export-fixed .rank-row .pts {
-                width: 76px !important;
-                height: 42px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                transform: skewX(-12deg) !important;
-                border-radius: 4px !important;
-                background: #c5f018 !important;
-                overflow: visible !important;
-              }
-              #poster.export-fixed .rank-row .pts b {
-                font-size: 28px !important;
-                line-height: 1 !important;
-                transform: skewX(12deg) !important;
-                color: #0b0f02 !important;
-                display: block !important;
-              }
-              #poster.export-fixed .rank-row > div:not(.pos):not(.team):not(.pts):not(.form) {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                height: 100% !important;
-                font-size: 18px !important;
-                font-weight: 700 !important;
-                line-height: 1 !important;
-              }
-              #poster.export-fixed .hero-logo {
-                width: 190px !important;
-                max-width: none !important;
-                height: auto !important;
-                margin: 0 auto !important;
-                display: block !important;
-              }
-              #poster.export-fixed .rank-wrap {
-                gap: ${isFourGroups ? '20px' : '24px'} !important;
-              }
-            `;
-            doc.head.appendChild(style);
-
-            // Also mutate inline styles directly on the cloned nodes as bulletproof guarantee
-            p.querySelectorAll('.rank-row:not(.rank-th)').forEach((row: any) => {
-              row.style.height = isFourGroups ? '58px' : '64px';
-              row.style.minHeight = isFourGroups ? '58px' : '64px';
-              row.style.maxHeight = isFourGroups ? '58px' : '64px';
-              row.style.flex = isFourGroups ? '0 0 58px' : '0 0 64px';
-              row.style.display = 'grid';
-              row.style.gridTemplateColumns = '48px minmax(0,1fr) repeat(7, 44px) 76px 150px';
-              row.style.alignItems = 'center';
-              row.style.marginBottom = isFourGroups ? '6px' : '8px';
-              row.style.padding = '0 16px';
-              row.style.boxSizing = 'border-box';
-              row.style.overflow = 'visible';
-            });
-            p.querySelectorAll('.rank-row .tname').forEach((tname: any) => {
-              tname.style.fontSize = '19px';
-              tname.style.fontWeight = '800';
-              tname.style.fontFamily = '"Barlow Condensed", Montserrat, sans-serif';
-              tname.style.letterSpacing = '0.04em';
-              tname.style.textTransform = 'uppercase';
-              tname.style.lineHeight = '1.2';
-              tname.style.overflow = 'visible';
-              tname.style.whiteSpace = 'nowrap';
-              tname.style.display = 'block';
-            });
-            p.querySelectorAll('.rank-row .pos').forEach((pos: any) => {
-              pos.style.width = '38px';
-              pos.style.height = '38px';
-              pos.style.display = 'flex';
-              pos.style.alignItems = 'center';
-              pos.style.justifyContent = 'center';
-              pos.style.overflow = 'visible';
-            });
-            p.querySelectorAll('.rank-row .pts').forEach((pts: any) => {
-              pts.style.width = '76px';
-              pts.style.height = '42px';
-              pts.style.display = 'flex';
-              pts.style.alignItems = 'center';
-              pts.style.justifyContent = 'center';
-              pts.style.overflow = 'visible';
-            });
-            const heroLogo = p.querySelector('.hero-logo') as HTMLElement;
-            if (heroLogo) {
-              heroLogo.style.width = '190px';
-              heroLogo.style.maxWidth = 'none';
-              heroLogo.style.margin = '0 auto';
-              heroLogo.style.display = 'block';
-            }
+          if (OUT_H > 0) {
+            p.classList.add('export-fixed');
+            p.style.height = OUT_H + 'px';
+          } else {
+            p.style.height = 'auto';
+            p.style.minHeight = 'auto';
+            p.classList.remove('export-fixed');
           }
+
+          if (OUT_W > 1200) p.classList.add('export-land');
+          if (activeTab === 'points') p.classList.add('export-points');
+          if (activeTab === 'final') p.classList.add('export-final');
         },
       });
 
-      const S = 2; // 2x supersampling for high-res clarity
-      const outW = OUT_W * S;
-      const outH = OUT_H * S;
+      const outW = big.width;
+      const outH = big.height;
 
       const out = document.createElement('canvas');
       out.width = outW;
@@ -521,17 +361,9 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
           </div>
         )}
 
-        {(() => {
-          const [w, h] = getExportSize(activeTab);
-          let ratio = '4:5';
-          if (w > h) ratio = '16:9';
-          else if (h >= 1800) ratio = '9:16';
-          return (
-            <div className="text-[11px] text-slate-400 ml-auto hidden sm:block">
-              Export Canvas: <strong className="text-[#c5f018]">{ratio} ({w * 2}×{h * 2} Sharp PNG)</strong>
-            </div>
-          );
-        })()}
+        <div className="text-[11px] text-slate-400 ml-auto hidden sm:block">
+          Export Canvas: <strong className="text-[#c5f018]">{activeTab === 'points' ? '16:9 Landscape (3840×2160)' : 'Exact Page Match 2X HD'}</strong>
+        </div>
       </div>
 
       {/* The Printable / Renderable Poster Node */}
@@ -1166,29 +998,29 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
 
       {/* Preview Modal if Download is triggered */}
       {previewImage && (
-        <div className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0b0f06] border border-[#c5f018]/30 rounded-2xl p-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-3 font-mono text-white text-center">
+        <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
+          <div className="bg-[#0b0f06] border border-[#c5f018]/30 rounded-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[94vh] overflow-y-auto space-y-3 font-mono text-white text-center shadow-2xl">
             <h3 className="text-sm font-bold text-[#c5f018] uppercase tracking-wider flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4" /> Poster Export Ready (2X High-Res)
+              <Sparkles className="w-4 h-4 text-[#c5f018]" /> Poster Export Ready (2X High-Res)
             </h3>
             <p className="text-xs text-slate-400">
               Download started! On mobile phones or tablets, you can also long-press the image below to save it directly to your Photos / Gallery.
             </p>
-            <div className="rounded-xl overflow-hidden border border-white/10 max-h-[60vh] flex items-center justify-center bg-black">
-              <img src={previewImage} alt="Generated Poster" className="max-h-[60vh] object-contain" />
+            <div className="rounded-xl overflow-hidden border border-white/10 max-h-[75vh] flex items-center justify-center bg-black/60 p-2 sm:p-4">
+              <img src={previewImage} alt="Generated Poster" className="max-h-[72vh] w-auto mx-auto object-contain rounded-lg shadow-2xl border border-white/5" />
             </div>
             <div className="flex justify-center gap-3 pt-2">
               <a
                 href={previewImage}
                 download={`SS Triple Threat - ${activeTab}.png`}
-                className="px-5 py-2 bg-[#c5f018] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer inline-flex items-center gap-1.5"
+                className="px-6 py-2.5 bg-[#c5f018] hover:bg-[#b0d912] text-[#0b0f02] font-black text-xs uppercase tracking-wider rounded-xl shadow-lg cursor-pointer inline-flex items-center gap-2 transition-all"
               >
                 <Download className="w-4 h-4" /> Save Image
               </a>
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
-                className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
+                className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all"
               >
                 Close
               </button>
