@@ -338,24 +338,24 @@ export default function TripleThreatLineupSubmission({
   }
 
   return (
-    <div className="space-y-6 font-mono text-slate-800">
+    <div className="space-y-4 sm:space-y-5 font-mono text-slate-800 pb-2">
       {/* Title & Rules Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 border border-amber-400/30 text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-400/20 border border-amber-400/30 text-amber-300 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider mb-1.5">
               <Sparkles className="w-3 h-3" /> SS TRIPLE THREAT
             </div>
-            <h2 className="text-xl font-black uppercase tracking-wide flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-black uppercase tracking-wide flex items-center gap-2 truncate">
               {isOpponentSelection 
                 ? `Submit Lineup for ${opponentTeamName || 'Opponent'}`
                 : isHomeTeam && opponentLineup?.triple_threat_lineup
                   ? 'Adjust Home Lineup (Home Advantage)'
                   : 'Matchday Lineup Submission'}
             </h2>
-            <p className="text-xs text-slate-300 font-sans mt-1">
+            <p className="text-[11px] sm:text-xs text-slate-300 font-sans mt-0.5 leading-snug">
               {isOpponentSelection
                 ? `Submitting 5-player lineup on behalf of ${opponentTeamName || 'Opponent'}.`
                 : isHomeTeam && opponentLineup?.triple_threat_lineup
@@ -365,12 +365,12 @@ export default function TripleThreatLineupSubmission({
           </div>
 
           {/* Progress Tracker */}
-          <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-3.5 text-center min-w-[160px]">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Lineup Progress</div>
-            <div className="text-2xl font-black text-amber-400">
+          <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-2.5 sm:p-3 text-center sm:min-w-[130px] shrink-0 self-start sm:self-auto">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Progress</div>
+            <div className="text-xl sm:text-2xl font-black text-amber-400">
               {selectedCount} <span className="text-xs font-normal text-slate-300">/ 5</span>
             </div>
-            <div className="text-[9px] uppercase font-bold text-emerald-400 mt-0.5">
+            <div className="text-[9px] uppercase font-bold text-emerald-400">
               {isLineupComplete ? '✓ All 5 Selected' : `${5 - selectedCount} remaining`}
             </div>
           </div>
@@ -378,8 +378,8 @@ export default function TripleThreatLineupSubmission({
 
         {/* Deadline Notice */}
         {deadlineInfo?.awayDeadline && (
-          <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-xs text-amber-200">
-            <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-2 text-[11px] text-amber-200">
+            <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>
               Away Team Submission Deadline: <strong>2:00 PM (14:00)</strong> on Matchday.
             </span>
@@ -389,7 +389,7 @@ export default function TripleThreatLineupSubmission({
 
       {/* Home Advantage: Opponent Lineup Card */}
       {isHomeTeam && opponentLineup?.triple_threat_lineup && (
-        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 rounded-2xl p-5 shadow-xs">
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 rounded-2xl p-3.5 sm:p-4.5 shadow-xs">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider">
               ⭐ HOME ADVANTAGE
@@ -426,7 +426,7 @@ export default function TripleThreatLineupSubmission({
 
       {/* Lock Banner if not editable */}
       {!isEditable && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-800 text-xs flex items-center gap-3">
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 sm:p-4 text-rose-800 text-xs flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
           <div>
             <p className="font-bold uppercase tracking-wider">Lineup Locked</p>
@@ -439,49 +439,49 @@ export default function TripleThreatLineupSubmission({
 
       {/* Error & Success Alerts */}
       {error && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700 text-xs flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 sm:p-4 text-rose-700 text-xs flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-700 text-xs flex items-center gap-2">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 sm:p-4 text-emerald-700 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {/* Mode 1: Co-op Match (2v2) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all hover:border-slate-300">
-        <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
-              <Users className="w-4 h-4" />
+      <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4.5 shadow-xs transition-all hover:border-slate-300">
+        <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shrink-0">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                 Mode 1: Co-op Match (2v2)
               </h3>
-              <p className="text-[10px] text-slate-400 font-sans">
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-sans">
                 Win = 3 Pts • Draw = 1 Pt • Loss = 0 Pts (2 Players)
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-[10px] font-bold uppercase">
+          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase shrink-0">
             {coopPlayers.filter(Boolean).length} / 2 Selected
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
               Co-op Player 1
             </label>
             {renderPlayerDropdown(coopPlayers[0], (v) => handleCoopChange(0, v), '-- SELECT CO-OP PLAYER 1 --')}
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
               Co-op Player 2
             </label>
             {renderPlayerDropdown(coopPlayers[1], (v) => handleCoopChange(1, v), '-- SELECT CO-OP PLAYER 2 --')}
@@ -490,35 +490,35 @@ export default function TripleThreatLineupSubmission({
       </div>
 
       {/* Mode 2: Duo Match (2v2 Goal Based) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all hover:border-slate-300">
-        <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-              <Award className="w-4 h-4" />
+      <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4.5 shadow-xs transition-all hover:border-slate-300">
+        <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                 Mode 2: Duo Match (2v2 Goal Based)
               </h3>
-              <p className="text-[10px] text-slate-400 font-sans">
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-sans">
                 Win = 3 Pts • Draw = 1 Pt • Loss = 0 Pts (2 Players)
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold uppercase">
+          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase shrink-0">
             {duoPlayers.filter(Boolean).length} / 2 Selected
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
               Duo Player 1
             </label>
             {renderPlayerDropdown(duoPlayers[0], (v) => handleDuoChange(0, v), '-- SELECT DUO PLAYER 1 --')}
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
               Duo Player 2
             </label>
             {renderPlayerDropdown(duoPlayers[1], (v) => handleDuoChange(1, v), '-- SELECT DUO PLAYER 2 --')}
@@ -527,37 +527,37 @@ export default function TripleThreatLineupSubmission({
       </div>
 
       {/* Mode 3: Single Match (1v1) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all hover:border-slate-300">
-        <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-              <Swords className="w-4 h-4" />
+      <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4.5 shadow-xs transition-all hover:border-slate-300">
+        <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+              <Swords className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                 Mode 3: Single Match (1v1)
               </h3>
-              <p className="text-[10px] text-slate-400 font-sans">
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-sans">
                 Win = 3 Pts • Draw = 1 Pt • Loss = 0 Pts (1 Player)
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-[10px] font-bold uppercase">
+          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase shrink-0">
             {singlePlayer ? '1 / 1' : '0 / 1'} Selected
           </span>
         </div>
 
         <div className="max-w-md">
-          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">
+          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
             Single (1v1) Player
           </label>
           {renderPlayerDropdown(singlePlayer, handleSingleChange, '-- SELECT 1V1 PLAYER --')}
         </div>
       </div>
 
-      {/* Action Submit Button */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200">
-        <div className="text-xs text-slate-500 font-sans">
+      {/* Action Submit Button (Sticky so it's always accessible on all screen heights) */}
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-md pt-3 pb-2 -mx-3.5 -mb-2 px-3.5 sm:-mx-6 sm:-mb-2 sm:px-6 border-t border-slate-200 z-10 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+        <div className="text-[11px] sm:text-xs text-slate-500 font-sans leading-tight">
           🔥 <strong className="text-slate-800">Clean Sweep Rule:</strong> Winning all 3 matches awards an extra <span className="text-amber-600 font-bold">+1 Bonus Point</span> (10 Max Points).
         </div>
 
@@ -565,7 +565,7 @@ export default function TripleThreatLineupSubmission({
           type="button"
           disabled={!isEditable || submitting || !validationResult.valid}
           onClick={handleSubmit}
-          className={`w-full sm:w-auto px-6 py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
+          className={`w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-sm ${
             !isEditable || !validationResult.valid
               ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200'
               : 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-emerald-200 hover:shadow-md'

@@ -149,13 +149,13 @@ export default function SelectOpponentLineupPage() {
 
   return (
     <AuthGuard requiredRole="team">
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-yellow-50/30 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-yellow-50/30 py-4 sm:py-8 px-3 sm:px-4">
       <div className="container mx-auto max-w-5xl">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <Link
             href={`/dashboard/team/fixture/${fixtureId}`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 hover:text-blue-600 font-medium transition-all rounded-lg shadow-sm hover:shadow-md"
+            className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-gray-700 hover:text-blue-600 font-medium transition-all rounded-xl shadow-xs hover:shadow-md text-xs sm:text-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -165,57 +165,57 @@ export default function SelectOpponentLineupPage() {
         </div>
 
         {/* Warning Banner */}
-        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-6 mb-6 shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-md">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-yellow-900 mb-1">Opponent Lineup Selection</h3>
-              <p className="text-sm text-yellow-800">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-yellow-900 mb-1">Opponent Lineup Selection</h3>
+              <p className="text-xs sm:text-sm text-yellow-800">
                 <strong>{opponentTeamName}</strong> has failed to submit their lineup within the deadline. 
                 As their opponent, you are now permitted to select their lineup on their behalf.
               </p>
-              <p className="text-sm text-yellow-700 mt-2">
-                ⚠️ The same validation rules apply: minimum 2 classic category players required.
+              <p className="text-xs sm:text-sm text-yellow-700 mt-2">
+                ⚠️ Field 5 unique players across Co-op, Duo, and Single modes.
               </p>
             </div>
           </div>
         </div>
 
         {/* Fixture Info */}
-        <div className="glass rounded-2xl p-6 mb-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
+        <div className="glass rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-md">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                 Select Opponent's Lineup
               </h1>
-              <p className="text-gray-600 mt-1">Round {fixture.round_number} - For {opponentTeamName}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Round {fixture.round_number} - For {opponentTeamName}</p>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-600">Match #</div>
-              <div className="text-2xl font-bold text-gray-900">{fixture.match_number}</div>
+              <div className="text-xs text-gray-500">Match #</div>
+              <div className="text-lg sm:text-2xl font-bold text-gray-900">{fixture.match_number}</div>
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4 py-4">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 py-2 sm:py-4">
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900">{fixture.home_team_name}</div>
-              <div className="text-xs text-gray-500">Home</div>
+              <div className="text-sm sm:text-lg font-bold text-gray-900">{fixture.home_team_name}</div>
+              <div className="text-[10px] sm:text-xs text-gray-500">Home</div>
             </div>
-            <div className="text-2xl font-bold text-gray-400">VS</div>
+            <div className="text-lg sm:text-2xl font-bold text-gray-400">VS</div>
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900">{fixture.away_team_name}</div>
-              <div className="text-xs text-gray-500">Away</div>
+              <div className="text-sm sm:text-lg font-bold text-gray-900">{fixture.away_team_name}</div>
+              <div className="text-[10px] sm:text-xs text-gray-500">Away</div>
             </div>
           </div>
         </div>
 
         {/* Lineup Selection Component */}
         {canSelectLineup && (
-          <div className="glass rounded-2xl p-6 shadow-lg border-2 border-yellow-200">
+          <div className="glass rounded-2xl p-3.5 sm:p-6 shadow-md border-2 border-yellow-200">
             {fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' ? (
               <TripleThreatLineupSubmission
                 fixtureId={fixtureId}

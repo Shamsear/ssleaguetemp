@@ -1486,86 +1486,90 @@ export default function CommitteeFixtureDetailPage() {
 
       {/* Matchup Creator Modal */}
       {showMatchupCreator && fixture && user && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 transition-all duration-300 animate-in fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-5xl w-full overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
-            <CommitteeMatchupCreator
-              fixtureId={fixtureId}
-              seasonId={fixture.season_id}
-              homeTeamId={fixture.home_team_id}
-              homeTeamName={fixture.home_team_name}
-              awayTeamId={fixture.away_team_id}
-              awayTeamName={fixture.away_team_name}
-              userId={user.uid}
-              userName={(user as any)?.displayName || user.email || 'Committee Admin'}
-              onSuccess={() => {
-                setShowMatchupCreator(false);
-                showAlert({
-                  type: 'success',
-                  title: 'Matchups Created',
-                  message: 'Matchups have been created successfully!'
-                });
-                fetchFixtureData(); // Reload data
-              }}
-              onCancel={() => setShowMatchupCreator(false)}
-            />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-6 overflow-y-auto transition-all duration-300 animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl max-w-5xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col my-auto overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              <CommitteeMatchupCreator
+                fixtureId={fixtureId}
+                seasonId={fixture.season_id}
+                homeTeamId={fixture.home_team_id}
+                homeTeamName={fixture.home_team_name}
+                awayTeamId={fixture.away_team_id}
+                awayTeamName={fixture.away_team_name}
+                userId={user.uid}
+                userName={(user as any)?.displayName || user.email || 'Committee Admin'}
+                onSuccess={() => {
+                  setShowMatchupCreator(false);
+                  showAlert({
+                    type: 'success',
+                    title: 'Matchups Created',
+                    message: 'Matchups have been created successfully!'
+                  });
+                  fetchFixtureData(); // Reload data
+                }}
+                onCancel={() => setShowMatchupCreator(false)}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* Lineup Editor Modal */}
       {showLineupEditor && fixture && user && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 transition-all duration-300 animate-in fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
-            <CommitteeMatchupCreator
-              fixtureId={fixtureId}
-              seasonId={fixture.season_id}
-              homeTeamId={fixture.home_team_id}
-              homeTeamName={fixture.home_team_name}
-              awayTeamId={fixture.away_team_id}
-              awayTeamName={fixture.away_team_name}
-              userId={user.uid}
-              userName={(user as any)?.displayName || user.email || 'Committee Admin'}
-              onSuccess={() => {
-                setShowLineupEditor(null);
-                showAlert({
-                  type: 'success',
-                  title: 'Lineup Updated',
-                  message: 'Lineup has been updated successfully!'
-                });
-                fetchFixtureData(); // Reload data
-              }}
-              onCancel={() => setShowLineupEditor(null)}
-              initialTeamToEdit={showLineupEditor}
-            />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-6 overflow-y-auto transition-all duration-300 animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl max-w-4xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col my-auto overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              <CommitteeMatchupCreator
+                fixtureId={fixtureId}
+                seasonId={fixture.season_id}
+                homeTeamId={fixture.home_team_id}
+                homeTeamName={fixture.home_team_name}
+                awayTeamId={fixture.away_team_id}
+                awayTeamName={fixture.away_team_name}
+                userId={user.uid}
+                userName={(user as any)?.displayName || user.email || 'Committee Admin'}
+                onSuccess={() => {
+                  setShowLineupEditor(null);
+                  showAlert({
+                    type: 'success',
+                    title: 'Lineup Updated',
+                    message: 'Lineup has been updated successfully!'
+                  });
+                  fetchFixtureData(); // Reload data
+                }}
+                onCancel={() => setShowLineupEditor(null)}
+                initialTeamToEdit={showLineupEditor}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* Triple Threat Lineup Editor Modal */}
       {showTTLineupModal && fixture && user && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 overflow-y-auto transition-all animate-in fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-2xl w-full my-8 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-6 overflow-y-auto transition-all animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl max-w-2xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col my-auto overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
               <div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono tracking-wider bg-amber-500 text-white">
                   ⚡ SS Triple Threat
                 </span>
-                <h3 className="text-base font-black tracking-tight mt-1">
+                <h3 className="text-sm sm:text-base font-black tracking-tight mt-1 truncate">
                   {showTTLineupModal === 'home' ? fixture.home_team_name : fixture.away_team_name} — Mode Lineup
                 </h3>
-                <p className="text-xs text-slate-400 font-mono">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-mono">
                   {showTTLineupModal === 'home' ? 'Home Team Lineup' : 'Away Team Lineup (Submitting on Behalf)'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowTTLineupModal(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
               >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-3.5 sm:p-6 flex-1 overflow-y-auto overscroll-contain">
               <TripleThreatLineupSubmission
                 fixtureId={fixtureId}
                 teamId={showTTLineupModal === 'home' ? fixture.home_team_id : fixture.away_team_id}

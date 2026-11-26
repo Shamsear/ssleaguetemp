@@ -611,8 +611,8 @@ export default function LineupStatusPage() {
       {/* Modals outside stacking context */}
       {/* Lineup Setting Modal */}
         {showLineupModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 font-mono">
-            <div className="console-card bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-[9999] p-3 sm:p-6 overflow-y-auto font-mono">
+            <div className="console-card bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-4xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-y-auto shadow-2xl relative">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-sm font-black uppercase text-slate-900 tracking-wider">Set Lineup</h2>
@@ -736,8 +736,8 @@ export default function LineupStatusPage() {
 
       {/* View Lineup Modal */}
         {showViewLineupModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 font-mono">
-            <div className="console-card bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-[9999] p-3 sm:p-6 overflow-y-auto font-mono">
+            <div className="console-card bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-2xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-y-auto shadow-2xl relative">
               <div className="flex items-start md:items-center justify-between mb-4 md:mb-6">
                 <div className="flex-1 min-w-0 pr-2">
                   <h2 className="text-sm font-black uppercase text-slate-900 tracking-wider">View Lineup</h2>

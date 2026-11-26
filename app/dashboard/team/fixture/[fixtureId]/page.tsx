@@ -4998,99 +4998,40 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
       {/* Substitution Modal */}
       {isSubModalOpen && subMatchupIndex !== null && subSide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm">
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 font-mono">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+          <div className="console-card bg-white border border-slate-200/60 rounded-2xl sm:rounded-3xl shadow-xl max-w-md w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col my-auto font-mono overflow-hidden">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">🔁 Substitute Player</h3>
               <button
                 onClick={() => setIsSubModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="mb-4">
-              {(() => {
-                const matchup = matchups[subMatchupIndex];
-                const isHome = subSide === 'home';
-                const currentPlayerId = isHome ? matchup.home_player_id : matchup.away_player_id;
-                const currentPlayerName = isHome ? matchup.home_player_name : matchup.away_player_name;
-                const squadMap = isHome ? homeSquadById : awaySquadById;
-                const squadByName = isHome ? homeSquadByName : awaySquadByName;
-                const playerMatch = squadMap.get(currentPlayerId) || squadByName.get(currentPlayerName?.toLowerCase());
-                const currentCategory = playerMatch?.category;
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 overscroll-contain">
+              <div className="mb-4">
+                {(() => {
+                  const matchup = matchups[subMatchupIndex];
+                  const isHome = subSide === 'home';
+                  const currentPlayerId = isHome ? matchup.home_player_id : matchup.away_player_id;
+                  const currentPlayerName = isHome ? matchup.home_player_name : matchup.away_player_name;
+                  const squadMap = isHome ? homeSquadById : awaySquadById;
+                  const squadByName = isHome ? homeSquadByName : awaySquadByName;
+                  const playerMatch = squadMap.get(currentPlayerId) || squadByName.get(currentPlayerName?.toLowerCase());
+                  const currentCategory = playerMatch?.category;
 
-                return (
-                  <div className="space-y-3 font-mono text-xs">
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <PlayerPhoto
-                          photoUrl={playerMatch?.photo_url}
-                          playerName={currentPlayerName}
-                          size={40}
-                          shape="circle"
-                          posXCircle={playerMatch?.photo_position_x_circle}
-                          posYCircle={playerMatch?.photo_position_y_circle}
-                          scaleCircle={playerMatch?.photo_scale_circle}
-                          className="border border-slate-300 flex-shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Subbing Out</span>
-                          <span className="font-extrabold text-slate-900 truncate text-sm">{currentPlayerName}</span>
-                          {currentCategory && (
-                            <span className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(currentCategory)}`}>
-                              {currentCategory}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className="px-2 py-1 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold rounded-lg uppercase whitespace-nowrap">
-                        OFF 🛑
-                      </span>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Select Replacement Player
-              </label>
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {(subSide === 'home' ? homePlayers : awayPlayers)
-                  .filter(player => {
-                    if (subMatchupIndex === null) return true;
-                    const currentMatchup = matchups[subMatchupIndex];
-                    const currentPlayerId = subSide === 'home'
-                      ? currentMatchup.home_player_id
-                      : currentMatchup.away_player_id;
-                    return player.player_id !== currentPlayerId;
-                  })
-                  .map((player) => {
-                    const isSelected = subNewPlayerId === player.player_id;
-                    const squadMap = subSide === 'home' ? homeSquadById : awaySquadById;
-                    const playerMatch = squadMap.get(player.player_id) || player;
-                    const category = playerMatch?.category || player.category || 'realplayer';
-
-                    return (
-                      <div
-                        key={player.player_id}
-                        onClick={() => setSubNewPlayerId(player.player_id)}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-amber-50 border-amber-400 shadow-sm'
-                            : 'bg-white border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
+                  return (
+                    <div className="space-y-3 font-mono text-xs">
+                      <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
                           <PlayerPhoto
-                            photoUrl={playerMatch?.photo_url || player.photo_url}
-                            playerName={player.name || player.player_name}
-                            size={36}
+                            photoUrl={playerMatch?.photo_url}
+                            playerName={currentPlayerName}
+                            size={40}
                             shape="circle"
                             posXCircle={playerMatch?.photo_position_x_circle}
                             posYCircle={playerMatch?.photo_position_y_circle}
@@ -5098,72 +5039,133 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             className="border border-slate-300 flex-shrink-0"
                           />
                           <div className="flex flex-col min-w-0">
-                            <span className="font-extrabold text-xs text-slate-900 truncate">
-                              {player.name || player.player_name}
-                            </span>
-                            <span className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
-                              {category}
-                            </span>
+                            <span className="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Subbing Out</span>
+                            <span className="font-extrabold text-slate-900 truncate text-sm">{currentPlayerName}</span>
+                            {currentCategory && (
+                              <span className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(currentCategory)}`}>
+                                {currentCategory}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        {isSelected && (
-                          <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-lg whitespace-nowrap">
-                            Selected ✓
-                          </span>
-                        )}
+                        <span className="px-2 py-1 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold rounded-lg uppercase whitespace-nowrap">
+                          OFF 🛑
+                        </span>
                       </div>
-                    );
-                  })}
-              </div>
-              {subNewPlayerId && (
-                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]">
-                      <AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Extra Goals to Opponent
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setSubPenaltyAmount(Math.max(0, subPenaltyAmount - 1))}
-                        className="w-7 h-7 bg-white border border-orange-300 text-orange-900 rounded-lg font-extrabold hover:bg-orange-100 transition-all flex items-center justify-center text-sm shadow-2xs cursor-pointer"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min="0"
-                        value={subPenaltyAmount}
-                        onChange={(e) => setSubPenaltyAmount(Math.max(0, parseInt(e.target.value) || 0))}
-                        className="w-12 px-1 py-1 bg-white border border-orange-300 rounded-lg text-center font-black text-sm text-orange-900 focus:ring-2 focus:ring-orange-500/20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setSubPenaltyAmount(subPenaltyAmount + 1)}
-                        className="w-7 h-7 bg-white border border-orange-300 text-orange-900 rounded-lg font-extrabold hover:bg-orange-100 transition-all flex items-center justify-center text-sm shadow-2xs cursor-pointer"
-                      >
-                        +
-                      </button>
-                      <span className="text-[10px] font-bold text-orange-700 ml-1">Goals</span>
                     </div>
-                  </div>
-                  <p className="text-[9px] text-orange-500 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
-                    You can edit/decrease this extra goals penalty (e.g. 0, 1, 2, etc.).
-                  </p>
+                  );
+                })()}
+              </div>
+
+              <div className="mb-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Select Replacement Player
+                </label>
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {(subSide === 'home' ? homePlayers : awayPlayers)
+                    .filter(player => {
+                      if (subMatchupIndex === null) return true;
+                      const currentMatchup = matchups[subMatchupIndex];
+                      const currentPlayerId = subSide === 'home'
+                        ? currentMatchup.home_player_id
+                        : currentMatchup.away_player_id;
+                      return player.player_id !== currentPlayerId;
+                    })
+                    .map((player) => {
+                      const isSelected = subNewPlayerId === player.player_id;
+                      const squadMap = subSide === 'home' ? homeSquadById : awaySquadById;
+                      const playerMatch = squadMap.get(player.player_id) || player;
+                      const category = playerMatch?.category || player.category || 'realplayer';
+
+                      return (
+                        <div
+                          key={player.player_id}
+                          onClick={() => setSubNewPlayerId(player.player_id)}
+                          className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-amber-50 border-amber-400 shadow-sm'
+                              : 'bg-white border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <PlayerPhoto
+                              photoUrl={playerMatch?.photo_url || player.photo_url}
+                              playerName={player.name || player.player_name}
+                              size={36}
+                              shape="circle"
+                              posXCircle={playerMatch?.photo_position_x_circle}
+                              posYCircle={playerMatch?.photo_position_y_circle}
+                              scaleCircle={playerMatch?.photo_scale_circle}
+                              className="border border-slate-300 flex-shrink-0"
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-extrabold text-xs text-slate-900 truncate">
+                                {player.name || player.player_name}
+                              </span>
+                              <span className={`inline-block text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(category)}`}>
+                                {category}
+                              </span>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <span className="text-amber-600 font-bold text-[10px] uppercase bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-lg whitespace-nowrap">
+                              Selected ✓
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
-              )}
+                {subNewPlayerId && (
+                  <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl font-mono text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-extrabold text-orange-900 uppercase tracking-wider text-[10px]">
+                        <AlertTriangle className="w-3 h-3 inline text-orange-500 mr-1" /> Extra Goals to Opponent
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setSubPenaltyAmount(Math.max(0, subPenaltyAmount - 1))}
+                          className="w-7 h-7 bg-white border border-orange-300 text-orange-900 rounded-lg font-extrabold hover:bg-orange-100 transition-all flex items-center justify-center text-sm shadow-2xs cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={subPenaltyAmount}
+                          onChange={(e) => setSubPenaltyAmount(Math.max(0, parseInt(e.target.value) || 0))}
+                          className="w-12 px-1 py-1 bg-white border border-orange-300 rounded-lg text-center font-black text-sm text-orange-900 focus:ring-2 focus:ring-orange-500/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSubPenaltyAmount(subPenaltyAmount + 1)}
+                          className="w-7 h-7 bg-white border border-orange-300 text-orange-900 rounded-lg font-extrabold hover:bg-orange-100 transition-all flex items-center justify-center text-sm shadow-2xs cursor-pointer"
+                        >
+                          +
+                        </button>
+                        <span className="text-[10px] font-bold text-orange-700 ml-1">Goals</span>
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-orange-500 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
+                      You can edit/decrease this extra goals penalty (e.g. 0, 1, 2, etc.).
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 p-4 sm:p-5 border-t border-slate-100 shrink-0 bg-slate-50/50">
               <button
                 onClick={() => setIsSubModalOpen(false)}
-                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all"
+                className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubstitution}
                 disabled={!subNewPlayerId || isSaving}
-                className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-900 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSaving ? 'Substituting...' : subNewPlayerId ? 'Confirm Substitution' : 'Select Player First'}
               </button>
