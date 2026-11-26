@@ -130,6 +130,177 @@ export default function TripleThreatPosterHub({ tournamentId }: TripleThreatPost
           if (activeTab === 'points') p.classList.add('export-points');
           if (activeTab === 'groups') p.classList.add('export-groups');
           if (activeTab === 'fixtures') p.classList.add('export-fixtures');
+
+          // Inject direct inline styles on ranking nodes to guarantee zero clipping & spacious vertical distribution
+          if (activeTab === 'ranking') {
+            const visibleGroups = (data?.groups || []).filter((g: any) => groupFilter === 'ALL' || g.name === groupFilter);
+            const isFourGroups = visibleGroups.length > 2;
+
+            // Direct style injection into doc.head to avoid any async <link> issues
+            const style = doc.createElement('style');
+            style.textContent = `
+              #poster.export-fixed .rank-row:not(.rank-th) {
+                height: ${isFourGroups ? '58px' : '64px'} !important;
+                min-height: ${isFourGroups ? '58px' : '64px'} !important;
+                max-height: ${isFourGroups ? '58px' : '64px'} !important;
+                flex: 0 0 ${isFourGroups ? '58px' : '64px'} !important;
+                display: grid !important;
+                grid-template-columns: 48px minmax(0,1fr) repeat(7, 44px) 76px 150px !important;
+                align-items: center !important;
+                margin-bottom: ${isFourGroups ? '6px' : '8px'} !important;
+                padding: 0 16px !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+              }
+              #poster.export-fixed .rank-th {
+                display: grid !important;
+                grid-template-columns: 48px minmax(0,1fr) repeat(7, 44px) 76px 150px !important;
+                padding: 0 16px 6px !important;
+                font-size: 14px !important;
+                align-items: center !important;
+              }
+              #poster.export-fixed .rank-row .team {
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+                height: 100% !important;
+                min-width: 0 !important;
+                overflow: visible !important;
+              }
+              #poster.export-fixed .rank-row .logo {
+                width: 42px !important;
+                height: 42px !important;
+                flex: 0 0 42px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: visible !important;
+              }
+              #poster.export-fixed .rank-row .logo img {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+              }
+              #poster.export-fixed .rank-row .tname {
+                font-size: 19px !important;
+                font-weight: 800 !important;
+                font-family: 'Barlow Condensed', Montserrat, sans-serif !important;
+                letter-spacing: 0.04em !important;
+                text-transform: uppercase !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                line-height: 1.2 !important;
+                display: block !important;
+              }
+              #poster.export-fixed .rank-row .pos {
+                width: 38px !important;
+                height: 38px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transform: skewX(-12deg) !important;
+                margin: 0 auto !important;
+                overflow: visible !important;
+              }
+              #poster.export-fixed .rank-row .pos b {
+                font-size: 22px !important;
+                line-height: 1 !important;
+                transform: skewX(12deg) !important;
+                display: block !important;
+              }
+              #poster.export-fixed .rank-row .pts {
+                width: 76px !important;
+                height: 42px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transform: skewX(-12deg) !important;
+                border-radius: 4px !important;
+                background: #c5f018 !important;
+                overflow: visible !important;
+              }
+              #poster.export-fixed .rank-row .pts b {
+                font-size: 28px !important;
+                line-height: 1 !important;
+                transform: skewX(12deg) !important;
+                color: #0b0f02 !important;
+                display: block !important;
+              }
+              #poster.export-fixed .rank-row > div:not(.pos):not(.team):not(.pts):not(.form) {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                height: 100% !important;
+                font-size: 18px !important;
+                font-weight: 700 !important;
+                line-height: 1 !important;
+              }
+              #poster.export-fixed .hero-logo {
+                width: 190px !important;
+                max-width: none !important;
+                height: auto !important;
+                margin: 0 auto !important;
+                display: block !important;
+              }
+              #poster.export-fixed .rank-wrap {
+                gap: ${isFourGroups ? '20px' : '24px'} !important;
+              }
+            `;
+            doc.head.appendChild(style);
+
+            // Also mutate inline styles directly on the cloned nodes as bulletproof guarantee
+            p.querySelectorAll('.rank-row:not(.rank-th)').forEach((row: any) => {
+              row.style.height = isFourGroups ? '58px' : '64px';
+              row.style.minHeight = isFourGroups ? '58px' : '64px';
+              row.style.maxHeight = isFourGroups ? '58px' : '64px';
+              row.style.flex = isFourGroups ? '0 0 58px' : '0 0 64px';
+              row.style.display = 'grid';
+              row.style.gridTemplateColumns = '48px minmax(0,1fr) repeat(7, 44px) 76px 150px';
+              row.style.alignItems = 'center';
+              row.style.marginBottom = isFourGroups ? '6px' : '8px';
+              row.style.padding = '0 16px';
+              row.style.boxSizing = 'border-box';
+              row.style.overflow = 'visible';
+            });
+            p.querySelectorAll('.rank-row .tname').forEach((tname: any) => {
+              tname.style.fontSize = '19px';
+              tname.style.fontWeight = '800';
+              tname.style.fontFamily = '"Barlow Condensed", Montserrat, sans-serif';
+              tname.style.letterSpacing = '0.04em';
+              tname.style.textTransform = 'uppercase';
+              tname.style.lineHeight = '1.2';
+              tname.style.overflow = 'visible';
+              tname.style.whiteSpace = 'nowrap';
+              tname.style.display = 'block';
+            });
+            p.querySelectorAll('.rank-row .pos').forEach((pos: any) => {
+              pos.style.width = '38px';
+              pos.style.height = '38px';
+              pos.style.display = 'flex';
+              pos.style.alignItems = 'center';
+              pos.style.justifyContent = 'center';
+              pos.style.overflow = 'visible';
+            });
+            p.querySelectorAll('.rank-row .pts').forEach((pts: any) => {
+              pts.style.width = '76px';
+              pts.style.height = '42px';
+              pts.style.display = 'flex';
+              pts.style.alignItems = 'center';
+              pts.style.justifyContent = 'center';
+              pts.style.overflow = 'visible';
+            });
+            const heroLogo = p.querySelector('.hero-logo') as HTMLElement;
+            if (heroLogo) {
+              heroLogo.style.width = '190px';
+              heroLogo.style.maxWidth = 'none';
+              heroLogo.style.margin = '0 auto';
+              heroLogo.style.display = 'block';
+            }
+          }
         },
       });
 
