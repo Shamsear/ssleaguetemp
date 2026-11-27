@@ -8,7 +8,7 @@ import {
   hasSubmittedLineup,
   autoPopulateStandardFivePlayerLineups
 } from '@/lib/lineup-validation';
-import { buildTripleThreatMatchups } from '@/lib/tournament/triple-threat-engine';
+import { buildTripleThreatMatchups, computeAwayLineupDeadline } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * GET - Fetch lineup(s)
@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
       triple_threat_lineup,
       submitted_by,
       submitted_by_name,
+      selected_by_opponent,
       bypass_deadline, // NEW: Allow committee admins to bypass deadline
     } = body;
 
@@ -184,6 +185,7 @@ export async function POST(request: NextRequest) {
       starting_xi,
       substitutes,
       submitted_by,
+      selected_by_opponent: !!selected_by_opponent,
       bypass_deadline
     });
 
@@ -208,11 +210,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // CRITICAL: Verify the team_id is actually part of this fixture
+    // CRITICAL: Verify the team_id is actually part of this fixture and fetch deadline metadata
     const fixtureCheck = await sql`
-      SELECT home_team_id, away_team_id
-      FROM fixtures
-      WHERE id = ${fixture_id}
+      SELECT
+        f.home_team_id, f.away_team_id, f.lineup_deadline, f.tournament_id,
+        t.tournament_type, ts.matchday_format,
+        rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str, rd.away_fixture_deadline_time
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      LEFT JOIN round_deadlines rd ON (
+        f.round_number = rd.round_number
+        AND f.season_id = rd.season_id
+        AND f.tournament_id = rd.tournament_id
+        AND (f.leg IS NULL OR rd.leg IS NULL OR f.leg = rd.leg)
+      )
+      WHERE f.id = ${fixture_id}
       LIMIT 1
     `;
 
@@ -223,7 +236,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { home_team_id, away_team_id } = fixtureCheck[0];
+    const {
+      home_team_id,
+      away_team_id,
+      lineup_deadline,
+      tournament_id: checkedTournamentId,
+      tournament_type,
+      matchday_format,
+      scheduled_date,
+      scheduled_date_str,
+      away_fixture_deadline_time,
+    } = fixtureCheck[0];
     if (team_id !== home_team_id && team_id !== away_team_id) {
       console.error('❌ SECURITY: Team not part of fixture!', {
         team_id,
@@ -247,6 +270,53 @@ export async function POST(request: NextRequest) {
         );
       }
       console.log('⚠️ Bypassing deadline check (committee admin override)');
+    } else if (selected_by_opponent) {
+      const auth = await verifyAuth(['team', 'committee_admin', 'super_admin'], request);
+      if (!auth.authenticated) {
+        return NextResponse.json(
+          { error: auth.error || 'Unauthorized to select opponent lineup' },
+          { status: 401 }
+        );
+      }
+
+      const isTT =
+        tournament_type === 'triple_threat' ||
+        matchday_format === 'triple_threat' ||
+        String(checkedTournamentId || '').toLowerCase().includes('triple_threat');
+
+      const existingOpp = await sql`
+        SELECT submitted_by, is_draft, triple_threat_lineup, selected_by_opponent
+        FROM lineups
+        WHERE fixture_id = ${fixture_id} AND team_id = ${team_id}
+        LIMIT 1
+      `;
+      const hasRealOppLineup =
+        existingOpp.length > 0 &&
+        !existingOpp[0].is_draft &&
+        existingOpp[0].submitted_by !== 'system_auto' &&
+        (isTT ? !!existingOpp[0].triple_threat_lineup : true);
+
+      if (hasRealOppLineup) {
+        return NextResponse.json(
+          { error: existingOpp[0].selected_by_opponent ? 'Opponent lineup has already been selected' : 'Opponent has already submitted their lineup' },
+          { status: 403 }
+        );
+      }
+
+      const deadline = computeAwayLineupDeadline({
+        scheduled_date,
+        scheduled_date_str,
+        away_fixture_deadline_time,
+        lineup_deadline,
+        isTripleThreat: isTT,
+      });
+
+      if (!deadline || new Date() < deadline) {
+        return NextResponse.json(
+          { error: 'Submission deadline has not passed yet. You can only submit on behalf of the opponent after the deadline.' },
+          { status: 403 }
+        );
+      }
     } else {
       const editableCheck = await isLineupEditable(fixture_id, team_id);
       if (!editableCheck.editable) {
@@ -349,6 +419,9 @@ export async function POST(request: NextRequest) {
         classic_player_count,
         is_valid,
         validation_errors,
+        selected_by_opponent,
+        opponent_selector_id,
+        opponent_selected_at,
         submitted_by,
         submitted_at,
         created_at,
@@ -366,6 +439,9 @@ export async function POST(request: NextRequest) {
         ${validation.classicPlayerCount},
         ${validation.isValid},
         ${JSON.stringify(validation.errors)},
+        ${Boolean(selected_by_opponent)},
+        ${selected_by_opponent ? submitted_by : null},
+        ${selected_by_opponent ? new Date().toISOString() : null},
         ${submitted_by},
         NOW(),
         NOW(),
@@ -378,6 +454,9 @@ export async function POST(request: NextRequest) {
         classic_player_count = EXCLUDED.classic_player_count,
         is_valid = EXCLUDED.is_valid,
         validation_errors = EXCLUDED.validation_errors,
+        selected_by_opponent = EXCLUDED.selected_by_opponent,
+        opponent_selector_id = EXCLUDED.opponent_selector_id,
+        opponent_selected_at = EXCLUDED.opponent_selected_at,
         submitted_by = EXCLUDED.submitted_by,
         submitted_at = EXCLUDED.submitted_at,
         is_draft = false,

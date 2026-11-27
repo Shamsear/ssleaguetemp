@@ -1,5 +1,9 @@
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { validateTripleThreatLineup, TripleThreatLineupSubmission } from '@/lib/tournament/triple-threat-engine';
+import {
+  computeAwayLineupDeadline,
+  validateTripleThreatLineup,
+  TripleThreatLineupSubmission,
+} from '@/lib/tournament/triple-threat-engine';
 
 export interface LineupValidationResult {
   isValid: boolean;
@@ -294,10 +298,12 @@ export async function isLineupEditable(
       f.leg,
       f.home_team_id,
       f.away_team_id,
+      f.lineup_deadline,
       f.status as fixture_status,
       t.tournament_type,
       ts.matchday_format,
       rd.scheduled_date,
+      rd.scheduled_date::text as scheduled_date_str,
       rd.round_start_time,
       rd.home_fixture_deadline_time,
       rd.away_fixture_deadline_time,
@@ -309,7 +315,7 @@ export async function isLineupEditable(
       f.round_number = rd.round_number 
       AND f.season_id = rd.season_id
       AND f.tournament_id = rd.tournament_id
-      AND f.leg = rd.leg
+      AND (f.leg IS NULL OR rd.leg IS NULL OR f.leg = rd.leg)
     WHERE f.id = ${fixtureId}
     LIMIT 1
   `;
@@ -330,40 +336,38 @@ export async function isLineupEditable(
   }
 
   // Check if round has started and calculate deadlines
-  if (fixture.scheduled_date) {
+  if (fixture.scheduled_date || fixture.scheduled_date_str) {
     const now = new Date();
-    
-    // Convert scheduled_date to YYYY-MM-DD string if it's a Date object
-    let scheduledDateStr: string;
-    if (fixture.scheduled_date instanceof Date) {
-      const year = fixture.scheduled_date.getFullYear();
-      const month = String(fixture.scheduled_date.getMonth() + 1).padStart(2, '0');
-      const day = String(fixture.scheduled_date.getDate()).padStart(2, '0');
-      scheduledDateStr = `${year}-${month}-${day}`;
-    } else {
+    const isTT =
+      fixture.tournament_type === 'triple_threat' ||
+      fixture.matchday_format === 'triple_threat' ||
+      String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+
+    // Always resolve scheduled_date as IST YYYY-MM-DD (prefer exact SQL ::text cast)
+    let scheduledDateStr = fixture.scheduled_date_str ? String(fixture.scheduled_date_str).split('T')[0] : '';
+    if (!scheduledDateStr && fixture.scheduled_date instanceof Date) {
+      const ist = new Date(fixture.scheduled_date.getTime() + 5.5 * 60 * 60 * 1000);
+      scheduledDateStr = ist.toISOString().split('T')[0];
+    } else if (!scheduledDateStr) {
       scheduledDateStr = String(fixture.scheduled_date).split('T')[0];
     }
-    
-    // Use the same time parsing as fixture page
+
+    // Use the same time parsing as fixture page (IST +05:30)
     const homeTime = fixture.home_fixture_deadline_time || '17:00';
-    const awayTime = fixture.away_fixture_deadline_time || '19:00';
-    
-    // Parse times (HH:MM format)
-    const [homeHour, homeMin] = homeTime.split(':').map(Number);
-    const [awayHour, awayMin] = awayTime.split(':').map(Number);
-    
-    // Create deadlines in UTC by converting from IST (UTC+5:30)
-    const homeDeadline = new Date(scheduledDateStr);
-    homeDeadline.setUTCHours(homeHour - 5, homeMin - 30, 0, 0);
-    
-    const awayDeadline = new Date(scheduledDateStr);
-    awayDeadline.setUTCHours(awayHour - 5, awayMin - 30, 0, 0);
-    
+    const awayTime = fixture.away_fixture_deadline_time || (isTT ? '14:00' : '19:00');
+    const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
+    const awayDeadline =
+      computeAwayLineupDeadline({
+        scheduled_date: fixture.scheduled_date,
+        scheduled_date_str: scheduledDateStr,
+        away_fixture_deadline_time: awayTime,
+        lineup_deadline: fixture.lineup_deadline,
+        isTripleThreat: isTT,
+      }) || new Date(`${scheduledDateStr}T${awayTime}:00+05:30`);
+
     // Round start time (for display purposes)
     const roundStartTimeStr = fixture.round_start_time || fixture.home_fixture_deadline_time || '14:00';
-    const [startHour, startMin] = roundStartTimeStr.split(':').map(Number);
-    const roundStart = new Date(scheduledDateStr);
-    roundStart.setUTCHours(startHour - 5, startMin - 30, 0, 0);
+    const roundStart = new Date(`${scheduledDateStr}T${roundStartTimeStr}:00+05:30`);
     
     // Check if matchups exist
     const matchupsResult = await sql`
@@ -378,8 +382,7 @@ export async function isLineupEditable(
 
     // Special Rules for Triple Threat:
     // 1. Home team has Home Advantage: they can view the away team's lineup and adjust/change their own lineup anytime before matches are completed.
-    // 2. Away team must submit their lineup blindly before 2:00 PM IST.
-    const isTT = fixture.tournament_type === 'triple_threat' || fixture.matchday_format === 'triple_threat';
+    // 2. Away team must submit their lineup blindly before the submission deadline (away_fixture_deadline_time, default 14:00 IST).
     if (isTT) {
       if (isHomeTeam && fixture.fixture_status !== 'completed' && fixture.fixture_status !== 'finalized') {
         return {
@@ -396,8 +399,8 @@ export async function isLineupEditable(
         return {
           editable: isBeforeAwayDeadline,
           reason: isBeforeAwayDeadline 
-            ? 'Away team can edit lineup before 2:00 PM IST' 
-            : 'Away team lineup submission deadline (2:00 PM IST) has passed',
+            ? `Away team can edit lineup before ${awayTime} IST` 
+            : `Away team lineup submission deadline (${awayTime} IST) has passed`,
           deadline: awayDeadline.toISOString(),
           roundStart: roundStart.toISOString(),
           homeDeadline: homeDeadline.toISOString(),

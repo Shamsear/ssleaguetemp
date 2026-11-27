@@ -19,7 +19,7 @@ import BlindLineupSubmission from '@/components/BlindLineupSubmission';
 import AuthGuard from '@/components/auth/AuthGuard';
 import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
 import PlayerPhoto from '@/components/PlayerPhoto';
-import { calculateTripleThreatFixture, formatTripleThreatFixtureCopy, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+import { calculateTripleThreatFixture, computeAwayLineupDeadline, formatTripleThreatFixtureCopy, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 const isRealSubmittedLineup = (lineupData: any, isTripleThreatMode: boolean): boolean => {
   const l = lineupData?.success ? lineupData.lineups : null;
@@ -238,6 +238,7 @@ export default function FixturePage() {
   // Lineup submission tracking
   const [homeLineupSubmitted, setHomeLineupSubmitted] = useState(false);
   const [awayLineupSubmitted, setAwayLineupSubmitted] = useState(false);
+  const [isPastAwaySubmissionDeadline, setIsPastAwaySubmissionDeadline] = useState(false);
   const [lineupDeadline, setLineupDeadline] = useState<Date | null>(null);
   const [canSubmitLineup, setCanSubmitLineup] = useState(false);
   const [phaseUpdateTrigger, setPhaseUpdateTrigger] = useState(0);
@@ -300,12 +301,29 @@ export default function FixturePage() {
     },
   });
 
-  // Auto-recalculate phase every 10 seconds to handle deadline transitions
+  // Auto-recalculate phase and Away lineup submission deadline every 10 seconds
   useEffect(() => {
-    if (!fixture || !roundDeadlines || !roundDeadlines.scheduled_date) return;
+    if (!fixture) return;
 
     const recalculatePhase = () => {
       const now = new Date();
+      const isTTFixture = Boolean(
+        fixture.tournament_type === 'triple_threat' ||
+        fixture.matchday_format === 'triple_threat' ||
+        fixture.scoring_system === 'triple_threat' ||
+        fixture.knockout_format === 'triple_threat' ||
+        fixture.tournament_id?.toLowerCase().includes('triple_threat')
+      );
+
+      const awaySubmissionDeadline = computeAwayLineupDeadline({
+        scheduled_date: roundDeadlines?.scheduled_date,
+        away_fixture_deadline_time: roundDeadlines?.away_fixture_deadline_time,
+        lineup_deadline: fixture.lineup_deadline,
+        isTripleThreat: isTTFixture,
+      });
+      setIsPastAwaySubmissionDeadline(Boolean(awaySubmissionDeadline && now >= awaySubmissionDeadline));
+
+      if (!roundDeadlines || !roundDeadlines.scheduled_date) return;
 
       // Use scheduled_date or default to today if null
       // scheduled_date might be a full timestamp or just a date string
@@ -325,7 +343,7 @@ export default function FixturePage() {
 
       // Validate and default time fields
       const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
-      const awayTime = roundDeadlines.away_fixture_deadline_time || '19:00';
+      const awayTime = roundDeadlines.away_fixture_deadline_time || (isTTFixture ? '14:00' : '19:00');
       const resultTime = roundDeadlines.result_entry_deadline_time || '00:10';
 
       // Parse all deadlines
@@ -1942,7 +1960,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       <span>Change / Adjust Home Lineup</span>
                     </Link>
                   )}
-                  {isHomeTeam && !awayLineupSubmitted && (
+                  {isHomeTeam && !awayLineupSubmitted && isPastAwaySubmissionDeadline && (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
@@ -2086,7 +2104,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       <span>✏️</span>
                       <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup (5 Players)'}</span>
                     </Link>
-                  ) : !awayLineupSubmitted ? (
+                  ) : !awayLineupSubmitted && isPastAwaySubmissionDeadline ? (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
                       className="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-mono text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
@@ -2094,6 +2112,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       <span>👥</span>
                       <span>Submit Away Lineup on Their Behalf</span>
                     </Link>
+                  ) : !awayLineupSubmitted ? (
+                    <p className="text-xs text-slate-500 italic">
+                      Awaiting submission by Away Team (Deadline: {roundDeadlines?.away_fixture_deadline_time || '14:00'} IST).
+                    </p>
                   ) : (
                     <p className="text-xs text-slate-400 italic">
                       Away lineup submitted.
@@ -2105,7 +2127,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               <div className="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-blue-900 flex items-start gap-2">
                 <span className="text-blue-500 text-sm">💡</span>
                 <span>
-                  <strong>Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team / Committee submits on the Away Team&apos;s behalf), all 4 matchups across the 3 modes will be automatically created.
+                  <strong>Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team submits on the Away Team&apos;s behalf after the submission deadline), all 4 matchups across the 3 modes will be automatically created.
                 </span>
               </div>
             </div>
@@ -5266,7 +5288,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             : !homeLineupSubmitted
                               ? 'Home team has not submitted their lineup yet.'
                               : !awayLineupSubmitted
-                                ? 'Away team lineup is pending (Deadline: 2:00 PM IST).'
+                                ? `Away team lineup is pending (Deadline: ${roundDeadlines?.away_fixture_deadline_time || '14:00'} IST).`
                                 : 'Generating matchups...'}
                         </p>
                       </div>
@@ -5314,7 +5336,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               <span>📋</span>
                               <span>{homeLineupSubmitted ? 'Adjust Home Lineup' : 'Submit Home Lineup'}</span>
                             </Link>
-                            {!awayLineupSubmitted && (
+                            {!awayLineupSubmitted && isPastAwaySubmissionDeadline && (
                               <Link
                                 href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
                                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"

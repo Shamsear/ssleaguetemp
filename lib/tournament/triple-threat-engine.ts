@@ -1009,3 +1009,54 @@ export function formatTripleThreatFixtureCopy(params: {
 
   return parts.join('\n');
 }
+
+/**
+ * Computes the Away Team's lineup submission deadline in IST from `round_deadlines` (with `lineup_deadline` fallback).
+ */
+export function computeAwayLineupDeadline(params: {
+  scheduled_date?: string | Date | null;
+  scheduled_date_str?: string | null;
+  away_fixture_deadline_time?: string | null;
+  lineup_deadline?: string | Date | null;
+  isTripleThreat?: boolean;
+}): Date | null {
+  const {
+    scheduled_date,
+    scheduled_date_str,
+    away_fixture_deadline_time,
+    lineup_deadline,
+    isTripleThreat,
+  } = params;
+
+  let dateStr = scheduled_date_str ? String(scheduled_date_str).split('T')[0] : '';
+
+  if (!dateStr && scheduled_date) {
+    if (scheduled_date instanceof Date) {
+      const ist = new Date(scheduled_date.getTime() + 5.5 * 60 * 60 * 1000);
+      dateStr = ist.toISOString().split('T')[0];
+    } else if (typeof scheduled_date === 'string') {
+      if (scheduled_date.includes('T')) {
+        const parsed = new Date(scheduled_date);
+        if (!Number.isNaN(parsed.getTime())) {
+          const ist = new Date(parsed.getTime() + 5.5 * 60 * 60 * 1000);
+          dateStr = ist.toISOString().split('T')[0];
+        }
+      } else {
+        dateStr = scheduled_date;
+      }
+    }
+  }
+
+  if (dateStr) {
+    const awayTime = away_fixture_deadline_time || (isTripleThreat ? '14:00' : '19:00');
+    const dt = new Date(`${dateStr}T${awayTime}:00+05:30`);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+
+  if (lineup_deadline) {
+    const dt = new Date(lineup_deadline);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+
+  return null;
+}
