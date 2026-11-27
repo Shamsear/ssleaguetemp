@@ -1,6 +1,6 @@
 'use client';
 
-import { Info, Search, XCircle } from 'lucide-react';
+import { Home, Info, Plane, Search, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -197,10 +197,13 @@ export default function FixtureLineupPage() {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="console-bg min-h-screen flex items-center justify-center relative">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="text-center relative z-10 font-mono">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="mt-4 text-sm text-slate-500 uppercase tracking-wider font-extrabold">
+            Loading lineup...
+          </p>
         </div>
       </div>
     );
@@ -210,89 +213,155 @@ export default function FixtureLineupPage() {
     return null;
   }
 
+  const isHomeUser = fixture.home_team_id === teamId;
+
   return (
     <AuthGuard requiredRole="team">
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-4 sm:py-8 px-3 sm:px-4">
-      <div className="container mx-auto max-w-5xl">
-        {/* Header */}
-        <div className="mb-4 sm:mb-6">
-          <Link
-            href={`/dashboard/team/fixture/${fixtureId}`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-gray-700 hover:text-blue-600 font-medium transition-all rounded-xl shadow-xs hover:shadow-md text-xs sm:text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Fixture
-          </Link>
-        </div>
+      <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6">
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#D4AF37]/5 to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+          {/* Header Back Link */}
+          <div>
+            <Link
+              href={`/dashboard/team/fixture/${fixtureId}`}
+              className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all"
+            >
+              {"<-"} Back to Fixture
+            </Link>
+          </div>
 
-        {/* Fixture Info */}
-        <div className="glass rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-md">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Lineup Submission
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Round {fixture.round_number}</p>
+          {/* Fixture Info Card */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-8 shadow-sm font-mono">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <div>
+                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">
+                  LINEUP SUBMISSION
+                </span>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-800 uppercase tracking-wide mt-0.5">
+                  Round {fixture.round_number}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  <span className="inline-flex items-center px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider border border-indigo-200 rounded-full">
+                    {fixture.leg === 'first' ? '1st' : '2nd'} Leg
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold uppercase tracking-wider border border-purple-200 rounded-full">
+                    Match #{fixture.match_number}
+                  </span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border rounded-full ${
+                    isHomeUser
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-slate-100 text-slate-700 border-slate-200'
+                  }`}>
+                    {isHomeUser ? 'Home Team' : 'Away Team'}
+                  </span>
+                </div>
+              </div>
+
+              {deadline && (
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5 text-left sm:text-right self-start sm:self-auto">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    {isHomeUser ? 'Away Cutoff (Reference)' : 'Submission Deadline'}
+                  </span>
+                  <span className="text-xs font-extrabold text-slate-800">
+                    {new Date(deadline).toLocaleString('en-IN', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: 'Asia/Kolkata',
+                    })} IST
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="text-right">
-              <div className="text-xs text-gray-500">Match #</div>
-              <div className="text-lg sm:text-2xl font-bold text-gray-900">{fixture.match_number}</div>
+
+            {/* Teams VS Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center">
+              {/* Home Team */}
+              <div className={`console-card bg-white border rounded-2xl p-4 sm:p-5 transition-all ${
+                isHomeUser ? 'border-amber-300 shadow-sm' : 'border-slate-200/60'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl p-1.5 overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
+                    {fixture.home_team_logo ? (
+                      <img src={fixture.home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain" />
+                    ) : (
+                      <Home className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Team</div>
+                    <div className="text-base sm:text-lg font-bold text-slate-800 uppercase tracking-wide truncate">
+                      {fixture.home_team_name}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* VS Badge */}
+              <div className="flex justify-center items-center">
+                <div className="bg-slate-800 text-amber-400 rounded-full w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center text-xs sm:text-sm font-black shadow-md border-4 border-slate-200">
+                  VS
+                </div>
+              </div>
+
+              {/* Away Team */}
+              <div className={`console-card bg-white border rounded-2xl p-4 sm:p-5 transition-all ${
+                !isHomeUser ? 'border-amber-300 shadow-sm' : 'border-slate-200/60'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl p-1.5 overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
+                    {fixture.away_team_logo ? (
+                      <img src={fixture.away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain" />
+                    ) : (
+                      <Plane className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Away Team</div>
+                    <div className="text-base sm:text-lg font-bold text-slate-800 uppercase tracking-wide truncate">
+                      {fixture.away_team_name}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-3 sm:gap-4 py-2 sm:py-4">
-            <div className="text-center">
-              <div className="text-sm sm:text-lg font-bold text-gray-900">{fixture.home_team_name}</div>
-              <div className="text-[10px] sm:text-xs text-gray-500">Home</div>
-            </div>
-            <div className="text-lg sm:text-2xl font-bold text-gray-400">VS</div>
-            <div className="text-center">
-              <div className="text-sm sm:text-lg font-bold text-gray-900">{fixture.away_team_name}</div>
-              <div className="text-[10px] sm:text-xs text-gray-500">Away</div>
-            </div>
+          {/* Lineup Submission Card */}
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 sm:p-8 shadow-sm">
+            {fixture.tournament_type === 'triple_threat' ||
+             fixture.matchday_format === 'triple_threat' ||
+             fixture.scoring_system === 'triple_threat' ||
+             fixture.knockout_format === 'triple_threat' ||
+             fixture.tournament_id?.toLowerCase().includes('triple_threat') ? (
+              <TripleThreatLineupSubmission
+                fixtureId={fixtureId}
+                teamId={teamId}
+                seasonId={fixture.season_id}
+                fixture={fixture}
+                teamName={isHomeUser ? fixture.home_team_name : fixture.away_team_name}
+                existingLineup={existingLineup}
+                opponentLineup={opponentLineup}
+                opponentRoster={opponentRoster}
+                opponentTeamName={isHomeUser ? fixture.away_team_name : fixture.home_team_name}
+                isHomeTeam={isHomeUser}
+                roundStarted={roundStarted}
+                onSubmitSuccess={handleSubmitSuccess}
+              />
+            ) : (
+              <LineupSubmission
+                fixtureId={fixtureId}
+                teamId={teamId}
+                seasonId={fixture.season_id}
+                existingLineup={existingLineup}
+                onSubmitSuccess={handleSubmitSuccess}
+              />
+            )}
           </div>
-
-          {fixture.scheduled_date && (
-            <div className="text-center text-xs text-gray-600 mt-2">
-              Scheduled: {new Date(fixture.scheduled_date).toLocaleString()}
-            </div>
-          )}
-        </div>
-
-        {/* Lineup Submission Component */}
-        <div className="glass rounded-2xl p-3.5 sm:p-6 shadow-md">
-          {fixture.tournament_type === 'triple_threat' ||
-           fixture.matchday_format === 'triple_threat' ||
-           fixture.scoring_system === 'triple_threat' ||
-           fixture.knockout_format === 'triple_threat' ||
-           fixture.tournament_id?.toLowerCase().includes('triple_threat') ? (
-            <TripleThreatLineupSubmission
-              fixtureId={fixtureId}
-              teamId={teamId}
-              seasonId={fixture.season_id}
-              existingLineup={existingLineup}
-              opponentLineup={opponentLineup}
-              opponentRoster={opponentRoster}
-              opponentTeamName={fixture.home_team_id === teamId ? fixture.away_team_name : fixture.home_team_name}
-              isHomeTeam={fixture.home_team_id === teamId}
-              roundStarted={roundStarted}
-              onSubmitSuccess={handleSubmitSuccess}
-            />
-          ) : (
-            <LineupSubmission
-              fixtureId={fixtureId}
-              teamId={teamId}
-              seasonId={fixture.season_id}
-              existingLineup={existingLineup}
-              onSubmitSuccess={handleSubmitSuccess}
-            />
-          )}
         </div>
       </div>
-    </div>
-  
     </AuthGuard>
   );
 }

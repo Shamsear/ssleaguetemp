@@ -4,9 +4,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Users, User, Swords, Shield, Clock, AlertTriangle, CheckCircle2, 
-  HelpCircle, RefreshCw, Send, ChevronDown, Sparkles, Award
+  HelpCircle, RefreshCw, Send, ChevronDown, Sparkles, Award, Copy, Check
 } from 'lucide-react';
-import { validateTripleThreatLineup } from '@/lib/tournament/triple-threat-engine';
+import { formatTripleThreatLineupCopy, validateTripleThreatLineup } from '@/lib/tournament/triple-threat-engine';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface Player {
@@ -24,6 +24,8 @@ interface TripleThreatLineupSubmissionProps {
   fixtureId: string;
   teamId: string;
   seasonId: string;
+  fixture?: any;
+  teamName?: string;
   onSubmitSuccess?: () => void;
   existingLineup?: any;
   opponentLineup?: any;
@@ -39,6 +41,8 @@ export default function TripleThreatLineupSubmission({
   fixtureId,
   teamId,
   seasonId,
+  fixture,
+  teamName,
   onSubmitSuccess,
   existingLineup,
   opponentLineup,
@@ -57,6 +61,7 @@ export default function TripleThreatLineupSubmission({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isEditable, setIsEditable] = useState(true);
   const [deadlineInfo, setDeadlineInfo] = useState<any>(null);
+  const [copiedSide, setCopiedSide] = useState<'own' | 'opponent' | null>(null);
 
   // 3-Mode Lineup State: 2 Co-op, 2 Duo, 1 Single
   const [coopPlayers, setCoopPlayers] = useState<[string, string]>(['', '']);
@@ -394,6 +399,53 @@ export default function TripleThreatLineupSubmission({
       .join(' & ');
   };
 
+  const ownSide: 'home' | 'away' =
+    fixture?.home_team_id === teamId
+      ? 'home'
+      : fixture?.away_team_id === teamId
+        ? 'away'
+        : isHomeTeam
+          ? 'home'
+          : 'away';
+
+  const effectiveTeamName =
+    teamName ||
+    (ownSide === 'home' ? fixture?.home_team_name : fixture?.away_team_name) ||
+    (isOpponentSelection ? opponentTeamName : undefined) ||
+    (ownSide === 'home' ? 'Home Team' : 'Away Team');
+
+  const handleCopyLineup = (target: 'own' | 'opponent') => {
+    let copyText = '';
+    if (target === 'own') {
+      copyText = formatTripleThreatLineupCopy({
+        teamName: effectiveTeamName,
+        side: ownSide,
+        lineup: {
+          coop: coopPlayers,
+          duo: duoPlayers,
+          single: singlePlayer ? [singlePlayer] : [],
+        },
+        fixture,
+        playerNamesById: playerMap,
+      });
+    } else if (opponentLineup?.triple_threat_lineup) {
+      copyText = formatTripleThreatLineupCopy({
+        teamName: opponentTeamName || fixture?.away_team_name || 'Away Team',
+        side: ownSide === 'home' ? 'away' : 'home',
+        lineup: opponentLineup.triple_threat_lineup,
+        fixture,
+        playerNamesById: opponentPlayerMap,
+      });
+    }
+    if (!copyText) return;
+    navigator.clipboard.writeText(copyText).then(() => {
+      setCopiedSide(target);
+      setTimeout(() => setCopiedSide((prev) => (prev === target ? null : prev)), 2000);
+    }).catch((err) => {
+      console.error('Failed to copy lineup:', err);
+    });
+  };
+
   if (loading) {
     return (
       <div className="py-12 text-center font-mono text-xs uppercase text-slate-500 flex items-center justify-center gap-2">
@@ -404,51 +456,71 @@ export default function TripleThreatLineupSubmission({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 font-mono text-slate-800 pb-2">
-      {/* Title & Rules Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
+    <div className="space-y-5 font-mono text-slate-800 pb-2">
+      {/* Title & Rules Header */}
+      <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-400/20 border border-amber-400/30 text-amber-300 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider mb-1.5">
-              <Sparkles className="w-3 h-3" /> SS TRIPLE THREAT
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1.5">
+              <Sparkles className="w-3 h-3" /> SS Triple Threat
             </div>
-            <h2 className="text-base sm:text-lg font-black uppercase tracking-wide flex items-center gap-2 truncate">
+            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-wide">
               {isOpponentSelection 
                 ? `Submit Lineup for ${opponentTeamName || 'Opponent'}`
-                : isHomeTeam && opponentLineup?.triple_threat_lineup
+                : isHomeTeam && roundStarted && opponentLineup?.triple_threat_lineup
                   ? 'Adjust Home Lineup (Home Advantage)'
-                  : 'Matchday Lineup Submission'}
+                  : `${ownSide === 'home' ? 'Home' : 'Away'} Team Lineup Submission`}
             </h2>
-            <p className="text-[11px] sm:text-xs text-slate-300 font-sans mt-0.5 leading-snug">
+            <p className="text-xs text-slate-500 font-sans mt-1 leading-snug">
               {isOpponentSelection
                 ? `Submitting 5-player lineup on behalf of ${opponentTeamName || 'Opponent'}.`
-                : isHomeTeam && opponentLineup?.triple_threat_lineup
-                  ? 'The Away Team has submitted. You have Home Advantage to see their lineup below and adjust your players!'
+                : isHomeTeam && roundStarted && opponentLineup?.triple_threat_lineup
+                  ? 'The Away Team has submitted. Review their lineup below and adjust your 5 players.'
                   : 'Field exactly 5 unique players across Co-op, Duo, and Single modes. No player can participate in more than one mode.'}
             </p>
           </div>
 
-          {/* Progress Tracker */}
-          <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-2.5 sm:p-3 text-center sm:min-w-[130px] shrink-0 self-start sm:self-auto">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-300 mb-0.5">Progress</div>
-            <div className="text-xl sm:text-2xl font-black text-amber-400">
-              {selectedCount} <span className="text-xs font-normal text-slate-300">/ 5</span>
-            </div>
-            <div className="text-[9px] uppercase font-bold text-emerald-400">
-              {isLineupComplete ? '✓ All 5 Selected' : `${5 - selectedCount} remaining`}
+          <div className="flex items-center gap-3 shrink-0 self-start md:self-auto">
+            <button
+              type="button"
+              disabled={selectedCount === 0}
+              onClick={() => handleCopyLineup('own')}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${
+                selectedCount === 0
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  : copiedSide === 'own'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs cursor-pointer'
+              }`}
+              title={`Copy ${ownSide === 'home' ? 'Home' : 'Away'} Lineup`}
+            >
+              {copiedSide === 'own' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>
+                {copiedSide === 'own'
+                  ? 'Copied!'
+                  : `Copy ${ownSide === 'home' ? 'Home' : 'Away'} Lineup`}
+              </span>
+            </button>
+
+            <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-center min-w-[110px] shadow-2xs">
+              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Progress</div>
+              <div className="text-lg sm:text-xl font-black text-amber-600 leading-tight">
+                {selectedCount} <span className="text-xs font-normal text-slate-400">/ 5</span>
+              </div>
+              <div className="text-[9px] uppercase font-bold text-emerald-600">
+                {isLineupComplete ? '✓ All 5 Ready' : `${5 - selectedCount} left`}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Deadline Notice */}
         {(deadlineInfo?.deadline || deadlineInfo?.roundStart) && (
-          <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-2 text-[11px] text-amber-200">
-            <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <div className="mt-3 pt-3 border-t border-slate-200/80 flex items-center gap-2 text-xs text-amber-800 font-sans">
+            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
             <span>
-              Away Team Submission Deadline:{' '}
-              <strong>
+              Away Team Submission Cutoff:{' '}
+              <strong className="font-mono">
                 {new Date(deadlineInfo.deadline || deadlineInfo.roundStart).toLocaleTimeString('en-IN', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -464,33 +536,47 @@ export default function TripleThreatLineupSubmission({
 
       {/* Home Advantage: Opponent Lineup Card (only shown once round starts) */}
       {isHomeTeam && !isOpponentSelection && roundStarted && opponentLineup?.triple_threat_lineup && (
-        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 rounded-2xl p-3.5 sm:p-4.5 shadow-xs">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider">
-              ⭐ HOME ADVANTAGE
-            </span>
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-              {opponentTeamName || 'Away Team'} Submitted Lineup
-            </h3>
+        <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider">
+                ⭐ HOME ADVANTAGE
+              </span>
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                {opponentTeamName || 'Away Team'} Submitted Lineup
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopyLineup('opponent')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                copiedSide === 'opponent'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                  : 'bg-white hover:bg-amber-50 text-slate-800 border-amber-300'
+              }`}
+            >
+              {copiedSide === 'opponent' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedSide === 'opponent' ? 'Copied!' : 'Copy Away Lineup'}</span>
+            </button>
           </div>
-          <p className="text-[11px] text-slate-600 mb-3 font-sans">
-            The Away Team has submitted their lineup. You can see their player placement below and adjust your 5 players to counter their strategy before the match begins!
+          <p className="text-xs text-slate-600 mb-3 font-sans">
+            The Away Team has submitted their lineup. Review their mode assignments below and counter with your 5 players.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
-            <div className="p-3 bg-white rounded-xl border border-indigo-200 shadow-2xs">
+            <div className="p-3 bg-white rounded-xl border border-indigo-200/80 shadow-2xs">
               <span className="text-[10px] font-bold text-indigo-700 uppercase block mb-1">🎮 Mode 1: Co-op (2v2)</span>
               <span className="font-extrabold text-slate-900 block">
                 {renderOpponentNames(opponentLineup.triple_threat_lineup.coop)}
               </span>
             </div>
-            <div className="p-3 bg-white rounded-xl border border-emerald-200 shadow-2xs">
+            <div className="p-3 bg-white rounded-xl border border-emerald-200/80 shadow-2xs">
               <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">🤝 Mode 2: Duo (2 × 1v1 Goal Based)</span>
               <div className="font-extrabold text-slate-900 space-y-0.5">
                 <div>1v1 #1: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[0])}</div>
                 <div>1v1 #2: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[1])}</div>
               </div>
             </div>
-            <div className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs">
+            <div className="p-3 bg-white rounded-xl border border-amber-200/80 shadow-2xs">
               <span className="text-[10px] font-bold text-amber-700 uppercase block mb-1">⚔️ Mode 3: Single (1v1)</span>
               <span className="font-extrabold text-slate-900 block">
                 {renderOpponentNames(opponentLineup.triple_threat_lineup.single)}
@@ -647,26 +733,44 @@ export default function TripleThreatLineupSubmission({
           🔥 <strong className="text-slate-800">Clean Sweep Rule:</strong> Winning all 3 matches awards an extra <span className="text-amber-600 font-bold">+1 Bonus Point</span> (10 Max Points).
         </div>
 
-        <button
-          type="button"
-          disabled={!isEditable || submitting || !validationResult.valid}
-          onClick={handleSubmit}
-          className={`w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-sm ${
-            !isEditable || !validationResult.valid
-              ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200'
-              : 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-emerald-200 hover:shadow-md'
-          }`}
-        >
-          {submitting ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin" /> Submitting Lineup...
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4" /> Submit Official Lineup
-            </>
-          )}
-        </button>
+        <div className="flex w-full sm:w-auto items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={() => handleCopyLineup('own')}
+            className={`px-4 py-2.5 sm:py-3 rounded-xl border font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shrink-0 ${
+              selectedCount === 0
+                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                : copiedSide === 'own'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 cursor-pointer'
+            }`}
+          >
+            {copiedSide === 'own' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copiedSide === 'own' ? 'Copied' : 'Copy'}</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={!isEditable || submitting || !validationResult.valid}
+            onClick={handleSubmit}
+            className={`flex-1 sm:flex-initial px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-sm ${
+              !isEditable || !validationResult.valid
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200'
+                : 'bg-slate-800 hover:bg-slate-700 active:scale-98 text-white'
+            }`}
+          >
+            {submitting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" /> Submitting Lineup...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" /> Submit Official Lineup
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

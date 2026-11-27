@@ -1012,6 +1012,151 @@ export function formatTripleThreatFixtureCopy(params: {
   return parts.join('\n');
 }
 
+function resolveLineupSlotNames(
+  slot: any,
+  playerNamesById?: Map<string, any> | Record<string, any>
+): string {
+  if (!slot) return 'TBD';
+  const items = Array.isArray(slot) ? slot : [slot];
+  const resolved = items
+    .filter(Boolean)
+    .map((item: any) => {
+      const pid = typeof item === 'object' ? String(item.player_id || item.id || '').trim() : String(item).trim();
+      let name = typeof item === 'object' ? String(item.player_name || item.name || '').trim() : '';
+      if (!name && pid && playerNamesById) {
+        const entry =
+          playerNamesById instanceof Map
+            ? playerNamesById.get(pid)
+            : playerNamesById[pid];
+        if (typeof entry === 'string') {
+          name = entry.trim();
+        } else if (entry && typeof entry === 'object') {
+          name = String(entry.player_name || entry.name || '').trim();
+        }
+      }
+      return (name || pid || 'TBD').toUpperCase();
+    })
+    .filter(Boolean);
+
+  return resolved.length > 0 ? resolved.join(' & ') : 'TBD';
+}
+
+/**
+ * Extracts a Triple Threat lineup structure ({ coop, duo, single }) for a team
+ * directly from generated matchups when separate lineup records aren't loaded.
+ */
+export function extractTripleThreatLineupFromMatchups(
+  matchups: any[],
+  side: 'home' | 'away'
+): { coop: any[]; duo: any[]; single: any[] } | null {
+  if (!Array.isArray(matchups) || matchups.length === 0) return null;
+
+  const isHome = side === 'home';
+  const getSideNames = (m: any): string[] => {
+    const arr = isHome ? m?.home_player_names : m?.away_player_names;
+    if (Array.isArray(arr) && arr.length > 0) {
+      return arr.map((n: any) => String(n || '').trim()).filter(Boolean);
+    }
+    const singleName = isHome ? m?.home_player_name : m?.away_player_name;
+    return singleName ? [String(singleName).trim()] : [];
+  };
+
+  const coopMatch = matchups.find((m) => m?.match_mode === 'coop') || matchups[0];
+  const duoMatches = matchups.filter((m) => m?.match_mode === 'duo');
+  const resolvedDuos =
+    duoMatches.length > 0
+      ? duoMatches
+      : matchups.slice(1, matchups.length > 2 ? 3 : 2);
+  const singleMatch =
+    matchups.find((m) => m?.match_mode === 'single') || matchups[matchups.length - 1];
+
+  const coop = coopMatch ? getSideNames(coopMatch) : [];
+  const duo = resolvedDuos.flatMap((dm) => getSideNames(dm).slice(0, 1));
+  const single = singleMatch ? getSideNames(singleMatch).slice(0, 1) : [];
+
+  if (coop.length === 0 && duo.length === 0 && single.length === 0) {
+    return null;
+  }
+
+  return { coop, duo, single };
+}
+
+/**
+ * Formats a single team's Triple Threat lineup (Home or Away) for quick copy/share.
+ */
+export function formatTripleThreatLineupCopy(params: {
+  teamName: string;
+  side: 'home' | 'away';
+  lineup: {
+    coop?: any[];
+    duo?: any[];
+    single?: any[] | any;
+  };
+  fixture?: TripleThreatCopyFixtureInput | null;
+  playerNamesById?: Map<string, any> | Record<string, any>;
+}): string {
+  const { teamName, side, lineup, fixture, playerNamesById } = params;
+  const divider = '━━━━━━━━━━━━━━━━━━';
+
+  const seasonMatch = String(fixture?.season_id || '').match(/\d+$/);
+  const seasonNumber = seasonMatch ? seasonMatch[0] : '19';
+
+  const roundStr = String(fixture?.round_number || 1).padStart(2, '0');
+  const knockoutLabelMap: Record<string, string> = {
+    quarter_finals: 'QUARTER FINALS',
+    semi_finals: 'SEMI FINALS',
+    finals: 'FINALS',
+    third_place: 'THIRD PLACE PLAYOFF',
+  };
+  const knockoutLabel = fixture?.knockout_round
+    ? knockoutLabelMap[fixture.knockout_round] ||
+      String(fixture.knockout_round).replace(/_/g, ' ').toUpperCase()
+    : '';
+  const matchdayLine = knockoutLabel ? `📋 ${knockoutLabel}` : `📋 MATCHDAY – ${roundStr}`;
+
+  const rawGroup =
+    fixture?.group_name ||
+    String(fixture?.id || '').match(/_grp([A-Za-z0-9]+)_/)?.[1] ||
+    '';
+  const cleanGroup = rawGroup.replace(/^group\s*[-–:]?\s*/i, '').trim().toUpperCase();
+
+  const sideLabel = side === 'home' ? '🏠 HOME TEAM' : '✈️ AWAY TEAM';
+  const cleanTeam = String(teamName || (side === 'home' ? 'HOME TEAM' : 'AWAY TEAM'))
+    .trim()
+    .toUpperCase();
+
+  const coopText = resolveLineupSlotNames(lineup?.coop, playerNamesById);
+  const duo1Text = resolveLineupSlotNames(lineup?.duo?.[0], playerNamesById);
+  const duo2Text = resolveLineupSlotNames(lineup?.duo?.[1], playerNamesById);
+  const singleRaw = Array.isArray(lineup?.single) ? lineup.single[0] : lineup?.single;
+  const singleText = resolveLineupSlotNames(singleRaw, playerNamesById);
+
+  const lines: string[] = [
+    `🏆 SS SUPER LEAGUE – SEASON ${seasonNumber}`,
+    '⚔️ THE TRIPLE THREAT LINEUP',
+    '',
+    divider,
+    matchdayLine,
+    divider,
+    '',
+  ];
+
+  if (cleanGroup) {
+    lines.push(`🏴 GROUP – ${cleanGroup}`, '');
+  }
+
+  lines.push(
+    `${sideLabel}: ${cleanTeam}`,
+    '',
+    `🎮 CO-OP (2V2): ${coopText}`,
+    `🤝 DUO #1 (1V1): ${duo1Text}`,
+    `🤝 DUO #2 (1V1): ${duo2Text}`,
+    `⚔️ SOLO (1V1): ${singleText}`,
+  );
+
+  return lines.join('\n');
+}
+
 /**
  * Computes the Away Team's lineup submission deadline in IST from `round_deadlines.round_start_time`
  * (with `home_fixture_deadline_time` and `lineup_deadline` fallbacks).

@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { getISTNow, parseISTDate, createISTDateTime, computeISTResultDeadline } from '@/lib/utils/timezone';
+import { getISTNow, extractISTDateString, createISTDateTime, computeISTResultDeadline } from '@/lib/utils/timezone';
+import { isRoundStartedFromDeadline } from '@/lib/tournament/triple-threat-engine';
 import { useRoundPhaseMonitor, calculatePhase } from '@/hooks/useRoundPhaseMonitor';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -191,6 +192,7 @@ export default function TeamMatchesPage() {
 
           const defaultData = {
             status: 'pending',
+            round_start_time: '09:00',
             home_fixture_deadline_time: '17:00',
             away_fixture_deadline_time: '19:00',
             result_entry_deadline_day_offset: 2,
@@ -208,6 +210,7 @@ export default function TeamMatchesPage() {
                   roundKey,
                   data: {
                     status: roundDeadline.status || 'pending',
+                    round_start_time: roundDeadline.round_start_time || '09:00',
                     home_fixture_deadline_time: roundDeadline.home_fixture_deadline_time || '17:00',
                     away_fixture_deadline_time: roundDeadline.away_fixture_deadline_time || '19:00',
                     result_entry_deadline_day_offset: roundDeadline.result_entry_deadline_day_offset ?? 2,
@@ -249,36 +252,24 @@ export default function TeamMatchesPage() {
           }
 
           const rawSchedDate = roundData.scheduled_date || matchDate;
-          let schedDateStr: string | null = null;
-          if (rawSchedDate) {
-            if (typeof rawSchedDate === 'string') {
-              if (rawSchedDate.includes('T')) {
-                const d = new Date(rawSchedDate);
-                const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
-                schedDateStr = ist.toISOString().split('T')[0];
-              } else {
-                schedDateStr = rawSchedDate.split('T')[0];
-              }
-            } else if (rawSchedDate instanceof Date) {
-              const ist = new Date(rawSchedDate.getTime() + (5.5 * 60 * 60 * 1000));
-              schedDateStr = ist.toISOString().split('T')[0];
-            } else if (typeof rawSchedDate?.toDate === 'function') {
-              const d = rawSchedDate.toDate();
-              const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
-              schedDateStr = ist.toISOString().split('T')[0];
-            }
-          }
+          const schedDateStr = extractISTDateString(rawSchedDate);
 
           if (!schedDateStr) {
             return { phase: 'draft' as const, phase_label: 'Upcoming' };
           }
 
-          // Get current date and time in IST
+          // Get current time in IST
           const now = getISTNow();
-          const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-          // If scheduled date is in the future (after today IST), return Draft / Upcoming
-          if (schedDateStr > todayStr && roundStatus !== 'active' && roundStatus !== 'in_progress' && roundStatus !== 'started') {
+          // Do not enter active match phases until the round is started (status active or >= round_start_time IST)
+          const roundStarted = isRoundStartedFromDeadline({
+            round_status: roundData.status,
+            scheduled_date_str: schedDateStr,
+            round_start_time: roundData.round_start_time,
+            now,
+          });
+
+          if (!roundStarted) {
             return { phase: 'draft' as const, phase_label: 'Upcoming' };
           }
 

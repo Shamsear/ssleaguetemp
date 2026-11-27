@@ -1,7 +1,7 @@
 'use client';
 
 import { SoccerBallIcon } from '@/components/ui/CustomIcons';
-import { BarChart2, Calendar, Check, ClipboardList, Clock, Crown, Handshake, Home, Info, Pencil, Save, Search, Shield, Star, Swords, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
+import { BarChart2, Calendar, Check, ClipboardList, Clock, Copy, Crown, Handshake, Home, Info, Pencil, Save, Search, Shield, Star, Swords, Trophy, XCircle, AlertTriangle, Plane, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -23,7 +23,9 @@ import { extractISTDateString, computeISTResultDeadline } from '@/lib/utils/time
 import {
   calculateTripleThreatFixture,
   computeAwayLineupDeadline,
+  extractTripleThreatLineupFromMatchups,
   formatTripleThreatFixtureCopy,
+  formatTripleThreatLineupCopy,
   getTripleThreatModeDisplay,
   isRoundStartedFromDeadline,
   resolveTripleThreatMode,
@@ -250,6 +252,7 @@ export default function FixturePage() {
   const [awayLineupSubmitted, setAwayLineupSubmitted] = useState(false);
   const [homeTTLineup, setHomeTTLineup] = useState<any>(null);
   const [awayTTLineup, setAwayTTLineup] = useState<any>(null);
+  const [copiedLineupSide, setCopiedLineupSide] = useState<'home' | 'away' | null>(null);
   const [isPastAwaySubmissionDeadline, setIsPastAwaySubmissionDeadline] = useState(false);
   const [isRoundStarted, setIsRoundStarted] = useState(false);
   const [lineupDeadline, setLineupDeadline] = useState<Date | null>(null);
@@ -335,15 +338,14 @@ export default function FixturePage() {
         isTripleThreat: isTTFixture,
       });
       setIsPastAwaySubmissionDeadline(Boolean(awaySubmissionDeadline && now >= awaySubmissionDeadline));
-      setIsRoundStarted(
-        isRoundStartedFromDeadline({
-          round_status: roundDeadlines?.status,
-          fixture_status: fixture.status,
-          scheduled_date: roundDeadlines?.scheduled_date,
-          round_start_time: roundDeadlines?.round_start_time,
-          now,
-        })
-      );
+      const started = isRoundStartedFromDeadline({
+        round_status: roundDeadlines?.status,
+        fixture_status: fixture.status,
+        scheduled_date: roundDeadlines?.scheduled_date,
+        round_start_time: roundDeadlines?.round_start_time,
+        now,
+      });
+      setIsRoundStarted(started);
 
       if (!roundDeadlines || !roundDeadlines.scheduled_date) return;
 
@@ -366,12 +368,8 @@ export default function FixturePage() {
       );
 
       // Calculate phase based on round status and deadlines
-      const rNum = fixture?.round_number || 0;
       const rStatus = (roundDeadlines.status || '').toLowerCase();
       const fStatus = (fixture?.status || '').toLowerCase();
-
-      const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-      const todayStr = istNow.toISOString().split('T')[0];
 
       let currentPhase: typeof phase = 'closed';
 
@@ -383,7 +381,7 @@ export default function FixturePage() {
         currentPhase = 'home_fixture';
       } else if (rStatus === 'fixture_entry' || fStatus === 'fixture_entry') {
         currentPhase = 'fixture_entry';
-      } else if (scheduledDateStr > todayStr && rStatus !== 'active' && rStatus !== 'in_progress' && rStatus !== 'started') {
+      } else if (!started) {
         currentPhase = 'draft';
       } else {
         // Evaluate deadlines for active/today/past rounds
@@ -652,6 +650,34 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         type: 'error',
         title: 'Copy Failed',
         message: 'Failed to copy to clipboard'
+      });
+    });
+  };
+
+  const handleCopyTeamLineup = (side: 'home' | 'away') => {
+    if (!fixture) return;
+    const rawLineup =
+      side === 'home'
+        ? homeTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'home')
+        : awayTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'away');
+    if (!rawLineup) return;
+
+    const text = formatTripleThreatLineupCopy({
+      teamName: side === 'home' ? fixture.home_team_name : fixture.away_team_name,
+      side,
+      lineup: rawLineup,
+      fixture,
+      playerNamesById: side === 'home' ? homeSquadById : awaySquadById,
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedLineupSide(side);
+      setTimeout(() => setCopiedLineupSide((prev) => (prev === side ? null : prev)), 2000);
+    }).catch(() => {
+      showAlert({
+        type: 'error',
+        title: 'Copy Failed',
+        message: 'Failed to copy lineup to clipboard'
       });
     });
   };
@@ -1585,12 +1611,30 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
   const getPhaseInfo = () => {
     switch (phase) {
-      case 'draft':
+      case 'draft': {
+        const rStatus = String(roundDeadlines?.status || '').toLowerCase();
+        if (rStatus === 'paused') {
+          return {
+            label: 'Round Paused',
+            color: 'yellow',
+            description: 'This round is currently paused by the committee.',
+          };
+        }
+        if (roundDeadlines?.scheduled_date) {
+          const schedStr = extractISTDateString(roundDeadlines.scheduled_date);
+          const startTime = roundDeadlines.round_start_time || '09:00';
+          return {
+            label: 'Not Started',
+            color: 'yellow',
+            description: `Round ${fixture?.round_number || ''} starts on ${schedStr} at ${startTime} IST.`,
+          };
+        }
         return {
           label: 'Draft Mode',
           color: 'yellow',
           description: 'Match not scheduled yet. You can prepare and save draft lineups.',
         };
+      }
       case 'home_fixture':
         return {
           label: 'Home Fixture Phase',
@@ -1642,6 +1686,27 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     const isHomeFixtureSet = matchups.length > 0;
     const isPastHomeDeadline = now >= homeDeadline;
     const isPastResultDeadline = now >= resultDeadline;
+    const roundStarted = isRoundStartedFromDeadline({
+      round_status: roundDeadlines.status,
+      fixture_status: fixture?.status,
+      scheduled_date_str: scheduledDateStr,
+      round_start_time: roundDeadlines.round_start_time,
+      now,
+    });
+
+    if (!roundStarted && !isHomeFixtureSet) {
+      const startTime = roundDeadlines.round_start_time || '09:00';
+      const isPaused = String(roundDeadlines.status || '').toLowerCase() === 'paused';
+      return {
+        type: 'not_started',
+        label: isPaused ? 'Round Paused' : 'Round Not Started',
+        deadline: new Date(`${scheduledDateStr}T${startTime}:00+05:30`),
+        formattedDate: `${scheduledDateStr} at ${startTime} IST`,
+        description: isPaused
+          ? 'This round is currently paused by the committee.'
+          : `Home fixture & matchup phase opens when Round ${fixture?.round_number || ''} starts.`
+      };
+    }
 
     if (!isHomeFixtureSet && !isPastHomeDeadline) {
       return {
@@ -1848,7 +1913,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   phaseInfo.color === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                   'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  <span className="w-2 h-2 bg-current rounded-full animate-pulse"></span>
                   {phaseInfo.label}
                 </span>
               </div>
@@ -1911,14 +1976,18 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 <div className={`hidden sm:block console-card rounded-2xl p-4 sm:p-5 font-mono mb-6 relative overflow-hidden border shadow-sm ${
                   deadlineInfo.type === 'home_fixture'
                     ? 'bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border-blue-200'
-                    : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-200'
+                    : deadlineInfo.type === 'not_started'
+                      ? 'bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border-amber-200'
+                      : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-200'
                 }`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
                         deadlineInfo.type === 'home_fixture'
                           ? 'bg-blue-600 text-white'
-                          : 'bg-emerald-600 text-white'
+                          : deadlineInfo.type === 'not_started'
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-emerald-600 text-white'
                       }`}>
                         <Clock className="w-5 h-5 animate-pulse" />
                       </div>
@@ -1927,7 +1996,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
                             deadlineInfo.type === 'home_fixture'
                               ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                              : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : deadlineInfo.type === 'not_started'
+                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           }`}>
                             {deadlineInfo.label}
                           </span>
@@ -1971,21 +2042,54 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
             {/* Triple Threat Action Buttons */}
             {(() => {
-              const isTT = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || matchups.some(m => !!(m as any).match_mode);
-              if (!isTT || fixture?.status === 'completed') return null;
+              const isTTHeader = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || matchups.some(m => !!(m as any).match_mode);
+              if (!isTTHeader) return null;
+
+              const effectiveHomeTT = homeTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'home');
+              const effectiveAwayTT = awayTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'away');
+              const canCopyHome = Boolean(effectiveHomeTT && (isHomeTeam || isAdmin || matchups.length > 0));
+              const canCopyAway = Boolean(effectiveAwayTT && (isRoundStarted || isAwayTeam || isAdmin || matchups.length > 0));
 
               return (
                 <div className="flex flex-wrap items-center gap-2 font-mono">
-                  {isHomeTeam && (
+                  {canCopyHome && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyTeamLineup('home')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        copiedLineupSide === 'home'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs'
+                      }`}
+                    >
+                      {copiedLineupSide === 'home' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLineupSide === 'home' ? 'Copied Home' : 'Copy Home Lineup'}</span>
+                    </button>
+                  )}
+                  {canCopyAway && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyTeamLineup('away')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        copiedLineupSide === 'away'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs'
+                      }`}
+                    >
+                      {copiedLineupSide === 'away' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLineupSide === 'away' ? 'Copied Away' : 'Copy Away Lineup'}</span>
+                    </button>
+                  )}
+                  {fixture?.status !== 'completed' && isHomeTeam && (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
                     >
-                      <span>✏️</span>
-                      <span>Change / Adjust Home Lineup</span>
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>{homeLineupSubmitted ? 'Edit Home Lineup' : 'Submit Home Lineup'}</span>
                     </Link>
                   )}
-                  {isHomeTeam && !awayLineupSubmitted && isPastAwaySubmissionDeadline && (
+                  {fixture?.status !== 'completed' && isHomeTeam && !awayLineupSubmitted && isPastAwaySubmissionDeadline && (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
@@ -1994,16 +2098,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       <span>Submit Away Lineup</span>
                     </Link>
                   )}
-                  {isAwayTeam && !isPastAwaySubmissionDeadline && (
+                  {fixture?.status !== 'completed' && isAwayTeam && !isPastAwaySubmissionDeadline && (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/lineup`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
                     >
-                      <span>📋</span>
+                      <ClipboardList className="w-3.5 h-3.5" />
                       <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup'}</span>
                     </Link>
                   )}
-                  {isAwayTeam && isPastAwaySubmissionDeadline && (
+                  {fixture?.status !== 'completed' && isAwayTeam && isPastAwaySubmissionDeadline && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-black uppercase tracking-wider">
                       <span>🔒</span>
                       <span>Away Lineup Locked ({roundDeadlines?.round_start_time || '09:00'} IST Cutoff)</span>
@@ -2032,16 +2136,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
           {/* Triple Threat Pending Matchups & Lineup Actions */}
           {isTT && matchups.length === 0 && (
-            <div className="p-5 sm:p-6 bg-gradient-to-br from-amber-500/5 via-slate-50 to-indigo-500/5 border-2 border-dashed border-amber-300 rounded-3xl space-y-5 font-mono mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/60">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-5 sm:p-6 space-y-5 font-mono mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
                 <div>
-                  <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white inline-flex items-center gap-1 shadow-2xs">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
                     ⚡ SS Triple Threat
                   </span>
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight mt-1.5">
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-wide mt-1.5">
                     Matchup Generation Engine
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 font-sans mt-0.5">
                     Each fixture consists of 3 modes (4 matches total). Lineups of 5 unique players must be set across Co-op, Duo, and Single modes.
                   </p>
                 </div>
@@ -2049,30 +2153,30 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
               {/* Mode Breakdown */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3 bg-white border border-indigo-200/80 rounded-2xl shadow-3xs">
+                <div className="p-3 bg-white border border-slate-200/80 rounded-2xl shadow-2xs">
                   <div className="flex items-center gap-2">
                     <span className="text-base">🎮</span>
                     <div>
-                      <div className="text-[11px] font-black text-indigo-950 uppercase">Mode 1: Co-op</div>
-                      <div className="text-[10px] text-indigo-700/80 font-bold">2v2 Match (2 Players)</div>
+                      <div className="text-[11px] font-black text-indigo-700 uppercase">Mode 1: Co-op</div>
+                      <div className="text-[10px] text-slate-500 font-bold">2v2 Match (2 Players)</div>
                     </div>
                   </div>
                 </div>
-                <div className="p-3 bg-white border border-emerald-200/80 rounded-2xl shadow-3xs">
+                <div className="p-3 bg-white border border-slate-200/80 rounded-2xl shadow-2xs">
                   <div className="flex items-center gap-2">
                     <span className="text-base">🤝</span>
                     <div>
-                      <div className="text-[11px] font-black text-emerald-950 uppercase">Mode 2: Duo</div>
-                      <div className="text-[10px] text-emerald-700/80 font-bold">2 × 1v1 Goal Based (2 Players)</div>
+                      <div className="text-[11px] font-black text-emerald-700 uppercase">Mode 2: Duo</div>
+                      <div className="text-[10px] text-slate-500 font-bold">2 × 1v1 Goal Based (2 Players)</div>
                     </div>
                   </div>
                 </div>
-                <div className="p-3 bg-white border border-amber-200/80 rounded-2xl shadow-3xs">
+                <div className="p-3 bg-white border border-slate-200/80 rounded-2xl shadow-2xs">
                   <div className="flex items-center gap-2">
                     <span className="text-base">⚔️</span>
                     <div>
-                      <div className="text-[11px] font-black text-amber-950 uppercase">Mode 3: Single</div>
-                      <div className="text-[10px] text-amber-700/80 font-bold">1v1 Match (1 Player)</div>
+                      <div className="text-[11px] font-black text-amber-700 uppercase">Mode 3: Single</div>
+                      <div className="text-[10px] text-slate-500 font-bold">1v1 Match (1 Player)</div>
                     </div>
                   </div>
                 </div>
@@ -2080,7 +2184,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
               {/* Team Lineup Status & Actions */}
               {(() => {
-                const formatAwayModeSlot = (items: any) => {
+                const formatModeSlot = (items: any, squadMap: Map<string, any>) => {
                   const arr = Array.isArray(items) ? items : [items];
                   return (
                     arr
@@ -2088,7 +2192,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       .map((item: any) => {
                         const pid =
                           typeof item === 'object' ? String(item.player_id || item.id || '') : String(item);
-                        const squadMatch = pid ? awaySquadById.get(pid) : undefined;
+                        const squadMatch = pid ? squadMap.get(pid) : undefined;
                         const name =
                           (typeof item === 'object' ? item.player_name || item.name : '') ||
                           squadMatch?.player_name ||
@@ -2104,37 +2208,84 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Home Team Card */}
-                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-3xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate max-w-[180px]">
-                      {fixture.home_team_name}
-                    </span>
+                <div className="console-card p-4 bg-white border border-slate-200/80 rounded-2xl space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {(fixture as any).home_team_logo ? (
+                          <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain" />
+                        ) : (
+                          <Home className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase block leading-none mb-0.5">Home Team</span>
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate block">
+                          {fixture.home_team_name}
+                        </span>
+                      </div>
+                    </div>
                     {homeLineupSubmitted ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                         ✓ Submitted
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
                         ⏳ Pending
                       </span>
                     )}
                   </div>
+
+                  {homeLineupSubmitted && homeTTLineup && (isHomeTeam || isAdmin) && (
+                    <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 text-[11px] font-mono">
+                      <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/70">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">
+                          ✅ Home Submitted Lineup
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTeamLineup('home')}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                            copiedLineupSide === 'home'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          {copiedLineupSide === 'home' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedLineupSide === 'home' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-indigo-700">Co-op:</span> {formatModeSlot(homeTTLineup.coop, homeSquadById)}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-emerald-700">Duo #1:</span> {formatModeSlot(homeTTLineup.duo?.[0], homeSquadById)}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-emerald-700">Duo #2:</span> {formatModeSlot(homeTTLineup.duo?.[1], homeSquadById)}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-amber-700">Single:</span> {formatModeSlot(homeTTLineup.single, homeSquadById)}
+                      </div>
+                    </div>
+                  )}
+
                   {isHomeTeam ? (
                     <div className="space-y-2">
                       {isRoundStarted && awayLineupSubmitted && awayTTLineup ? (
-                        <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl text-[10px] text-amber-900 font-bold">
+                        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[10px] text-amber-900 font-bold">
                           ⭐ Home Advantage: Review {fixture.away_team_name}&apos;s lineup and set or adjust your lineup below.
                         </div>
                       ) : !isRoundStarted && awayLineupSubmitted ? (
-                        <div className="p-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] text-slate-600 font-bold">
+                        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] text-slate-600 font-bold">
                           🔒 {fixture.away_team_name} has submitted — their players will be revealed once the round starts ({roundDeadlines?.round_start_time || '09:00'} IST).
                         </div>
                       ) : null}
                       <Link
                         href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
                       >
-                        <span>✏️</span>
+                        <Pencil className="w-3.5 h-3.5" />
                         <span>
                           {homeLineupSubmitted
                             ? 'Edit Home Lineup'
@@ -2145,58 +2296,84 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </Link>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 italic">
+                    <p className="text-xs text-slate-400 italic font-sans">
                       {homeLineupSubmitted ? (isTT ? 'Home lineup submitted.' : 'Home lineup submitted and locked.') : 'Awaiting submission by Home Team.'}
                     </p>
                   )}
                 </div>
 
                 {/* Away Team Card */}
-                <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-3xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate max-w-[180px]">
-                      {fixture.away_team_name}
-                    </span>
+                <div className="console-card p-4 bg-white border border-slate-200/80 rounded-2xl space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {(fixture as any).away_team_logo ? (
+                          <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain" />
+                        ) : (
+                          <Plane className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase block leading-none mb-0.5">Away Team</span>
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate block">
+                          {fixture.away_team_name}
+                        </span>
+                      </div>
+                    </div>
                     {awayLineupSubmitted ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                         ✓ Submitted
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
                         ⏳ Pending
                       </span>
                     )}
                   </div>
                   {awayLineupSubmitted && awayTTLineup && (isRoundStarted || isAwayTeam || isAdmin) && (
-                    <div className="p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1 text-[11px] font-mono">
-                      <div className="text-[10px] font-black uppercase tracking-wider text-amber-800">
-                        {isHomeTeam ? '⭐ Away Submitted Lineup' : '✅ Your Submitted Lineup'}
+                    <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-xl space-y-1.5 text-[11px] font-mono">
+                      <div className="flex items-center justify-between gap-2 pb-1 border-b border-amber-200/70">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
+                          {isHomeTeam ? '⭐ Away Submitted Lineup' : '✅ Your Submitted Lineup'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTeamLineup('away')}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                            copiedLineupSide === 'away'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-white hover:bg-amber-50 text-slate-700 border-amber-300'
+                          }`}
+                        >
+                          {copiedLineupSide === 'away' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedLineupSide === 'away' ? 'Copied' : 'Copy'}</span>
+                        </button>
                       </div>
                       <div className="text-slate-800">
-                        <span className="font-bold text-indigo-700">Co-op:</span> {formatAwayModeSlot(awayTTLineup.coop)}
+                        <span className="font-bold text-indigo-700">Co-op:</span> {formatModeSlot(awayTTLineup.coop, awaySquadById)}
                       </div>
                       <div className="text-slate-800">
-                        <span className="font-bold text-emerald-700">Duo #1:</span> {formatAwayModeSlot(awayTTLineup.duo?.[0])}
+                        <span className="font-bold text-emerald-700">Duo #1:</span> {formatModeSlot(awayTTLineup.duo?.[0], awaySquadById)}
                       </div>
                       <div className="text-slate-800">
-                        <span className="font-bold text-emerald-700">Duo #2:</span> {formatAwayModeSlot(awayTTLineup.duo?.[1])}
+                        <span className="font-bold text-emerald-700">Duo #2:</span> {formatModeSlot(awayTTLineup.duo?.[1], awaySquadById)}
                       </div>
                       <div className="text-slate-800">
-                        <span className="font-bold text-amber-700">Single:</span> {formatAwayModeSlot(awayTTLineup.single)}
+                        <span className="font-bold text-amber-700">Single:</span> {formatModeSlot(awayTTLineup.single, awaySquadById)}
                       </div>
                     </div>
                   )}
                   {awayLineupSubmitted && !isRoundStarted && !isAwayTeam && !isAdmin && (
-                    <p className="text-xs text-slate-500 italic">
+                    <p className="text-xs text-slate-500 italic font-sans">
                       🔒 Away team lineup submitted. Hidden until the round starts ({roundDeadlines?.round_start_time || '09:00'} IST).
                     </p>
                   )}
                   {isAwayTeam && !isPastAwaySubmissionDeadline ? (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
                     >
-                      <span>✏️</span>
+                      <ClipboardList className="w-3.5 h-3.5" />
                       <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup (5 Players)'}</span>
                     </Link>
                   ) : isAwayTeam && isPastAwaySubmissionDeadline ? (
@@ -2206,13 +2383,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                   ) : isHomeTeam && !awayLineupSubmitted && isPastAwaySubmissionDeadline ? (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/select-opponent-lineup`}
-                      className="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-mono text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                      className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-mono text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
                     >
                       <span>👥</span>
                       <span>Submit Away Lineup on Their Behalf</span>
                     </Link>
                   ) : !awayLineupSubmitted ? (
-                    <p className="text-xs text-slate-500 italic">
+                    <p className="text-xs text-slate-500 italic font-sans">
                       Awaiting submission by Away Team (Deadline: {roundDeadlines?.round_start_time || '09:00'} IST).
                     </p>
                   ) : null}
@@ -2221,10 +2398,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 );
               })()}
 
-              <div className="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-blue-900 flex items-start gap-2">
-                <span className="text-blue-500 text-sm">💡</span>
+              <div className="p-3 bg-white border border-slate-200/80 rounded-xl text-[11px] text-slate-600 font-sans flex items-start gap-2">
+                <span className="text-amber-500 text-sm">💡</span>
                 <span>
-                  <strong>Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team submits on the Away Team&apos;s behalf after the submission deadline), all 4 matchups across the 3 modes will be automatically created.
+                  <strong className="text-slate-800">Instant Matchup Generation:</strong> As soon as both teams submit their 5-player mode lineups (or the Home Team submits on the Away Team&apos;s behalf after the submission deadline), all 4 matchups across the 3 modes will be automatically created.
                 </span>
               </div>
             </div>
@@ -5430,9 +5607,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           <>
                             <Link
                               href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
                             >
-                              <span>📋</span>
+                              <ClipboardList className="w-3.5 h-3.5" />
                               <span>{homeLineupSubmitted ? 'Adjust Home Lineup' : 'Submit Home Lineup'}</span>
                             </Link>
                             {!awayLineupSubmitted && isPastAwaySubmissionDeadline && (
@@ -5448,9 +5625,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         ) : isAwayTeam && !isPastAwaySubmissionDeadline ? (
                           <Link
                             href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all"
                           >
-                            <span>📋</span>
+                            <ClipboardList className="w-3.5 h-3.5" />
                             <span>{awayLineupSubmitted ? 'Edit Away Lineup' : 'Submit Away Lineup'}</span>
                           </Link>
                         ) : isAwayTeam && isPastAwaySubmissionDeadline ? (
