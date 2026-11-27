@@ -365,13 +365,13 @@ export async function isLineupEditable(
         home_fixture_deadline_time: fixture.home_fixture_deadline_time,
         lineup_deadline: fixture.lineup_deadline,
         isTripleThreat: isTT,
-      }) || new Date(`${scheduledDateStr}T${isTT ? '00:00' : '17:00'}:00+05:30`);
+      }) || new Date(`${scheduledDateStr}T${isTT ? '09:00' : '17:00'}:00+05:30`);
 
     // Round start time (used as Away lineup submission deadline)
     const roundStartTimeStr =
       fixture.round_start_time && /^\d{2}:\d{2}$/.test(fixture.round_start_time)
         ? fixture.round_start_time
-        : fixture.home_fixture_deadline_time || (isTT ? '00:00' : '17:00');
+        : fixture.home_fixture_deadline_time || (isTT ? '09:00' : '17:00');
     const roundStart = new Date(`${scheduledDateStr}T${roundStartTimeStr}:00+05:30`);
     
     // Check if matchups exist

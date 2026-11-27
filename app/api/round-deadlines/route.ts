@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
         const rawStartTime = d.round_start_time && /^\d{2}:\d{2}$/.test(d.round_start_time)
           ? d.round_start_time
-          : '06:00';
+          : '09:00';
         const startAtIST = new Date(`${dateStr}T${rawStartTime}:00+05:30`);
 
         if (now >= startAtIST) {
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
             try {
               await sql`
                 UPDATE round_deadlines
-                SET status = 'active', is_active = true, updated_at = NOW()
+                SET status = 'active', updated_at = NOW()
                 WHERE id = ${d.id}
               `;
               d.status = 'active';
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       const finalScheduledDate = scheduled_date !== undefined
         ? normalizeDateString(scheduled_date)
         : normalizeDateString(existingRecord?.scheduled_date);
-      const finalRoundStartTime = round_start_time !== undefined ? round_start_time : (existingRecord?.round_start_time || null);
+      const finalRoundStartTime = round_start_time !== undefined ? round_start_time : (existingRecord?.round_start_time || '09:00');
       const finalHomeTime = home_fixture_deadline_time || existingRecord?.home_fixture_deadline_time || '17:00';
       const finalAwayTime = away_fixture_deadline_time || existingRecord?.away_fixture_deadline_time || '19:00';
       const finalResultOffset = result_entry_deadline_day_offset !== undefined ? result_entry_deadline_day_offset : (existingRecord?.result_entry_deadline_day_offset || 2);

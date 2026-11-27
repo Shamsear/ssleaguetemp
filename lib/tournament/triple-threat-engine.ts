@@ -1054,7 +1054,7 @@ export function computeAwayLineupDeadline(params: {
     const startTime =
       round_start_time && /^\d{2}:\d{2}$/.test(round_start_time)
         ? round_start_time
-        : home_fixture_deadline_time || (isTripleThreat ? '00:00' : '17:00');
+        : home_fixture_deadline_time || (isTripleThreat ? '09:00' : '17:00');
     const dt = new Date(`${dateStr}T${startTime}:00+05:30`);
     if (!Number.isNaN(dt.getTime())) return dt;
   }

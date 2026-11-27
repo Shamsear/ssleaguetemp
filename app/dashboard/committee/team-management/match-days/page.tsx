@@ -166,8 +166,9 @@ export default function MatchDayManagementPage() {
                   status: 'pending',
                   is_active: false,
                   scheduled_date: null,
+                  round_start_time: '09:00',
                   home_fixture_deadline_time: '17:00',
-                  away_fixture_deadline_time: '17:00',
+                  away_fixture_deadline_time: '19:00',
                   result_entry_deadline_day_offset: 2,
                   result_entry_deadline_time: '00:10',
                 });
@@ -204,7 +205,7 @@ export default function MatchDayManagementPage() {
                         const startTimeStr =
                           deadline.round_start_time && /^\d{2}:\d{2}$/.test(deadline.round_start_time)
                             ? deadline.round_start_time
-                            : '06:00';
+                            : '09:00';
                         const startAt = new Date(`${dStr}T${startTimeStr}:00+05:30`);
                         if (now >= startAt) isPastStartTime = true;
                       }
@@ -642,9 +643,9 @@ export default function MatchDayManagementPage() {
             round_number: rNum,
             leg: rLeg,
             scheduled_date: dateStr,
-            round_start_time: round.round_start_time || '00:00',
+            round_start_time: round.round_start_time || '09:00',
             home_fixture_deadline_time: round.home_fixture_deadline_time || '17:00',
-            away_fixture_deadline_time: round.away_fixture_deadline_time || '17:00',
+            away_fixture_deadline_time: round.away_fixture_deadline_time || '19:00',
             result_entry_deadline_day_offset: round.result_entry_deadline_day_offset || 2,
             result_entry_deadline_time: round.result_entry_deadline_time || '00:10',
             status: (round as any).status || 'pending'
@@ -895,12 +896,12 @@ export default function MatchDayManagementPage() {
                           // Parse deadlines using IST utilities
                           const homeDeadline = createISTDateTime(
                             scheduledDateStr,
-                            round.home_fixture_deadline_time || '23:30'
+                            round.home_fixture_deadline_time || '17:00'
                           );
 
                           const awayDeadline = createISTDateTime(
                             scheduledDateStr,
-                            round.away_fixture_deadline_time || '23:45'
+                            round.away_fixture_deadline_time || '19:00'
                           );
 
                           // Result deadline calculation - add days to the scheduled date
@@ -1060,10 +1061,10 @@ export default function MatchDayManagementPage() {
                                   </div>
                                 )}
                                 <div className="flex items-center gap-1">
-                                  <span className="uppercase text-[9px] px-1 bg-slate-50 border border-slate-200 rounded text-slate-500">HOME:</span> {round.home_fixture_deadline_time || '23:30'}
+                                  <span className="uppercase text-[9px] px-1 bg-slate-50 border border-slate-200 rounded text-slate-500">HOME:</span> {round.home_fixture_deadline_time || '17:00'}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <span className="uppercase text-[9px] px-1 bg-slate-50 border border-slate-200 rounded text-slate-500">AWAY:</span> {round.away_fixture_deadline_time || '23:45'}
+                                  <span className="uppercase text-[9px] px-1 bg-slate-50 border border-slate-200 rounded text-slate-500">AWAY:</span> {round.away_fixture_deadline_time || '19:00'}
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <span className="uppercase text-[9px] px-1 bg-slate-50 border border-slate-200 rounded text-slate-500">RESULT:</span> {(() => {
@@ -1215,12 +1216,12 @@ export default function MatchDayManagementPage() {
 
                       const homeDeadline = createISTDateTime(
                         scheduledDateStr,
-                        round.home_fixture_deadline_time || '23:30'
+                        round.home_fixture_deadline_time || '17:00'
                       );
 
                       const awayDeadline = createISTDateTime(
                         scheduledDateStr,
-                        round.away_fixture_deadline_time || '23:45'
+                        round.away_fixture_deadline_time || '19:00'
                       );
 
                       const [year, month, day] = scheduledDateStr.split('-').map(Number);
@@ -1378,10 +1379,10 @@ export default function MatchDayManagementPage() {
                               </div>
                             )}
                             <div className="flex items-center gap-1">
-                              <span className="uppercase text-[9px] px-1 bg-slate-100 border border-slate-200 rounded text-slate-500">HOME:</span> {round.home_fixture_deadline_time || '23:30'}
+                              <span className="uppercase text-[9px] px-1 bg-slate-100 border border-slate-200 rounded text-slate-500">HOME:</span> {round.home_fixture_deadline_time || '17:00'}
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className="uppercase text-[9px] px-1 bg-slate-100 border border-slate-200 rounded text-slate-500">AWAY:</span> {round.away_fixture_deadline_time || '23:45'}
+                              <span className="uppercase text-[9px] px-1 bg-slate-100 border border-slate-200 rounded text-slate-500">AWAY:</span> {round.away_fixture_deadline_time || '19:00'}
                             </div>
                             <div className="flex items-center gap-1">
                               <span className="uppercase text-[9px] px-1 bg-slate-100 border border-slate-200 rounded text-slate-500">RESULT:</span> {(() => {

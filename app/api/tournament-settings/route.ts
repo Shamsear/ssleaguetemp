@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
         ${tournament_system || 'match_round'},
         ${scoring_type || 'goals'},
         ${home_deadline_time || '17:00'},
-        ${away_deadline_time || '17:00'},
+        ${away_deadline_time || '19:00'},
         ${result_day_offset ?? 2},
         ${result_deadline_time || '00:10'},
         ${has_knockout_stage ?? false},

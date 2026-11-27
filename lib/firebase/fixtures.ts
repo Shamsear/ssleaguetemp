@@ -412,8 +412,8 @@ export async function getRoundDeadlines(
     if (!response.ok) {
       console.error('Failed to fetch round deadlines from Neon');
       return {
-        home_fixture_deadline_time: '23:30',
-        away_fixture_deadline_time: '23:45',
+        home_fixture_deadline_time: '17:00',
+        away_fixture_deadline_time: '19:00',
         result_entry_deadline_day_offset: 2,
         result_entry_deadline_time: '00:10',
       };
@@ -423,8 +423,8 @@ export async function getRoundDeadlines(
 
     if (!roundDeadline) {
       return {
-        home_fixture_deadline_time: '23:30',
-        away_fixture_deadline_time: '23:45',
+        home_fixture_deadline_time: '17:00',
+        away_fixture_deadline_time: '19:00',
         result_entry_deadline_day_offset: 2,
         result_entry_deadline_time: '00:10',
       };
@@ -492,8 +492,9 @@ export async function getFixturesByRoundsWithDeadlines(
           const response = await fetch(`/api/round-deadlines?season_id=${seasonId}&round_number=${round.round_number}&leg=${round.leg}`);
 
           let deadlineData: any = {
-            home_fixture_deadline_time: '23:30',
-            away_fixture_deadline_time: '23:45',
+            round_start_time: '09:00',
+            home_fixture_deadline_time: '17:00',
+            away_fixture_deadline_time: '19:00',
             result_entry_deadline_day_offset: 2,
             result_entry_deadline_time: '00:10',
             status: 'pending',
@@ -515,8 +516,9 @@ export async function getFixturesByRoundsWithDeadlines(
           console.error(`Error fetching deadline for round ${round.round_number}:`, error);
           return {
             ...round,
-            home_fixture_deadline_time: '23:30',
-            away_fixture_deadline_time: '23:45',
+            round_start_time: '09:00',
+            home_fixture_deadline_time: '17:00',
+            away_fixture_deadline_time: '19:00',
             result_entry_deadline_day_offset: 2,
             result_entry_deadline_time: '00:10',
             status: 'pending',

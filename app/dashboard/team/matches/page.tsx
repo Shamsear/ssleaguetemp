@@ -191,8 +191,8 @@ export default function TeamMatchesPage() {
 
           const defaultData = {
             status: 'pending',
-            home_fixture_deadline_time: '23:30',
-            away_fixture_deadline_time: '23:45',
+            home_fixture_deadline_time: '17:00',
+            away_fixture_deadline_time: '19:00',
             result_entry_deadline_day_offset: 2,
             result_entry_deadline_time: '00:10',
           };
@@ -208,8 +208,8 @@ export default function TeamMatchesPage() {
                   roundKey,
                   data: {
                     status: roundDeadline.status || 'pending',
-                    home_fixture_deadline_time: roundDeadline.home_fixture_deadline_time || '23:30',
-                    away_fixture_deadline_time: roundDeadline.away_fixture_deadline_time || '23:45',
+                    home_fixture_deadline_time: roundDeadline.home_fixture_deadline_time || '17:00',
+                    away_fixture_deadline_time: roundDeadline.away_fixture_deadline_time || '19:00',
                     result_entry_deadline_day_offset: roundDeadline.result_entry_deadline_day_offset || 2,
                     result_entry_deadline_time: roundDeadline.result_entry_deadline_time || '00:10',
                     scheduled_date: roundDeadline.scheduled_date,

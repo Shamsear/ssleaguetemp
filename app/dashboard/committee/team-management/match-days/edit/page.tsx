@@ -35,9 +35,9 @@ function EditRoundDeadlinesContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [seasonName, setSeasonName] = useState('');
   
-  const [roundStartTime, setRoundStartTime] = useState('00:00');
+  const [roundStartTime, setRoundStartTime] = useState('09:00');
   const [homeTime, setHomeTime] = useState('17:00');
-  const [awayTime, setAwayTime] = useState('17:00');
+  const [awayTime, setAwayTime] = useState('19:00');
   const [resultDayOffset, setResultDayOffset] = useState(1);
   const [resultTime, setResultTime] = useState('00:10');
   const [scheduledDate, setScheduledDate] = useState('');
@@ -99,9 +99,9 @@ function EditRoundDeadlinesContent() {
       const deadlines = roundDeadline;
       console.log('Loaded deadlines:', deadlines);
       if (deadlines) {
-        setRoundStartTime(deadlines.round_start_time || '00:00');
+        setRoundStartTime(deadlines.round_start_time || '09:00');
         setHomeTime(deadlines.home_fixture_deadline_time || '17:00');
-        setAwayTime(deadlines.away_fixture_deadline_time || '17:00');
+        setAwayTime(deadlines.away_fixture_deadline_time || '19:00');
         setResultDayOffset(deadlines.result_entry_deadline_day_offset || 2);
         setResultTime(deadlines.result_entry_deadline_time || '00:10');
         
@@ -321,7 +321,7 @@ function EditRoundDeadlinesContent() {
                   className="block w-full sm:max-w-xs px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
                   required
                 />
-                <p className="text-[10px] text-slate-500 mt-1 font-mono">Daily IST time when the round auto-starts on its scheduled date (00:00 = 12:00 AM)</p>
+                <p className="text-[10px] text-slate-500 mt-1 font-mono">Daily IST time when the round auto-starts on its scheduled date (09:00 = 9:00 AM)</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

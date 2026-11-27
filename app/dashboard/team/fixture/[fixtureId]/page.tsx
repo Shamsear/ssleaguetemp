@@ -2186,7 +2186,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </Link>
                   ) : !awayLineupSubmitted ? (
                     <p className="text-xs text-slate-500 italic">
-                      Awaiting submission by Away Team (Deadline: {roundDeadlines?.round_start_time || '00:00'} IST).
+                      Awaiting submission by Away Team (Deadline: {roundDeadlines?.round_start_time || '09:00'} IST).
                     </p>
                   ) : null}
                 </div>
@@ -5358,7 +5358,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             : !homeLineupSubmitted
                               ? 'Home team has not submitted their lineup yet.'
                               : !awayLineupSubmitted
-                                ? `Away team lineup is pending (Deadline: ${roundDeadlines?.round_start_time || '00:00'} IST).`
+                                ? `Away team lineup is pending (Deadline: ${roundDeadlines?.round_start_time || '09:00'} IST).`
                                 : 'Generating matchups...'}
                         </p>
                       </div>
