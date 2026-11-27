@@ -105,27 +105,28 @@ export default function CommitteeMatchupCreator({
             console.log('Home lineup data:', homeData);
             console.log('Away lineup data:', awayData);
 
+            const extractId = (item: any): string =>
+                typeof item === 'string' ? item : String(item?.player_id || item?.id || '');
+
             // API returns { success: true, lineups: {...} } for single team
             // lineups can be null if not found, or an object with starting_xi and substitutes
-            if (homeData.lineups && homeData.lineups.starting_xi) {
-                // starting_xi and substitutes are arrays of player IDs (strings)
-                // We need to fetch the full player details to get names
-                const startingIds = homeData.lineups.starting_xi || [];
-                const subIds = homeData.lineups.substitutes || [];
+            if (homeData.lineups && Array.isArray(homeData.lineups.starting_xi) && homeData.lineups.starting_xi.length > 0) {
+                const startingIds = (homeData.lineups.starting_xi || []).map(extractId).filter(Boolean);
+                const subIds = (homeData.lineups.substitutes || []).map(extractId).filter(Boolean);
                 const playerIds = [...startingIds, ...subIds];
 
-                // Fetch player details from player_seasons
+                // Fetch player details from player_seasons (with realplayerstats fallback in API)
                 const playerDetails = await fetchWithTokenRefresh(`/api/player-seasons?team_id=${homeTeamId}&season_id=${seasonId}`)
                     .then(res => res.json())
                     .then(data => data.players || []);
 
                 // Filter to only include players in the lineup and mark their type
                 const players = playerDetails
-                    .filter((p: any) => playerIds.includes(p.player_id))
+                    .filter((p: any) => playerIds.includes(String(p.player_id)))
                     .map((p: any) => ({
                         ...p,
-                        isStarting: startingIds.includes(p.player_id),
-                        isSubstitute: subIds.includes(p.player_id)
+                        isStarting: startingIds.includes(String(p.player_id)),
+                        isSubstitute: subIds.includes(String(p.player_id))
                     }));
 
                 console.log('Home players constructed:', players);
@@ -136,24 +137,23 @@ export default function CommitteeMatchupCreator({
                 setHomeNeedsLineup(true);
             }
 
-            if (awayData.lineups && awayData.lineups.starting_xi) {
-                // starting_xi and substitutes are arrays of player IDs (strings)
-                const startingIds = awayData.lineups.starting_xi || [];
-                const subIds = awayData.lineups.substitutes || [];
+            if (awayData.lineups && Array.isArray(awayData.lineups.starting_xi) && awayData.lineups.starting_xi.length > 0) {
+                const startingIds = (awayData.lineups.starting_xi || []).map(extractId).filter(Boolean);
+                const subIds = (awayData.lineups.substitutes || []).map(extractId).filter(Boolean);
                 const playerIds = [...startingIds, ...subIds];
 
-                // Fetch player details from player_seasons
+                // Fetch player details from player_seasons (with realplayerstats fallback in API)
                 const playerDetails = await fetchWithTokenRefresh(`/api/player-seasons?team_id=${awayTeamId}&season_id=${seasonId}`)
                     .then(res => res.json())
                     .then(data => data.players || []);
 
                 // Filter to only include players in the lineup and mark their type
                 const players = playerDetails
-                    .filter((p: any) => playerIds.includes(p.player_id))
+                    .filter((p: any) => playerIds.includes(String(p.player_id)))
                     .map((p: any) => ({
                         ...p,
-                        isStarting: startingIds.includes(p.player_id),
-                        isSubstitute: subIds.includes(p.player_id)
+                        isStarting: startingIds.includes(String(p.player_id)),
+                        isSubstitute: subIds.includes(String(p.player_id))
                     }));
 
                 console.log('Away players constructed:', players);

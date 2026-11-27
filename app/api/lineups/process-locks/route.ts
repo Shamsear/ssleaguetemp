@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
 
 /**
  * Process lineup locks for fixtures past their deadline
@@ -51,41 +52,40 @@ export async function POST(request: NextRequest) {
         String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
 
       try {
+        // First auto-populate standard 5-player teams before locking
+        if (!isTripleThreat) {
+          await autoPopulateStandardFivePlayerLineups(sql, [
+            {
+              fixture_id,
+              season_id: fixtureSeason,
+              tournament_id: fixture.tournament_id,
+              round_number: fixture.round_number,
+              home_team_id,
+              away_team_id,
+              tournament_type: fixture.tournament_type,
+              matchday_format: fixture.matchday_format,
+              matchup_mode: fixture.matchup_mode,
+            },
+          ]);
+        }
+
         // Lock home team lineup if exists and not already locked
         const homeLineupRows = await sql`SELECT * FROM lineups WHERE fixture_id = ${fixture_id} AND team_id = ${home_team_id} LIMIT 1`;
 
         if (homeLineupRows.length > 0) {
           const homeLineup = homeLineupRows[0];
           if (!homeLineup.is_locked) {
-            await sql`UPDATE lineups SET is_locked = true, locked_at = ${now.toISOString()}, locked_by = 'system', locked_by_name = 'Auto-lock (Deadline)', updated_at = ${now.toISOString()} WHERE fixture_id = ${fixture_id} AND team_id = ${home_team_id}`;
+            await sql`UPDATE lineups SET is_locked = true, locked_at = ${now.toISOString()}, locked_by = 'system', updated_at = ${now.toISOString()} WHERE fixture_id = ${fixture_id} AND team_id = ${home_team_id}`;
             results.push({ team_id: home_team_id, status: 'locked' });
             processedCount++;
           }
         } else if (!isTripleThreat) {
-          // Check if team has exactly 5 players - auto-create lineup with all players
-          const rosterResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/team/${home_team_id}/roster?season_id=${fixtureSeason}`);
-          const rosterData = await rosterResponse.json();
-          
-          let starters: string[] = [];
-          let subs: string[] = [];
-          
-          if (rosterData.success && rosterData.players) {
-            const activePlayers = rosterData.players.filter((p: any) => p.is_active);
-            if (activePlayers.length === 5) {
-              starters = activePlayers.map((p: any) => p.player_id);
-              console.log(`✅ Auto-created lineup for home team ${home_team_id} with 5 players`);
-            }
-          }
-          
-          // No lineup submitted - create locked lineup (empty if not 5 players, auto-filled if exactly 5)
           const lineupId = `lineup_${fixture_id}_${home_team_id}`;
-          await sql`INSERT INTO lineups (id, fixture_id, team_id, season_id, starters, substitutes, is_locked, locked_at, locked_by, locked_by_name, created_at, updated_at, submitted_by, submitted_by_name)
-            VALUES (${lineupId}, ${fixture_id}, ${home_team_id}, ${fixtureSeason || ''}, ${JSON.stringify(starters)}, ${JSON.stringify(subs)}, true, ${now.toISOString()}, 'system', ${starters.length === 5 ? 'Auto-lock (5 Players)' : 'Auto-lock (Deadline - No Submission)'}, ${now.toISOString()}, ${now.toISOString()}, null, null)
+          await sql`INSERT INTO lineups (id, fixture_id, team_id, round_number, season_id, tournament_id, starting_xi, substitutes, is_locked, locked_at, locked_by, is_valid, created_at, updated_at, submitted_by)
+            VALUES (${lineupId}, ${fixture_id}, ${home_team_id}, ${fixture.round_number ?? 1}, ${fixtureSeason || ''}, ${fixture.tournament_id || null}, '[]'::jsonb, '[]'::jsonb, true, ${now.toISOString()}, 'system', false, ${now.toISOString()}, ${now.toISOString()}, 'system')
             ON CONFLICT (id) DO UPDATE SET
-              starters = EXCLUDED.starters, substitutes = EXCLUDED.substitutes,
-              is_locked = true, locked_at = EXCLUDED.locked_at, locked_by = 'system',
-              locked_by_name = EXCLUDED.locked_by_name, updated_at = EXCLUDED.updated_at`;
-          results.push({ team_id: home_team_id, status: starters.length === 5 ? 'locked_auto_5' : 'locked_empty' });
+              is_locked = true, locked_at = EXCLUDED.locked_at, locked_by = 'system', updated_at = EXCLUDED.updated_at`;
+          results.push({ team_id: home_team_id, status: 'locked_empty' });
           processedCount++;
         }
 
@@ -95,35 +95,17 @@ export async function POST(request: NextRequest) {
         if (awayLineupRows.length > 0) {
           const awayLineup = awayLineupRows[0];
           if (!awayLineup.is_locked) {
-            await sql`UPDATE lineups SET is_locked = true, locked_at = ${now.toISOString()}, locked_by = 'system', locked_by_name = 'Auto-lock (Deadline)', updated_at = ${now.toISOString()} WHERE fixture_id = ${fixture_id} AND team_id = ${away_team_id}`;
+            await sql`UPDATE lineups SET is_locked = true, locked_at = ${now.toISOString()}, locked_by = 'system', updated_at = ${now.toISOString()} WHERE fixture_id = ${fixture_id} AND team_id = ${away_team_id}`;
             results.push({ team_id: away_team_id, status: 'locked' });
             processedCount++;
           }
         } else if (!isTripleThreat) {
-          // Check if team has exactly 5 players - auto-create lineup with all players
-          const rosterResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/team/${away_team_id}/roster?season_id=${fixtureSeason}`);
-          const rosterData = await rosterResponse.json();
-          
-          let starters: string[] = [];
-          let subs: string[] = [];
-          
-          if (rosterData.success && rosterData.players) {
-            const activePlayers = rosterData.players.filter((p: any) => p.is_active);
-            if (activePlayers.length === 5) {
-              starters = activePlayers.map((p: any) => p.player_id);
-              console.log(`✅ Auto-created lineup for away team ${away_team_id} with 5 players`);
-            }
-          }
-          
-          // No lineup submitted - create locked lineup (empty if not 5 players, auto-filled if exactly 5)
           const lineupId = `lineup_${fixture_id}_${away_team_id}`;
-          await sql`INSERT INTO lineups (id, fixture_id, team_id, season_id, starters, substitutes, is_locked, locked_at, locked_by, locked_by_name, created_at, updated_at, submitted_by, submitted_by_name)
-            VALUES (${lineupId}, ${fixture_id}, ${away_team_id}, ${fixtureSeason || ''}, ${JSON.stringify(starters)}, ${JSON.stringify(subs)}, true, ${now.toISOString()}, 'system', ${starters.length === 5 ? 'Auto-lock (5 Players)' : 'Auto-lock (Deadline - No Submission)'}, ${now.toISOString()}, ${now.toISOString()}, null, null)
-            ON CONFLICT (fixture_id, team_id) DO UPDATE SET
-              starters = EXCLUDED.starters, substitutes = EXCLUDED.substitutes,
-              is_locked = true, locked_at = EXCLUDED.locked_at, locked_by = 'system',
-              locked_by_name = EXCLUDED.locked_by_name, updated_at = EXCLUDED.updated_at`;
-          results.push({ team_id: away_team_id, status: starters.length === 5 ? 'locked_auto_5' : 'locked_empty' });
+          await sql`INSERT INTO lineups (id, fixture_id, team_id, round_number, season_id, tournament_id, starting_xi, substitutes, is_locked, locked_at, locked_by, is_valid, created_at, updated_at, submitted_by)
+            VALUES (${lineupId}, ${fixture_id}, ${away_team_id}, ${fixture.round_number ?? 1}, ${fixtureSeason || ''}, ${fixture.tournament_id || null}, '[]'::jsonb, '[]'::jsonb, true, ${now.toISOString()}, 'system', false, ${now.toISOString()}, ${now.toISOString()}, 'system')
+            ON CONFLICT (id) DO UPDATE SET
+              is_locked = true, locked_at = EXCLUDED.locked_at, locked_by = 'system', updated_at = EXCLUDED.updated_at`;
+          results.push({ team_id: away_team_id, status: 'locked_empty' });
           processedCount++;
         }
 

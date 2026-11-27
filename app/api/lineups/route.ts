@@ -5,7 +5,8 @@ import {
   validateLineup,
   isLineupEditable,
   generateLineupId,
-  hasSubmittedLineup
+  hasSubmittedLineup,
+  autoPopulateStandardFivePlayerLineups
 } from '@/lib/lineup-validation';
 import { buildTripleThreatMatchups } from '@/lib/tournament/triple-threat-engine';
 
@@ -29,10 +30,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Auto-create default team lineups ONLY for standard (non-Triple Threat) tournaments
+    // Auto-create default 5-player team lineups ONLY for standard (non-Triple Threat, non-blind_lineup) tournaments
     try {
       const fixtureRes = await sql`
-        SELECT f.id, f.season_id, f.round_number, f.tournament_id, f.home_team_id, f.away_team_id,
+        SELECT f.id as fixture_id, f.season_id, f.round_number, f.tournament_id,
+               f.home_team_id, f.away_team_id, f.matchup_mode,
                t.tournament_type, ts.matchday_format
         FROM fixtures f
         LEFT JOIN tournaments t ON f.tournament_id = t.id
@@ -40,85 +42,8 @@ export async function GET(request: NextRequest) {
         WHERE f.id = ${fixtureId}
         LIMIT 1
       `;
-      const isTripleThreatFixture =
-        fixtureRes.length > 0 &&
-        (fixtureRes[0].tournament_type === 'triple_threat' ||
-          fixtureRes[0].matchday_format === 'triple_threat' ||
-          String(fixtureRes[0].tournament_id || '').toLowerCase().includes('triple_threat'));
-
-      if (fixtureRes.length > 0 && !isTripleThreatFixture) {
-        const fix = fixtureRes[0];
-        const teamsToEnsure = [fix.home_team_id, fix.away_team_id].filter((id: any) => id && id !== 'TBD' && id !== 'bye'
-        );
-
-        for (const tid of teamsToEnsure) {
-          const existing = await sql`
-            SELECT id FROM lineups
-            WHERE fixture_id = ${fixtureId} AND team_id = ${tid}
-            LIMIT 1
-          `;
-          if (existing.length === 0) {
-            let players = await sql`
-              SELECT player_id, player_name, category
-              FROM player_seasons
-              WHERE team_id = ${tid} AND season_id = ${fix.season_id} AND registration_status = 'active'
-              ORDER BY player_name ASC
-            `;
-            if (players.length === 0) {
-              players = await sql`
-                SELECT player_id, player_name, category
-                FROM realplayerstats
-                WHERE team_id = ${tid} AND season_id = ${fix.season_id}
-                ORDER BY player_name ASC
-              `;
-            }
-
-            const startingXi = players.map((p: any) => ({
-              player_id: String(p.player_id),
-              player_name: p.player_name,
-              category: p.category || 'realplayer'
-            }));
-
-            const lineupId = generateLineupId(fixtureId, tid);
-
-            await sql`
-              INSERT INTO lineups (
-                id,
-                fixture_id,
-                team_id,
-                round_number,
-                season_id,
-                tournament_id,
-                starting_xi,
-                substitutes,
-                classic_player_count,
-                is_valid,
-                validation_errors,
-                submitted_by,
-                submitted_at,
-                created_at,
-                updated_at
-              ) VALUES (
-                ${lineupId},
-                ${fixtureId},
-                ${tid},
-                ${fix.round_number},
-                ${fix.season_id},
-                ${fix.tournament_id},
-                ${JSON.stringify(startingXi)},
-                '[]'::jsonb,
-                0,
-                true,
-                '[]'::jsonb,
-                'system_auto',
-                NOW(),
-                NOW(),
-                NOW()
-              )
-              ON CONFLICT (id) DO NOTHING
-            `;
-          }
-        }
+      if (fixtureRes.length > 0) {
+        await autoPopulateStandardFivePlayerLineups(sql, fixtureRes as any[]);
       }
     } catch (autoErr) {
       console.error('Error auto-creating default lineups:', autoErr);
@@ -193,12 +118,16 @@ export async function GET(request: NextRequest) {
       // Attach substitutions and sort starting_xi by category priority
       lineups = lineups.map((l: any) => {
         let startingXi = Array.isArray(l.starting_xi) ? [...l.starting_xi] : [];
-        startingXi.sort((a: any, b: any) => {
-          const pA = getCategoryPriority(a.category);
-          const pB = getCategoryPriority(b.category);
-          if (pA !== pB) return pA - pB;
-          return (a.player_name || a.name || '').localeCompare(b.player_name || b.name || '');
-        });
+        if (startingXi.some((item: any) => item && typeof item === 'object' && (item.category || item.player_name || item.name))) {
+          startingXi.sort((a: any, b: any) => {
+            const pA = typeof a === 'object' ? getCategoryPriority(a?.category) : 99;
+            const pB = typeof b === 'object' ? getCategoryPriority(b?.category) : 99;
+            if (pA !== pB) return pA - pB;
+            const nameA = typeof a === 'object' ? (a?.player_name || a?.name || '') : '';
+            const nameB = typeof b === 'object' ? (b?.player_name || b?.name || '') : '';
+            return nameA.localeCompare(nameB);
+          });
+        }
 
         return {
           ...l,

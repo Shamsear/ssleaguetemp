@@ -57,7 +57,15 @@ export default function LineupStatusWidget({ teamId, seasonId }: LineupStatusWid
           const lineupRes = await fetch(`/api/lineups?fixture_id=${fixture.id}&team_id=${teamId}`);
           const lineupData = await lineupRes.json();
 
-          const hasLineup = lineupData.success && lineupData.lineups;
+          const hasLineup = Boolean(
+            lineupData.success &&
+            lineupData.lineups &&
+            !lineupData.lineups.is_draft &&
+            Array.isArray(lineupData.lineups.starting_xi) &&
+            lineupData.lineups.starting_xi.length >= 5 &&
+            ((fixture as any).tournament_type !== 'triple_threat' ||
+              (lineupData.lineups.submitted_by !== 'system_auto' && lineupData.lineups.triple_threat_lineup))
+          );
           const isLocked = hasLineup ? lineupData.lineups.is_locked : false;
 
           // Check deadline
@@ -69,7 +77,9 @@ export default function LineupStatusWidget({ teamId, seasonId }: LineupStatusWid
             hasLineup,
             isLocked,
             deadline: editableData.deadline,
-            isUserHomeTeam: fixture.home_team_name === teamId
+            isUserHomeTeam: (fixture as any).home_team_id
+              ? (fixture as any).home_team_id === teamId
+              : fixture.home_team_name === teamId
           };
         } catch (err) {
           console.error(`Error checking lineup for fixture ${fixture.id}:`, err);

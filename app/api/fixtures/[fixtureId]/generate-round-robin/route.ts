@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { verifyAuth } from '@/lib/auth-helper';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
 
 /**
  * POST - Manually generate round robin matchups for a fixture
@@ -47,6 +48,19 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    // Auto-populate 5-player standard squads if lineups haven't been manually created yet
+    await autoPopulateStandardFivePlayerLineups(sql, [
+      {
+        fixture_id: fixture.id,
+        season_id: fixture.season_id,
+        tournament_id: fixture.tournament_id,
+        round_number: fixture.round_number,
+        home_team_id: fixture.home_team_id,
+        away_team_id: fixture.away_team_id,
+        matchup_mode: fixture.matchup_mode,
+      },
+    ]);
     
     // Check if both lineups exist in the lineups table
     const homeLineups = await sql`
@@ -85,9 +99,12 @@ export async function POST(
       );
     }
     
-    // Get the 5 starting players from each team (starting_xi array)
-    const homePlayerIds = homeLineup.starting_xi || [];
-    const awayPlayerIds = awayLineup.starting_xi || [];
+    const extractId = (item: any): string =>
+      typeof item === 'string' ? item : String(item?.player_id || item?.id || '');
+
+    // Get the 5 starting players from each team (supports both string IDs and legacy object entries)
+    const homePlayerIds = (homeLineup.starting_xi || []).map(extractId).filter(Boolean);
+    const awayPlayerIds = (awayLineup.starting_xi || []).map(extractId).filter(Boolean);
     
     if (homePlayerIds.length < 5 || awayPlayerIds.length < 5) {
       return NextResponse.json(
@@ -99,24 +116,22 @@ export async function POST(
       );
     }
     
-    // Get player names from player_seasons table
+    // Get player names from player_seasons with fallback to realplayerstats
     const allPlayerIds = [...homePlayerIds.slice(0, 5), ...awayPlayerIds.slice(0, 5)];
-    const seasonNum = parseInt(fixture.season_id.replace(/\D/g, '')) || 0;
-    const isModern = seasonNum === 16 || seasonNum === 17;
-
-    const players = isModern
-      ? await sql`
-          SELECT player_id, player_name 
-          FROM player_seasons 
-          WHERE player_id = ANY(${allPlayerIds})
-          AND season_id = ${fixture.season_id}
-        `
-      : await sql`
-          SELECT player_id, player_name 
-          FROM realplayerstats 
-          WHERE player_id = ANY(${allPlayerIds})
-          AND season_id = ${fixture.season_id}
-        `;
+    let players = await sql`
+      SELECT player_id, player_name 
+      FROM player_seasons 
+      WHERE player_id = ANY(${allPlayerIds})
+      AND season_id = ${fixture.season_id}
+    `;
+    if (players.length === 0) {
+      players = await sql`
+        SELECT player_id, player_name 
+        FROM realplayerstats 
+        WHERE player_id = ANY(${allPlayerIds})
+        AND season_id = ${fixture.season_id}
+      `;
+    }
     
     // Create a map of player_id to player_name
     const playerMap = new Map(players.map((p: any) => [p.player_id, p.player_name]));

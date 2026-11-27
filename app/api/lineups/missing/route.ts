@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
 
 /**
  * GET - Get fixtures with missing lineups for a round
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const fixtures = await sql`
       SELECT 
         f.id as fixture_id,
+        f.season_id,
         f.tournament_id,
         f.home_team_id,
         f.away_team_id,
@@ -32,6 +34,7 @@ export async function GET(request: NextRequest) {
         f.away_team_name,
         f.round_number,
         f.match_number,
+        f.matchup_mode,
         rd.scheduled_date,
         rd.home_fixture_deadline_time,
         t.tournament_type,
@@ -55,10 +58,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Ensure 5-player teams in standard non-blind fixtures are auto-populated
+    await autoPopulateStandardFivePlayerLineups(sql, fixtures as any[]);
+
     // Get all genuine submitted lineups for these fixtures
     const fixtureIds = fixtures.map((f: any) => f.fixture_id);
     const lineups = await sql`
-      SELECT fixture_id, team_id, is_valid, warning_given, submitted_by, is_draft, triple_threat_lineup
+      SELECT fixture_id, team_id, starting_xi, is_valid, warning_given, submitted_by, is_draft, triple_threat_lineup
       FROM lineups
       WHERE fixture_id = ANY(${fixtureIds})
     `;
@@ -72,7 +78,7 @@ export async function GET(request: NextRequest) {
       if (isTT) {
         return lineup.submitted_by !== 'system_auto' && Boolean(lineup.triple_threat_lineup);
       }
-      return true;
+      return Array.isArray(lineup.starting_xi) && lineup.starting_xi.length >= 5;
     };
 
     // Build missing lineups list

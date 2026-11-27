@@ -60,14 +60,18 @@ export default function LineupSubmission({
   // Separate useEffect for loading existing lineup
   useEffect(() => {
     if (existingLineup) {
+      const toId = (item: any) =>
+        typeof item === 'string' ? item : String(item?.player_id || item?.id || '');
+      const normalizedXI = (existingLineup.starting_xi || []).map(toId).filter(Boolean);
+      const normalizedSubs = (existingLineup.substitutes || []).map(toId).filter(Boolean);
       console.log('📋 Loading existing lineup:', {
-        starting_xi: existingLineup.starting_xi,
-        substitutes: existingLineup.substitutes,
-        starting_xi_length: existingLineup.starting_xi?.length,
-        substitutes_length: existingLineup.substitutes?.length
+        starting_xi: normalizedXI,
+        substitutes: normalizedSubs,
+        starting_xi_length: normalizedXI.length,
+        substitutes_length: normalizedSubs.length
       });
-      setStartingXI(existingLineup.starting_xi || []);
-      setSubstitutes(existingLineup.substitutes || []);
+      setStartingXI(normalizedXI);
+      setSubstitutes(normalizedSubs);
       console.log('✅ State updated with existing lineup');
     }
   }, [existingLineup]);
@@ -131,7 +135,11 @@ export default function LineupSubmission({
         setRoster(activePlayers);
         
         // Auto-select and auto-submit for teams with exactly 5 players (no choice needed)
-        if (activePlayers.length === 5 && !existingLineup) {
+        const hasExistingPlayers =
+          existingLineup &&
+          Array.isArray(existingLineup.starting_xi) &&
+          existingLineup.starting_xi.length >= 5;
+        if (activePlayers.length === 5 && !hasExistingPlayers) {
           const allPlayerIds = activePlayers.map((p: any) => p.player_id);
           setStartingXI(allPlayerIds);
           setSubstitutes([]);

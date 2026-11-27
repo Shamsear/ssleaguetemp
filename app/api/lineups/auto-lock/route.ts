@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
 
 /**
  * Auto-lock lineups for a specific fixture if deadline has passed
@@ -54,6 +55,24 @@ export async function POST(request: NextRequest) {
       fixture.tournament_type === 'triple_threat' ||
       fixture.matchday_format === 'triple_threat' ||
       String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+
+    // Standard non-blind 5-player teams don't need to wait for deadline to auto-populate their 5-player lineup
+    let autoPopulatedBeforeDeadline = 0;
+    if (!isTripleThreat) {
+      autoPopulatedBeforeDeadline = await autoPopulateStandardFivePlayerLineups(sql, [
+        {
+          fixture_id: fixture.id,
+          season_id: fixture.season_id,
+          tournament_id: fixture.tournament_id,
+          round_number: fixture.round_number,
+          home_team_id: fixture.home_team_id,
+          away_team_id: fixture.away_team_id,
+          tournament_type: fixture.tournament_type,
+          matchday_format: fixture.matchday_format,
+          matchup_mode: fixture.matchup_mode,
+        },
+      ]);
+    }
     
     // Get round deadlines to calculate the actual deadline
     const roundDeadlines = await sql`
@@ -96,6 +115,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Round not started yet',
         locked: false,
+        auto_populated: autoPopulatedBeforeDeadline,
         round_start: roundStartDeadline.toISOString(),
         now: now.toISOString()
       });

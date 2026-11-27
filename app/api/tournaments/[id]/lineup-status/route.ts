@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
 
 export async function GET(
   request: NextRequest,
@@ -23,6 +24,33 @@ export async function GET(
           tourRows[0].matchday_format === 'triple_threat')) ||
       tournamentId.toLowerCase().includes('triple_threat');
 
+    // Ensure standard 5-player teams in non-Triple Threat, non-blind_lineup tournaments have lineups auto-populated
+    if (!isTripleThreat) {
+      const pendingFixtures = await sql`
+        SELECT
+          id as fixture_id,
+          season_id,
+          tournament_id,
+          round_number,
+          home_team_id,
+          away_team_id,
+          matchup_mode
+        FROM fixtures
+        WHERE tournament_id = ${tournamentId}
+          AND status IN ('scheduled', 'in_progress')
+      `;
+      if (pendingFixtures.length > 0) {
+        await autoPopulateStandardFivePlayerLineups(
+          sql,
+          pendingFixtures.map((f: any) => ({
+            ...f,
+            tournament_type: tourRows[0]?.tournament_type ?? null,
+            matchday_format: tourRows[0]?.matchday_format ?? null,
+          }))
+        );
+      }
+    }
+
     // Get all fixtures for the tournament with lineup status
     const fixtures = await sql`
       SELECT 
@@ -38,24 +66,25 @@ export async function GET(
         f.leg,
         f.group_name,
         f.knockout_round,
-        -- Check if home team has submitted a real lineup (ignore system_auto stubs and drafts)
+        -- Triple Threat excludes system_auto and requires triple_threat_lineup; standard includes valid system_auto (>= 5 players)
         EXISTS(
           SELECT 1 FROM lineups l
           WHERE l.fixture_id = f.id 
             AND l.team_id = f.home_team_id
             AND l.submitted_at IS NOT NULL
-            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND (${!isTripleThreat} OR COALESCE(l.submitted_by, '') <> 'system_auto')
             AND COALESCE(l.is_draft, false) = false
+            AND jsonb_array_length(COALESCE(l.starting_xi, '[]'::jsonb)) >= 5
             AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
         ) as home_lineup_submitted,
-        -- Check if away team has submitted a real lineup (ignore system_auto stubs and drafts)
         EXISTS(
           SELECT 1 FROM lineups l
           WHERE l.fixture_id = f.id 
             AND l.team_id = f.away_team_id
             AND l.submitted_at IS NOT NULL
-            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND (${!isTripleThreat} OR COALESCE(l.submitted_by, '') <> 'system_auto')
             AND COALESCE(l.is_draft, false) = false
+            AND jsonb_array_length(COALESCE(l.starting_xi, '[]'::jsonb)) >= 5
             AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
         ) as away_lineup_submitted,
         -- Count home team lineup players
@@ -64,7 +93,7 @@ export async function GET(
           FROM lineups l
           WHERE l.fixture_id = f.id 
             AND l.team_id = f.home_team_id
-            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND (${!isTripleThreat} OR COALESCE(l.submitted_by, '') <> 'system_auto')
             AND COALESCE(l.is_draft, false) = false
             AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
           LIMIT 1
@@ -75,7 +104,7 @@ export async function GET(
           FROM lineups l
           WHERE l.fixture_id = f.id 
             AND l.team_id = f.away_team_id
-            AND COALESCE(l.submitted_by, '') <> 'system_auto'
+            AND (${!isTripleThreat} OR COALESCE(l.submitted_by, '') <> 'system_auto')
             AND COALESCE(l.is_draft, false) = false
             AND (${!isTripleThreat} OR l.triple_threat_lineup IS NOT NULL)
           LIMIT 1

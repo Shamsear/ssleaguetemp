@@ -525,10 +525,228 @@ export async function hasSubmittedLineup(
     FROM lineups
     WHERE fixture_id = ${fixtureId}
     AND team_id = ${teamId}
+    AND COALESCE(is_draft, false) = false
+    AND jsonb_array_length(COALESCE(starting_xi, '[]'::jsonb)) >= 5
     LIMIT 1
   `;
 
   return result.length > 0;
+}
+
+export interface StandardLineupFixtureInput {
+  fixture_id: string;
+  season_id: string;
+  tournament_id?: string | null;
+  round_number?: number | null;
+  home_team_id?: string | null;
+  away_team_id?: string | null;
+  tournament_type?: string | null;
+  matchday_format?: string | null;
+  matchup_mode?: string | null;
+}
+
+/**
+ * Batch auto-populate lineups for standard (non-Triple Threat, non-blind_lineup)
+ * fixtures whenever a team has an exact 5-player active squad (min/max = 5)
+ * and no valid lineup (or an empty system_auto stub) exists yet.
+ */
+export async function autoPopulateStandardFivePlayerLineups(
+  sql: ReturnType<typeof getTournamentDb>,
+  fixtures: StandardLineupFixtureInput[]
+): Promise<number> {
+  const eligibleFixtures = fixtures.filter((f) => {
+    const isTT =
+      f.tournament_type === 'triple_threat' ||
+      f.matchday_format === 'triple_threat' ||
+      String(f.tournament_id || '').toLowerCase().includes('triple_threat');
+    if (isTT) return false;
+    if (f.matchup_mode === 'blind_lineup') return false;
+    return Boolean(f.fixture_id && f.season_id);
+  });
+
+  if (eligibleFixtures.length === 0) return 0;
+
+  const fixtureIds = Array.from(new Set(eligibleFixtures.map((f) => f.fixture_id)));
+  const existingRows = await sql`
+    SELECT fixture_id, team_id, starting_xi, submitted_by, is_draft
+    FROM lineups
+    WHERE fixture_id = ANY(${fixtureIds})
+  `;
+
+  const existingMap = new Map<string, any>();
+  existingRows.forEach((row: any) => {
+    existingMap.set(`${row.fixture_id}::${row.team_id}`, row);
+  });
+
+  const pendingSlots: Array<{
+    fixture: StandardLineupFixtureInput;
+    teamId: string;
+    side: 'home' | 'away';
+  }> = [];
+
+  const isInvalidTeamId = (id?: string | null) =>
+    !id || id === 'TBD' || id === 'bye';
+
+  for (const fix of eligibleFixtures) {
+    const candidates: Array<{ teamId?: string | null; side: 'home' | 'away' }> = [
+      { teamId: fix.home_team_id, side: 'home' },
+      { teamId: fix.away_team_id, side: 'away' },
+    ];
+
+    for (const c of candidates) {
+      if (isInvalidTeamId(c.teamId)) continue;
+      const tid = String(c.teamId);
+      const existing = existingMap.get(`${fix.fixture_id}::${tid}`);
+      const hasPlayers =
+        existing &&
+        Array.isArray(existing.starting_xi) &&
+        existing.starting_xi.length > 0;
+      const isEmptySystemAutoStub =
+        existing &&
+        existing.submitted_by === 'system_auto' &&
+        (!Array.isArray(existing.starting_xi) || existing.starting_xi.length === 0);
+
+      if (!existing || isEmptySystemAutoStub) {
+        pendingSlots.push({ fixture: fix, teamId: tid, side: c.side });
+      } else if (!hasPlayers && !existing.is_draft) {
+        // Real row exists without players - leave untouched
+      }
+    }
+  }
+
+  if (pendingSlots.length === 0) return 0;
+
+  // Group roster lookups by season_id so we only issue 2 SQL queries per season
+  const teamIdsBySeason = new Map<string, Set<string>>();
+  for (const slot of pendingSlots) {
+    if (!teamIdsBySeason.has(slot.fixture.season_id)) {
+      teamIdsBySeason.set(slot.fixture.season_id, new Set());
+    }
+    teamIdsBySeason.get(slot.fixture.season_id)!.add(slot.teamId);
+  }
+
+  const playersBySeasonTeam = new Map<string, string[]>();
+
+  for (const [seasonId, teamSet] of teamIdsBySeason.entries()) {
+    const teamIds = Array.from(teamSet);
+    const psRows = await sql`
+      SELECT team_id, player_id
+      FROM player_seasons
+      WHERE season_id = ${seasonId}
+        AND team_id = ANY(${teamIds})
+        AND registration_status = 'active'
+      ORDER BY player_name ASC
+    `;
+
+    const psFoundTeams = new Set<string>();
+    psRows.forEach((r: any) => {
+      const tid = String(r.team_id);
+      psFoundTeams.add(tid);
+      const key = `${seasonId}::${tid}`;
+      if (!playersBySeasonTeam.has(key)) playersBySeasonTeam.set(key, []);
+      playersBySeasonTeam.get(key)!.push(String(r.player_id));
+    });
+
+    const missingTeams = teamIds.filter((tid) => !psFoundTeams.has(tid));
+    if (missingTeams.length > 0) {
+      const rpsRows = await sql`
+        SELECT team_id, player_id
+        FROM realplayerstats
+        WHERE season_id = ${seasonId}
+          AND team_id = ANY(${missingTeams})
+        ORDER BY player_name ASC
+      `;
+      rpsRows.forEach((r: any) => {
+        const tid = String(r.team_id);
+        const key = `${seasonId}::${tid}`;
+        if (!playersBySeasonTeam.has(key)) playersBySeasonTeam.set(key, []);
+        playersBySeasonTeam.get(key)!.push(String(r.player_id));
+      });
+    }
+  }
+
+  let populatedCount = 0;
+
+  for (const slot of pendingSlots) {
+    const { fixture, teamId } = slot;
+    const playerIds = playersBySeasonTeam.get(`${fixture.season_id}::${teamId}`) || [];
+    if (playerIds.length !== 5) continue;
+
+    const lineupId = generateLineupId(fixture.fixture_id, teamId);
+    const jsonStartingXI = JSON.stringify(playerIds);
+
+    await sql`
+      INSERT INTO lineups (
+        id,
+        fixture_id,
+        team_id,
+        round_number,
+        season_id,
+        tournament_id,
+        starting_xi,
+        substitutes,
+        classic_player_count,
+        is_valid,
+        validation_errors,
+        is_draft,
+        submitted_by,
+        submitted_at,
+        created_at,
+        updated_at
+      ) VALUES (
+        ${lineupId},
+        ${fixture.fixture_id},
+        ${teamId},
+        ${fixture.round_number ?? 1},
+        ${fixture.season_id},
+        ${fixture.tournament_id || null},
+        ${jsonStartingXI}::jsonb,
+        '[]'::jsonb,
+        0,
+        true,
+        '[]'::jsonb,
+        false,
+        'system_auto',
+        NOW(),
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        starting_xi = EXCLUDED.starting_xi,
+        substitutes = '[]'::jsonb,
+        is_valid = true,
+        validation_errors = '[]'::jsonb,
+        is_draft = false,
+        submitted_at = COALESCE(lineups.submitted_at, NOW()),
+        updated_at = NOW()
+      WHERE lineups.submitted_by = 'system_auto'
+        AND (lineups.starting_xi IS NULL OR jsonb_array_length(lineups.starting_xi) = 0)
+    `;
+
+    try {
+      if (slot.side === 'home') {
+        await sql`
+          UPDATE fixtures
+          SET home_lineup_submitted = true,
+              home_lineup_submitted_at = COALESCE(home_lineup_submitted_at, NOW())
+          WHERE id = ${fixture.fixture_id}
+        `;
+      } else {
+        await sql`
+          UPDATE fixtures
+          SET away_lineup_submitted = true,
+              away_lineup_submitted_at = COALESCE(away_lineup_submitted_at, NOW())
+          WHERE id = ${fixture.fixture_id}
+        `;
+      }
+    } catch {
+      // Non-critical if flag update is skipped
+    }
+
+    populatedCount++;
+  }
+
+  return populatedCount;
 }
 
 /**

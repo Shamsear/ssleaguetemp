@@ -828,9 +828,12 @@ export async function GET(
         });
       }
 
-      // The lineups table has starting_xi and substitutes arrays with player IDs
-      // We need to fetch player names from the players table
-      const playerIds = [...(lineup.starting_xi || []), ...(lineup.substitutes || [])];
+      // Standard lineup: handle both plain string IDs and legacy { player_id } objects
+      const extractStdId = (item: any): string =>
+        typeof item === 'string' ? item.trim() : String(item?.player_id || item?.id || '').trim();
+      const rawStartingIds = (lineup.starting_xi || []).map(extractStdId).filter(Boolean);
+      const rawSubIds = (lineup.substitutes || []).map(extractStdId).filter(Boolean);
+      const playerIds = [...rawStartingIds, ...rawSubIds];
 
       if (playerIds.length === 0) {
         return NextResponse.json(
@@ -839,32 +842,37 @@ export async function GET(
         );
       }
 
-      // Fetch player names
-      const seasonNum = parseInt(lineup.season_id.replace(/\D/g, '')) || 0;
-      const isModern = seasonNum === 16 || seasonNum === 17;
-
-      const players = isModern
-        ? await sql`
-            SELECT player_id, player_name 
-            FROM player_seasons 
-            WHERE player_id = ANY(${playerIds})
-            AND season_id = ${lineup.season_id}
-          `
-        : await sql`
-            SELECT player_id, player_name 
-            FROM realplayerstats 
-            WHERE player_id = ANY(${playerIds})
-            AND season_id = ${lineup.season_id}
-          `;
+      // Fetch player names from player_seasons with fallback to realplayerstats
+      let players = await sql`
+        SELECT player_id, player_name 
+        FROM player_seasons 
+        WHERE player_id = ANY(${playerIds})
+        AND season_id = ${lineup.season_id}
+      `;
+      if (players.length === 0) {
+        players = await sql`
+          SELECT player_id, player_name 
+          FROM realplayerstats 
+          WHERE player_id = ANY(${playerIds})
+          AND season_id = ${lineup.season_id}
+        `;
+      }
 
       // Create a map of player_id to player_name
-      const playerMap = new Map(players.map((p: any) => [p.player_id, p.player_name]));
+      const playerMap = new Map<string, string>(
+        players.map((p: any) => [String(p.player_id), String(p.player_name || 'Unknown Player')])
+      );
 
       // Format the lineup with player names
-      const formattedLineup = [];
+      const formattedLineup: Array<{
+        player_id: string;
+        player_name: string;
+        position: number;
+        is_substitute: boolean;
+      }> = [];
       
       // Add starting XI
-      (lineup.starting_xi || []).forEach((playerId: string, index: number) => {
+      rawStartingIds.forEach((playerId: string, index: number) => {
         formattedLineup.push({
           player_id: playerId,
           player_name: playerMap.get(playerId) || 'Unknown Player',
@@ -874,11 +882,11 @@ export async function GET(
       });
 
       // Add substitutes
-      (lineup.substitutes || []).forEach((playerId: string, index: number) => {
+      rawSubIds.forEach((playerId: string, index: number) => {
         formattedLineup.push({
           player_id: playerId,
           player_name: playerMap.get(playerId) || 'Unknown Player',
-          position: (lineup.starting_xi?.length || 0) + index + 1,
+          position: rawStartingIds.length + index + 1,
           is_substitute: true,
         });
       });
