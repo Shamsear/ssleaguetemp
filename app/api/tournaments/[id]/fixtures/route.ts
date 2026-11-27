@@ -330,7 +330,7 @@ export async function GET(
       SELECT *
       FROM fixtures
       WHERE tournament_id = ${tournamentId}
-      ORDER BY round_number ASC, match_number ASC
+      ORDER BY round_number ASC, COALESCE(group_name, 'ZZZ') ASC, match_number ASC
     `;
 
     // Fetch team logos from Neon Main database (where teams and team_seasons reside)

@@ -1569,24 +1569,61 @@ export function TournamentDashboardPageContent() {
     ? Math.max(...fixturesForSelectedTournament.map(f => f.round_number || 0))
     : 14;
 
+  const getFixtureGroupCode = (fixture: any) =>
+    normalizeGroupCode(fixture.group_name || fixture.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1]);
+
   // Extract available groups for the selected tournament
   const availableGroups = Array.from(
     new Set(
       fixturesForSelectedTournament
-        .map(f => normalizeGroupCode(f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1]))
+        .map(getFixtureGroupCode)
         .filter(Boolean)
     )
   ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) as string[];
 
-  // Filter fixtures by selected round and group
-  const filteredFixtures = fixturesForSelectedTournament.filter(f => {
-    const roundMatch = selectedRound === 0 || f.round_number === selectedRound;
-    const fixtureGroup = normalizeGroupCode(f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1]);
-    const groupMatch = selectedGroup === 'all' || !selectedGroup || (
-      Boolean(fixtureGroup) && fixtureGroup === normalizeGroupCode(selectedGroup)
-    );
-    return roundMatch && groupMatch;
-  });
+  // Filter fixtures by selected round and group, ordered consistently by round -> group -> match_number
+  const filteredFixtures = fixturesForSelectedTournament
+    .filter(f => {
+      const roundMatch = selectedRound === 0 || f.round_number === selectedRound;
+      const fixtureGroup = getFixtureGroupCode(f);
+      const groupMatch = selectedGroup === 'all' || !selectedGroup || (
+        Boolean(fixtureGroup) && fixtureGroup === normalizeGroupCode(selectedGroup)
+      );
+      return roundMatch && groupMatch;
+    })
+    .sort((a, b) => {
+      if ((a.round_number || 0) !== (b.round_number || 0)) {
+        return (a.round_number || 0) - (b.round_number || 0);
+      }
+      const ga = getFixtureGroupCode(a) || 'ZZZ';
+      const gb = getFixtureGroupCode(b) || 'ZZZ';
+      if (ga !== gb) return ga.localeCompare(gb, undefined, { numeric: true });
+      return (a.match_number || 0) - (b.match_number || 0);
+    });
+
+  const shouldGroupFixturesByGroup = availableGroups.length > 0 && selectedGroup === 'all';
+  const fixtureSections = (() => {
+    if (!shouldGroupFixturesByGroup) {
+      return [{ key: 'all', title: null as string | null, items: filteredFixtures }];
+    }
+    const buckets = new Map<string, any[]>();
+    for (const fixture of filteredFixtures) {
+      const code = getFixtureGroupCode(fixture) || 'OTHER';
+      if (!buckets.has(code)) buckets.set(code, []);
+      buckets.get(code)!.push(fixture);
+    }
+    return Array.from(buckets.entries())
+      .sort(([a], [b]) => {
+        if (a === 'OTHER') return 1;
+        if (b === 'OTHER') return -1;
+        return a.localeCompare(b, undefined, { numeric: true });
+      })
+      .map(([code, items]) => ({
+        key: code,
+        title: code === 'OTHER' ? 'Knockout / Other Matches' : `Group ${code}`,
+        items,
+      }));
+  })();
 
   return (
     <AuthGuard requiredRole="committee_admin">
@@ -2950,9 +2987,24 @@ export function TournamentDashboardPageContent() {
                   )}
                 </div>
 
-                {/* Fixture Cards List */}
-                <div className="space-y-3">
-                  {filteredFixtures.map((fixture: any) => {
+                {/* Fixture Cards List (grouped cleanly when viewing All Groups) */}
+                <div className="space-y-5">
+                  {fixtureSections.map((section) => (
+                    <div key={section.key} className="space-y-3">
+                      {section.title && (
+                        <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-100/90 border border-slate-200/90">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-600" />
+                            <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">
+                              {section.title}
+                            </h4>
+                          </div>
+                          <span className="text-[11px] font-mono font-bold text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
+                            {section.items.length} {section.items.length === 1 ? 'match' : 'matches'}
+                          </span>
+                        </div>
+                      )}
+                      {section.items.map((fixture: any) => {
                     const isHomeWinner = fixture.result === 'home_win';
                     const isAwayWinner = fixture.result === 'away_win';
                     const isCompleted = fixture.status === 'completed';
@@ -3124,6 +3176,8 @@ export function TournamentDashboardPageContent() {
                       </div>
                     );
                   })}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
