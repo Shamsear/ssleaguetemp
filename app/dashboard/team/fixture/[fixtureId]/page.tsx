@@ -238,6 +238,8 @@ export default function FixturePage() {
   // Lineup submission tracking
   const [homeLineupSubmitted, setHomeLineupSubmitted] = useState(false);
   const [awayLineupSubmitted, setAwayLineupSubmitted] = useState(false);
+  const [homeTTLineup, setHomeTTLineup] = useState<any>(null);
+  const [awayTTLineup, setAwayTTLineup] = useState<any>(null);
   const [isPastAwaySubmissionDeadline, setIsPastAwaySubmissionDeadline] = useState(false);
   const [lineupDeadline, setLineupDeadline] = useState<Date | null>(null);
   const [canSubmitLineup, setCanSubmitLineup] = useState(false);
@@ -770,23 +772,33 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
           let homeStarting: any[] = [];
           let homeLineupValid = false;
+          let homeTT: any = null;
           if (homeLineupRes.ok) {
             const hData = await homeLineupRes.json();
             homeLineupValid = isRealSubmittedLineup(hData, isTTFixture);
             if (homeLineupValid && hData.lineups?.starting_xi?.length > 0) {
               homeStarting = hData.lineups.starting_xi;
             }
+            if (homeLineupValid && hData.lineups?.triple_threat_lineup) {
+              homeTT = hData.lineups.triple_threat_lineup;
+            }
           }
+          setHomeTTLineup(homeTT);
 
           let awayStarting: any[] = [];
           let awayLineupValid = false;
+          let awayTT: any = null;
           if (awayLineupRes.ok) {
             const aData = await awayLineupRes.json();
             awayLineupValid = isRealSubmittedLineup(aData, isTTFixture);
             if (awayLineupValid && aData.lineups?.starting_xi?.length > 0) {
               awayStarting = aData.lineups.starting_xi;
             }
+            if (awayLineupValid && aData.lineups?.triple_threat_lineup) {
+              awayTT = aData.lineups.triple_threat_lineup;
+            }
           }
+          setAwayTTLineup(awayTT);
 
           // Fetch full squad details for Home and Away teams to guarantee player_name, category, and photo_url
           let homeSquadById = new Map();
@@ -1019,12 +1031,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
         if (homeLineupResponse.ok) {
           const homeLineupData = await homeLineupResponse.json();
-          setHomeLineupSubmitted(isRealSubmittedLineup(homeLineupData, isTTPoll));
+          const hValid = isRealSubmittedLineup(homeLineupData, isTTPoll);
+          setHomeLineupSubmitted(hValid);
+          setHomeTTLineup(hValid ? (homeLineupData.lineups?.triple_threat_lineup || null) : null);
         }
 
         if (awayLineupResponse.ok) {
           const awayLineupData = await awayLineupResponse.json();
-          setAwayLineupSubmitted(isRealSubmittedLineup(awayLineupData, isTTPoll));
+          const aValid = isRealSubmittedLineup(awayLineupData, isTTPoll);
+          setAwayLineupSubmitted(aValid);
+          setAwayTTLineup(aValid ? (awayLineupData.lineups?.triple_threat_lineup || null) : null);
         }
 
         // Poll matchups - auto-update when created
@@ -2049,6 +2065,29 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </div>
 
               {/* Team Lineup Status & Actions */}
+              {(() => {
+                const formatAwayModeSlot = (items: any) => {
+                  const arr = Array.isArray(items) ? items : [items];
+                  return (
+                    arr
+                      .filter(Boolean)
+                      .map((item: any) => {
+                        const pid =
+                          typeof item === 'object' ? String(item.player_id || item.id || '') : String(item);
+                        const squadMatch = pid ? awaySquadById.get(pid) : undefined;
+                        const name =
+                          (typeof item === 'object' ? item.player_name || item.name : '') ||
+                          squadMatch?.player_name ||
+                          pid ||
+                          'Player';
+                        const cat = squadMatch?.category;
+                        return cat && cat !== 'realplayer' ? `${name} (${cat})` : name;
+                      })
+                      .join(' & ') || '—'
+                  );
+                };
+
+                return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Home Team Card */}
                 <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-3xs">
@@ -2067,13 +2106,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     )}
                   </div>
                   {isHomeTeam ? (
-                    <Link
-                      href={`/dashboard/team/fixture/${fixtureId}/lineup`}
-                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
-                    >
-                      <span>✏️</span>
-                      <span>{homeLineupSubmitted ? 'Edit Home Lineup' : 'Submit Home Lineup (5 Players)'}</span>
-                    </Link>
+                    <div className="space-y-2">
+                      {awayLineupSubmitted && awayTTLineup && (
+                        <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl text-[10px] text-amber-900 font-bold">
+                          ⭐ Home Advantage: Review {fixture.away_team_name}&apos;s lineup and set or adjust your lineup below.
+                        </div>
+                      )}
+                      <Link
+                        href={`/dashboard/team/fixture/${fixtureId}/lineup`}
+                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                      >
+                        <span>✏️</span>
+                        <span>
+                          {homeLineupSubmitted
+                            ? 'Edit Home Lineup'
+                            : awayLineupSubmitted
+                              ? 'Submit Home Lineup (Counter Away)'
+                              : 'Submit Home Lineup (5 Players)'}
+                        </span>
+                      </Link>
+                    </div>
                   ) : (
                     <p className="text-xs text-slate-400 italic">
                       {homeLineupSubmitted ? (isTT ? 'Home lineup submitted.' : 'Home lineup submitted and locked.') : 'Awaiting submission by Home Team.'}
@@ -2097,6 +2149,25 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </span>
                     )}
                   </div>
+                  {awayLineupSubmitted && awayTTLineup && (
+                    <div className="p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1 text-[11px] font-mono">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-amber-800">
+                        {isHomeTeam ? '⭐ Away Submitted Lineup' : '✅ Your Submitted Lineup'}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-indigo-700">Co-op:</span> {formatAwayModeSlot(awayTTLineup.coop)}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-emerald-700">Duo #1:</span> {formatAwayModeSlot(awayTTLineup.duo?.[0])}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-emerald-700">Duo #2:</span> {formatAwayModeSlot(awayTTLineup.duo?.[1])}
+                      </div>
+                      <div className="text-slate-800">
+                        <span className="font-bold text-amber-700">Single:</span> {formatAwayModeSlot(awayTTLineup.single)}
+                      </div>
+                    </div>
+                  )}
                   {!isHomeTeam ? (
                     <Link
                       href={`/dashboard/team/fixture/${fixtureId}/lineup`}
@@ -2117,13 +2188,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <p className="text-xs text-slate-500 italic">
                       Awaiting submission by Away Team (Deadline: {roundDeadlines?.round_start_time || '00:00'} IST).
                     </p>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">
-                      Away lineup submitted.
-                    </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
+                );
+              })()}
 
               <div className="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-blue-900 flex items-start gap-2">
                 <span className="text-blue-500 text-sm">💡</span>

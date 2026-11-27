@@ -27,6 +27,7 @@ interface TripleThreatLineupSubmissionProps {
   onSubmitSuccess?: () => void;
   existingLineup?: any;
   opponentLineup?: any;
+  opponentRoster?: any[];
   isOpponentSelection?: boolean;
   opponentTeamName?: string;
   isHomeTeam?: boolean;
@@ -40,6 +41,7 @@ export default function TripleThreatLineupSubmission({
   onSubmitSuccess,
   existingLineup,
   opponentLineup,
+  opponentRoster = [],
   isOpponentSelection = false,
   opponentTeamName,
   isHomeTeam = false,
@@ -339,16 +341,35 @@ export default function TripleThreatLineupSubmission({
     );
   };
 
+  const opponentPlayerMap = useMemo(() => {
+    const map = new Map<string, { name: string; category?: string }>();
+    (opponentRoster || []).forEach((p: any) => {
+      const id = String(p.player_id || p.id || '');
+      const name = p.player_name || p.name || '';
+      if (id && name) {
+        map.set(id, { name, category: p.category });
+      }
+    });
+    return map;
+  }, [opponentRoster]);
+
   const renderOpponentNames = (arr: any) => {
     if (!arr) return 'None';
-    if (!Array.isArray(arr)) {
-      if (typeof arr === 'object') return arr.player_name || arr.name || arr.player_id || 'Player';
-      return String(arr);
-    }
-    return arr.map((item: any) => {
-      if (typeof item === 'object') return item.player_name || item.name || item.player_id || 'Player';
-      return String(item);
-    }).join(' & ');
+    const items = Array.isArray(arr) ? arr : [arr];
+    return items
+      .filter(Boolean)
+      .map((item: any) => {
+        const pid = typeof item === 'object' ? String(item.player_id || item.id || '') : String(item);
+        const oppInfo = pid ? opponentPlayerMap.get(pid) : undefined;
+        const name =
+          (typeof item === 'object' ? item.player_name || item.name : '') ||
+          oppInfo?.name ||
+          pid ||
+          'Player';
+        const cat = (typeof item === 'object' ? item.category : undefined) || oppInfo?.category;
+        return cat ? `${name} (${cat})` : name;
+      })
+      .join(' & ');
   };
 
   if (loading) {
@@ -400,18 +421,27 @@ export default function TripleThreatLineupSubmission({
         </div>
 
         {/* Deadline Notice */}
-        {deadlineInfo?.awayDeadline && (
+        {(deadlineInfo?.deadline || deadlineInfo?.roundStart) && (
           <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-2 text-[11px] text-amber-200">
             <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>
-              Away Team Submission Deadline: <strong>2:00 PM (14:00)</strong> on Matchday.
+              Away Team Submission Deadline:{' '}
+              <strong>
+                {new Date(deadlineInfo.deadline || deadlineInfo.roundStart).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Kolkata',
+                })}
+              </strong>{' '}
+              IST on Matchday.
             </span>
           </div>
         )}
       </div>
 
       {/* Home Advantage: Opponent Lineup Card */}
-      {isHomeTeam && opponentLineup?.triple_threat_lineup && (
+      {isHomeTeam && !isOpponentSelection && opponentLineup?.triple_threat_lineup && (
         <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 rounded-2xl p-3.5 sm:p-4.5 shadow-xs">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider">
@@ -427,19 +457,20 @@ export default function TripleThreatLineupSubmission({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
             <div className="p-3 bg-white rounded-xl border border-indigo-200 shadow-2xs">
               <span className="text-[10px] font-bold text-indigo-700 uppercase block mb-1">🎮 Mode 1: Co-op (2v2)</span>
-              <span className="font-extrabold text-slate-900">
+              <span className="font-extrabold text-slate-900 block">
                 {renderOpponentNames(opponentLineup.triple_threat_lineup.coop)}
               </span>
             </div>
             <div className="p-3 bg-white rounded-xl border border-emerald-200 shadow-2xs">
               <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">🤝 Mode 2: Duo (2 × 1v1 Goal Based)</span>
-              <span className="font-extrabold text-slate-900">
-                1v1 #1: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[0])} • 1v1 #2: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[1])}
-              </span>
+              <div className="font-extrabold text-slate-900 space-y-0.5">
+                <div>1v1 #1: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[0])}</div>
+                <div>1v1 #2: {renderOpponentNames(opponentLineup.triple_threat_lineup.duo?.[1])}</div>
+              </div>
             </div>
             <div className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs">
               <span className="text-[10px] font-bold text-amber-700 uppercase block mb-1">⚔️ Mode 3: Single (1v1)</span>
-              <span className="font-extrabold text-slate-900">
+              <span className="font-extrabold text-slate-900 block">
                 {renderOpponentNames(opponentLineup.triple_threat_lineup.single)}
               </span>
             </div>

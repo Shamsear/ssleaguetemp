@@ -21,6 +21,7 @@ export default function FixtureLineupPage() {
   const [teamId, setTeamId] = useState<string>('');
   const [existingLineup, setExistingLineup] = useState<any>(null);
   const [opponentLineup, setOpponentLineup] = useState<any>(null);
+  const [opponentRoster, setOpponentRoster] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [deadline, setDeadline] = useState<string | null>(null);
 
@@ -110,9 +111,13 @@ export default function FixtureLineupPage() {
       
       console.log('<Search className="w-4 h-4 text-slate-500" /> DEBUG - Lineup API response:', lineupData);
       
-      const isTripleThreatFixture =
+      const isTripleThreatFixture = Boolean(
         fixtureData.fixture.tournament_type === 'triple_threat' ||
-        fixtureData.fixture.matchday_format === 'triple_threat';
+        fixtureData.fixture.matchday_format === 'triple_threat' ||
+        fixtureData.fixture.scoring_system === 'triple_threat' ||
+        fixtureData.fixture.knockout_format === 'triple_threat' ||
+        fixtureData.fixture.tournament_id?.toLowerCase().includes('triple_threat')
+      );
 
       // Verify the returned lineup belongs to this team and is not a system_auto stub in Triple Threat
       if (lineupData.success && lineupData.lineups !== null && lineupData.lineups !== undefined) {
@@ -138,15 +143,29 @@ export default function FixtureLineupPage() {
         setExistingLineup(null);
       }
 
-      // If user is Home Team, also fetch Away Team's lineup (Home Advantage)
+      // If user is Home Team, also fetch Away Team's submitted lineup & roster (Home Advantage)
       if (userTeamId === fixtureData.fixture.home_team_id) {
         try {
-          const oppLineupUrl = `/api/lineups?fixture_id=${fixtureId}&team_id=${fixtureData.fixture.away_team_id}`;
-          const oppLineupRes = await fetchWithTokenRefresh(oppLineupUrl);
+          const [oppLineupRes, oppPlayersRes] = await Promise.all([
+            fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixtureData.fixture.away_team_id}`),
+            fetch(`/api/team/${fixtureData.fixture.away_team_id}/players?seasonId=${fixtureData.fixture.season_id}`)
+          ]);
+          if (oppPlayersRes.ok) {
+            const oppPlayersData = await oppPlayersRes.json();
+            setOpponentRoster(oppPlayersData.realplayers || oppPlayersData.data || []);
+          }
           if (oppLineupRes.ok) {
             const oppData = await oppLineupRes.json();
-            if (oppData.success && oppData.lineups?.triple_threat_lineup && oppData.lineups.submitted_by !== 'system_auto') {
+            if (
+              oppData.success &&
+              oppData.lineups &&
+              !oppData.lineups.is_draft &&
+              oppData.lineups.submitted_by !== 'system_auto' &&
+              oppData.lineups.triple_threat_lineup
+            ) {
               setOpponentLineup(oppData.lineups);
+            } else {
+              setOpponentLineup(null);
             }
           }
         } catch (oppErr) {
@@ -238,13 +257,18 @@ export default function FixtureLineupPage() {
 
         {/* Lineup Submission Component */}
         <div className="glass rounded-2xl p-3.5 sm:p-6 shadow-md">
-          {fixture.tournament_type === 'triple_threat' || fixture.matchday_format === 'triple_threat' ? (
+          {fixture.tournament_type === 'triple_threat' ||
+           fixture.matchday_format === 'triple_threat' ||
+           fixture.scoring_system === 'triple_threat' ||
+           fixture.knockout_format === 'triple_threat' ||
+           fixture.tournament_id?.toLowerCase().includes('triple_threat') ? (
             <TripleThreatLineupSubmission
               fixtureId={fixtureId}
               teamId={teamId}
               seasonId={fixture.season_id}
               existingLineup={existingLineup}
               opponentLineup={opponentLineup}
+              opponentRoster={opponentRoster}
               opponentTeamName={fixture.home_team_id === teamId ? fixture.away_team_name : fixture.home_team_name}
               isHomeTeam={fixture.home_team_id === teamId}
               onSubmitSuccess={handleSubmitSuccess}
