@@ -2919,8 +2919,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                         homeWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
                                       }`}>
                                         {homeWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
-                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat')
-                                          ? ` (${homeWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`
+                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode)
+                                          ? (resolveTripleThreatMode(matchup as any) === 'duo'
+                                            ? ` (${matchup.home_goals} goals)`
+                                            : ` (${homeWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`)
                                           : ` (${matchup.home_goals} goals)`}
                                       </span>
                                     </div>
@@ -2993,8 +2995,10 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                         awayWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
                                       }`}>
                                         {awayWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
-                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat')
-                                          ? ` (${awayWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`
+                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode)
+                                          ? (resolveTripleThreatMode(matchup as any) === 'duo'
+                                            ? ` (${matchup.away_goals} goals)`
+                                            : ` (${awayWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`)
                                           : ` (${matchup.away_goals} goals)`}
                                       </span>
                                     </div>
@@ -3093,14 +3097,19 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     const homeSubPenalties = matchups.reduce((sum, m) => sum + (m.home_sub_penalty ?? 0), 0);
                     const awaySubPenalties = matchups.reduce((sum, m) => sum + (m.away_sub_penalty ?? 0), 0);
 
-                    const isTT = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat';
+                    const isTT = Boolean(
+                      (fixture as any)?.tournament_type === 'triple_threat' ||
+                      (fixture as any)?.matchday_format === 'triple_threat' ||
+                      matchups.some(m => !!(m as any).match_mode)
+                    );
 
                     // Calculate scores based on tournament system
                     let homeTotalScore, awayTotalScore;
                     let homeTTWins = 0, awayTTWins = 0, ttDraws = 0;
+                    let ttLiveResult: ReturnType<typeof calculateTripleThreatFixture> | null = null;
                     
                     if (isTT) {
-                      const ttRes = calculateTripleThreatFixture(
+                      ttLiveResult = calculateTripleThreatFixture(
                         matchups.map((m, idx) => ({
                           position: m.position,
                           mode: resolveTripleThreatMode(m as any),
@@ -3108,11 +3117,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           away_goals: matchResults[idx]?.away_goals,
                         }))
                       );
-                      homeTTWins = ttRes.home_matches_won;
-                      awayTTWins = ttRes.away_matches_won;
-                      ttDraws = ttRes.draws;
-                      homeTotalScore = ttRes.home_total_points;
-                      awayTotalScore = ttRes.away_total_points;
+                      homeTTWins = ttLiveResult.home_matches_won;
+                      awayTTWins = ttLiveResult.away_matches_won;
+                      ttDraws = ttLiveResult.draws;
+                      homeTotalScore = ttLiveResult.home_total_points;
+                      awayTotalScore = ttLiveResult.away_total_points;
                     } else if (tournamentSystem === 'wins') {
                       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
                       // Substitution penalties are added to MATCHUP score to determine winner
@@ -3217,9 +3226,29 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             )}
                           </div>
                         </div>
-                        {isTT && (
-                          <div className="text-center mt-2 text-xs font-mono font-bold text-slate-500 border-t border-slate-100 pt-1.5">
-                            Points GD: {homeGD > 0 ? `+${homeGD}` : homeGD} vs {awayGD > 0 ? `+${awayGD}` : awayGD}
+                        {isTT && ttLiveResult && (
+                          <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-2">
+                            <div className="text-center text-xs font-mono font-bold text-slate-500">
+                              Points GD: {homeGD > 0 ? `+${homeGD}` : homeGD} vs {awayGD > 0 ? `+${awayGD}` : awayGD}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+                              {(['coop', 'duo', 'single'] as const).map((modeKey) => {
+                                const mr = ttLiveResult.modeResults[modeKey];
+                                return (
+                                <div key={modeKey} className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                                  <div className="font-black uppercase text-[10px] text-slate-600">
+                                    {modeKey === 'coop' ? 'Co-op 2v2' : modeKey === 'duo' ? 'Duo 2×1v1' : 'Single 1v1'}
+                                  </div>
+                                  <div className="font-bold text-slate-800 mt-0.5">
+                                    {modeKey === 'duo' ? `Agg ${mr.home_goals}-${mr.away_goals}` : `${mr.home_goals}-${mr.away_goals}`}
+                                  </div>
+                                  <div className="text-[10px] font-black text-amber-700 mt-0.5">
+                                    {mr.home_points} - {mr.away_points} pts
+                                  </div>
+                                </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
                         {winner === 'draw' && (
@@ -3236,7 +3265,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     );
                   })()}
 
-                  {/* Swap Mode Toggle */}
+                  {/* Swap Mode Toggle (Standard tournaments only) */}
+                  {!isTT && (
                   <div className="relative overflow-hidden mb-4 p-4 bg-gradient-to-r from-cyan-50 via-blue-50 to-indigo-50 border-2 border-cyan-300 rounded-2xl shadow-lg">
                     <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-cyan-200 to-blue-200 rounded-full blur-2xl opacity-20"></div>
                     <div className="relative flex items-center justify-between gap-3">
@@ -3273,6 +3303,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </button>
                     </div>
                   </div>
+                  )}
 
                   <div className="space-y-3">
                     {matchups.map((matchup, idx) => (
@@ -3285,7 +3316,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             : 'border-gray-200'
                           }`}
                         onClick={() => {
-                          if (swapMode) {
+                          if (!isTT && swapMode) {
                             if (swapFirstIndex === null) {
                               setSwapFirstIndex(idx);
                             } else if (swapFirstIndex === idx) {
@@ -3297,18 +3328,28 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         }}
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-semibold text-gray-700">
                               Match #{matchup.position}
                               {swapMode && swapFirstIndex === idx && <span className="ml-2 text-cyan-600">(Selected)</span>}
                             </span>
+                            {(() => {
+                              const isTTCard = isTT || !!(matchup as any).match_mode;
+                              const modeMeta = isTTCard ? getTripleThreatModeDisplay(matchups as any[], matchup as any) : null;
+                              return isTTCard && modeMeta ? (
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-extrabold rounded-lg border ${modeMeta.badgeClass}`}>
+                                  <span>{modeMeta.icon}</span>
+                                  <span>{modeMeta.title}</span>
+                                </span>
+                              ) : null;
+                            })()}
                             {nullMatchups.has(matchup.position) && (
                               <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded border border-red-300">
                                 NULL
                               </span>
                             )}
                           </div>
-                          {!swapMode && (
+                          {!swapMode && !isTT && (
                             <div className="flex gap-2 items-center">
                               {/* NULL Matchup Checkbox */}
                               <label
@@ -3407,7 +3448,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   />
                                   <div className="flex flex-col min-w-0 overflow-hidden">
                                     <span className="font-extrabold text-xs text-slate-900 leading-snug break-words">
-                                      {matchup.home_player_name}
+                                      {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
                                     </span>
                                     {homeCategory && (
                                       <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
@@ -3437,7 +3478,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   />
                                   <div className="flex flex-col min-w-0 overflow-hidden">
                                     <span className="font-extrabold text-xs text-slate-900 leading-snug break-words">
-                                      {matchup.away_player_name}
+                                      {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
                                     </span>
                                     {awayCategory && (
                                       <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
@@ -3519,7 +3560,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 />
                                 <div className="flex flex-col min-w-0">
                                   <span className="font-extrabold text-xs text-slate-900 truncate">
-                                    {matchup.home_player_name}
+                                    {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
                                   </span>
                                   {homeCategory && (
                                     <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
@@ -3599,7 +3640,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 />
                                 <div className="flex flex-col min-w-0">
                                   <span className="font-extrabold text-xs text-slate-900 truncate">
-                                    {matchup.away_player_name}
+                                    {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
                                   </span>
                                   {awayCategory && (
                                     <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
@@ -3615,7 +3656,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     ))}
                   </div>
 
-                  {/* Penalty/Fine Goals Section */}
+                  {/* Penalty/Fine Goals Section (Standard tournaments only) */}
+                  {!isTT && (
                   <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono">
                     <div className="flex items-center gap-2 mb-3">
                       <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Penalty / Fine Goals</h3>
@@ -3654,6 +3696,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {/* Man of the Match Selector (Fixture Level) */}
                   <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 shadow-sm font-mono">
@@ -3778,27 +3821,45 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               const awayDraw = homeGoals === awayGoals;
                               const awayScore = (awayGoals * 10) + (awayWon ? 5 : 0) + (awayDraw ? 2 : 0) - (homeGoals * 2);
 
-                              if (homeScore > bestScore) {
-                                bestScore = homeScore;
-                                bestPlayer = {
-                                  id: m.home_player_id,
-                                  name: m.home_player_name,
-                                  goals: homeGoals,
-                                  conceded: awayGoals,
-                                  result: homeWon ? 'W' : homeDraw ? 'D' : 'L'
-                                };
-                              }
+                              // Evaluate all home players (handles Co-op 2v2 home_player_ids cleanly)
+                              const hIds: string[] = (m as any).home_player_ids?.length
+                                ? (m as any).home_player_ids
+                                : (m.home_player_id ? [m.home_player_id] : []);
+                              const hNames: string[] = (m as any).home_player_names?.length
+                                ? (m as any).home_player_names
+                                : (m.home_player_name ? [m.home_player_name] : []);
+                              hIds.forEach((pId, pIdx) => {
+                                if (pId && homeScore > bestScore) {
+                                  bestScore = homeScore;
+                                  bestPlayer = {
+                                    id: pId,
+                                    name: hNames[pIdx] || m.home_player_name,
+                                    goals: homeGoals,
+                                    conceded: awayGoals,
+                                    result: homeWon ? 'W' : homeDraw ? 'D' : 'L'
+                                  };
+                                }
+                              });
 
-                              if (awayScore > bestScore) {
-                                bestScore = awayScore;
-                                bestPlayer = {
-                                  id: m.away_player_id,
-                                  name: m.away_player_name,
-                                  goals: awayGoals,
-                                  conceded: homeGoals,
-                                  result: awayWon ? 'W' : awayDraw ? 'D' : 'L'
-                                };
-                              }
+                              // Evaluate all away players (handles Co-op 2v2 away_player_ids cleanly)
+                              const aIds: string[] = (m as any).away_player_ids?.length
+                                ? (m as any).away_player_ids
+                                : (m.away_player_id ? [m.away_player_id] : []);
+                              const aNames: string[] = (m as any).away_player_names?.length
+                                ? (m as any).away_player_names
+                                : (m.away_player_name ? [m.away_player_name] : []);
+                              aIds.forEach((pId, pIdx) => {
+                                if (pId && awayScore > bestScore) {
+                                  bestScore = awayScore;
+                                  bestPlayer = {
+                                    id: pId,
+                                    name: aNames[pIdx] || m.away_player_name,
+                                    goals: awayGoals,
+                                    conceded: homeGoals,
+                                    result: awayWon ? 'W' : awayDraw ? 'D' : 'L'
+                                  };
+                                }
+                              });
                             });
 
                             if (bestPlayer === null) return;
@@ -4028,10 +4089,24 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         );
                       } else {
-                        // Regular matchup - single match stats
-                        const selectedPlayer = matchups.find(m => m.home_player_id === motmPlayerId || m.away_player_id === motmPlayerId);
-                        const idx = matchups.indexOf(selectedPlayer!);
-                        const isHome = selectedPlayer?.home_player_id === motmPlayerId;
+                        // Regular / Triple Threat matchup - match stats including Co-op home_player_ids/away_player_ids
+                        const idx = matchups.findIndex((m) => {
+                          const hIds: string[] = (m as any).home_player_ids || (m.home_player_id ? [m.home_player_id] : []);
+                          const aIds: string[] = (m as any).away_player_ids || (m.away_player_id ? [m.away_player_id] : []);
+                          return hIds.includes(motmPlayerId) || aIds.includes(motmPlayerId);
+                        });
+                        if (idx === -1) return null;
+                        const selectedPlayer = matchups[idx];
+                        const hIds: string[] = (selectedPlayer as any).home_player_ids || (selectedPlayer.home_player_id ? [selectedPlayer.home_player_id] : []);
+                        const hNames: string[] = (selectedPlayer as any).home_player_names || (selectedPlayer.home_player_name ? [selectedPlayer.home_player_name] : []);
+                        const aIds: string[] = (selectedPlayer as any).away_player_ids || (selectedPlayer.away_player_id ? [selectedPlayer.away_player_id] : []);
+                        const aNames: string[] = (selectedPlayer as any).away_player_names || (selectedPlayer.away_player_name ? [selectedPlayer.away_player_name] : []);
+                        const hIdx = hIds.indexOf(motmPlayerId);
+                        const aIdx = aIds.indexOf(motmPlayerId);
+                        const isHome = hIdx !== -1;
+                        const displayPlayerName = isHome
+                          ? (hNames[hIdx] || selectedPlayer.home_player_name)
+                          : (aNames[aIdx] || selectedPlayer.away_player_name);
                         const goals = isHome ? (matchResults[idx]?.home_goals ?? 0) : (matchResults[idx]?.away_goals ?? 0);
                         const conceded = isHome ? (matchResults[idx]?.away_goals ?? 0) : (matchResults[idx]?.home_goals ?? 0);
                         const won = goals > conceded;
@@ -4042,7 +4117,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-semibold text-yellow-900">
-                                  {isHome ? selectedPlayer?.home_player_name : selectedPlayer?.away_player_name}
+                                  {displayPlayerName}
                                 </p>
                                 <p className="text-xs text-yellow-700 mt-1 flex items-center gap-1">
                                   {goals} goals scored • {conceded} conceded • {won ? <span className="inline-flex items-center gap-1 text-emerald-600 font-bold"><Check className="w-4 h-4 text-emerald-500" /> Won</span> : draw ? '◆ Draw' : '✗ Lost'}
@@ -4087,6 +4162,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           // Save matchup results (goals only)
                           const results = matchups.map((m, idx) => ({
                             position: m.position,
+                            ...(isTT && (m as any).match_mode ? { match_mode: (m as any).match_mode } : {}),
                             home_goals: matchResults[idx]?.home_goals ?? 0,
                             away_goals: matchResults[idx]?.away_goals ?? 0,
                           }));
@@ -4148,8 +4224,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             body: JSON.stringify({
                               motm_player_id: motmPlayerId,
                               motm_player_name: motmPlayerName,
-                              home_penalty_goals: homePenaltyGoals,
-                              away_penalty_goals: awayPenaltyGoals,
+                              home_penalty_goals: isTT ? 0 : homePenaltyGoals,
+                              away_penalty_goals: isTT ? 0 : awayPenaltyGoals,
                             }),
                           });
 
@@ -4179,43 +4255,44 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                           // Note: Real player stats and points are already synchronized and recalculated
                           // from source-of-truth matchups in PATCH /api/fixtures/${fixtureId}/matchups via syncPlayerStatsForSeason.
-                          // Calling update-points or update-stats here causes double counting.
+                          // For Triple Threat, teamstats is already updated server-side inside PATCH /matchups (including edits).
+                          if (!isTT) {
+                            const statsPayload = matchups.map((m, idx) => ({
+                              position: m.position,
+                              home_player_id: m.home_player_id,
+                              home_player_name: m.home_player_name,
+                              away_player_id: m.away_player_id,
+                              away_player_name: m.away_player_name,
+                              home_goals: matchResults[idx]?.home_goals ?? 0,
+                              away_goals: matchResults[idx]?.away_goals ?? 0,
+                              is_null: m.is_null || false, // Include null status
+                            }));
 
-                          const statsPayload = matchups.map((m, idx) => ({
-                            position: m.position,
-                            home_player_id: m.home_player_id,
-                            home_player_name: m.home_player_name,
-                            away_player_id: m.away_player_id,
-                            away_player_name: m.away_player_name,
-                            home_goals: matchResults[idx]?.home_goals ?? 0,
-                            away_goals: matchResults[idx]?.away_goals ?? 0,
-                            is_null: m.is_null || false, // Include null status
-                          }));
-
-                          // Update team stats (wins, draws, losses, goals)
-                          const teamStatsResponse = await fetchWithTokenRefresh('/api/teamstats/update-stats', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              season_id: fixture.season_id,
-                              fixture_id: fixtureId,
-                              home_team_id: fixture.home_team_id,
-                              away_team_id: fixture.away_team_id,
-                              matchups: statsPayload,
-                            }),
-                          });
-
-                          if (teamStatsResponse.ok) {
-                            const teamStatsData = await teamStatsResponse.json();
-                            console.log('✅ Team stats updated:', teamStatsData.updates);
-                          } else {
-                            const errorData = await teamStatsResponse.json();
-                            console.error('❌ Team stats update failed:', errorData);
-                            showAlert({
-                              type: 'warning',
-                              title: 'Team Stats Warning',
-                              message: `⚠️ Warning: Team stats may not have been updated. Error: ${errorData.error || 'Unknown error'}`
+                            // Update team stats (wins, draws, losses, goals)
+                            const teamStatsResponse = await fetchWithTokenRefresh('/api/teamstats/update-stats', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                season_id: fixture.season_id,
+                                fixture_id: fixtureId,
+                                home_team_id: fixture.home_team_id,
+                                away_team_id: fixture.away_team_id,
+                                matchups: statsPayload,
+                              }),
                             });
+
+                            if (teamStatsResponse.ok) {
+                              const teamStatsData = await teamStatsResponse.json();
+                              console.log('✅ Team stats updated:', teamStatsData.updates);
+                            } else {
+                              const errorData = await teamStatsResponse.json();
+                              console.error('❌ Team stats update failed:', errorData);
+                              showAlert({
+                                type: 'warning',
+                                title: 'Team Stats Warning',
+                                message: `⚠️ Warning: Team stats may not have been updated. Error: ${errorData.error || 'Unknown error'}`
+                              });
+                            }
                           }
 
                           // Calculate fantasy points (auto-trigger)
@@ -4255,9 +4332,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   fixture_id: fixtureId,
                                   home_team_name: fixture.home_team_name,
                                   away_team_name: fixture.away_team_name,
-                                  home_score: resultData.fixture.home_score,
-                                  away_score: resultData.fixture.away_score,
-                                  result: resultData.fixture.result,
+                                  home_score: resultData.fixture?.home_score ?? (fixture as any).home_score ?? 0,
+                                  away_score: resultData.fixture?.away_score ?? (fixture as any).away_score ?? 0,
+                                  result: resultData.fixture?.result ?? (fixture as any).result,
                                   motm_player_name: motmPlayerName,
                                 }
                               }),
@@ -4340,6 +4417,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           // Save as draft (no calculations)
                           const results = matchups.map((m, idx) => ({
                             position: m.position,
+                            ...(isTT && (m as any).match_mode ? { match_mode: (m as any).match_mode } : {}),
                             home_goals: matchResults[idx]?.home_goals ?? 0,
                             away_goals: matchResults[idx]?.away_goals ?? 0,
                           }));
@@ -4372,8 +4450,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                               entered_by: user!.uid,
                               motm_player_id: motmPlayerId,
                               motm_player_name: motmPlayerName,
-                              home_penalty_goals: homePenaltyGoals,
-                              away_penalty_goals: awayPenaltyGoals,
+                              home_penalty_goals: isTT ? 0 : homePenaltyGoals,
+                              away_penalty_goals: isTT ? 0 : awayPenaltyGoals,
                             }),
                           });
 
@@ -4826,9 +4904,22 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       return (
                         <div key={idx} className="console-card bg-white border border-slate-200/60 rounded-2xl p-4 shadow-sm transition-all font-mono hover:border-amber-400/40 duration-200">
                           <div className="flex items-center justify-between mb-3">
-                            <span className="inline-flex items-center px-2.5 py-1 bg-gray-800 text-white text-xs font-bold rounded-lg">
-                              Match #{matchup.position}
-                            </span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center px-2.5 py-1 bg-gray-800 text-white text-xs font-bold rounded-lg">
+                                Match #{matchup.position}
+                              </span>
+                              {(() => {
+                                const isTTCard = (fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode;
+                                const modeMeta = isTTCard ? getTripleThreatModeDisplay(matchups as any[], matchup as any) : null;
+                                if (!isTTCard || !modeMeta) return null;
+                                return (
+                                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold rounded-lg border ${modeMeta.badgeClass}`}>
+                                    <span>{modeMeta.icon}</span>
+                                    <span>{modeMeta.title}</span>
+                                  </span>
+                                );
+                              })()}
+                            </div>
                             {matchup.match_duration && (
                               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

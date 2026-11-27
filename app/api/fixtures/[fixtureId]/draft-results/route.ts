@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { calculateTripleThreatFixture, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * PUT /api/fixtures/[fixtureId]/draft-results
@@ -41,11 +42,49 @@ export async function PUT(
     }
 
     // Calculate total scores for display purposes (but don't update fixture status)
+    const fixtureMeta = await sql`
+      SELECT f.tournament_id, t.tournament_type, ts.matchday_format
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.id = ${fixtureId}
+      LIMIT 1
+    `;
+    const isTripleThreat =
+      fixtureMeta.length > 0 &&
+      (fixtureMeta[0].tournament_type === 'triple_threat' ||
+        fixtureMeta[0].matchday_format === 'triple_threat' ||
+        String(fixtureMeta[0].tournament_id || '').toLowerCase().includes('triple_threat'));
+
     let totalHomeScore = 0;
     let totalAwayScore = 0;
-    for (const result of results) {
-      totalHomeScore += result.home_goals;
-      totalAwayScore += result.away_goals;
+
+    if (isTripleThreat) {
+      const dbMatchups = await sql`
+        SELECT position, match_mode FROM matchups WHERE fixture_id = ${fixtureId}
+      `;
+      const modeByPos = new Map<number, string>();
+      dbMatchups.forEach((m: any) => {
+        if (m.match_mode) modeByPos.set(m.position, m.match_mode);
+      });
+      const ttResult = calculateTripleThreatFixture(
+        results.map((r: any) => ({
+          position: r.position,
+          mode: resolveTripleThreatMode({
+            mode: r.match_mode || modeByPos.get(r.position),
+            position: r.position,
+          }),
+          home_goals: r.home_goals ?? 0,
+          away_goals: r.away_goals ?? 0,
+        }))
+      );
+      totalHomeScore = ttResult.home_total_points;
+      totalAwayScore = ttResult.away_total_points;
+    } else {
+      for (const result of results) {
+        totalHomeScore += result.home_goals;
+        totalAwayScore += result.away_goals;
+      }
     }
 
     // Update fixture with draft results and MOTM (but keep status as is, don't mark as completed)

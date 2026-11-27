@@ -544,7 +544,7 @@ export async function PATCH(
 
     // Check result entry deadline and get penalty goals
     const fixtures = await sql`
-      SELECT f.season_id, f.round_number, f.leg, 
+      SELECT f.season_id, f.round_number, f.leg, f.status as current_status,
              COALESCE(f.home_penalty_goals, 0) as home_penalty_goals,
              COALESCE(f.away_penalty_goals, 0) as away_penalty_goals,
              f.home_team_name, f.away_team_name
@@ -560,7 +560,7 @@ export async function PATCH(
       );
     }
 
-    const { season_id, round_number, leg, home_penalty_goals, away_penalty_goals } = fixtures[0];
+    const { season_id, round_number, leg, current_status, home_penalty_goals, away_penalty_goals } = fixtures[0];
 
     // Get round deadlines
     const deadlines = await sql`
@@ -883,7 +883,8 @@ export async function PATCH(
             home_penalty_goals: Number(home_penalty_goals) || 0,
             away_penalty_goals: Number(away_penalty_goals) || 0,
             scoring_type: scoringType,
-            matchups: results
+            matchups: results,
+            ...(isTripleThreat ? { is_edit: current_status === 'completed' } : {})
           })
         });
 
@@ -940,7 +941,17 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       message: 'Results saved successfully',
-      fixture_status: 'completed'
+      fixture_status: 'completed',
+      ...(isTripleThreat
+        ? {
+            fixture: {
+              home_score: totalHomeScore,
+              away_score: totalAwayScore,
+              result: matchResult,
+              clean_sweep_winner: cleanSweepWinner,
+            },
+          }
+        : {}),
     });
   } catch (error: any) {
     console.error('Error saving results:', error);

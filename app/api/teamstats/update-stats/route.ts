@@ -47,6 +47,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const tournamentScoringType = scoring_type === 'triple_threat'
+      ? 'triple_threat'
+      : (fixtureData[0]?.scoring_type || scoring_type || 'goals');
     const isTripleThreat = tournamentScoringType === 'triple_threat' || 
                            fixtureData[0]?.tournament_type === 'triple_threat' || 
                            fixtureData[0]?.matchday_format === 'triple_threat';

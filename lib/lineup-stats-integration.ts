@@ -25,8 +25,16 @@ export async function recordPlayerParticipation(fixtureId: string) {
     for (const lineup of lineups) {
       const lineupId = lineup.id;
       const teamId = lineup.team_id;
-      const startingXI = lineup.starting_xi || [];
-      const substitutes = lineup.substitutes || [];
+      const extractIds = (arr: any): string[] =>
+        Array.isArray(arr)
+          ? arr
+              .map((item: any) =>
+                typeof item === 'string' ? item : String(item?.player_id || item?.id || '')
+              )
+              .filter(Boolean)
+          : [];
+      const startingXI = extractIds(lineup.starting_xi);
+      const substitutes = extractIds(lineup.substitutes);
 
       // Get all substitutions for this lineup
       const substitutions = await sql`
