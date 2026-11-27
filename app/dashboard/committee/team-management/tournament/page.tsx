@@ -16,6 +16,7 @@ import TournamentStandings from '@/components/tournament/TournamentStandings';
 import TripleThreatPosterHub from '@/components/tournament/TripleThreatPosterHub';
 import { Activity, AlertTriangle, ArrowLeft, Award, BarChart2, Bot, Calendar, Check, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardList, Clock, Download, Eye, FileText, HelpCircle, Info, Layers, Lightbulb, Pencil, Play, Plus, RefreshCw, Search, Settings, Share2, Shield, Shuffle, Sparkles, Star, Target, Trash2, Trophy, Users, X, XCircle, Crown, Flame, Swords } from 'lucide-react';
 import { normalizeStr } from '@/lib/utils/normalizeStr';
+import { distributeTeamsIntoGroups, normalizeGroupCode } from '@/lib/tournament/group-stage';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 const getCategoryColor = (name: string) => {
@@ -592,7 +593,7 @@ export function TournamentDashboardPageContent() {
       return;
     }
 
-    if (selectedTeamsForTournament.length < 2) {
+    if (tournamentTeams.length > 0 && selectedTeamsForTournament.length < 2) {
       showAlert({
         type: 'warning',
         title: 'Insufficient Teams',
@@ -601,10 +602,15 @@ export function TournamentDashboardPageContent() {
       return;
     }
 
+    const activeFixtureTour = tournaments.find(t => t.id === selectedTournamentForFixtures);
+    const confirmMsg = activeFixtureTour?.has_group_stage
+      ? `Generate group-stage fixtures for ${selectedTeamsForTournament.length || 'the tournament'} teams across ${activeFixtureTour.number_of_groups || 4} groups? Saved group assignments will be used.`
+      : `Generate fixtures for ${selectedTeamsForTournament.length} teams? This will create a complete round-robin schedule.`;
+
     const confirmed = await showConfirm({
       type: 'info',
       title: 'Generate Fixtures',
-      message: `Generate fixtures for ${selectedTeamsForTournament.length} teams? This will create a complete round-robin schedule.`,
+      message: confirmMsg,
       confirmText: 'Generate',
       cancelText: 'Cancel'
     });
@@ -1401,7 +1407,9 @@ export function TournamentDashboardPageContent() {
         showAlert({
           type: 'success',
           title: 'Groups Saved',
-          message: `${groupAssignments.length} team(s) assigned to groups`
+          message: data.has_existing_fixtures
+            ? `${groupAssignments.length} team(s) assigned to groups. Note: existing fixtures still reflect previous groups — delete and regenerate fixtures in the Fixtures tab if needed.`
+            : `${groupAssignments.length} team(s) assigned to groups`
         });
         await loadTournamentGroups(selectedTournamentForGroups);
       } else {
@@ -1425,17 +1433,12 @@ export function TournamentDashboardPageContent() {
 
   const handleAutoDistributeGroups = () => {
     const allTeamsInTournament = [...groupAssignments.map(a => ({ team_id: a.team_id, team_name: a.team_name })), ...unassignedTeams];
-    const teamsPerGroup = Math.ceil(allTeamsInTournament.length / numberOfGroups);
-
-    const newAssignments: any[] = [];
-    const groupNames = Array.from({ length: numberOfGroups }, (_, i) => String.fromCharCode(65 + i));
-    const shuffled = [...allTeamsInTournament].sort(() => Math.random() - 0.5);
-
-    shuffled.forEach((team, index) => {
-      const groupIndex = Math.floor(index / teamsPerGroup);
-      const groupName = `Group ${groupNames[groupIndex]}`;
-      newAssignments.push({ team_id: team.team_id, team_name: team.team_name, group_name: groupName });
-    });
+    const distributed = distributeTeamsIntoGroups(allTeamsInTournament, numberOfGroups, { shuffle: true });
+    const newAssignments = distributed.map(({ team, groupLabel }) => ({
+      team_id: team.team_id,
+      team_name: team.team_name,
+      group_name: groupLabel,
+    }));
 
     setGroupAssignments(newAssignments);
     setUnassignedTeams([]);
@@ -1570,21 +1573,17 @@ export function TournamentDashboardPageContent() {
   const availableGroups = Array.from(
     new Set(
       fixturesForSelectedTournament
-        .map(f => f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1])
+        .map(f => normalizeGroupCode(f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1]))
         .filter(Boolean)
     )
-  ).sort() as string[];
+  ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) as string[];
 
   // Filter fixtures by selected round and group
   const filteredFixtures = fixturesForSelectedTournament.filter(f => {
     const roundMatch = selectedRound === 0 || f.round_number === selectedRound;
-    const fixtureGroup = f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null;
+    const fixtureGroup = normalizeGroupCode(f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1]);
     const groupMatch = selectedGroup === 'all' || !selectedGroup || (
-      fixtureGroup && (
-        fixtureGroup.toLowerCase() === selectedGroup.toLowerCase() ||
-        `group ${fixtureGroup.toLowerCase()}` === selectedGroup.toLowerCase() ||
-        fixtureGroup.toLowerCase() === `group ${selectedGroup.toLowerCase()}`
-      )
+      Boolean(fixtureGroup) && fixtureGroup === normalizeGroupCode(selectedGroup)
     );
     return roundMatch && groupMatch;
   });
@@ -2922,11 +2921,11 @@ export function TournamentDashboardPageContent() {
                         All Groups
                       </button>
                       {availableGroups.map((grp: string) => {
-                        const label = grp.toUpperCase().startsWith('GROUP') ? grp.toUpperCase() : `Group ${grp.toUpperCase()}`;
-                        const isActive = selectedGroup.toLowerCase() === grp.toLowerCase();
+                        const label = `Group ${grp}`;
+                        const isActive = normalizeGroupCode(selectedGroup) === grp;
                         const count = fixturesForSelectedTournament.filter(f => {
-                          const fg = f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || '';
-                          return fg.toLowerCase() === grp.toLowerCase();
+                          const fg = normalizeGroupCode(f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1]);
+                          return fg === grp;
                         }).length;
 
                         return (

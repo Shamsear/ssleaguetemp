@@ -2,6 +2,7 @@ import { getMainDb } from '@/lib/neon/main-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { normalizeGroupCode } from '@/lib/tournament/group-stage';
 
 export async function GET(
   request: NextRequest,
@@ -411,12 +412,14 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
     `;
 
     groupTeams.forEach((t: any) => {
-      if (!groups[t.group_name]) groups[t.group_name] = {};
-      groups[t.group_name][t.team_id] = {
+      const groupKey = normalizeGroupCode(t.group_name) || t.group_name;
+      if (!groupKey) return;
+      if (!groups[groupKey]) groups[groupKey] = {};
+      groups[groupKey][t.team_id] = {
         team_id: t.team_id,
         team_name: t.team_name || 'Unknown Team',
         team_logo: null,
-        group: t.group_name,
+        group: groupKey,
         matches_played: 0,
         wins: 0,
         draws: 0,
@@ -433,11 +436,15 @@ async function calculateGroupStandings(fixtures: any[], teamsAdvancing: number, 
     console.error('Error fetching group teams:', error);
   }
 
-  // Filter only group stage fixtures
-  const groupFixtures = fixtures.filter((f: any) => f.group_name);
+  // Filter only group stage fixtures (ignore knockout fixtures)
+  const groupFixtures = fixtures.filter(
+    (f: any) => !f.knockout_round && Boolean(f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1])
+  );
 
   groupFixtures.forEach((fixture) => {
-    const groupName = fixture.group_name;
+    const rawGroup = fixture.group_name || fixture.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1];
+    const groupName = normalizeGroupCode(rawGroup) || rawGroup;
+    if (!groupName) return;
     if (!groups[groupName]) {
       groups[groupName] = {};
     }

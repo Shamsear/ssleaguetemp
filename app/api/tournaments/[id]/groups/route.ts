@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { formatGroupLabel } from '@/lib/tournament/group-stage';
 
 // GET - Get current group assignments for a tournament
 export async function GET(
@@ -26,13 +27,18 @@ export async function GET(
     }
 
     // Get assigned teams
-    const assignments = await sql`
+    const rawAssignments = await sql`
       SELECT ttg.team_id, ttg.group_name, ts.team_name
       FROM tournament_team_groups ttg
       JOIN teamstats ts ON ttg.team_id = ts.team_id AND ts.tournament_id = ${tournamentId}
       WHERE ttg.tournament_id = ${tournamentId}
       ORDER BY ttg.group_name, ts.team_name
     `;
+
+    const assignments = rawAssignments.map((a: any) => ({
+      ...a,
+      group_name: formatGroupLabel(a.group_name) || a.group_name,
+    }));
 
     // Get all teams in tournament (not yet assigned)
     const allTeams = await sql`
@@ -84,19 +90,32 @@ export async function POST(
       WHERE tournament_id = ${tournamentId}
     `;
 
-    // Insert new assignments
-    if (assignments.length > 0) {
-      for (const assignment of assignments) {
-        await sql`
-          INSERT INTO tournament_team_groups (tournament_id, team_id, group_name, created_at, updated_at)
-          VALUES (${tournamentId}, ${assignment.team_id}, ${assignment.group_name}, NOW(), NOW())
-        `;
-      }
+    // Insert normalized new assignments
+    const validAssignments = assignments
+      .map((a: any) => ({
+        team_id: String(a?.team_id || '').trim(),
+        group_name: formatGroupLabel(a?.group_name),
+      }))
+      .filter((a: any) => a.team_id && a.group_name);
+
+    for (const assignment of validAssignments) {
+      await sql`
+        INSERT INTO tournament_team_groups (tournament_id, team_id, group_name, created_at, updated_at)
+        VALUES (${tournamentId}, ${assignment.team_id}, ${assignment.group_name}, NOW(), NOW())
+      `;
     }
+
+    const existingFixtures = await sql`
+      SELECT COUNT(*)::int AS count
+      FROM fixtures
+      WHERE tournament_id = ${tournamentId}
+    `;
+    const hasExistingFixtures = Number(existingFixtures[0]?.count || 0) > 0;
 
     return NextResponse.json({
       success: true,
-      message: `${assignments.length} teams assigned to groups`,
+      has_existing_fixtures: hasExistingFixtures,
+      message: `${validAssignments.length} teams assigned to groups`,
     });
   } catch (error: any) {
     console.error('Error saving group assignments:', error);
