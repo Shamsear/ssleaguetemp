@@ -34,12 +34,15 @@ import {
   Download,
   Shuffle,
   Check,
-  RefreshCw
+  RefreshCw,
+  Pencil
 } from 'lucide-react';
 import AuthGuard from '@/components/auth/AuthGuard';
+import TripleThreatLineupSubmission from '@/components/TripleThreatLineupSubmission';
 
 interface FixtureLineupStatus {
   fixture_id: string;
+  season_id?: string;
   round_number: number;
   match_number: number;
   home_team_id: string;
@@ -60,6 +63,7 @@ interface TournamentInfo {
   id: string;
   tournament_name: string;
   season_id: string;
+  tournament_type?: string;
 }
 
 export default function LineupStatusPage() {
@@ -68,12 +72,18 @@ export default function LineupStatusPage() {
   const [fixtures, setFixtures] = useState<FixtureLineupStatus[]>([]);
   const [tournaments, setTournaments] = useState<TournamentInfo[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<string>('');
+  const [isTripleThreat, setIsTripleThreat] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTournaments, setIsLoadingTournaments] = useState(true);
   const [error, setError] = useState('');
 
-  // Lineup setting modal state
+  // Lineup setting modal state (standard tournaments)
   const [showLineupModal, setShowLineupModal] = useState(false);
+  // Triple Threat lineup modal state
+  const [showTTLineupModal, setShowTTLineupModal] = useState(false);
+  const [ttExistingLineup, setTtExistingLineup] = useState<any>(null);
+  const [ttOpponentLineup, setTtOpponentLineup] = useState<any>(null);
+  const [isLoadingTTLineup, setIsLoadingTTLineup] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<FixtureLineupStatus | null>(null);
   const [selectedTeamType, setSelectedTeamType] = useState<'home' | 'away'>('home');
   const [availablePlayers, setAvailablePlayers] = useState<any[]>([]);
@@ -127,6 +137,24 @@ export default function LineupStatusPage() {
     fetchTournaments();
   }, [user]);
 
+  const refreshLineupStatus = async (tournamentId: string) => {
+    if (!tournamentId) return;
+    const response = await fetchWithTokenRefresh(
+      `/api/tournaments/${tournamentId}/lineup-status`
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Fixtures loaded:', data.fixtures?.length || 0);
+      setFixtures(data.fixtures || []);
+      setIsTripleThreat(Boolean(data.is_triple_threat));
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to load lineup status:', response.status, errorData);
+      setError('Failed to load lineup status');
+    }
+  };
+
   // Fetch lineup status
   useEffect(() => {
     const fetchLineupStatus = async () => {
@@ -135,24 +163,18 @@ export default function LineupStatusPage() {
         return;
       }
 
+      const selectedTourObj = tournaments.find(t => t.id === selectedTournament);
+      setIsTripleThreat(
+        selectedTourObj?.tournament_type === 'triple_threat' ||
+        selectedTournament.toLowerCase().includes('triple_threat')
+      );
+
       console.log('Fetching lineup status for tournament:', selectedTournament);
       setIsLoading(true);
       setError('');
 
       try {
-        const response = await fetchWithTokenRefresh(
-          `/api/tournaments/${selectedTournament}/lineup-status`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Fixtures loaded:', data.fixtures?.length || 0);
-          setFixtures(data.fixtures || []);
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Failed to load lineup status:', response.status, errorData);
-          setError('Failed to load lineup status');
-        }
+        await refreshLineupStatus(selectedTournament);
       } catch (err: any) {
         console.error('Error fetching lineup status:', err);
         setError('Failed to load lineup status');
@@ -162,12 +184,50 @@ export default function LineupStatusPage() {
     };
 
     fetchLineupStatus();
-  }, [selectedTournament]);
+  }, [selectedTournament, tournaments]);
 
   // Open lineup modal
   const openLineupModal = async (fixture: FixtureLineupStatus, teamType: 'home' | 'away') => {
     setSelectedFixture(fixture);
     setSelectedTeamType(teamType);
+
+    if (isTripleThreat) {
+      setShowTTLineupModal(true);
+      setTtExistingLineup(null);
+      setTtOpponentLineup(null);
+      setIsLoadingTTLineup(true);
+
+      try {
+        const targetTeamId = teamType === 'home' ? fixture.home_team_id : fixture.away_team_id;
+        const oppTeamId = teamType === 'home' ? fixture.away_team_id : fixture.home_team_id;
+
+        const requests: Promise<Response>[] = [
+          fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixture.fixture_id}&team_id=${targetTeamId}`),
+        ];
+        if (teamType === 'home') {
+          requests.push(
+            fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixture.fixture_id}&team_id=${oppTeamId}`)
+          );
+        }
+
+        const [teamRes, oppRes] = await Promise.all(requests);
+        if (teamRes.ok) {
+          const teamData = await teamRes.json();
+          setTtExistingLineup(teamData.success ? teamData.lineups : null);
+        }
+        if (oppRes && oppRes.ok) {
+          const oppData = await oppRes.json();
+          setTtOpponentLineup(oppData.success ? oppData.lineups : null);
+        }
+      } catch (err) {
+        console.error('Error fetching Triple Threat lineup:', err);
+        setError('Failed to load Triple Threat lineup');
+      } finally {
+        setIsLoadingTTLineup(false);
+      }
+      return;
+    }
+
     setShowLineupModal(true);
     setSelectedPlayers([]);
 
@@ -232,6 +292,24 @@ export default function LineupStatusPage() {
     const teamName = selectedTeamType === 'home' 
       ? selectedFixture.home_team_name 
       : selectedFixture.away_team_name;
+
+    if (viewLineupData.triple_threat_lineup) {
+      const tt = viewLineupData.triple_threat_lineup;
+      const formatNames = (items: any) =>
+        (Array.isArray(items) ? items : [items])
+          .filter(Boolean)
+          .map((p: any) => p.player_name || p.name || String(p))
+          .join(' & ');
+
+      let message = `*${teamName} - Round ${selectedFixture.round_number} (Triple Threat)*\n\n`;
+      message += `*Mode 1: Co-op (2v2)*\n${formatNames(tt.coop)}\n\n`;
+      message += `*Mode 2: Duo (2 × 1v1)*\n1v1 #1: ${tt.duo?.[0]?.player_name || 'N/A'}\n1v1 #2: ${tt.duo?.[1]?.player_name || 'N/A'}\n\n`;
+      message += `*Mode 3: Single (1v1)*\n${formatNames(tt.single)}\n`;
+
+      navigator.clipboard.writeText(message);
+      alert('Lineup copied to clipboard! You can now paste it in WhatsApp.');
+      return;
+    }
 
     const playing = viewLineupData.lineup?.filter((p: any) => !p.is_substitute) || [];
     const substitutes = viewLineupData.lineup?.filter((p: any) => p.is_substitute) || [];
@@ -535,7 +613,7 @@ export default function LineupStatusPage() {
                               {fixture.away_lineup_submitted ? (
                                 <div className="flex flex-col items-center">
                                   <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-100 font-bold text-xs">
-                                    Yes {fixture.home_lineup_count}
+                                    Yes {isTripleThreat ? fixture.away_lineup_count : fixture.home_lineup_count}
                                   </span>
                                   <span className="text-xs text-gray-500 mt-1 hidden md:block">
                                     {fixture.away_lineup_count}
@@ -569,12 +647,22 @@ export default function LineupStatusPage() {
                                   </button>
                                 )}
                                 {fixture.home_lineup_submitted && (
-                                  <button
-                                    onClick={() => viewLineup(fixture, 'home')}
-                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
-                                  >
-                                    View H
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => viewLineup(fixture, 'home')}
+                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
+                                    >
+                                      View H
+                                    </button>
+                                    {isTripleThreat && (
+                                      <button
+                                        onClick={() => openLineupModal(fixture, 'home')}
+                                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
+                                      >
+                                        Edit H
+                                      </button>
+                                    )}
+                                  </>
                                 )}
                                 {!fixture.away_lineup_submitted && (
                                   <button
@@ -585,12 +673,22 @@ export default function LineupStatusPage() {
                                   </button>
                                 )}
                                 {fixture.away_lineup_submitted && (
-                                  <button
-                                    onClick={() => viewLineup(fixture, 'away')}
-                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
-                                  >
-                                    View A
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => viewLineup(fixture, 'away')}
+                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
+                                    >
+                                      View A
+                                    </button>
+                                    {isTripleThreat && (
+                                      <button
+                                        onClick={() => openLineupModal(fixture, 'away')}
+                                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-mono font-bold text-xs uppercase tracking-wider cursor-pointer shadow-sm transition-all"
+                                      >
+                                        Edit A
+                                      </button>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </td>
@@ -761,6 +859,56 @@ export default function LineupStatusPage() {
                 </div>
               ) : viewLineupData ? (
                 <>
+                  {viewLineupData.triple_threat_lineup ? (
+                    <div className="space-y-3 mb-5">
+                      <div className="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-2xl">
+                        <div className="text-[11px] font-black uppercase tracking-wider text-indigo-800 mb-2">
+                          Mode 1: Co-op (2v2)
+                        </div>
+                        <div className="space-y-1.5">
+                          {(viewLineupData.triple_threat_lineup.coop || []).map((player: any, idx: number) => (
+                            <div key={player.player_id || idx} className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-indigo-100 text-sm font-bold text-slate-900">
+                              <span className="text-xs text-indigo-500 w-5">{idx + 1}.</span>
+                              <span className="truncate">{player.player_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-2xl">
+                        <div className="text-[11px] font-black uppercase tracking-wider text-emerald-800 mb-2">
+                          Mode 2: Duo (2 × 1v1 Goal Based)
+                        </div>
+                        <div className="space-y-1.5">
+                          {(viewLineupData.triple_threat_lineup.duo || []).map((player: any, idx: number) => (
+                            <div key={player.player_id || idx} className="flex items-center justify-between gap-2.5 p-2 bg-white rounded-xl border border-emerald-100 text-sm font-bold text-slate-900">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 shrink-0">
+                                  1v1 #{idx + 1}
+                                </span>
+                                <span className="truncate">{player.player_name}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl">
+                        <div className="text-[11px] font-black uppercase tracking-wider text-amber-800 mb-2">
+                          Mode 3: Single (1v1)
+                        </div>
+                        <div className="space-y-1.5">
+                          {(viewLineupData.triple_threat_lineup.single || []).map((player: any, idx: number) => (
+                            <div key={player.player_id || idx} className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-amber-100 text-sm font-bold text-slate-900">
+                              <span className="text-xs text-amber-600 w-5">1.</span>
+                              <span className="truncate">{player.player_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
                   {/* Starting Lineup */}
                   <div className="mb-4 md:mb-6">
                     <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider mb-3 flex items-center gap-2">
@@ -817,6 +965,8 @@ export default function LineupStatusPage() {
                       </div>
                     </div>
                   )}
+                    </>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-2 md:gap-3 sm:justify-end">
@@ -826,6 +976,18 @@ export default function LineupStatusPage() {
                     >
                       Close
                     </button>
+                    {isTripleThreat && selectedFixture && (
+                      <button
+                        onClick={() => {
+                          setShowViewLineupModal(false);
+                          openLineupModal(selectedFixture, selectedTeamType);
+                        }}
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        <span>Edit Lineup</span>
+                      </button>
+                    )}
                     <button
                       onClick={copyLineupToClipboard}
                       className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2"
@@ -841,6 +1003,65 @@ export default function LineupStatusPage() {
                   <p className="text-xs text-slate-550 uppercase tracking-wider font-extrabold font-mono mt-4">No lineup data available</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+      {/* Triple Threat Lineup Setting Modal */}
+        {showTTLineupModal && selectedFixture && (
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-[9999] p-3 sm:p-6 overflow-y-auto font-mono">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl max-w-2xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col my-auto overflow-hidden">
+              <div className="px-4 py-3 sm:px-6 sm:py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <div className="min-w-0 pr-2">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono tracking-wider bg-amber-500 text-slate-950">
+                    ⚡ SS Triple Threat
+                  </span>
+                  <h2 className="text-sm sm:text-base font-black tracking-tight mt-1 truncate">
+                    {selectedTeamType === 'home' ? selectedFixture.home_team_name : selectedFixture.away_team_name} — Mode Lineup
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-slate-400 font-mono">
+                    Round {selectedFixture.round_number} • {selectedTeamType === 'home' ? 'Home Team Lineup' : 'Away Team Lineup'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTTLineupModal(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-3.5 sm:p-6 flex-1 overflow-y-auto overscroll-contain">
+                {isLoadingTTLineup ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mx-auto"></div>
+                    <p className="mt-4 text-xs text-slate-500 uppercase tracking-wider font-extrabold font-mono">
+                      Loading lineup...
+                    </p>
+                  </div>
+                ) : (
+                  <TripleThreatLineupSubmission
+                    fixtureId={selectedFixture.fixture_id}
+                    teamId={selectedTeamType === 'home' ? selectedFixture.home_team_id : selectedFixture.away_team_id}
+                    seasonId={
+                      selectedFixture.season_id ||
+                      tournaments.find((t) => t.id === selectedTournament)?.season_id ||
+                      ''
+                    }
+                    isHomeTeam={selectedTeamType === 'home'}
+                    opponentTeamName={
+                      selectedTeamType === 'home' ? selectedFixture.away_team_name : selectedFixture.home_team_name
+                    }
+                    existingLineup={ttExistingLineup}
+                    opponentLineup={ttOpponentLineup}
+                    bypassDeadline={true}
+                    onSubmitSuccess={() => {
+                      setShowTTLineupModal(false);
+                      refreshLineupStatus(selectedTournament);
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}

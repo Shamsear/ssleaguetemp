@@ -689,6 +689,21 @@ export async function GET(
 
     const fixture = fixtures[0];
 
+    let isTripleThreat = String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+    if (!isTripleThreat && fixture.tournament_id) {
+      const tourRows = await sql`
+        SELECT t.tournament_type, ts.matchday_format
+        FROM tournaments t
+        LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+        WHERE t.id = ${fixture.tournament_id}
+        LIMIT 1
+      `;
+      isTripleThreat =
+        tourRows.length > 0 &&
+        (tourRows[0].tournament_type === 'triple_threat' ||
+          tourRows[0].matchday_format === 'triple_threat');
+    }
+
     // If team_type is specified, return only that team's lineup from lineups table
     if (teamType) {
       if (teamType !== 'home' && teamType !== 'away') {
@@ -701,12 +716,23 @@ export async function GET(
       const teamId = teamType === 'home' ? fixture.home_team_id : fixture.away_team_id;
 
       // Query the lineups table
-      const lineups = await sql`
-        SELECT * FROM lineups 
-        WHERE fixture_id = ${fixtureId} 
-        AND team_id = ${teamId}
-        LIMIT 1
-      `;
+      const lineups = isTripleThreat
+        ? await sql`
+            SELECT * FROM lineups
+            WHERE fixture_id = ${fixtureId}
+              AND team_id = ${teamId}
+              AND submitted_at IS NOT NULL
+              AND COALESCE(submitted_by, '') <> 'system_auto'
+              AND COALESCE(is_draft, false) = false
+              AND triple_threat_lineup IS NOT NULL
+            LIMIT 1
+          `
+        : await sql`
+            SELECT * FROM lineups 
+            WHERE fixture_id = ${fixtureId} 
+            AND team_id = ${teamId}
+            LIMIT 1
+          `;
 
       console.log(`Lineup query for ${teamType} team (${teamId}):`, lineups);
 
@@ -718,6 +744,89 @@ export async function GET(
       }
 
       const lineup = lineups[0];
+
+      // Handle Triple Threat lineups cleanly (objects with player_id/mode + triple_threat_lineup JSON)
+      if (isTripleThreat && lineup.triple_threat_lineup) {
+        const extractId = (item: any): string => {
+          if (!item) return '';
+          if (typeof item === 'string') return item.trim();
+          return String(item.player_id || item.id || '').trim();
+        };
+
+        const tt = lineup.triple_threat_lineup;
+        const rawCoop = Array.isArray(tt.coop) ? tt.coop : [];
+        const rawDuo = Array.isArray(tt.duo) ? tt.duo : [];
+        const rawSingle = Array.isArray(tt.single) ? tt.single : tt.single ? [tt.single] : [];
+
+        const allIds = Array.from(
+          new Set([
+            ...rawCoop.map(extractId),
+            ...rawDuo.map(extractId),
+            ...rawSingle.map(extractId),
+          ].filter(Boolean))
+        );
+
+        const nameMap = new Map<string, string>();
+        [...rawCoop, ...rawDuo, ...rawSingle].forEach((item: any) => {
+          if (item && typeof item === 'object') {
+            const id = extractId(item);
+            const name = item.player_name || item.name;
+            if (id && name) nameMap.set(id, name);
+          }
+        });
+
+        if (allIds.length > 0) {
+          let dbPlayers = await sql`
+            SELECT player_id::text AS player_id, player_name
+            FROM player_seasons
+            WHERE player_id::text = ANY(${allIds})
+              AND season_id = ${lineup.season_id}
+          `;
+          if (dbPlayers.length === 0) {
+            dbPlayers = await sql`
+              SELECT player_id::text AS player_id, player_name
+              FROM realplayerstats
+              WHERE player_id::text = ANY(${allIds})
+                AND season_id = ${lineup.season_id}
+            `;
+          }
+          dbPlayers.forEach((p: any) => {
+            if (p.player_id && p.player_name) {
+              nameMap.set(String(p.player_id), p.player_name);
+            }
+          });
+        }
+
+        const resolveSlot = (arr: any[]) =>
+          arr.map((item: any) => {
+            const id = extractId(item);
+            return {
+              player_id: id,
+              player_name: nameMap.get(id) || 'Unknown Player',
+            };
+          });
+
+        const resolvedTripleThreat = {
+          coop: resolveSlot(rawCoop),
+          duo: resolveSlot(rawDuo),
+          single: resolveSlot(rawSingle),
+        };
+
+        const formattedLineup = [
+          ...resolvedTripleThreat.coop.map((p, idx) => ({ ...p, position: idx + 1, mode: 'coop', is_substitute: false })),
+          ...resolvedTripleThreat.duo.map((p, idx) => ({ ...p, position: idx + 3, mode: 'duo', is_substitute: false })),
+          ...resolvedTripleThreat.single.map((p) => ({ ...p, position: 5, mode: 'single', is_substitute: false })),
+        ];
+
+        return NextResponse.json({
+          success: true,
+          is_triple_threat: true,
+          triple_threat_lineup: resolvedTripleThreat,
+          lineup: formattedLineup,
+          locked: lineup.is_locked || false,
+          submitted_at: lineup.submitted_at || lineup.created_at || null,
+        });
+      }
 
       // The lineups table has starting_xi and substitutes arrays with player IDs
       // We need to fetch player names from the players table

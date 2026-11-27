@@ -72,6 +72,32 @@ export async function POST(
         }
 
         const fixture = fixtures[0];
+
+        // Guard Triple Threat fixtures from legacy 5-to-7 player/sub writes
+        let isTripleThreat = String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+        if (!isTripleThreat && fixture.tournament_id) {
+            const tourRows = await sql`
+              SELECT t.tournament_type, ts.matchday_format
+              FROM tournaments t
+              LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+              WHERE t.id = ${fixture.tournament_id}
+              LIMIT 1
+            `;
+            isTripleThreat =
+                tourRows.length > 0 &&
+                (tourRows[0].tournament_type === 'triple_threat' ||
+                    tourRows[0].matchday_format === 'triple_threat');
+        }
+        if (isTripleThreat) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'Triple Threat fixtures require Co-op, Duo, and Single lineup submission via /api/lineups',
+                },
+                { status: 400 }
+            );
+        }
+
         const teamId = team_type === 'home' ? fixture.home_team_id : fixture.away_team_id;
 
         // Check if lineup already exists

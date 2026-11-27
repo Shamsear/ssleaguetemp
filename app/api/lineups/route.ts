@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { verifyAuth } from '@/lib/auth-helper';
 import {
   validateLineup,
   isLineupEditable,
@@ -307,8 +308,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if lineup can be edited (skip if bypass_deadline is true)
-    if (!bypass_deadline) {
+    // Check if lineup can be edited (skip only if verified admin passes bypass_deadline)
+    if (bypass_deadline) {
+      const auth = await verifyAuth(['committee_admin', 'super_admin'], request);
+      if (!auth.authenticated) {
+        return NextResponse.json(
+          { error: auth.error || 'Only committee or super admins can bypass lineup deadlines' },
+          { status: 403 }
+        );
+      }
+      console.log('⚠️ Bypassing deadline check (committee admin override)');
+    } else {
       const editableCheck = await isLineupEditable(fixture_id, team_id);
       if (!editableCheck.editable) {
         // Check if it's because matchups exist
@@ -333,8 +343,6 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-    } else {
-      console.log('⚠️ Bypassing deadline check (committee admin override)');
     }
 
     // Get fixture info
@@ -441,6 +449,9 @@ export async function POST(request: NextRequest) {
         classic_player_count = EXCLUDED.classic_player_count,
         is_valid = EXCLUDED.is_valid,
         validation_errors = EXCLUDED.validation_errors,
+        submitted_by = EXCLUDED.submitted_by,
+        submitted_at = EXCLUDED.submitted_at,
+        is_draft = false,
         updated_at = NOW()
     `;
 
@@ -473,7 +484,10 @@ export async function POST(request: NextRequest) {
         const otherTeamId = (team_id === home_team_id) ? away_team_id : home_team_id;
         const otherLineup = await sql`
           SELECT triple_threat_lineup FROM lineups
-          WHERE fixture_id = ${fixture_id} AND team_id = ${otherTeamId}
+          WHERE fixture_id = ${fixture_id}
+            AND team_id = ${otherTeamId}
+            AND COALESCE(submitted_by, '') <> 'system_auto'
+            AND COALESCE(is_draft, false) = false
           LIMIT 1
         `;
 

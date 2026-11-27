@@ -7,6 +7,7 @@ import {
   HelpCircle, RefreshCw, Send, ChevronDown, Sparkles, Award
 } from 'lucide-react';
 import { validateTripleThreatLineup } from '@/lib/tournament/triple-threat-engine';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface Player {
   id: string;
@@ -29,6 +30,7 @@ interface TripleThreatLineupSubmissionProps {
   isOpponentSelection?: boolean;
   opponentTeamName?: string;
   isHomeTeam?: boolean;
+  bypassDeadline?: boolean;
 }
 
 export default function TripleThreatLineupSubmission({
@@ -41,6 +43,7 @@ export default function TripleThreatLineupSubmission({
   isOpponentSelection = false,
   opponentTeamName,
   isHomeTeam = false,
+  bypassDeadline = false,
 }: TripleThreatLineupSubmissionProps) {
   const { user } = useAuth();
   const [roster, setRoster] = useState<Player[]>([]);
@@ -126,9 +129,11 @@ export default function TripleThreatLineupSubmission({
     }
   };
 
+  const isAdminOverride = bypassDeadline || user?.role === 'committee_admin' || (user?.role as string) === 'super_admin';
+
   const checkEditability = async () => {
     // Committee admin can always edit/submit lineups on behalf of teams
-    if (user?.role === 'committee_admin') {
+    if (isAdminOverride) {
       setIsEditable(true);
       return;
     }
@@ -267,10 +272,11 @@ export default function TripleThreatLineupSubmission({
         substitutes: [],
         selected_by_opponent: isOpponentSelection,
         submitted_by: user?.uid || 'anonymous',
-        submitted_by_name: user?.displayName || user?.email || 'Team Manager',
+        submitted_by_name: (user as any)?.displayName || (user as any)?.display_name || user?.username || user?.email || 'Team Manager',
+        bypass_deadline: isAdminOverride,
       };
 
-      const res = await fetch('/api/lineups', {
+      const res = await fetchWithTokenRefresh('/api/lineups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

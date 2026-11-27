@@ -27,6 +27,7 @@ export async function GET(
     const fixtures = await sql`
       SELECT 
         f.id as fixture_id,
+        f.season_id,
         f.round_number,
         f.match_number,
         f.home_team_id,
@@ -110,7 +111,8 @@ export async function GET(
     return NextResponse.json({
       success: true,
       fixtures: fixtures,
-      count: fixtures.length
+      count: fixtures.length,
+      is_triple_threat: isTripleThreat
     });
   } catch (error: any) {
     console.error('Error fetching lineup status:', error);
