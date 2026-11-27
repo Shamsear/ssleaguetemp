@@ -272,7 +272,7 @@ export async function POST(
           ${parseInt(roundNumber)},
           ${leg},
           ${isTT ? '00:00' : '14:00'},
-          ${isTT ? '14:00' : '17:00'},
+          ${isTT ? '19:00' : '17:00'},
           '00:10',
           'pending',
           NOW(),

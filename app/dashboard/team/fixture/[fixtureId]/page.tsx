@@ -317,7 +317,8 @@ export default function FixturePage() {
 
       const awaySubmissionDeadline = computeAwayLineupDeadline({
         scheduled_date: roundDeadlines?.scheduled_date,
-        away_fixture_deadline_time: roundDeadlines?.away_fixture_deadline_time,
+        round_start_time: roundDeadlines?.round_start_time,
+        home_fixture_deadline_time: roundDeadlines?.home_fixture_deadline_time,
         lineup_deadline: fixture.lineup_deadline,
         isTripleThreat: isTTFixture,
       });
@@ -343,7 +344,7 @@ export default function FixturePage() {
 
       // Validate and default time fields
       const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
-      const awayTime = roundDeadlines.away_fixture_deadline_time || (isTTFixture ? '14:00' : '19:00');
+      const awayTime = roundDeadlines.away_fixture_deadline_time || '19:00';
       const resultTime = roundDeadlines.result_entry_deadline_time || '00:10';
 
       // Parse all deadlines
@@ -2114,7 +2115,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </Link>
                   ) : !awayLineupSubmitted ? (
                     <p className="text-xs text-slate-500 italic">
-                      Awaiting submission by Away Team (Deadline: {roundDeadlines?.away_fixture_deadline_time || '14:00'} IST).
+                      Awaiting submission by Away Team (Deadline: {roundDeadlines?.round_start_time || '00:00'} IST).
                     </p>
                   ) : (
                     <p className="text-xs text-slate-400 italic">
@@ -5288,7 +5289,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             : !homeLineupSubmitted
                               ? 'Home team has not submitted their lineup yet.'
                               : !awayLineupSubmitted
-                                ? `Away team lineup is pending (Deadline: ${roundDeadlines?.away_fixture_deadline_time || '14:00'} IST).`
+                                ? `Away team lineup is pending (Deadline: ${roundDeadlines?.round_start_time || '00:00'} IST).`
                                 : 'Generating matchups...'}
                         </p>
                       </div>

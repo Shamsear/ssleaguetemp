@@ -341,7 +341,7 @@ export async function POST(
                     ${currentRound},
                     ${leg},
                     ${isTripleThreat ? '00:00' : '14:00'},
-                    ${isTripleThreat ? '14:00' : '17:00'},
+                    ${isTripleThreat ? '19:00' : '17:00'},
                     '00:10',
                     'pending',
                     NOW(),

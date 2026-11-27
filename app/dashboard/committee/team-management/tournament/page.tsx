@@ -3529,7 +3529,7 @@ export function TournamentDashboardPageContent() {
                               playoff_teams: 8,
                               direct_semifinal_teams: 0,
                               is_two_legged: true,
-                              away_deadline_time: '14:00',
+                              away_deadline_time: '19:00',
                               result_deadline_time: '00:10',
                             }));
                           } else {

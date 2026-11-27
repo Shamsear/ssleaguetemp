@@ -354,19 +354,24 @@ export async function isLineupEditable(
 
     // Use the same time parsing as fixture page (IST +05:30)
     const homeTime = fixture.home_fixture_deadline_time || '17:00';
-    const awayTime = fixture.away_fixture_deadline_time || (isTT ? '14:00' : '19:00');
+    const awayTime = fixture.away_fixture_deadline_time || '19:00';
     const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
-    const awayDeadline =
+    const awayDeadline = new Date(`${scheduledDateStr}T${awayTime}:00+05:30`);
+    const awayLineupDeadline =
       computeAwayLineupDeadline({
         scheduled_date: fixture.scheduled_date,
         scheduled_date_str: scheduledDateStr,
-        away_fixture_deadline_time: awayTime,
+        round_start_time: fixture.round_start_time,
+        home_fixture_deadline_time: fixture.home_fixture_deadline_time,
         lineup_deadline: fixture.lineup_deadline,
         isTripleThreat: isTT,
-      }) || new Date(`${scheduledDateStr}T${awayTime}:00+05:30`);
+      }) || new Date(`${scheduledDateStr}T${isTT ? '00:00' : '17:00'}:00+05:30`);
 
-    // Round start time (for display purposes)
-    const roundStartTimeStr = fixture.round_start_time || fixture.home_fixture_deadline_time || '14:00';
+    // Round start time (used as Away lineup submission deadline)
+    const roundStartTimeStr =
+      fixture.round_start_time && /^\d{2}:\d{2}$/.test(fixture.round_start_time)
+        ? fixture.round_start_time
+        : fixture.home_fixture_deadline_time || (isTT ? '00:00' : '17:00');
     const roundStart = new Date(`${scheduledDateStr}T${roundStartTimeStr}:00+05:30`);
     
     // Check if matchups exist
@@ -382,26 +387,26 @@ export async function isLineupEditable(
 
     // Special Rules for Triple Threat:
     // 1. Home team has Home Advantage: they can view the away team's lineup and adjust/change their own lineup anytime before matches are completed.
-    // 2. Away team must submit their lineup blindly before the submission deadline (away_fixture_deadline_time, default 14:00 IST).
+    // 2. Away team must submit their lineup before the round start time (round_start_time).
     if (isTT) {
       if (isHomeTeam && fixture.fixture_status !== 'completed' && fixture.fixture_status !== 'finalized') {
         return {
           editable: true,
           reason: 'Home team has Home Advantage and can view and adjust their lineup against the away team',
-          deadline: awayDeadline.toISOString(),
+          deadline: awayLineupDeadline.toISOString(),
           roundStart: roundStart.toISOString(),
           homeDeadline: homeDeadline.toISOString(),
           awayDeadline: awayDeadline.toISOString()
         };
       }
       if (!isHomeTeam) {
-        const isBeforeAwayDeadline = now < awayDeadline;
+        const isBeforeAwayDeadline = now < awayLineupDeadline;
         return {
           editable: isBeforeAwayDeadline,
           reason: isBeforeAwayDeadline 
-            ? `Away team can edit lineup before ${awayTime} IST` 
-            : `Away team lineup submission deadline (${awayTime} IST) has passed`,
-          deadline: awayDeadline.toISOString(),
+            ? `Away team can edit lineup before ${roundStartTimeStr} IST` 
+            : `Away team lineup submission deadline (${roundStartTimeStr} IST) has passed`,
+          deadline: awayLineupDeadline.toISOString(),
           roundStart: roundStart.toISOString(),
           homeDeadline: homeDeadline.toISOString(),
           awayDeadline: awayDeadline.toISOString()

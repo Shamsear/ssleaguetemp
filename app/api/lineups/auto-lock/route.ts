@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
+import { computeAwayLineupDeadline } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Auto-lock lineups for a specific fixture if deadline has passed
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
     
     // Get round deadlines to calculate the actual deadline
     const roundDeadlines = await sql`
-      SELECT * FROM round_deadlines 
+      SELECT *, scheduled_date::text as scheduled_date_str FROM round_deadlines 
       WHERE season_id = ${fixture.season_id}
         AND tournament_id = ${fixture.tournament_id}
         AND round_number = ${fixture.round_number}
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     const roundData = roundDeadlines[0];
     const scheduledDate = roundData.scheduled_date;
     
-    if (!scheduledDate) {
+    if (!scheduledDate && !roundData.scheduled_date_str) {
       return NextResponse.json({
         success: true,
         message: 'Round not scheduled yet',
@@ -102,27 +103,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Calculate away lineup lock deadline (Triple Threat locks at away_fixture_deadline_time; never treat 00:00 round start as lock time)
-    const roundStartTimeStr = isTripleThreat
-      ? (roundData.away_fixture_deadline_time || '14:00')
-      : (roundData.round_start_time && roundData.round_start_time !== '00:00'
-          ? roundData.round_start_time
-          : roundData.home_fixture_deadline_time || '17:00');
-    const baseDateStr = scheduledDate instanceof Date
-      ? `${scheduledDate.getFullYear()}-${String(scheduledDate.getMonth() + 1).padStart(2, '0')}-${String(scheduledDate.getDate()).padStart(2, '0')}`
-      : String(scheduledDate).split('T')[0];
-    const [startHour, startMin] = roundStartTimeStr.split(':').map(Number);
-    const roundStartDeadline = new Date(baseDateStr);
-    roundStartDeadline.setUTCHours(startHour - 5, startMin - 30, 0, 0); // Convert IST to UTC
+    // Away lineup submission deadline is always the round start time (round_start_time)
+    const roundStartDeadline = computeAwayLineupDeadline({
+      scheduled_date: roundData.scheduled_date,
+      scheduled_date_str: roundData.scheduled_date_str,
+      round_start_time: roundData.round_start_time,
+      home_fixture_deadline_time: roundData.home_fixture_deadline_time,
+      lineup_deadline: fixture.lineup_deadline,
+      isTripleThreat,
+    });
 
     // Check if round has started
-    if (now <= roundStartDeadline) {
+    if (!roundStartDeadline || now <= roundStartDeadline) {
       return NextResponse.json({
         success: true,
         message: 'Round not started yet',
         locked: false,
         auto_populated: autoPopulatedBeforeDeadline,
-        round_start: roundStartDeadline.toISOString(),
+        round_start: roundStartDeadline ? roundStartDeadline.toISOString() : null,
         now: now.toISOString()
       });
     }

@@ -1011,19 +1011,22 @@ export function formatTripleThreatFixtureCopy(params: {
 }
 
 /**
- * Computes the Away Team's lineup submission deadline in IST from `round_deadlines` (with `lineup_deadline` fallback).
+ * Computes the Away Team's lineup submission deadline in IST from `round_deadlines.round_start_time`
+ * (with `home_fixture_deadline_time` and `lineup_deadline` fallbacks).
  */
 export function computeAwayLineupDeadline(params: {
   scheduled_date?: string | Date | null;
   scheduled_date_str?: string | null;
-  away_fixture_deadline_time?: string | null;
+  round_start_time?: string | null;
+  home_fixture_deadline_time?: string | null;
   lineup_deadline?: string | Date | null;
   isTripleThreat?: boolean;
 }): Date | null {
   const {
     scheduled_date,
     scheduled_date_str,
-    away_fixture_deadline_time,
+    round_start_time,
+    home_fixture_deadline_time,
     lineup_deadline,
     isTripleThreat,
   } = params;
@@ -1048,8 +1051,11 @@ export function computeAwayLineupDeadline(params: {
   }
 
   if (dateStr) {
-    const awayTime = away_fixture_deadline_time || (isTripleThreat ? '14:00' : '19:00');
-    const dt = new Date(`${dateStr}T${awayTime}:00+05:30`);
+    const startTime =
+      round_start_time && /^\d{2}:\d{2}$/.test(round_start_time)
+        ? round_start_time
+        : home_fixture_deadline_time || (isTripleThreat ? '00:00' : '17:00');
+    const dt = new Date(`${dateStr}T${startTime}:00+05:30`);
     if (!Number.isNaN(dt.getTime())) return dt;
   }
 

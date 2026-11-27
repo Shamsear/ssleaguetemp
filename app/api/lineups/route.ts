@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
       SELECT
         f.home_team_id, f.away_team_id, f.lineup_deadline, f.tournament_id,
         t.tournament_type, ts.matchday_format,
-        rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str, rd.away_fixture_deadline_time
+        rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str, rd.round_start_time, rd.home_fixture_deadline_time
       FROM fixtures f
       LEFT JOIN tournaments t ON f.tournament_id = t.id
       LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
@@ -245,7 +245,8 @@ export async function POST(request: NextRequest) {
       matchday_format,
       scheduled_date,
       scheduled_date_str,
-      away_fixture_deadline_time,
+      round_start_time,
+      home_fixture_deadline_time,
     } = fixtureCheck[0];
     if (team_id !== home_team_id && team_id !== away_team_id) {
       console.error('❌ SECURITY: Team not part of fixture!', {
@@ -306,7 +307,8 @@ export async function POST(request: NextRequest) {
       const deadline = computeAwayLineupDeadline({
         scheduled_date,
         scheduled_date_str,
-        away_fixture_deadline_time,
+        round_start_time,
+        home_fixture_deadline_time,
         lineup_deadline,
         isTripleThreat: isTT,
       });
