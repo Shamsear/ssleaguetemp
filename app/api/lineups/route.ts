@@ -6,9 +6,12 @@ import {
   isLineupEditable,
   generateLineupId,
   hasSubmittedLineup,
-  autoPopulateStandardFivePlayerLineups
+  autoPopulateStandardFivePlayerLineups,
+  isRoundStartedFromDeadline,
+  resolveUserTeamIdForSeason,
+  materializeTripleThreatMatchups
 } from '@/lib/lineup-validation';
-import { buildTripleThreatMatchups, computeAwayLineupDeadline } from '@/lib/tournament/triple-threat-engine';
+import { computeAwayLineupDeadline } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * GET - Fetch lineup(s)
@@ -30,30 +33,67 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Auto-create default 5-player team lineups ONLY for standard (non-Triple Threat, non-blind_lineup) tournaments
+    let fixtureMeta: any = null;
     try {
       const fixtureRes = await sql`
-        SELECT f.id as fixture_id, f.season_id, f.round_number, f.tournament_id,
-               f.home_team_id, f.away_team_id, f.matchup_mode,
-               t.tournament_type, ts.matchday_format
+        SELECT f.id as fixture_id, f.season_id, f.round_number, f.tournament_id, f.leg,
+               f.home_team_id, f.away_team_id, f.matchup_mode, f.status as fixture_status,
+               t.tournament_type, ts.matchday_format,
+               rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str,
+               rd.round_start_time, rd.status as round_status
         FROM fixtures f
         LEFT JOIN tournaments t ON f.tournament_id = t.id
         LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+        LEFT JOIN round_deadlines rd ON (
+          f.round_number = rd.round_number
+          AND f.season_id = rd.season_id
+          AND f.tournament_id = rd.tournament_id
+          AND (f.leg IS NULL OR rd.leg IS NULL OR f.leg = rd.leg)
+        )
         WHERE f.id = ${fixtureId}
         LIMIT 1
       `;
       if (fixtureRes.length > 0) {
+        fixtureMeta = fixtureRes[0];
         await autoPopulateStandardFivePlayerLineups(sql, fixtureRes as any[]);
       }
     } catch (autoErr) {
-      console.error('Error auto-creating default lineups:', autoErr);
+      console.error('Error fetching fixture metadata / auto-creating lineups:', autoErr);
     }
+
+    const roundStarted = fixtureMeta
+      ? isRoundStartedFromDeadline({
+          round_status: fixtureMeta.round_status,
+          fixture_status: fixtureMeta.fixture_status,
+          scheduled_date: fixtureMeta.scheduled_date,
+          scheduled_date_str: fixtureMeta.scheduled_date_str,
+          round_start_time: fixtureMeta.round_start_time,
+        })
+      : false;
+
+    const isTripleThreatFixture = Boolean(
+      fixtureMeta && (
+        fixtureMeta.tournament_type === 'triple_threat' ||
+        fixtureMeta.matchday_format === 'triple_threat' ||
+        String(fixtureMeta.tournament_id || '').toLowerCase().includes('triple_threat')
+      )
+    );
+
+    const auth = await verifyAuth(undefined, request);
+    const roleLower = String(auth.role || '').toLowerCase();
+    const isAdmin = Boolean(
+      auth.authenticated &&
+      ['committee_admin', 'super_admin', 'superadmin', 'admin'].includes(roleLower)
+    );
+    const callerTeamId =
+      auth.authenticated && auth.userId && !isAdmin
+        ? await resolveUserTeamIdForSeason(auth.userId, fixtureMeta?.season_id)
+        : null;
 
     let lineups;
 
     if (teamId) {
       // Get specific team's lineup - ONLY for that team
-      // This ensures Team A cannot fetch Team B's lineup by accident
       lineups = await sql`
         SELECT 
           l.*,
@@ -105,7 +145,7 @@ export async function GET(request: NextRequest) {
       return 10;
     };
 
-    // Get substitutions and sort starting_xi by category priority for the lineups
+    // Get substitutions and sort starting_xi by category priority, redacting opponent lineup before round starts
     if (lineups.length > 0) {
       const lineupIds = lineups.map((l: any) => l.id);
       const substitutions = await sql`
@@ -115,37 +155,67 @@ export async function GET(request: NextRequest) {
         ORDER BY made_at ASC
       `;
 
-      // Attach substitutions and sort starting_xi by category priority
-      lineups = lineups.map((l: any) => {
-        let startingXi = Array.isArray(l.starting_xi) ? [...l.starting_xi] : [];
-        if (startingXi.some((item: any) => item && typeof item === 'object' && (item.category || item.player_name || item.name))) {
-          startingXi.sort((a: any, b: any) => {
-            const pA = typeof a === 'object' ? getCategoryPriority(a?.category) : 99;
-            const pB = typeof b === 'object' ? getCategoryPriority(b?.category) : 99;
-            if (pA !== pB) return pA - pB;
-            const nameA = typeof a === 'object' ? (a?.player_name || a?.name || '') : '';
-            const nameB = typeof b === 'object' ? (b?.player_name || b?.name || '') : '';
-            return nameA.localeCompare(nameB);
-          });
-        }
+      lineups = lineups
+        .map((l: any) => {
+          const shouldHidePlayers = !isAdmin && !roundStarted && callerTeamId !== l.team_id;
+          if (shouldHidePlayers) {
+            const isRealSubmitted =
+              !l.is_draft &&
+              (isTripleThreatFixture
+                ? l.submitted_by !== 'system_auto' && Boolean(l.triple_threat_lineup)
+                : Array.isArray(l.starting_xi) && l.starting_xi.length >= 5);
 
-        return {
-          ...l,
-          starting_xi: startingXi,
-          substitutions: substitutions.filter((s: any) => s.lineup_id === l.id),
-        };
-      });
+            if (!isRealSubmitted) {
+              return null;
+            }
+
+            return {
+              id: l.id,
+              fixture_id: l.fixture_id,
+              team_id: l.team_id,
+              round_number: l.round_number,
+              is_draft: false,
+              is_locked: Boolean(l.is_locked),
+              submitted: true,
+              submitted_at: l.submitted_at,
+              selected_by_opponent: Boolean(l.selected_by_opponent),
+              hidden_until_round_start: true,
+              starting_xi: [],
+              substitutes: [],
+              triple_threat_lineup: null,
+              substitutions: [],
+            };
+          }
+
+          let startingXi = Array.isArray(l.starting_xi) ? [...l.starting_xi] : [];
+          if (startingXi.some((item: any) => item && typeof item === 'object' && (item.category || item.player_name || item.name))) {
+            startingXi.sort((a: any, b: any) => {
+              const pA = typeof a === 'object' ? getCategoryPriority(a?.category) : 99;
+              const pB = typeof b === 'object' ? getCategoryPriority(b?.category) : 99;
+              if (pA !== pB) return pA - pB;
+              const nameA = typeof a === 'object' ? (a?.player_name || a?.name || '') : '';
+              const nameB = typeof b === 'object' ? (b?.player_name || b?.name || '') : '';
+              return nameA.localeCompare(nameB);
+            });
+          }
+
+          return {
+            ...l,
+            starting_xi: startingXi,
+            substitutions: substitutions.filter((s: any) => s.lineup_id === l.id),
+          };
+        })
+        .filter(Boolean);
     }
 
-    // If requesting specific team and no lineup found, return null
-    // If requesting specific team and lineup found, return the lineup object
-    // If requesting all lineups, return the array
     const response = teamId
       ? (lineups.length > 0 ? lineups[0] : null)
       : lineups;
 
     return NextResponse.json({
       success: true,
+      round_started: roundStarted,
+      hidden_until_round_start: Boolean(teamId && !isAdmin && !roundStarted && callerTeamId !== teamId),
       lineups: response,
     });
   } catch (error: any) {
@@ -213,9 +283,10 @@ export async function POST(request: NextRequest) {
     // CRITICAL: Verify the team_id is actually part of this fixture and fetch deadline metadata
     const fixtureCheck = await sql`
       SELECT
-        f.home_team_id, f.away_team_id, f.lineup_deadline, f.tournament_id,
+        f.home_team_id, f.away_team_id, f.tournament_id, f.status as fixture_status,
         t.tournament_type, ts.matchday_format,
-        rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str, rd.round_start_time, rd.home_fixture_deadline_time
+        rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str, rd.round_start_time, rd.home_fixture_deadline_time,
+        rd.status as round_status
       FROM fixtures f
       LEFT JOIN tournaments t ON f.tournament_id = t.id
       LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
@@ -239,14 +310,15 @@ export async function POST(request: NextRequest) {
     const {
       home_team_id,
       away_team_id,
-      lineup_deadline,
       tournament_id: checkedTournamentId,
+      fixture_status,
       tournament_type,
       matchday_format,
       scheduled_date,
       scheduled_date_str,
       round_start_time,
       home_fixture_deadline_time,
+      round_status,
     } = fixtureCheck[0];
     if (team_id !== home_team_id && team_id !== away_team_id) {
       console.error('❌ SECURITY: Team not part of fixture!', {
@@ -309,7 +381,6 @@ export async function POST(request: NextRequest) {
         scheduled_date_str,
         round_start_time,
         home_fixture_deadline_time,
-        lineup_deadline,
         isTripleThreat: isTT,
       });
 
@@ -488,111 +559,27 @@ export async function POST(request: NextRequest) {
       console.warn('Could not update fixture submission flags:', fixErr);
     }
 
-    // For Triple Threat, auto-create the 3 mode matchups if both teams have submitted
+    // For Triple Threat, auto-create the 3 mode matchups only once the round has started
     if (triple_threat_lineup) {
-      try {
-        const otherTeamId = (team_id === home_team_id) ? away_team_id : home_team_id;
-        const otherLineup = await sql`
-          SELECT triple_threat_lineup FROM lineups
-          WHERE fixture_id = ${fixture_id}
-            AND team_id = ${otherTeamId}
-            AND COALESCE(submitted_by, '') <> 'system_auto'
-            AND COALESCE(is_draft, false) = false
-          LIMIT 1
-        `;
+      const roundStarted = isRoundStartedFromDeadline({
+        round_status,
+        fixture_status,
+        scheduled_date,
+        scheduled_date_str,
+        round_start_time,
+      });
 
-        if (otherLineup.length > 0 && otherLineup[0].triple_threat_lineup) {
-          const homeTT = (team_id === home_team_id) ? triple_threat_lineup : otherLineup[0].triple_threat_lineup;
-          const awayTT = (team_id === away_team_id) ? triple_threat_lineup : otherLineup[0].triple_threat_lineup;
-
-          const extractId = (item: any): string => {
-            if (!item) return '';
-            if (typeof item === 'string') return item.trim();
-            return String(item.player_id || item.id || '').trim();
-          };
-
-          const homeCoopIds = (homeTT.coop || []).map(extractId).filter(Boolean);
-          const homeDuoIds = (homeTT.duo || []).map(extractId).filter(Boolean);
-          const homeSingleIds = (homeTT.single || []).map(extractId).filter(Boolean);
-
-          const awayCoopIds = (awayTT.coop || []).map(extractId).filter(Boolean);
-          const awayDuoIds = (awayTT.duo || []).map(extractId).filter(Boolean);
-          const awaySingleIds = (awayTT.single || []).map(extractId).filter(Boolean);
-
-          const allPlayerIds = [
-            ...homeCoopIds, ...homeDuoIds, ...homeSingleIds,
-            ...awayCoopIds, ...awayDuoIds, ...awaySingleIds
-          ];
-
-          const nameMap = new Map<string, string>();
-
-          // Pre-populate with names if objects were provided in lineup
-          const gatherObjNames = (arr: any[]) => {
-            if (!Array.isArray(arr)) return;
-            arr.forEach((item: any) => {
-              if (item && typeof item === 'object') {
-                const id = extractId(item);
-                const name = item.player_name || item.name;
-                if (id && name) nameMap.set(id, name);
-              }
-            });
-          };
-
-          gatherObjNames(homeTT.coop);
-          gatherObjNames(homeTT.duo);
-          gatherObjNames(homeTT.single);
-          gatherObjNames(awayTT.coop);
-          gatherObjNames(awayTT.duo);
-          gatherObjNames(awayTT.single);
-
-          // Fetch any remaining/verified player names from DB
-          if (allPlayerIds.length > 0) {
-            try {
-              const playerRows = await sql`
-                SELECT player_id::text, player_name FROM player_seasons WHERE player_id::text = ANY(${allPlayerIds})
-                UNION
-                SELECT id::text as player_id, name as player_name FROM realplayers WHERE id::text = ANY(${allPlayerIds})
-                UNION
-                SELECT id::text as player_id, name as player_name FROM players WHERE id::text = ANY(${allPlayerIds})
-              `;
-              playerRows.forEach((r: any) => {
-                if (r.player_id && r.player_name) {
-                  nameMap.set(String(r.player_id), r.player_name);
-                }
-              });
-            } catch (pErr) {
-              console.warn('Could not query player names for Triple Threat matchups:', pErr);
-            }
+      if (roundStarted) {
+        try {
+          const matResult = await materializeTripleThreatMatchups(sql, fixture_id);
+          if (matResult.created) {
+            console.log(`✅ Auto-created ${matResult.matchupsCount} Triple Threat matchups for fixture ${fixture_id}`);
           }
-
-          const getNames = (ids: string[]) => ids.map(id => nameMap.get(id) || `Player ${id}`);
-          const builtMatchups = buildTripleThreatMatchups(homeTT, awayTT, getNames);
-
-          // Delete old matchups for this fixture
-          await sql`DELETE FROM matchups WHERE fixture_id = ${fixture_id}`;
-
-          for (const m of builtMatchups) {
-            await sql`
-              INSERT INTO matchups (
-                fixture_id, season_id, tournament_id, round_number, position, match_mode,
-                home_player_id, home_player_name, away_player_id, away_player_name,
-                home_player_ids, home_player_names, away_player_ids, away_player_names,
-                match_duration, created_at, updated_at
-              ) VALUES (
-                ${fixture_id}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, ${m.position}, ${m.match_mode},
-                ${m.home_player_id}, ${m.home_player_name},
-                ${m.away_player_id}, ${m.away_player_name},
-                ${m.home_player_ids}, ${m.home_player_names},
-                ${m.away_player_ids}, ${m.away_player_names},
-                ${m.match_duration}, NOW(), NOW()
-              )
-            `;
-          }
-
-          console.log(`✅ Auto-created ${builtMatchups.length} Triple Threat matchups for fixture ${fixture_id}`);
+        } catch (ttErr) {
+          console.error('Failed to auto-create Triple Threat matchups:', ttErr);
         }
-      } catch (ttErr) {
-        console.error('Failed to auto-create Triple Threat matchups:', ttErr);
+      } else {
+        console.log(`⏳ Deferring Triple Threat matchup creation for fixture ${fixture_id} until round starts`);
       }
     }
 

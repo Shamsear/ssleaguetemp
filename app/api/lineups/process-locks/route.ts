@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { autoPopulateStandardFivePlayerLineups } from '@/lib/lineup-validation';
+import { computeAwayLineupDeadline } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Process lineup locks for fixtures past their deadline
@@ -14,9 +15,25 @@ export async function POST(request: NextRequest) {
     const { season_id, round_number } = body;
     const sql = getTournamentDb();
 
-    // Get fixtures with passed deadlines from Neon
-    let fixturesQuery = `SELECT f.*, t.tournament_type, ts.matchday_format FROM fixtures f LEFT JOIN tournaments t ON f.tournament_id = t.id LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id WHERE f.lineup_deadline <= $1`;
-    const params: any[] = [now.toISOString()];
+    // Get candidate fixtures joined with round_deadlines (fixtures table has no lineup_deadline column)
+    let fixturesQuery = `
+      SELECT f.*, t.tournament_type, ts.matchday_format,
+             rd.scheduled_date as rd_scheduled_date,
+             rd.scheduled_date::text as rd_scheduled_date_str,
+             rd.round_start_time,
+             rd.home_fixture_deadline_time
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      LEFT JOIN round_deadlines rd ON (
+        f.round_number = rd.round_number
+        AND f.season_id = rd.season_id
+        AND f.tournament_id = rd.tournament_id
+        AND (f.leg IS NULL OR rd.leg IS NULL OR f.leg = rd.leg)
+      )
+      WHERE f.status NOT IN ('completed', 'finalized', 'closed')
+    `;
+    const params: any[] = [];
 
     if (season_id) {
       params.push(season_id);
@@ -28,7 +45,21 @@ export async function POST(request: NextRequest) {
     }
 
     const fixturesResult: any = await sql.query(fixturesQuery, params);
-    const fixturesRows: any[] = Array.isArray(fixturesResult) ? fixturesResult : (fixturesResult?.rows || []);
+    const allRows: any[] = Array.isArray(fixturesResult) ? fixturesResult : (fixturesResult?.rows || []);
+    const fixturesRows = allRows.filter((fixture) => {
+      const isTT =
+        fixture.tournament_type === 'triple_threat' ||
+        fixture.matchday_format === 'triple_threat' ||
+        String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+      const deadline = computeAwayLineupDeadline({
+        scheduled_date: fixture.rd_scheduled_date,
+        scheduled_date_str: fixture.rd_scheduled_date_str,
+        round_start_time: fixture.round_start_time,
+        home_fixture_deadline_time: fixture.home_fixture_deadline_time,
+        isTripleThreat: isTT,
+      });
+      return Boolean(deadline && now >= deadline);
+    });
 
     if (fixturesRows.length === 0) {
       return NextResponse.json({

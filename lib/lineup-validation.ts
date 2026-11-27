@@ -1,9 +1,16 @@
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { getMainDb } from '@/lib/neon/main-config';
+import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { extractISTDateString } from '@/lib/utils/timezone';
 import {
+  buildTripleThreatMatchups,
   computeAwayLineupDeadline,
+  isRoundStartedFromDeadline,
   validateTripleThreatLineup,
   TripleThreatLineupSubmission,
 } from '@/lib/tournament/triple-threat-engine';
+
+export { isRoundStartedFromDeadline };
 
 export interface LineupValidationResult {
   isValid: boolean;
@@ -277,6 +284,206 @@ export async function validateLineup(
   };
 }
 
+// isRoundStartedFromDeadline is defined in lib/tournament/triple-threat-engine and re-exported above.
+
+/**
+ * Resolve the authenticated Firebase user's registered team_id for a season.
+ */
+export async function resolveUserTeamIdForSeason(
+  userId: string,
+  seasonId?: string | null
+): Promise<string | null> {
+  if (!userId) return null;
+
+  try {
+    const mainSql = getMainDb();
+    if (seasonId) {
+      const rows = await mainSql`
+        SELECT team_id FROM team_seasons
+        WHERE (user_id = ${userId} OR team_id = ${userId})
+          AND season_id = ${seasonId}
+        LIMIT 1
+      `;
+      if (rows.length > 0 && rows[0].team_id) return String(rows[0].team_id);
+    }
+    const fallbackRows = await mainSql`
+      SELECT team_id FROM team_seasons
+      WHERE user_id = ${userId} OR team_id = ${userId}
+      ORDER BY joined_at DESC
+      LIMIT 1
+    `;
+    if (fallbackRows.length > 0 && fallbackRows[0].team_id) return String(fallbackRows[0].team_id);
+  } catch (sqlErr) {
+    console.warn('Could not resolve user team_id from Neon main DB:', sqlErr);
+  }
+
+  try {
+    if (seasonId) {
+      const snap = await adminDb
+        .collection('team_seasons')
+        .where('user_id', '==', userId)
+        .where('season_id', '==', seasonId)
+        .limit(1)
+        .get();
+      if (!snap.empty) {
+        const d = snap.docs[0].data();
+        if (d.team_id) return String(d.team_id);
+      }
+    }
+    const anySnap = await adminDb
+      .collection('team_seasons')
+      .where('user_id', '==', userId)
+      .limit(1)
+      .get();
+    if (!anySnap.empty) {
+      const d = anySnap.docs[0].data();
+      if (d.team_id) return String(d.team_id);
+    }
+  } catch (fbErr) {
+    console.warn('Could not resolve user team_id from Firebase:', fbErr);
+  }
+
+  return null;
+}
+
+/**
+ * Idempotently builds and stores the 4 Triple Threat matchups from both submitted team lineups.
+ */
+export async function materializeTripleThreatMatchups(
+  sql: ReturnType<typeof getTournamentDb>,
+  fixtureId: string
+): Promise<{ created: boolean; matchupsCount: number; error?: string }> {
+  const fixtures = await sql`
+    SELECT id, season_id, round_number, tournament_id, home_team_id, away_team_id, home_team_name, away_team_name
+    FROM fixtures
+    WHERE id = ${fixtureId}
+    LIMIT 1
+  `;
+  if (fixtures.length === 0) {
+    return { created: false, matchupsCount: 0, error: 'Fixture not found' };
+  }
+
+  const fixture = fixtures[0];
+  const { home_team_id, away_team_id } = fixture;
+
+  const lineups = await sql`
+    SELECT team_id, triple_threat_lineup, submitted_by, is_draft
+    FROM lineups
+    WHERE fixture_id = ${fixtureId}
+      AND team_id IN (${home_team_id}, ${away_team_id})
+      AND COALESCE(submitted_by, '') <> 'system_auto'
+      AND COALESCE(is_draft, false) = false
+  `;
+
+  const homeL = lineups.find((l: any) => l.team_id === home_team_id);
+  const awayL = lineups.find((l: any) => l.team_id === away_team_id);
+
+  if (!homeL?.triple_threat_lineup && !awayL?.triple_threat_lineup) {
+    return { created: false, matchupsCount: 0, error: 'Neither team has submitted a Triple Threat lineup yet.' };
+  }
+  if (!homeL?.triple_threat_lineup) {
+    return { created: false, matchupsCount: 0, error: `${fixture.home_team_name} has not submitted their Triple Threat lineup yet.` };
+  }
+  if (!awayL?.triple_threat_lineup) {
+    return { created: false, matchupsCount: 0, error: `${fixture.away_team_name} has not submitted their Triple Threat lineup yet.` };
+  }
+
+  const homeTT = homeL.triple_threat_lineup;
+  const awayTT = awayL.triple_threat_lineup;
+
+  const extractId = (item: any): string => {
+    if (!item) return '';
+    if (typeof item === 'string') return item.trim();
+    return String(item.player_id || item.id || '').trim();
+  };
+
+  const allPlayerIds = [
+    ...(homeTT.coop || []).map(extractId),
+    ...(homeTT.duo || []).map(extractId),
+    ...(homeTT.single || []).map(extractId),
+    ...(awayTT.coop || []).map(extractId),
+    ...(awayTT.duo || []).map(extractId),
+    ...(awayTT.single || []).map(extractId),
+  ].filter(Boolean);
+
+  const nameMap = new Map<string, string>();
+  const gatherObjNames = (arr: any[]) => {
+    if (!Array.isArray(arr)) return;
+    arr.forEach((item: any) => {
+      if (item && typeof item === 'object') {
+        const id = extractId(item);
+        const name = item.player_name || item.name;
+        if (id && name) nameMap.set(id, name);
+      }
+    });
+  };
+
+  gatherObjNames(homeTT.coop);
+  gatherObjNames(homeTT.duo);
+  gatherObjNames(homeTT.single);
+  gatherObjNames(awayTT.coop);
+  gatherObjNames(awayTT.duo);
+  gatherObjNames(awayTT.single);
+
+  if (allPlayerIds.length > 0) {
+    try {
+      const playerRows = await sql`
+        SELECT player_id::text, player_name FROM player_seasons WHERE player_id::text = ANY(${allPlayerIds})
+        UNION
+        SELECT id::text as player_id, name as player_name FROM realplayers WHERE id::text = ANY(${allPlayerIds})
+        UNION
+        SELECT id::text as player_id, name as player_name FROM players WHERE id::text = ANY(${allPlayerIds})
+      `;
+      playerRows.forEach((r: any) => {
+        if (r.player_id && r.player_name) {
+          nameMap.set(String(r.player_id), r.player_name);
+        }
+      });
+    } catch (pErr) {
+      console.warn('Could not query player names for Triple Threat matchups:', pErr);
+    }
+  }
+
+  const getNames = (ids: string[]) => ids.map((id) => nameMap.get(id) || `Player ${id}`);
+  const builtMatchups = buildTripleThreatMatchups(homeTT, awayTT, getNames);
+
+  await sql`DELETE FROM matchups WHERE fixture_id = ${fixtureId}`;
+
+  for (const m of builtMatchups) {
+    await sql`
+      INSERT INTO matchups (
+        fixture_id, season_id, tournament_id, round_number, position, match_mode,
+        home_player_id, home_player_name, away_player_id, away_player_name,
+        home_player_ids, home_player_names, away_player_ids, away_player_names,
+        match_duration, created_at, updated_at
+      ) VALUES (
+        ${fixtureId}, ${fixture.season_id}, ${fixture.tournament_id}, ${fixture.round_number}, ${m.position}, ${m.match_mode},
+        ${m.home_player_id}, ${m.home_player_name},
+        ${m.away_player_id}, ${m.away_player_name},
+        ${m.home_player_ids}, ${m.home_player_names},
+        ${m.away_player_ids}, ${m.away_player_names},
+        ${m.match_duration}, NOW(), NOW()
+      )
+    `;
+  }
+
+  try {
+    await sql`
+      UPDATE fixtures
+      SET
+        home_lineup_submitted = true,
+        away_lineup_submitted = true,
+        matchups_created_at = NOW(),
+        updated_at = NOW()
+      WHERE id = ${fixtureId}
+    `;
+  } catch {
+    // Non-critical if fixture timestamp column update fails
+  }
+
+  return { created: true, matchupsCount: builtMatchups.length };
+}
+
 /**
  * Check if lineup can still be edited (deadline not passed)
  * Updated to support:
@@ -286,7 +493,15 @@ export async function validateLineup(
 export async function isLineupEditable(
   fixtureId: string,
   teamId?: string
-): Promise<{ editable: boolean; reason?: string; deadline?: string; roundStart?: string; homeDeadline?: string; awayDeadline?: string }> {
+): Promise<{
+  editable: boolean;
+  reason?: string;
+  deadline?: string;
+  roundStart?: string;
+  homeDeadline?: string;
+  awayDeadline?: string;
+  roundStarted?: boolean;
+}> {
   const sql = getTournamentDb();
 
   // Get fixture and round deadline info
@@ -298,7 +513,6 @@ export async function isLineupEditable(
       f.leg,
       f.home_team_id,
       f.away_team_id,
-      f.lineup_deadline,
       f.status as fixture_status,
       t.tournament_type,
       ts.matchday_format,
@@ -321,21 +535,29 @@ export async function isLineupEditable(
   `;
 
   if (result.length === 0) {
-    return { editable: false, reason: 'Fixture not found' };
+    return { editable: false, reason: 'Fixture not found', roundStarted: false };
   }
 
   const fixture = result[0];
+  const roundStarted = isRoundStartedFromDeadline({
+    round_status: fixture.round_status,
+    fixture_status: fixture.fixture_status,
+    scheduled_date: fixture.scheduled_date,
+    scheduled_date_str: fixture.scheduled_date_str,
+    round_start_time: fixture.round_start_time,
+  });
 
   // Don't block based on fixture_status alone - check actual deadlines
   // Only block if fixture is actually completed/finalized
   if (fixture.fixture_status && (fixture.fixture_status === 'completed' || fixture.fixture_status === 'finalized')) {
     return { 
       editable: false, 
-      reason: 'Lineup locked - fixture has been completed'
+      reason: 'Lineup locked - fixture has been completed',
+      roundStarted,
     };
   }
 
-  // Check if round has started and calculate deadlines
+  // Check if round has scheduled_date and calculate deadlines
   if (fixture.scheduled_date || fixture.scheduled_date_str) {
     const now = new Date();
     const isTT =
@@ -344,13 +566,7 @@ export async function isLineupEditable(
       String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
 
     // Always resolve scheduled_date as IST YYYY-MM-DD (prefer exact SQL ::text cast)
-    let scheduledDateStr = fixture.scheduled_date_str ? String(fixture.scheduled_date_str).split('T')[0] : '';
-    if (!scheduledDateStr && fixture.scheduled_date instanceof Date) {
-      const ist = new Date(fixture.scheduled_date.getTime() + 5.5 * 60 * 60 * 1000);
-      scheduledDateStr = ist.toISOString().split('T')[0];
-    } else if (!scheduledDateStr) {
-      scheduledDateStr = String(fixture.scheduled_date).split('T')[0];
-    }
+    const scheduledDateStr = extractISTDateString(fixture.scheduled_date_str || fixture.scheduled_date);
 
     // Use the same time parsing as fixture page (IST +05:30)
     const homeTime = fixture.home_fixture_deadline_time || '17:00';
@@ -363,7 +579,6 @@ export async function isLineupEditable(
         scheduled_date_str: scheduledDateStr,
         round_start_time: fixture.round_start_time,
         home_fixture_deadline_time: fixture.home_fixture_deadline_time,
-        lineup_deadline: fixture.lineup_deadline,
         isTripleThreat: isTT,
       }) || new Date(`${scheduledDateStr}T${isTT ? '09:00' : '17:00'}:00+05:30`);
 
@@ -382,24 +597,28 @@ export async function isLineupEditable(
     `;
     const matchupsExist = matchupsResult[0].count > 0;
     
-    // Determine if user is home team
-    const isHomeTeam = teamId === fixture.home_team_id;
+    // Determine user team side explicitly
+    const isHomeTeam = Boolean(teamId && teamId === fixture.home_team_id);
+    const isAwayTeam = Boolean(teamId && teamId === fixture.away_team_id);
 
     // Special Rules for Triple Threat:
-    // 1. Home team has Home Advantage: they can view the away team's lineup and adjust/change their own lineup anytime before matches are completed.
+    // 1. Home team has Home Advantage: they can view the away team's lineup once the round starts and adjust their own lineup anytime before completion.
     // 2. Away team must submit their lineup before the round start time (round_start_time).
     if (isTT) {
-      if (isHomeTeam && fixture.fixture_status !== 'completed' && fixture.fixture_status !== 'finalized') {
+      if (isHomeTeam) {
         return {
           editable: true,
-          reason: 'Home team has Home Advantage and can view and adjust their lineup against the away team',
+          reason: roundStarted
+            ? 'Home team has Home Advantage and can view and adjust their lineup against the away team'
+            : 'Home team can submit or adjust their lineup before the round starts',
           deadline: awayLineupDeadline.toISOString(),
           roundStart: roundStart.toISOString(),
           homeDeadline: homeDeadline.toISOString(),
-          awayDeadline: awayDeadline.toISOString()
+          awayDeadline: awayDeadline.toISOString(),
+          roundStarted,
         };
       }
-      if (!isHomeTeam) {
+      if (isAwayTeam || !teamId) {
         const isBeforeAwayDeadline = now < awayLineupDeadline;
         return {
           editable: isBeforeAwayDeadline,
@@ -409,9 +628,19 @@ export async function isLineupEditable(
           deadline: awayLineupDeadline.toISOString(),
           roundStart: roundStart.toISOString(),
           homeDeadline: homeDeadline.toISOString(),
-          awayDeadline: awayDeadline.toISOString()
+          awayDeadline: awayDeadline.toISOString(),
+          roundStarted,
         };
       }
+      return {
+        editable: false,
+        reason: 'Team is not part of this fixture',
+        deadline: awayLineupDeadline.toISOString(),
+        roundStart: roundStart.toISOString(),
+        homeDeadline: homeDeadline.toISOString(),
+        awayDeadline: awayDeadline.toISOString(),
+        roundStarted,
+      };
     }
     
     // Determine current phase based on round status and deadlines
@@ -512,11 +741,12 @@ export async function isLineupEditable(
       deadline,
       roundStart: roundStart.toISOString(),
       homeDeadline: homeDeadline.toISOString(),
-      awayDeadline: awayDeadline.toISOString()
+      awayDeadline: awayDeadline.toISOString(),
+      roundStarted,
     };
   }
 
-  return { editable: true, reason: 'Round not scheduled yet' };
+  return { editable: true, reason: 'Round not scheduled yet', roundStarted };
 }
 
 /**

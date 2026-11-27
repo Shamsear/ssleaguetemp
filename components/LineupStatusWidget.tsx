@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ClipboardList, AlertTriangle, Lock } from 'lucide-react';
+import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 
 interface Fixture {
   id: string;
@@ -54,7 +55,7 @@ export default function LineupStatusWidget({ teamId, seasonId }: LineupStatusWid
       // For each fixture, check if lineup exists
       const statusPromises = fixturesData.fixtures.map(async (fixture: Fixture) => {
         try {
-          const lineupRes = await fetch(`/api/lineups?fixture_id=${fixture.id}&team_id=${teamId}`);
+          const lineupRes = await fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixture.id}&team_id=${teamId}`);
           const lineupData = await lineupRes.json();
 
           const hasLineup = Boolean(

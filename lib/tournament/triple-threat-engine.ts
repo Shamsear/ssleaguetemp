@@ -23,6 +23,8 @@
  *    - Example: Sweep = 10 pts vs 0 pts -> Final GD: +10 / -10
  */
 
+import { extractISTDateString } from '@/lib/utils/timezone';
+
 export type TripleThreatMode = 'coop' | 'duo' | 'single';
 
 export interface TripleThreatMatchInput {
@@ -1031,24 +1033,7 @@ export function computeAwayLineupDeadline(params: {
     isTripleThreat,
   } = params;
 
-  let dateStr = scheduled_date_str ? String(scheduled_date_str).split('T')[0] : '';
-
-  if (!dateStr && scheduled_date) {
-    if (scheduled_date instanceof Date) {
-      const ist = new Date(scheduled_date.getTime() + 5.5 * 60 * 60 * 1000);
-      dateStr = ist.toISOString().split('T')[0];
-    } else if (typeof scheduled_date === 'string') {
-      if (scheduled_date.includes('T')) {
-        const parsed = new Date(scheduled_date);
-        if (!Number.isNaN(parsed.getTime())) {
-          const ist = new Date(parsed.getTime() + 5.5 * 60 * 60 * 1000);
-          dateStr = ist.toISOString().split('T')[0];
-        }
-      } else {
-        dateStr = scheduled_date;
-      }
-    }
-  }
+  const dateStr = extractISTDateString(scheduled_date_str || scheduled_date);
 
   if (dateStr) {
     const startTime =
@@ -1065,4 +1050,57 @@ export function computeAwayLineupDeadline(params: {
   }
 
   return null;
+}
+
+/**
+ * Determines whether a round has started based on round_deadlines status and round_start_time (IST).
+ * Shared safely across both client components and server API routes.
+ */
+export function isRoundStartedFromDeadline(params: {
+  round_status?: string | null;
+  fixture_status?: string | null;
+  scheduled_date?: string | Date | null;
+  scheduled_date_str?: string | null;
+  round_start_time?: string | null;
+  now?: Date;
+}): boolean {
+  const {
+    round_status,
+    fixture_status,
+    scheduled_date,
+    scheduled_date_str,
+    round_start_time,
+    now = new Date(),
+  } = params;
+
+  const fStatus = String(fixture_status || '').toLowerCase();
+  const rStatus = String(round_status || '').toLowerCase();
+
+  if (['completed', 'finalized', 'closed'].includes(fStatus)) {
+    return true;
+  }
+
+  if (
+    ['active', 'in_progress', 'started', 'completed', 'finalized', 'closed', 'home_fixture', 'fixture_entry', 'result_entry'].includes(
+      rStatus
+    )
+  ) {
+    return true;
+  }
+
+  if (['paused', 'cancelled'].includes(rStatus)) {
+    return false;
+  }
+
+  const dateStr = extractISTDateString(scheduled_date_str || scheduled_date);
+  if (!dateStr) return false;
+
+  const startTime =
+    round_start_time && /^\d{2}:\d{2}$/.test(round_start_time)
+      ? round_start_time
+      : '09:00';
+  const startAt = new Date(`${dateStr}T${startTime}:00+05:30`);
+  if (Number.isNaN(startAt.getTime())) return false;
+
+  return now >= startAt;
 }

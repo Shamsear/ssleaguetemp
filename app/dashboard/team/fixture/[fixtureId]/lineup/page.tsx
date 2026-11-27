@@ -24,6 +24,7 @@ export default function FixtureLineupPage() {
   const [opponentRoster, setOpponentRoster] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [deadline, setDeadline] = useState<string | null>(null);
+  const [roundStarted, setRoundStarted] = useState<boolean>(false);
 
   // Auto-lock lineups when deadline passes
   useAutoLockLineups(fixtureId, deadline || undefined);
@@ -102,6 +103,8 @@ export default function FixtureLineupPage() {
       if (editableData.deadline) {
         setDeadline(editableData.deadline);
       }
+      const isRoundActive = Boolean(editableData.roundStarted);
+      setRoundStarted(isRoundActive);
 
       // Fetch existing lineup if any - only for the user's team
       const lineupUrl = `/api/lineups?fixture_id=${fixtureId}&team_id=${userTeamId}`;
@@ -143,8 +146,8 @@ export default function FixtureLineupPage() {
         setExistingLineup(null);
       }
 
-      // If user is Home Team, also fetch Away Team's submitted lineup & roster (Home Advantage)
-      if (userTeamId === fixtureData.fixture.home_team_id) {
+      // If user is Home Team AND the round has started, also fetch Away Team's submitted lineup & roster (Home Advantage)
+      if (userTeamId === fixtureData.fixture.home_team_id && isRoundActive) {
         try {
           const [oppLineupRes, oppPlayersRes] = await Promise.all([
             fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixtureData.fixture.away_team_id}`),
@@ -159,6 +162,7 @@ export default function FixtureLineupPage() {
             if (
               oppData.success &&
               oppData.lineups &&
+              !oppData.lineups.hidden_until_round_start &&
               !oppData.lineups.is_draft &&
               oppData.lineups.submitted_by !== 'system_auto' &&
               oppData.lineups.triple_threat_lineup
@@ -171,6 +175,8 @@ export default function FixtureLineupPage() {
         } catch (oppErr) {
           console.warn('Could not fetch away lineup for home advantage:', oppErr);
         }
+      } else {
+        setOpponentLineup(null);
       }
     } catch (error: any) {
       console.error('Error fetching data:', error);
@@ -271,6 +277,7 @@ export default function FixtureLineupPage() {
               opponentRoster={opponentRoster}
               opponentTeamName={fixture.home_team_id === teamId ? fixture.away_team_name : fixture.home_team_name}
               isHomeTeam={fixture.home_team_id === teamId}
+              roundStarted={roundStarted}
               onSubmitSuccess={handleSubmitSuccess}
             />
           ) : (

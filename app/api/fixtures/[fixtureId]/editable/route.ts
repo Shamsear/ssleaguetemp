@@ -20,7 +20,8 @@ export async function GET(
       deadline: editabilityCheck.deadline,
       roundStart: editabilityCheck.roundStart,
       homeDeadline: editabilityCheck.homeDeadline,
-      awayDeadline: editabilityCheck.awayDeadline
+      awayDeadline: editabilityCheck.awayDeadline,
+      roundStarted: editabilityCheck.roundStarted ?? false,
     });
   } catch (error: any) {
     console.error('Error checking lineup editability:', error);

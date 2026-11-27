@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { verifyAuth } from '@/lib/auth-helper';
+import { isRoundStartedFromDeadline, materializeTripleThreatMatchups } from '@/lib/lineup-validation';
 import { computeISTResultDeadline } from '@/lib/utils/timezone';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
@@ -262,12 +264,82 @@ export async function GET(
     const sql = getTournamentDb();
     const { fixtureId } = await params;
 
+    // Check Triple Threat round-start gate so matchups do not leak away lineups pre-start
+    const metaRows = await sql`
+      SELECT
+        f.tournament_id, f.status as fixture_status,
+        t.tournament_type, ts.matchday_format,
+        rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str,
+        rd.round_start_time, rd.status as round_status
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      LEFT JOIN round_deadlines rd ON (
+        f.round_number = rd.round_number
+        AND f.season_id = rd.season_id
+        AND f.tournament_id = rd.tournament_id
+        AND (f.leg IS NULL OR rd.leg IS NULL OR f.leg = rd.leg)
+      )
+      WHERE f.id = ${fixtureId}
+      LIMIT 1
+    `;
+
+    const meta = metaRows[0];
+    const isTT = Boolean(
+      meta && (
+        meta.tournament_type === 'triple_threat' ||
+        meta.matchday_format === 'triple_threat' ||
+        String(meta.tournament_id || '').toLowerCase().includes('triple_threat')
+      )
+    );
+
+    const roundStarted = meta
+      ? isRoundStartedFromDeadline({
+          round_status: meta.round_status,
+          fixture_status: meta.fixture_status,
+          scheduled_date: meta.scheduled_date,
+          scheduled_date_str: meta.scheduled_date_str,
+          round_start_time: meta.round_start_time,
+        })
+      : true;
+
+    if (isTT && !roundStarted) {
+      const auth = await verifyAuth(undefined, request);
+      const roleLower = String(auth.role || '').toLowerCase();
+      const isAdmin = Boolean(
+        auth.authenticated &&
+        ['committee_admin', 'super_admin', 'superadmin', 'admin'].includes(roleLower)
+      );
+      if (!isAdmin) {
+        return NextResponse.json({
+          matchups: [],
+          hidden_until_round_start: true,
+        });
+      }
+    }
+
     // Get matchups for this fixture
-    const matchups = await sql`
+    let matchups = await sql`
       SELECT * FROM matchups
       WHERE fixture_id = ${fixtureId}
       ORDER BY position ASC
     `;
+
+    // Once Triple Threat round starts, auto-materialize matchups if both teams already submitted
+    if (isTT && roundStarted && matchups.length === 0) {
+      try {
+        const res = await materializeTripleThreatMatchups(sql, fixtureId);
+        if (res.created) {
+          matchups = await sql`
+            SELECT * FROM matchups
+            WHERE fixture_id = ${fixtureId}
+            ORDER BY position ASC
+          `;
+        }
+      } catch (matErr) {
+        console.warn('Could not auto-materialize Triple Threat matchups on read:', matErr);
+      }
+    }
 
     return NextResponse.json({ matchups });
   } catch (error: any) {

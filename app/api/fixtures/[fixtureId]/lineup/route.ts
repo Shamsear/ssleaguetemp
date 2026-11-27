@@ -3,6 +3,8 @@ import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { verifyAuth } from '@/lib/auth-helper';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { computeAwayLineupDeadline } from '@/lib/tournament/triple-threat-engine';
+import { extractISTDateString } from '@/lib/utils/timezone';
 
 interface LineupPlayer {
   player_id: string;
@@ -151,9 +153,26 @@ export async function POST(
     const roundNumber = fixture.round_number;
     const leg = fixture.leg || 'first';
 
+    const tourCheck = fixture.tournament_id
+      ? await sql`
+          SELECT t.tournament_type, ts.matchday_format
+          FROM tournaments t
+          LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+          WHERE t.id = ${fixture.tournament_id}
+          LIMIT 1
+        `
+      : [];
+
+    const isTT =
+      (tourCheck.length > 0 &&
+        (tourCheck[0].tournament_type === 'triple_threat' ||
+          tourCheck[0].matchday_format === 'triple_threat')) ||
+      String(fixture.tournament_id || '').toLowerCase().includes('triple_threat');
+
     const roundDeadlines = await sql`
-      SELECT * FROM round_deadlines 
+      SELECT *, scheduled_date::text as scheduled_date_str FROM round_deadlines 
       WHERE season_id = ${seasonId}
+        AND tournament_id = ${fixture.tournament_id}
         AND round_number = ${roundNumber}
         AND leg = ${leg}
       LIMIT 1
@@ -171,33 +190,42 @@ export async function POST(
 
     // Calculate deadlines in IST (UTC+5:30)
     const scheduledDate = roundData.scheduled_date;
-    if (!scheduledDate) {
+    if (!scheduledDate && !roundData.scheduled_date_str) {
       return NextResponse.json(
         { success: false, error: 'Round not scheduled yet' },
         { status: 400 }
       );
     }
 
-    const baseDateStr = new Date(scheduledDate).toISOString().split('T')[0]; // YYYY-MM-DD
-    const [homeHour, homeMin] = (roundData.home_fixture_deadline_time || '17:00').split(':').map(Number);
-    const [awayHour, awayMin] = (roundData.away_fixture_deadline_time || '17:00').split(':').map(Number);
+    const baseDateStr = extractISTDateString(roundData.scheduled_date_str || scheduledDate);
+    const homeDeadline = new Date(`${baseDateStr}T${roundData.home_fixture_deadline_time || '17:00'}:00+05:30`);
+    const awayDeadline = new Date(`${baseDateStr}T${roundData.away_fixture_deadline_time || '19:00'}:00+05:30`);
+    const awayLineupCutoff = computeAwayLineupDeadline({
+      scheduled_date: scheduledDate,
+      scheduled_date_str: baseDateStr,
+      round_start_time: roundData.round_start_time,
+      home_fixture_deadline_time: roundData.home_fixture_deadline_time,
+      isTripleThreat: isTT,
+    }) || awayDeadline;
 
-    // Create deadlines in UTC by converting from IST
-    const homeDeadline = new Date(baseDateStr);
-    homeDeadline.setUTCHours(homeHour - 5, homeMin - 30, 0, 0); // Convert IST to UTC
+    if (isTT && isAwayTeam && now >= awayLineupCutoff) {
+      return NextResponse.json(
+        { success: false, error: 'Away team lineup submission deadline has passed.' },
+        { status: 403 }
+      );
+    }
 
-    const awayDeadline = new Date(baseDateStr);
-    awayDeadline.setUTCHours(awayHour - 5, awayMin - 30, 0, 0); // Convert IST to UTC
-
-    // Determine current phase
-    const isHomePhase = now < homeDeadline;
-    const isAwayPhase = now >= homeDeadline && now < awayDeadline;
-    const isLocked = now >= awayDeadline;
+    // Determine current phase for standard tournaments
+    const isHomePhase = !isTT && now < homeDeadline;
+    const isAwayPhase = !isTT && now >= homeDeadline && now < awayDeadline;
+    const isLocked = !isTT && now >= awayDeadline;
 
     console.log('Lineup submission deadline check:', {
       now: now.toISOString(),
       homeDeadline: homeDeadline.toISOString(),
       awayDeadline: awayDeadline.toISOString(),
+      awayLineupCutoff: awayLineupCutoff.toISOString(),
+      isTT,
       isHomePhase,
       isAwayPhase,
       isLocked,

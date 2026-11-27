@@ -31,6 +31,7 @@ interface TripleThreatLineupSubmissionProps {
   isOpponentSelection?: boolean;
   opponentTeamName?: string;
   isHomeTeam?: boolean;
+  roundStarted?: boolean;
   bypassDeadline?: boolean;
 }
 
@@ -45,6 +46,7 @@ export default function TripleThreatLineupSubmission({
   isOpponentSelection = false,
   opponentTeamName,
   isHomeTeam = false,
+  roundStarted = true,
   bypassDeadline = false,
 }: TripleThreatLineupSubmissionProps) {
   const { user } = useAuth();
@@ -141,7 +143,7 @@ export default function TripleThreatLineupSubmission({
     }
 
     try {
-      const res = await fetch(`/api/fixtures/${fixtureId}/editable?team_id=${teamId}`);
+      const res = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/editable?team_id=${teamId}`);
       const data = await res.json();
       setIsEditable(isOpponentSelection ? true : (data.editable ?? true));
       setDeadlineInfo(data);
@@ -149,6 +151,26 @@ export default function TripleThreatLineupSubmission({
       console.error('Error checking lineup editability:', err);
     }
   };
+
+  // Automatically lock Away Team form live if cutoff passes while page is open
+  useEffect(() => {
+    if (isAdminOverride || isHomeTeam || isOpponentSelection) return;
+    const cutoffStr = deadlineInfo?.deadline || deadlineInfo?.roundStart;
+    if (!cutoffStr) return;
+
+    const cutoffMs = new Date(cutoffStr).getTime();
+    if (Number.isNaN(cutoffMs)) return;
+
+    const checkCutoff = () => {
+      if (Date.now() >= cutoffMs) {
+        setIsEditable(false);
+      }
+    };
+    checkCutoff();
+
+    const interval = setInterval(checkCutoff, 5000);
+    return () => clearInterval(interval);
+  }, [deadlineInfo, isAdminOverride, isHomeTeam, isOpponentSelection]);
 
   // Lookup map for player names
   const playerMap = useMemo(() => {
@@ -440,8 +462,8 @@ export default function TripleThreatLineupSubmission({
         )}
       </div>
 
-      {/* Home Advantage: Opponent Lineup Card */}
-      {isHomeTeam && !isOpponentSelection && opponentLineup?.triple_threat_lineup && (
+      {/* Home Advantage: Opponent Lineup Card (only shown once round starts) */}
+      {isHomeTeam && !isOpponentSelection && roundStarted && opponentLineup?.triple_threat_lineup && (
         <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 rounded-2xl p-3.5 sm:p-4.5 shadow-xs">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider">
@@ -475,6 +497,16 @@ export default function TripleThreatLineupSubmission({
               </span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Pre-start Home Notice */}
+      {isHomeTeam && !isOpponentSelection && !roundStarted && (
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 sm:p-4 text-xs text-slate-700 flex items-center gap-2.5">
+          <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+          <span className="font-sans">
+            Away Team&apos;s lineup will be revealed here (<strong>Home Advantage</strong>) once the round starts. You can save your provisional lineup now and adjust it after the round begins.
+          </span>
         </div>
       )}
 

@@ -109,7 +109,6 @@ export async function POST(request: NextRequest) {
       scheduled_date_str: roundData.scheduled_date_str,
       round_start_time: roundData.round_start_time,
       home_fixture_deadline_time: roundData.home_fixture_deadline_time,
-      lineup_deadline: fixture.lineup_deadline,
       isTripleThreat,
     });
 

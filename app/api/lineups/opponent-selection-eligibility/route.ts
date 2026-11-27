@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     // Get fixture to check deadline and tournament type
     const fixtures = await sql`
       SELECT 
-        f.id, f.lineup_deadline, f.tournament_id, f.season_id, f.round_number, f.leg,
+        f.id, f.tournament_id, f.season_id, f.round_number, f.leg,
         f.home_team_id, f.away_team_id,
         t.tournament_type, ts.matchday_format,
         rd.scheduled_date, rd.scheduled_date::text as scheduled_date_str, rd.round_start_time, rd.home_fixture_deadline_time
@@ -91,7 +91,6 @@ export async function GET(request: NextRequest) {
       scheduled_date_str: fixture.scheduled_date_str,
       round_start_time: fixture.round_start_time,
       home_fixture_deadline_time: fixture.home_fixture_deadline_time,
-      lineup_deadline: fixture.lineup_deadline,
       isTripleThreat: isTT,
     });
 
