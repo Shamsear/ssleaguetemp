@@ -1662,6 +1662,15 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     }
   };
 
+  const rawFixtureGroup =
+    (fixture as any)?.group_name ||
+    String(fixture?.id || '').match(/_grp([A-Za-z0-9]+)_/)?.[1] ||
+    '';
+  const cleanGroupName = rawFixtureGroup
+    .replace(/^group\s*[-–:]?\s*/i, '')
+    .trim()
+    .toUpperCase();
+
   const phaseInfo = getPhaseInfo();
 
   const getSectionDeadlineInfo = () => {
@@ -1771,13 +1780,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-4 shadow-sm font-mono">
             {/* Meta Row */}
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 pb-2 border-b border-slate-100">
-              <span className="text-amber-500 font-extrabold">
+              <span className="text-amber-600 font-extrabold">
                 {fixture.knockout_round ? fixture.knockout_round.replace('_', ' ').toUpperCase() : `ROUND ${fixture.round_number}`}
+                {cleanGroupName ? ` • GRP ${cleanGroupName}` : ''}
               </span>
               <div className="flex items-center gap-2 text-slate-500">
                 <span>{fixture.leg === 'first' ? '1st' : '2nd'} Leg</span>
                 <span>•</span>
-                <span>Match #{fixture.match_number}</span>
+                <span>#{fixture.match_number}</span>
               </div>
             </div>
 
@@ -1785,15 +1795,17 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
               {/* Home Team */}
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
+                <div className="no-console-override w-10 h-10 bg-white border border-slate-200 rounded-xl p-1 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-2xs">
                   {(fixture as any).home_team_logo ? (
-                    <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
+                    <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain" />
                   ) : (
                     <Home className="w-5 h-5 text-slate-400" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none mb-1">HOME</span>
+                  <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none mb-1">
+                    HOME {isHomeTeam && !isAdmin ? '• YOU' : ''}
+                  </span>
                   <span className="text-xs sm:text-sm font-black uppercase text-slate-900 truncate block tracking-wide">
                     {fixture.home_team_name || 'Home Team'}
                   </span>
@@ -1801,21 +1813,23 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </div>
 
               {/* VS Badge */}
-              <div className="px-2.5 py-1 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm">
+              <div className="px-2.5 py-1 bg-slate-900 text-amber-400 text-[10px] font-black rounded-xl shadow-xs">
                 VS
               </div>
 
               {/* Away Team */}
               <div className="flex items-center gap-2.5 min-w-0 flex-row-reverse text-right">
-                <div className="w-10 h-10 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
+                <div className="no-console-override w-10 h-10 bg-white border border-slate-200 rounded-xl p-1 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-2xs">
                   {(fixture as any).away_team_logo ? (
-                    <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
+                    <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain" />
                   ) : (
                     <Plane className="w-5 h-5 text-slate-400" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none mb-1">AWAY</span>
+                  <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none mb-1">
+                    {isAwayTeam ? 'YOU • ' : ''}AWAY
+                  </span>
                   <span className="text-xs sm:text-sm font-black uppercase text-slate-900 truncate block tracking-wide">
                     {fixture.away_team_name || 'Away Team'}
                   </span>
@@ -1830,7 +1844,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               return (
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs">
                   <span className="text-slate-400 font-medium truncate">{deadlineInfo.label}:</span>
-                  <span className="font-extrabold text-amber-600 ml-1 whitespace-nowrap">{deadlineInfo.formattedDate}</span>
+                  <span className="font-extrabold text-amber-600 ml-1 whitespace-nowrap tabular-nums">{deadlineInfo.formattedDate}</span>
                 </div>
               );
             })()}
@@ -1846,120 +1860,121 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
             {"<-"} Back to Matches
           </Link>
 
-          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-8 shadow-sm overflow-hidden relative">
-
+          <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
             {/* Title and Phase Badge */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 sm:mb-8">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">FIXTURE</span>
-                    <h1 className="text-2xl font-mono font-bold text-slate-800 uppercase tracking-wide">
-                      {fixture.knockout_round ? (
-                        <>
-                          {fixture.knockout_round === 'quarter_finals' && <span className="inline-flex items-center gap-1.5"><Swords className="w-5 h-5 text-rose-500" /> Quarter Finals</span>}
-                          {fixture.knockout_round === 'semi_finals' && <span className="inline-flex items-center gap-1.5"><Trophy className="w-5 h-5 text-amber-500 fill-amber-500" /> Semi Finals</span>}
-                          {fixture.knockout_round === 'finals' && <span className="inline-flex items-center gap-1.5"><Crown className="w-5 h-5 text-amber-500 fill-amber-500" /> Finals</span>}
-                          {fixture.knockout_round === 'third_place' && <span className="inline-flex items-center gap-1.5"><Trophy className="w-5 h-5 text-amber-700 fill-amber-700" /> Third Place</span>}
-                        </>
-                      ) : (
-                        `Round ${fixture.round_number}`
-                      )}
-                    </h1>
-                    <div className="flex items-center gap-2 mt-1">
-                      {fixture.knockout_round && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-sm">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          KNOCKOUT
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold font-mono uppercase tracking-wider border border-indigo-200 rounded-full">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                        </svg>
-                        {fixture.leg === 'first' ? '1st' : '2nd'} Leg
-                      </span>
-                      {scoringSystem && scoringSystem !== tournamentSystem && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold font-mono uppercase tracking-wider border border-amber-200 rounded-full">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                          </svg>
-                          {scoringSystem === 'wins' ? 'Win-Based' : 'Goal-Based'} Scoring
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold font-mono uppercase tracking-wider border border-purple-200 rounded-full">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                          <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                        </svg>
-                        Match #{fixture.match_number}
-                      </span>
-                    </div>
-                  </div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="min-w-0">
+                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider font-mono">
+                  FIXTURE
+                </span>
+                <h1 className="text-xl sm:text-2xl font-extrabold font-mono text-slate-900 uppercase tracking-tight mt-0.5 text-balance">
+                  {fixture.knockout_round ? (
+                    <>
+                      {fixture.knockout_round === 'quarter_finals' && <span className="inline-flex items-center gap-1.5"><Swords className="w-5 h-5 text-rose-500" /> Quarter Finals</span>}
+                      {fixture.knockout_round === 'semi_finals' && <span className="inline-flex items-center gap-1.5"><Trophy className="w-5 h-5 text-amber-500 fill-amber-500" /> Semi Finals</span>}
+                      {fixture.knockout_round === 'finals' && <span className="inline-flex items-center gap-1.5"><Crown className="w-5 h-5 text-amber-500 fill-amber-500" /> Finals</span>}
+                      {fixture.knockout_round === 'third_place' && <span className="inline-flex items-center gap-1.5"><Trophy className="w-5 h-5 text-amber-700 fill-amber-700" /> Third Place</span>}
+                    </>
+                  ) : (
+                    `Round ${fixture.round_number}`
+                  )}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 mt-2 font-mono">
+                  {fixture.knockout_round && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                      Knockout
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider border border-slate-200 rounded-full">
+                    {fixture.leg === 'first' ? '1st' : '2nd'} Leg
+                  </span>
+                  {cleanGroupName && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider border border-slate-200 rounded-full">
+                      Group {cleanGroupName}
+                    </span>
+                  )}
+                  {isTT ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200 rounded-full">
+                      ⚡ Triple Threat
+                    </span>
+                  ) : scoringSystem && scoringSystem !== tournamentSystem ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200 rounded-full">
+                      {scoringSystem === 'wins' ? 'Win-Based' : 'Goal-Based'} Scoring
+                    </span>
+                  ) : null}
+                  <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-200 rounded-full">
+                    Match #{fixture.match_number}
+                  </span>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border whitespace-nowrap ${
+
+              <div className="shrink-0 self-start">
+                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider border whitespace-nowrap ${
                   phaseInfo.color === 'yellow' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                   phaseInfo.color === 'blue' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                   phaseInfo.color === 'purple' ? 'bg-purple-50 text-purple-700 border-purple-200' :
                   phaseInfo.color === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                  'bg-slate-50 text-slate-700 border-slate-200'
+                  'bg-slate-100 text-slate-700 border-slate-200'
                 }`}>
-                  <span className="w-2 h-2 bg-current rounded-full animate-pulse"></span>
+                  <span className="w-1.5 h-1.5 bg-current rounded-full"></span>
                   {phaseInfo.label}
                 </span>
               </div>
             </div>
 
-            {/* Teams VS */}
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center mb-6 sm:mb-8 font-mono">
-              {/* Home Team */}
-              <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
+            {/* Teams Scoreboard Strip */}
+            <div className="no-console-override bg-slate-50/90 border border-slate-200/70 rounded-2xl px-5 py-4 sm:px-6 sm:py-5 font-mono">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center">
+                {/* Home Team (right-aligned toward center VS on desktop) */}
+                <div className="flex items-center sm:flex-row-reverse sm:text-right gap-3.5 min-w-0">
+                  <div className="no-console-override w-12 h-12 sm:w-14 sm:h-14 bg-white border border-slate-200/80 rounded-2xl p-1.5 overflow-hidden flex items-center justify-center shadow-2xs flex-shrink-0">
                     {(fixture as any).home_team_logo ? (
-                      <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain p-1" />
+                      <img src={(fixture as any).home_team_logo} alt={fixture.home_team_name} className="w-full h-full object-contain" />
                     ) : (
                       <Home className="w-6 h-6 text-slate-400" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Team</div>
-                    <div className="text-lg sm:text-xl font-bold text-slate-800 uppercase tracking-wide truncate">
+                    <div className="flex items-center sm:justify-end gap-1.5 mb-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Team</span>
+                      {isHomeTeam && !isAdmin && (
+                        <span className="text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded uppercase">
+                          You
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight truncate">
                       {fixture.home_team_name}
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* VS Badge */}
-              <div className="flex justify-center items-center">
-                <div className="relative bg-slate-800 text-white rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-sm sm:text-base font-black shadow-md border-4 border-slate-200">
-                  <span>VS</span>
+                {/* VS Badge */}
+                <div className="flex justify-center items-center">
+                  <div className="bg-slate-900 text-amber-400 rounded-2xl w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center text-xs sm:text-sm font-black shadow-sm border border-slate-800">
+                    VS
+                  </div>
                 </div>
-              </div>
 
-              {/* Away Team */}
-              <div className="console-card bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-amber-400/40 transition-all duration-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm flex-shrink-0">
+                {/* Away Team (left-aligned toward center VS) */}
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="no-console-override w-12 h-12 sm:w-14 sm:h-14 bg-white border border-slate-200/80 rounded-2xl p-1.5 overflow-hidden flex items-center justify-center shadow-2xs flex-shrink-0">
                     {(fixture as any).away_team_logo ? (
-                      <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain p-1" />
+                      <img src={(fixture as any).away_team_logo} alt={fixture.away_team_name} className="w-full h-full object-contain" />
                     ) : (
                       <Plane className="w-6 h-6 text-slate-400" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Away Team</div>
-                    <div className="text-lg sm:text-xl font-bold text-slate-800 uppercase tracking-wide truncate">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Away Team</span>
+                      {isAwayTeam && (
+                        <span className="text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded uppercase">
+                          You
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-base sm:text-xl font-extrabold text-slate-900 uppercase tracking-tight truncate">
                       {fixture.away_team_name}
                     </div>
                   </div>
@@ -1967,56 +1982,64 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               </div>
             </div>
 
-            {/* Phase Info & Section Deadlines Banner */}
+            {/* Phase Info & Section Deadlines Strip */}
             {(() => {
               const deadlineInfo = getSectionDeadlineInfo();
               if (!deadlineInfo) return null;
 
+              const stripStyle =
+                deadlineInfo.type === 'home_fixture'
+                  ? 'bg-blue-50/70 border-blue-200/80'
+                  : deadlineInfo.type === 'not_started'
+                    ? 'bg-amber-50/70 border-amber-200/80'
+                    : deadlineInfo.type === 'closed'
+                      ? 'bg-slate-50 border-slate-200/80'
+                      : 'bg-emerald-50/70 border-emerald-200/80';
+
+              const iconStyle =
+                deadlineInfo.type === 'home_fixture'
+                  ? 'bg-blue-600 text-white'
+                  : deadlineInfo.type === 'not_started'
+                    ? 'bg-amber-500 text-white'
+                    : deadlineInfo.type === 'closed'
+                      ? 'bg-slate-600 text-white'
+                      : 'bg-emerald-600 text-white';
+
+              const pillStyle =
+                deadlineInfo.type === 'home_fixture'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                  : deadlineInfo.type === 'not_started'
+                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                    : deadlineInfo.type === 'closed'
+                      ? 'bg-slate-200 text-slate-700 border border-slate-300'
+                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+
               return (
-                <div className={`hidden sm:block console-card rounded-2xl p-4 sm:p-5 font-mono mb-6 relative overflow-hidden border shadow-sm ${
-                  deadlineInfo.type === 'home_fixture'
-                    ? 'bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border-blue-200'
-                    : deadlineInfo.type === 'not_started'
-                      ? 'bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border-amber-200'
-                      : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-200'
-                }`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
-                        deadlineInfo.type === 'home_fixture'
-                          ? 'bg-blue-600 text-white'
-                          : deadlineInfo.type === 'not_started'
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-emerald-600 text-white'
-                      }`}>
-                        <Clock className="w-5 h-5 animate-pulse" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
-                            deadlineInfo.type === 'home_fixture'
-                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                              : deadlineInfo.type === 'not_started'
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                          }`}>
-                            {deadlineInfo.label}
-                          </span>
-                        </div>
-                        <h3 className="text-sm sm:text-base font-bold text-slate-800 uppercase tracking-wide">
-                          ⏰ {deadlineInfo.formattedDate}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-semibold mt-1">
-                          {deadlineInfo.description}
-                        </p>
-                      </div>
+                <div className={`no-console-override hidden sm:flex items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 sm:px-5 font-mono ${stripStyle}`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-2xs ${iconStyle}`}>
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className={`inline-block text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${pillStyle}`}>
+                        {deadlineInfo.label}
+                      </span>
+                      <p className="text-xs text-slate-600 font-sans mt-1 truncate">
+                        {deadlineInfo.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      {deadlineInfo.type === 'not_started' ? 'Starts At' : 'Deadline'}
+                    </div>
+                    <div className="text-sm font-extrabold text-slate-900 uppercase tabular-nums">
+                      {deadlineInfo.formattedDate}
                     </div>
                   </div>
                 </div>
               );
             })()}
-
-
           </div>
         </div>
 
