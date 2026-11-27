@@ -446,17 +446,12 @@ function TeamDetailContent() {
             <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm text-center space-y-4">
               
               {/* Logo Frame */}
-              <div className="relative w-40 h-40 mx-auto rounded-xl shadow-sm border border-slate-200 bg-white flex items-center justify-center overflow-hidden">
+              <div className="relative w-40 h-40 mx-auto rounded-xl shadow-sm border border-slate-200 bg-white p-3 flex items-center justify-center overflow-hidden">
                 {team.logo_url ? (
                   <img
                     src={team.logo_url}
                     alt={team.team_name}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{
-                      objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                      transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                      transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                    }}
+                    className="w-full h-full object-contain"
                   />
                 ) : (
                   <div className="bg-[#D4AF37]/10 w-full h-full flex items-center justify-center rounded-lg">

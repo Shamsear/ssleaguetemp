@@ -378,17 +378,12 @@ export default function TeamSquadPage({ params }: { params: Promise<{ teamId: st
 
           {/* Team Header */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <div className="h-20 w-20 flex-shrink-0 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center p-0 relative overflow-hidden shadow-inner mx-auto md:mx-0">
+            <div className="h-20 w-20 flex-shrink-0 bg-white border border-slate-200/60 rounded-xl flex items-center justify-center p-2 relative overflow-hidden shadow-inner mx-auto md:mx-0">
               {teamProfile.logoUrl ? (
                 <img 
                   src={teamProfile.logoUrl} 
                   alt={teamProfile.name} 
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{
-                    objectPosition: `${(teamProfile as any).logo_position_x_square ?? 50}% ${(teamProfile as any).logo_position_y_square ?? 50}%`,
-                    transform: `scale(${(teamProfile as any).logo_scale_square ?? 1})`,
-                    transformOrigin: `${(teamProfile as any).logo_position_x_square ?? 50}% ${(teamProfile as any).logo_position_y_square ?? 50}%`,
-                  }}
+                  className="w-full h-full object-contain"
                 />
               ) : (
                 <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

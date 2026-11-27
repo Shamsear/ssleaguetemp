@@ -242,7 +242,7 @@ export default function ShareableFantasyLeaderboard({
                       {/* Team & Owner */}
                       <td style={{ padding: '16px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                          <div style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 10, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '4px' }}>
                             {team.team_logo ? (
                               <img 
                                 src={logoDataUrls[team.team_logo] || team.team_logo}
@@ -250,10 +250,7 @@ export default function ShareableFantasyLeaderboard({
                                 style={{
                                   width: '100%',
                                   height: '100%',
-                                  objectFit: 'cover',
-                                  objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-                                  transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
-                                  transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
+                                  objectFit: 'contain',
                                 }}
                               />
                             ) : (

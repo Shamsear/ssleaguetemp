@@ -452,16 +452,13 @@ export default function MyFantasyTeamPage() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
             <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
               {fantasyTeam.supported_team_logo ? (
-                <img
-                  src={fantasyTeam.supported_team_logo}
-                  alt={`${fantasyTeam.team_name} logo`}
-                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl object-cover border border-slate-250 shadow-sm shrink-0"
-                  style={{
-                    objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                    transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
-                    transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                  }}
-                />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white border border-slate-250 shadow-sm p-1.5 flex items-center justify-center shrink-0 overflow-hidden">
+                  <img
+                    src={fantasyTeam.supported_team_logo}
+                    alt={`${fantasyTeam.team_name} logo`}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
               ) : (
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-800 border border-slate-700 text-amber-400 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
                   <Users className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -666,18 +663,15 @@ export default function MyFantasyTeamPage() {
           <div className="console-card bg-gradient-to-r from-emerald-50/50 to-blue-50/50 border border-slate-200/80 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-4">
               {fantasyTeam.supported_team_logo ? (
-                <img
-                  src={fantasyTeam.supported_team_logo}
-                  alt={`${fantasyTeam.supported_team_name} logo`}
-                  className="w-14 h-14 rounded-full object-cover border border-slate-200"
-                  style={{
-                    objectPosition: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                    transform: `scale(${(fantasyTeam as any).logo_scale_circle ?? 1})`,
-                    transformOrigin: `${(fantasyTeam as any).logo_position_x_circle ?? 50}% ${(fantasyTeam as any).logo_position_y_circle ?? 50}%`,
-                  }}
-                />
+                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 overflow-hidden">
+                  <img
+                    src={fantasyTeam.supported_team_logo}
+                    alt={`${fantasyTeam.supported_team_name} logo`}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
               ) : (
-                <div className="w-14 h-14 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center justify-center">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-bold text-lg flex items-center justify-center shrink-0">
                   {fantasyTeam.supported_team_name.charAt(0).toUpperCase()}
                 </div>
               )}

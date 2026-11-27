@@ -242,18 +242,15 @@ export default function FantasyLeaderboardPage() {
                         <td className="px-2.5 sm:px-4 py-3">
                           <div className="flex items-center gap-2 sm:gap-3">
                             {entry.team_logo ? (
-                              <img 
-                                src={entry.team_logo} 
-                                alt={`${entry.team_name} logo`}
-                                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white"
-                                style={{
-                                  objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
-                                  transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
-                                  transformOrigin: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
-                                }}
-                              />
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg shrink-0 border border-slate-200 bg-white p-0.5 flex items-center justify-center overflow-hidden">
+                                <img 
+                                  src={entry.team_logo} 
+                                  alt={`${entry.team_name} logo`}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                             ) : (
-                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-800 border border-slate-900 text-amber-400 font-black text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-sm">
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-slate-800 border border-slate-900 text-amber-400 font-black text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-sm">
                                 {entry.team_name.charAt(0).toUpperCase()}
                               </div>
                             )}

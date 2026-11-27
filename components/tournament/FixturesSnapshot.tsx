@@ -129,7 +129,7 @@ export function FixturesSnapshot({
                   <span style={{ color: homeWin ? '#059669' : '#111111', fontSize: '20px', fontWeight: 800, textTransform: 'uppercase' }}>
                     {match.homeTeam.team.name?.toUpperCase()}
                   </span>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden', flexShrink: 0 }}>
                     {match.homeTeam.team.logoUrl ? (
                       <img 
                         src={match.homeTeam.team.logoUrl} 
@@ -137,10 +137,7 @@ export function FixturesSnapshot({
                         style={{ 
                           width: '100%', 
                           height: '100%', 
-                          objectFit: 'cover',
-                          objectPosition: `${(match.homeTeam.team as any).logo_position_x_square ?? 50}% ${(match.homeTeam.team as any).logo_position_y_square ?? 50}%`,
-                          transform: `scale(${(match.homeTeam.team as any).logo_scale_square ?? 1})`,
-                          transformOrigin: `${(match.homeTeam.team as any).logo_position_x_square ?? 50}% ${(match.homeTeam.team as any).logo_position_y_square ?? 50}%`,
+                          objectFit: 'contain',
                         }} 
                       />
                     ) : (
@@ -168,7 +165,7 @@ export function FixturesSnapshot({
 
                 {/* Away Team */}
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '16px', opacity: homeWin ? 0.6 : 1 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', overflow: 'hidden', flexShrink: 0 }}>
                     {match.awayTeam.team.logoUrl ? (
                       <img 
                         src={match.awayTeam.team.logoUrl} 
@@ -176,10 +173,7 @@ export function FixturesSnapshot({
                         style={{ 
                           width: '100%', 
                           height: '100%', 
-                          objectFit: 'cover',
-                          objectPosition: `${(match.awayTeam.team as any).logo_position_x_square ?? 50}% ${(match.awayTeam.team as any).logo_position_y_square ?? 50}%`,
-                          transform: `scale(${(match.awayTeam.team as any).logo_scale_square ?? 1})`,
-                          transformOrigin: `${(match.awayTeam.team as any).logo_position_x_square ?? 50}% ${(match.awayTeam.team as any).logo_position_y_square ?? 50}%`,
+                          objectFit: 'contain',
                         }} 
                       />
                     ) : (

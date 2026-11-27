@@ -168,7 +168,14 @@ export default function DraftDetailedResultsPage() {
         try {
           const logoImg = await loadImage(player.team_logo);
           const logoSize = 120;
-          ctx.drawImage(logoImg, 1080 - logoSize - 40, 40, logoSize, logoSize);
+          const naturalW = logoImg.naturalWidth || logoImg.width || logoSize;
+          const naturalH = logoImg.naturalHeight || logoImg.height || logoSize;
+          const aspect = naturalW / naturalH;
+          const drawW = aspect >= 1 ? logoSize : logoSize * aspect;
+          const drawH = aspect >= 1 ? logoSize / aspect : logoSize;
+          const drawX = 1080 - logoSize - 40 + (logoSize - drawW) / 2;
+          const drawY = 40 + (logoSize - drawH) / 2;
+          ctx.drawImage(logoImg, drawX, drawY, drawW, drawH);
         } catch {}
       }
 
@@ -874,14 +881,17 @@ export default function DraftDetailedResultsPage() {
                                 }}
                               />
                               {a.team_logo && (
-                                <img
-                                  src={a.team_logo}
-                                  alt="Team Logo"
-                                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-white object-cover"
-                                  onError={(e: any) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
+                                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg border-2 border-white bg-white p-0.5 flex items-center justify-center shadow-sm overflow-hidden">
+                                  <img
+                                    src={a.team_logo}
+                                    alt="Team Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e: any) => {
+                                      const parent = (e.target as HTMLImageElement).parentElement;
+                                      if (parent) parent.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
                               )}
                             </div>
                             {/* Player Info */}

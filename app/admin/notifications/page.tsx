@@ -625,7 +625,7 @@ export default function AdminNotificationsPage() {
                                           <img 
                                             src={team.team_logo} 
                                             alt={team.team_name}
-                                            className="w-4 h-4 rounded object-cover"
+                                            className="w-4 h-4 rounded object-contain flex-shrink-0"
                                           />
                                         ) : (
                                           <div className="w-4 h-4 bg-emerald-100 rounded flex items-center justify-center text-[8px] font-black text-emerald-600">
@@ -840,11 +840,11 @@ export default function AdminNotificationsPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1">
                           {user.teamLogo ? (
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-200 flex-shrink-0">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-200 p-1 flex items-center justify-center flex-shrink-0">
                               <img 
                                 src={user.teamLogo} 
                                 alt={user.teamName || 'Team'} 
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                               />
                             </div>
                           ) : (

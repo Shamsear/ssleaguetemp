@@ -975,16 +975,11 @@ export default function PlayerStatsByRoundPage() {
                       <td className="px-4 py-3.5 text-left whitespace-nowrap text-xs font-extrabold text-slate-500 uppercase">
                         <div className="flex items-center gap-2">
                           {player.team_logo && (
-                            <div className="w-5 h-5 overflow-hidden rounded">
+                            <div className="w-5 h-5 rounded bg-white border border-slate-100 p-0.5 flex items-center justify-center overflow-hidden flex-shrink-0">
                               <img 
                                 src={player.team_logo} 
                                 alt="" 
-                                className="w-full h-full object-cover"
-                                style={{
-                                  objectPosition: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
-                                  transform: `scale(${(player as any).logo_scale_square ?? 1})`,
-                                  transformOrigin: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
-                                }}
+                                className="w-full h-full object-contain"
                               />
                             </div>
                           )}
@@ -1104,16 +1099,11 @@ export default function PlayerStatsByRoundPage() {
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
                           {player.team_logo && (
-                            <div className="w-3.5 h-3.5 overflow-hidden rounded">
+                            <div className="w-4 h-4 rounded bg-white border border-slate-100 p-[1px] flex items-center justify-center overflow-hidden flex-shrink-0">
                               <img 
                                 src={player.team_logo} 
                                 alt="" 
-                                className="w-full h-full object-cover"
-                                style={{
-                                  objectPosition: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
-                                  transform: `scale(${(player as any).logo_scale_square ?? 1})`,
-                                  transformOrigin: `${(player as any).logo_position_x_square ?? 50}% ${(player as any).logo_position_y_square ?? 50}%`,
-                                }}
+                                className="w-full h-full object-contain"
                               />
                             </div>
                           )}

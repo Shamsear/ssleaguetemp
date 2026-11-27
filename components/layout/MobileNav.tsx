@@ -437,7 +437,7 @@ export default function MobileNav() {
                 title="Profile"
               >
                 {user.role === 'team' && teamLogo ? (
-                  <div className={`w-6 h-6 rounded-full overflow-hidden bg-white ring-2 ${
+                  <div className={`w-7 h-7 rounded-lg overflow-hidden bg-white p-0.5 flex items-center justify-center ring-2 ${
                     isActiveLink(getProfileUrl()) ? 'ring-[#D4AF37]' : 'ring-[#D4AF37]/30'
                   }`}>
                     <Image
@@ -445,7 +445,7 @@ export default function MobileNav() {
                       alt="Team Logo"
                       width={24}
                       height={24}
-                      className="object-cover w-full h-full"
+                      className="object-contain w-full h-full"
                     />
                   </div>
                 ) : (

@@ -793,17 +793,12 @@ export default function CommitteeCashBalances() {
                         {/* Team Name */}
                         <td className="py-3.5 pr-4 font-bold">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-155 p-1 flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 p-1 flex items-center justify-center relative overflow-hidden flex-shrink-0">
                               {team.team_logo ? (
                                 <img 
                                   src={team.team_logo} 
                                   alt={team.team_name} 
-                                  className="object-cover w-full h-full"
-                                  style={{
-                                    objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                    transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                                    transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                  }}
+                                  className="object-contain w-full h-full"
                                 />
                               ) : (
                                 <User className="w-4 h-4 text-slate-400" />

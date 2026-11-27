@@ -156,18 +156,15 @@ export default function GroupStageStandings({ groupStandings, currentUserId, isT
                       <div className="flex items-center gap-3">
                         {/* Team Logo */}
                         {(team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL) ? (
-                          <img 
-                            src={team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL} 
-                            alt={`${team.team_name} logo`}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
-                            style={{
-                              objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-                              transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
-                              transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-                            }}
-                          />
+                          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 p-0.5 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <img 
+                              src={team.team_logo || (team as any).logo_url || (team as any).logoUrl || (team as any).logoURL} 
+                              alt={`${team.team_name} logo`}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-black text-[10px] flex-shrink-0 shadow-sm shadow-amber-500/10">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-black text-[10px] flex-shrink-0 shadow-sm shadow-amber-500/10">
                             {team.team_name.charAt(0).toUpperCase()}
                           </div>
                         )}

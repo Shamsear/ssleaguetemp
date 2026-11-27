@@ -45,13 +45,13 @@ function TeamLogo({ logoUrl, teamName, size = 40 }: { logoUrl?: string; teamName
     return (
       <div 
         style={{ width: size, height: size }} 
-        className="relative rounded-full border-2 border-slate-200/80 bg-white p-0.5 shadow-sm overflow-hidden flex-shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform"
+        className="relative rounded-xl border-2 border-slate-200/80 bg-white p-1 shadow-sm overflow-hidden flex-shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform"
       >
         <img
           src={logoUrl}
           alt={cleanName}
           onError={() => setImgError(true)}
-          className="w-full h-full object-contain rounded-full"
+          className="w-full h-full object-contain"
         />
       </div>
     );
@@ -60,7 +60,7 @@ function TeamLogo({ logoUrl, teamName, size = 40 }: { logoUrl?: string; teamName
   return (
     <div
       style={{ width: size, height: size }}
-      className="rounded-full border-2 border-slate-300/80 bg-gradient-to-br from-slate-800 to-slate-900 text-amber-400 font-extrabold flex items-center justify-center shadow-sm flex-shrink-0 font-mono text-xs group-hover:scale-105 transition-transform"
+      className="rounded-xl border-2 border-slate-300/80 bg-gradient-to-br from-slate-800 to-slate-900 text-amber-400 font-extrabold flex items-center justify-center shadow-sm flex-shrink-0 font-mono text-xs group-hover:scale-105 transition-transform"
     >
       {initial}
     </div>

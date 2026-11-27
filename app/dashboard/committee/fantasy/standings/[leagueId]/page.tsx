@@ -287,18 +287,15 @@ export default function FantasyStandingsPage() {
                           <td className="px-2.5 sm:px-6 py-3">
                             <div className="flex items-center gap-2 sm:gap-3">
                               {entry.team_logo ? (
-                                <img 
-                                  src={entry.team_logo} 
-                                  alt={`${entry.team_name}`}
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-slate-200 shadow-sm shrink-0"
-                                  style={{
-                                    objectPosition: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
-                                    transform: `scale(${(entry as any).logo_scale_circle ?? 1})`,
-                                    transformOrigin: `${(entry as any).logo_position_x_circle ?? 50}% ${(entry as any).logo_position_y_circle ?? 50}%`,
-                                  }}
-                                />
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-200 shadow-sm p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                  <img 
+                                    src={entry.team_logo} 
+                                    alt={`${entry.team_name}`}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
                               ) : (
-                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-800 border border-slate-700 text-amber-400 flex items-center justify-center font-black text-[10px] sm:text-xs uppercase font-mono shrink-0">
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 flex items-center justify-center font-black text-[10px] sm:text-xs uppercase font-mono shrink-0">
                                   {entry.team_name.charAt(0).toUpperCase()}
                                 </div>
                               )}

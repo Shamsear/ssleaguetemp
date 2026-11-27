@@ -2082,13 +2082,15 @@ export function TournamentDashboardPageContent() {
                         />
                         <div className="flex items-center flex-1 min-w-0">
                           {(team.logo_url || team.logoUrl || team.logoURL) ? (
-                            <img
-                              src={team.logo_url || team.logoUrl || team.logoURL}
-                              alt=""
-                              className="w-7 h-7 rounded-full object-cover mr-2.5 flex-shrink-0"
-                            />
+                            <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 p-0.5 flex items-center justify-center mr-2.5 flex-shrink-0 overflow-hidden">
+                              <img
+                                src={team.logo_url || team.logoUrl || team.logoURL}
+                                alt=""
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center mr-2.5 flex-shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center mr-2.5 flex-shrink-0">
                               <span className="text-[10px] font-bold text-slate-600">{team.team_name?.charAt(0)?.toUpperCase()}</span>
                             </div>
                           )}
@@ -3114,13 +3116,15 @@ export function TournamentDashboardPageContent() {
                               )}
                             </div>
                             {homeLogo ? (
-                              <img
-                                src={homeLogo}
-                                alt=""
-                                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs"
-                              />
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl shrink-0 border border-slate-200 bg-white p-1 flex items-center justify-center shadow-2xs overflow-hidden">
+                                <img
+                                  src={homeLogo}
+                                  alt=""
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                             ) : (
-                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300">
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300">
                                 {fixture.home_team_name?.slice(0, 2).toUpperCase() || 'H'}
                               </div>
                             )}
@@ -3151,13 +3155,15 @@ export function TournamentDashboardPageContent() {
                             isAwayWinner ? 'font-black text-emerald-700' : 'font-bold text-slate-800'
                           }`}>
                             {awayLogo ? (
-                              <img
-                                src={awayLogo}
-                                alt=""
-                                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs"
-                              />
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl shrink-0 border border-slate-200 bg-white p-1 flex items-center justify-center shadow-2xs overflow-hidden">
+                                <img
+                                  src={awayLogo}
+                                  alt=""
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                             ) : (
-                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300">
+                              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300">
                                 {fixture.away_team_name?.slice(0, 2).toUpperCase() || 'A'}
                               </div>
                             )}

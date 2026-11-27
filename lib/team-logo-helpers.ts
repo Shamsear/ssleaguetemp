@@ -24,30 +24,12 @@ export function getTeamLogoStyle(
   team: TeamLogoData | undefined | null,
   shape: 'circle' | 'square' = 'square'
 ): React.CSSProperties {
-  if (!team) {
-    return {
-      objectPosition: '50% 50%',
-      transform: 'scale(1)',
-      transformOrigin: '50% 50%',
-    };
-  }
-
-  const posX = shape === 'circle' 
-    ? (team.logo_position_x_circle ?? 50) 
-    : (team.logo_position_x_square ?? 50);
-  
-  const posY = shape === 'circle'
-    ? (team.logo_position_y_circle ?? 50)
-    : (team.logo_position_y_square ?? 50);
-  
-  const scale = shape === 'circle'
-    ? (team.logo_scale_circle ?? 1)
-    : (team.logo_scale_square ?? 1);
+  void team;
+  void shape;
 
   return {
-    objectPosition: `${posX}% ${posY}%`,
-    transform: `scale(${scale})`,
-    transformOrigin: `${posX}% ${posY}%`,
+    objectFit: 'contain',
+    objectPosition: '50% 50%',
   };
 }
 

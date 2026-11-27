@@ -290,16 +290,11 @@ function TeamsContent() {
                 <div className="flex items-center gap-4 mb-4">
                   {/* Team Logo */}
                   {team.logo_url ? (
-                    <div className="w-16 h-16 rounded-xl bg-white border border-slate-200/60 shadow-inner flex-shrink-0 flex items-center justify-center relative overflow-hidden">
+                    <div className="w-16 h-16 rounded-xl bg-white border border-slate-200/60 shadow-inner p-1.5 flex-shrink-0 flex items-center justify-center relative overflow-hidden">
                       <img
                         src={team.logo_url}
                         alt={team.team_name}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        style={{
-                          objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                          transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                          transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                        }}
+                        className="w-full h-full object-contain"
                       />
                     </div>
                   ) : (

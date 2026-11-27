@@ -19,8 +19,7 @@ interface TeamLogoProps {
 
 /**
  * TeamLogo Component
- * Displays team logos with proper positioning based on shape (circle or square)
- * Uses the team's saved position settings to fill containers without white space
+ * Displays team logos cleanly fitted inside their container without cropping.
  */
 export function TeamLogo({ 
   src, 
@@ -31,24 +30,8 @@ export function TeamLogo({
   fallback,
   onError
 }: TeamLogoProps) {
-  // Get position settings based on shape
-  const posX = shape === 'circle' 
-    ? (team?.logo_position_x_circle ?? 50) 
-    : (team?.logo_position_x_square ?? 50);
-  
-  const posY = shape === 'circle'
-    ? (team?.logo_position_y_circle ?? 50)
-    : (team?.logo_position_y_square ?? 50);
-  
-  const scale = shape === 'circle'
-    ? (team?.logo_scale_circle ?? 1)
-    : (team?.logo_scale_square ?? 1);
-
-  const logoStyle = {
-    objectPosition: `${posX}% ${posY}%`,
-    transform: `scale(${scale})`,
-    transformOrigin: `${posX}% ${posY}%`,
-  };
+  void shape;
+  void team;
 
   if (!src) {
     return <>{fallback}</> || null;
@@ -58,8 +41,7 @@ export function TeamLogo({
     <img
       src={src}
       alt={alt}
-      className={`object-cover ${className}`}
-      style={logoStyle}
+      className={`object-contain ${className}`}
       onError={onError}
     />
   );
@@ -67,7 +49,7 @@ export function TeamLogo({
 
 /**
  * Utility function to get logo style object
- * Can be used inline when component usage is not possible
+ * Keeps full logo visible inside container bounds without zoom cropping.
  */
 export function getTeamLogoStyle(
   team: {
@@ -80,21 +62,11 @@ export function getTeamLogoStyle(
   } | undefined,
   shape: 'circle' | 'square' = 'square'
 ): React.CSSProperties {
-  const posX = shape === 'circle' 
-    ? (team?.logo_position_x_circle ?? 50) 
-    : (team?.logo_position_x_square ?? 50);
-  
-  const posY = shape === 'circle'
-    ? (team?.logo_position_y_circle ?? 50)
-    : (team?.logo_position_y_square ?? 50);
-  
-  const scale = shape === 'circle'
-    ? (team?.logo_scale_circle ?? 1)
-    : (team?.logo_scale_square ?? 1);
+  void team;
+  void shape;
 
   return {
-    objectPosition: `${posX}% ${posY}%`,
-    transform: `scale(${scale})`,
-    transformOrigin: `${posX}% ${posY}%`,
+    objectFit: 'contain',
+    objectPosition: '50% 50%',
   };
 }

@@ -295,17 +295,12 @@ export default function TeamDetailPage() {
               {/* Team Card */}
               <div className="bg-white/60 rounded-2xl p-6 shadow-md border border-white/20">
                 {/* Team Logo */}
-                <div className="relative w-40 h-40 mx-auto mb-4 rounded-xl overflow-hidden shadow-md">
+                <div className="relative w-40 h-40 mx-auto mb-4 rounded-xl bg-white border border-slate-200 p-3 flex items-center justify-center overflow-hidden shadow-md">
                   {team.logo_url ? (
                     <img
                       src={team.logo_url}
                       alt={team.team_name}
-                      className="w-full h-full object-cover"
-                      style={{
-                        objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                        transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                        transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                      }}
+                      className="w-full h-full object-contain"
                     />
                   ) : (
                     <div className="bg-primary/10 w-full h-full flex items-center justify-center">

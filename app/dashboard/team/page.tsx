@@ -267,16 +267,11 @@ export default function TeamDashboard() {
                   title="Click to change logo"
                 >
                   {teamLogoUrl && teamLogoUrl !== 'skip' ? (
-                    <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-slate-200 shadow-sm p-2 overflow-hidden">
                       <img 
                         src={teamLogoUrl}
                         alt="Team logo" 
-                        className="absolute inset-0 w-full h-full object-cover group-hover:opacity-75 transition-opacity"
-                        style={{
-                          objectPosition: `${logoPositionXSquare ?? 50}% ${logoPositionYSquare ?? 50}%`,
-                          transform: `scale(${logoScaleSquare ?? 1})`,
-                          transformOrigin: `${logoPositionXSquare ?? 50}% ${logoPositionYSquare ?? 50}%`,
-                        }}
+                        className="w-full h-full object-contain group-hover:opacity-75 transition-opacity"
                         loading="lazy"
                       />
                       <div className="absolute inset-0 rounded-3xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -916,16 +911,11 @@ export default function TeamDashboard() {
                           className="bg-slate-50 border border-slate-100 rounded-xl p-4 hover:bg-slate-100 transition-all text-left w-full cursor-pointer flex items-center gap-3.5 hover:shadow-sm"
                         >
                           {(team.logo_url || (team as any).team_logo || (team as any).logoUrl || (team as any).teamLogo) ? (
-                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
+                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-1.5 overflow-hidden flex-shrink-0">
                               <img 
                                 src={team.logo_url || (team as any).team_logo || (team as any).logoUrl || (team as any).teamLogo} 
                                 alt={team.team_name} 
-                                className="w-full h-full object-cover p-1" 
-                                style={{
-                                  objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                  transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                                  transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                }}
+                                className="w-full h-full object-contain" 
                               />
                             </div>
                           ) : (

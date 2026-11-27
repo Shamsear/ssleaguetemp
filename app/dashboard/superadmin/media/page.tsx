@@ -1136,7 +1136,7 @@ export default function ImageKitMediaPage() {
                         <div className="flex items-center gap-3">
                           {/* Current image thumbnail — click to enlarge */}
                           <div
-                            className={`relative w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden border-2 cursor-pointer transition-all ${
+                            className={`relative w-10 h-10 rounded-lg bg-white p-0.5 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 cursor-pointer transition-all ${
                               hasImage ? 'border-emerald-300 hover:border-emerald-500' : 'border-dashed border-slate-200'
                             }`}
                             onMouseEnter={() => hasImage && setHoveredImage(entity.current_image!)}
@@ -1144,7 +1144,7 @@ export default function ImageKitMediaPage() {
                             title={hasImage ? 'Currently assigned image — hover to preview' : 'No image assigned'}
                           >
                             {hasImage ? (
-                              <img src={entity.current_image!} alt={entity.label} className="w-full h-full object-cover" loading="lazy" />
+                              <img src={entity.current_image!} alt={entity.label} className="w-full h-full object-contain" loading="lazy" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-slate-50">
                                 <ImageIcon className="w-4 h-4 text-slate-300" />
@@ -1193,11 +1193,13 @@ export default function ImageKitMediaPage() {
                         {hasImage && (
                           <div className="mt-2 ml-13 pl-[52px] flex items-center gap-2">
                             <div className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg p-1.5 flex items-center gap-2">
-                              <img
-                                src={entity.current_image!}
-                                alt="current"
-                                className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-slate-200"
-                              />
+                              <div className="w-8 h-8 rounded-md bg-white border border-slate-200 p-0.5 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                <img
+                                  src={entity.current_image!}
+                                  alt="current"
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                               <p className="text-xs text-slate-500 font-mono truncate flex-1" title={entity.current_image!}>
                                 {entity.current_image!.split('/').pop()}
                               </p>

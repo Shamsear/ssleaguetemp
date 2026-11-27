@@ -1286,13 +1286,13 @@ export default function Navbar() {
                   <span className="absolute inset-0 bg-[#D4AF37]/8 rounded-lg scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 -z-10"></span>
                   <div className="flex items-center space-x-2">
                     {user.role === 'team' && teamLogo ? (
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-white shadow-lg ring-2 ring-[#D4AF37]/30 group-hover:ring-[#D4AF37]/50 transition-all">
+                      <div className="w-8 h-8 rounded-xl overflow-hidden bg-white p-0.5 flex items-center justify-center shadow-lg ring-2 ring-[#D4AF37]/30 group-hover:ring-[#D4AF37]/50 transition-all">
                         <Image
                           src={teamLogo}
                           alt="Team Logo"
                           width={32}
                           height={32}
-                          className="object-cover w-full h-full"
+                          className="object-contain w-full h-full"
                         />
                       </div>
                     ) : (

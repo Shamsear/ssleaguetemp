@@ -146,18 +146,15 @@ export default function TeamStatistics({ teamId, seasonId, tournamentId }: TeamS
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
         <div className="flex items-center gap-4">
           {team.team_logo ? (
-            <img 
-              src={team.team_logo} 
-              alt={`${team.team_name} logo`}
-              className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
-              style={{
-                objectPosition: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-                transform: `scale(${(team as any).logo_scale_circle ?? 1})`,
-                transformOrigin: `${(team as any).logo_position_x_circle ?? 50}% ${(team as any).logo_position_y_circle ?? 50}%`,
-              }}
-            />
+            <div className="w-16 h-16 rounded-2xl bg-white border-2 border-white shadow-lg p-1.5 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <img 
+                src={team.team_logo} 
+                alt={`${team.team_name} logo`}
+                className="w-full h-full object-contain"
+              />
+            </div>
           ) : (
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg flex-shrink-0">
               {team.team_name.charAt(0).toUpperCase()}
             </div>
           )}

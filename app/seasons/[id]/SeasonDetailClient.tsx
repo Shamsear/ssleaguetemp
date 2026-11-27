@@ -638,16 +638,11 @@ export default function SeasonDetailPage() {
                                     <td className="py-4 px-4 text-left font-bold text-slate-900">
                                       <Link href={`/teams/${team.team_id}?season=${seasonId}`} className="flex items-center gap-3 group">
                                         {team.logo_url && (
-                                          <div className="w-8 h-8 rounded bg-white border border-slate-100 flex items-center justify-center overflow-hidden relative">
+                                          <div className="w-8 h-8 rounded bg-white border border-slate-100 p-1 flex items-center justify-center overflow-hidden relative flex-shrink-0">
                                             <img
                                               src={team.logo_url}
                                               alt={resolvedName}
-                                              className="absolute inset-0 w-full h-full object-cover"
-                                              style={{
-                                                objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                                transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                                                transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                              }}
+                                              className="w-full h-full object-contain"
                                             />
                                           </div>
                                         )}
@@ -689,16 +684,11 @@ export default function SeasonDetailPage() {
                                     {team.rank}
                                   </div>
                                   {team.logo_url && (
-                                    <div className="w-10 h-10 rounded bg-white border border-slate-100 flex items-center justify-center p-0 overflow-hidden relative">
+                                    <div className="w-10 h-10 rounded bg-white border border-slate-100 flex items-center justify-center p-1 overflow-hidden relative flex-shrink-0">
                                       <img
                                         src={team.logo_url}
                                         alt={resolvedName}
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                        style={{
-                                          objectPosition: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                          transform: `scale(${(team as any).logo_scale_square ?? 1})`,
-                                          transformOrigin: `${(team as any).logo_position_x_square ?? 50}% ${(team as any).logo_position_y_square ?? 50}%`,
-                                        }}
+                                        className="w-full h-full object-contain"
                                       />
                                     </div>
                                   )}
@@ -777,16 +767,11 @@ export default function SeasonDetailPage() {
                                       <td className="py-3 px-2 text-left font-bold text-slate-900">
                                         <Link href={`/teams/${team.team_id}?season=${seasonId}`} className="flex items-center gap-2 group text-xs">
                                           {team.team_logo && (
-                                            <div className="w-6 h-6 rounded bg-white border border-slate-100 overflow-hidden flex-shrink-0 relative">
+                                            <div className="w-6 h-6 rounded bg-white border border-slate-100 p-0.5 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                                               <img
                                                 src={team.team_logo}
                                                 alt={resolvedName}
-                                                className="absolute inset-0 w-full h-full object-cover"
-                                                style={{
-                                                  objectPosition: `${team.logo_position_x_square ?? 50}% ${team.logo_position_y_square ?? 50}%`,
-                                                  transform: `scale(${team.logo_scale_square ?? 1})`,
-                                                  transformOrigin: `${team.logo_position_x_square ?? 50}% ${team.logo_position_y_square ?? 50}%`,
-                                                }}
+                                                className="w-full h-full object-contain"
                                               />
                                             </div>
                                           )}

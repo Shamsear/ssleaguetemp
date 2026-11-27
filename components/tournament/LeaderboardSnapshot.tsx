@@ -134,7 +134,7 @@ export function LeaderboardSnapshot({
                     {/* Team Info (Logo + Name) */}
                     <td style={{ padding: '16px 10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '4px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', padding: '3px' }}>
                           {row.seasonTeam.team.logoUrl ? (
                             <img
                               src={row.seasonTeam.team.logoUrl}

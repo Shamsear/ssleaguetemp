@@ -412,17 +412,12 @@ export default function TeamDetailsPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0 group overflow-hidden shadow-sm">
+            <div className="relative w-16 h-16 rounded-2xl bg-white border border-slate-200 p-2 flex items-center justify-center flex-shrink-0 group overflow-hidden shadow-sm">
               {team.logo_url ? (
                 <img 
                   src={team.logo_url} 
                   alt={`${team.team_name} logo`}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{
-                    objectPosition: `${(team as any).logo_position_x ?? 50}% ${(team as any).logo_position_y ?? 50}%`,
-                    transform: `scale(${(team as any).logo_scale ?? 1})`,
-                    transformOrigin: `${(team as any).logo_position_x ?? 50}% ${(team as any).logo_position_y ?? 50}%`,
-                  }}
+                  className="w-full h-full object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLElement;
                     target.style.display = 'none';

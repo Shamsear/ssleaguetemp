@@ -339,16 +339,11 @@ export default function TeamManagementClient({
                   <div>
                     <div className="flex items-center gap-4 mb-4">
                       {teamData.team.logoUrl ? (
-                        <div className="w-12 h-12 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden flex-shrink-0 flex items-center justify-center bg-white">
+                        <div className="w-12 h-12 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden flex-shrink-0 flex items-center justify-center bg-white p-1.5">
                           <img
                             src={teamData.team.logoUrl}
                             alt={teamData.team.name}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            style={{
-                              objectPosition: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
-                              transform: `scale(${(teamData.team as any).logo_scale_square ?? 1})`,
-                              transformOrigin: `${(teamData.team as any).logo_position_x_square ?? 50}% ${(teamData.team as any).logo_position_y_square ?? 50}%`,
-                            }}
+                            className="w-full h-full object-contain"
                           />
                         </div>
                       ) : (
