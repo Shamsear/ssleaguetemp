@@ -164,7 +164,7 @@ export default function FixtureManagementPage() {
     resultDate.setDate(resultDate.getDate() + (roundData.result_entry_deadline_day_offset || 2));
     const resultDeadline = createISTDateTime(
       `${resultDate.getFullYear()}-${String(resultDate.getMonth() + 1).padStart(2, '0')}-${String(resultDate.getDate()).padStart(2, '0')}`,
-      roundData.result_entry_deadline_time || '00:30'
+      roundData.result_entry_deadline_time || '00:10'
     );
 
     // Determine phase and permissions

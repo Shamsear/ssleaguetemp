@@ -283,7 +283,7 @@ export async function PATCH(
       const resultDate = new Date(schedDateStr);
       resultDate.setDate(resultDate.getDate() + (deadline.result_entry_deadline_day_offset || 2));
       const resultDateStr = resultDate.toISOString().split('T')[0];
-      const resultTime = deadline.result_entry_deadline_time || '00:30';
+      const resultTime = deadline.result_entry_deadline_time || '00:10';
 
       const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
       const now = new Date();

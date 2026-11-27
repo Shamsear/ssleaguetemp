@@ -326,7 +326,7 @@ export default function FixturePage() {
       // Validate and default time fields
       const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
       const awayTime = roundDeadlines.away_fixture_deadline_time || '19:00';
-      const resultTime = roundDeadlines.result_entry_deadline_time || '00:30';
+      const resultTime = roundDeadlines.result_entry_deadline_time || '00:10';
 
       // Parse all deadlines
       const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
@@ -1570,7 +1570,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     }
 
     const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
-    const resultTime = roundDeadlines.result_entry_deadline_time || '00:30';
+    const resultTime = roundDeadlines.result_entry_deadline_time || '00:10';
 
     const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
 

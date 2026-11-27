@@ -169,7 +169,7 @@ export default function MatchDayManagementPage() {
                   home_fixture_deadline_time: '17:00',
                   away_fixture_deadline_time: '17:00',
                   result_entry_deadline_day_offset: 2,
-                  result_entry_deadline_time: '00:30',
+                  result_entry_deadline_time: '00:10',
                 });
               }
 
@@ -646,7 +646,7 @@ export default function MatchDayManagementPage() {
             home_fixture_deadline_time: round.home_fixture_deadline_time || '17:00',
             away_fixture_deadline_time: round.away_fixture_deadline_time || '17:00',
             result_entry_deadline_day_offset: round.result_entry_deadline_day_offset || 2,
-            result_entry_deadline_time: round.result_entry_deadline_time || '00:30',
+            result_entry_deadline_time: round.result_entry_deadline_time || '00:10',
             status: (round as any).status || 'pending'
           };
         })
@@ -916,7 +916,7 @@ export default function MatchDayManagementPage() {
                           const resultDateStr = `${resultYear}-${resultMonth}-${resultDay}`;
                           const resultDeadline = createISTDateTime(
                             resultDateStr,
-                            round.result_entry_deadline_time || '00:30'
+                            round.result_entry_deadline_time || '00:10'
                           );
 
                           if (now < homeDeadline) {
@@ -1072,7 +1072,7 @@ export default function MatchDayManagementPage() {
                                     const scheduledDate = new Date(round.scheduled_date);
                                     const resultDate = new Date(scheduledDate.getTime() + offsetDays * 24 * 60 * 60 * 1000);
                                     const dateStr = resultDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
-                                    return `${dateStr} ${round.result_entry_deadline_time || '00:30'}`;
+                                    return `${dateStr} ${round.result_entry_deadline_time || '00:10'}`;
                                   })()}
                                 </div>
                               </div>
@@ -1235,7 +1235,7 @@ export default function MatchDayManagementPage() {
                       const resultDateStr = `${resultYear}-${resultMonth}-${resultDay}`;
                       const resultDeadline = createISTDateTime(
                         resultDateStr,
-                        round.result_entry_deadline_time || '00:30'
+                        round.result_entry_deadline_time || '00:10'
                       );
 
                       if (now < homeDeadline) {
@@ -1390,7 +1390,7 @@ export default function MatchDayManagementPage() {
                                 const scheduledDate = new Date(round.scheduled_date);
                                 const resultDate = new Date(scheduledDate.getTime() + offsetDays * 24 * 60 * 60 * 1000);
                                 const dateStr = resultDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
-                                return `${dateStr} ${round.result_entry_deadline_time || '00:30'}`;
+                                return `${dateStr} ${round.result_entry_deadline_time || '00:10'}`;
                               })()}
                             </div>
                           </div>

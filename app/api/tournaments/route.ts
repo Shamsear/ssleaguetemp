@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
         ${home_deadline_time || '17:00'},
         ${away_deadline_time || '17:00'},
         ${result_day_offset ?? 2},
-        ${result_deadline_time || '00:30'},
+        ${result_deadline_time || '00:10'},
         ${has_knockout_stage ?? false},
         ${playoff_teams ?? 4},
         ${direct_semifinal_teams ?? 2},

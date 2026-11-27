@@ -342,7 +342,7 @@ export async function POST(
                     ${leg},
                     ${isTripleThreat ? '00:00' : '14:00'},
                     ${isTripleThreat ? '14:00' : '17:00'},
-                    '00:30',
+                    '00:10',
                     'pending',
                     NOW(),
                     NOW()

@@ -273,7 +273,7 @@ export async function POST(
           ${leg},
           ${isTT ? '00:00' : '14:00'},
           ${isTT ? '14:00' : '17:00'},
-          '00:30',
+          '00:10',
           'pending',
           NOW(),
           NOW()

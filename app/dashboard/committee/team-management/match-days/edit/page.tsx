@@ -39,7 +39,7 @@ function EditRoundDeadlinesContent() {
   const [homeTime, setHomeTime] = useState('17:00');
   const [awayTime, setAwayTime] = useState('17:00');
   const [resultDayOffset, setResultDayOffset] = useState(1);
-  const [resultTime, setResultTime] = useState('00:30');
+  const [resultTime, setResultTime] = useState('00:10');
   const [scheduledDate, setScheduledDate] = useState('');
 
   // Modal system
@@ -103,7 +103,7 @@ function EditRoundDeadlinesContent() {
         setHomeTime(deadlines.home_fixture_deadline_time || '17:00');
         setAwayTime(deadlines.away_fixture_deadline_time || '17:00');
         setResultDayOffset(deadlines.result_entry_deadline_day_offset || 2);
-        setResultTime(deadlines.result_entry_deadline_time || '00:30');
+        setResultTime(deadlines.result_entry_deadline_time || '00:10');
         
         // Extract date part if scheduled_date is a timestamp
         let dateValue = deadlines.scheduled_date || '';

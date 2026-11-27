@@ -194,7 +194,7 @@ export default function TeamMatchesPage() {
             home_fixture_deadline_time: '23:30',
             away_fixture_deadline_time: '23:45',
             result_entry_deadline_day_offset: 2,
-            result_entry_deadline_time: '00:30',
+            result_entry_deadline_time: '00:10',
           };
 
           try {
@@ -211,7 +211,7 @@ export default function TeamMatchesPage() {
                     home_fixture_deadline_time: roundDeadline.home_fixture_deadline_time || '23:30',
                     away_fixture_deadline_time: roundDeadline.away_fixture_deadline_time || '23:45',
                     result_entry_deadline_day_offset: roundDeadline.result_entry_deadline_day_offset || 2,
-                    result_entry_deadline_time: roundDeadline.result_entry_deadline_time || '00:30',
+                    result_entry_deadline_time: roundDeadline.result_entry_deadline_time || '00:10',
                     scheduled_date: roundDeadline.scheduled_date,
                   }
                 };
@@ -295,8 +295,8 @@ export default function TeamMatchesPage() {
           const baseDate = parseISTDate(schedDateStr);
           const resultDeadline = new Date(baseDate);
           resultDeadline.setDate(resultDeadline.getDate() + (roundData.result_entry_deadline_day_offset || 2));
-          const [resultHour, resultMin] = (roundData.result_entry_deadline_time || '00:30').split(':').map(Number);
-          resultDeadline.setHours(resultHour || 0, resultMin || 30, 0, 0);
+          const [resultHour, resultMin] = (roundData.result_entry_deadline_time || '00:10').split(':').map(Number);
+          resultDeadline.setHours(Number.isFinite(resultHour) ? resultHour : 0, Number.isFinite(resultMin) ? resultMin : 10, 0, 0);
 
           if (now < homeDeadline) {
             return {

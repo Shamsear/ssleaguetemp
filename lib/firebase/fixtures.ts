@@ -415,7 +415,7 @@ export async function getRoundDeadlines(
         home_fixture_deadline_time: '23:30',
         away_fixture_deadline_time: '23:45',
         result_entry_deadline_day_offset: 2,
-        result_entry_deadline_time: '00:30',
+        result_entry_deadline_time: '00:10',
       };
     }
 
@@ -426,7 +426,7 @@ export async function getRoundDeadlines(
         home_fixture_deadline_time: '23:30',
         away_fixture_deadline_time: '23:45',
         result_entry_deadline_day_offset: 2,
-        result_entry_deadline_time: '00:30',
+        result_entry_deadline_time: '00:10',
       };
     }
 
@@ -495,7 +495,7 @@ export async function getFixturesByRoundsWithDeadlines(
             home_fixture_deadline_time: '23:30',
             away_fixture_deadline_time: '23:45',
             result_entry_deadline_day_offset: 2,
-            result_entry_deadline_time: '00:30',
+            result_entry_deadline_time: '00:10',
             status: 'pending',
             is_active: false,
           };
@@ -518,7 +518,7 @@ export async function getFixturesByRoundsWithDeadlines(
             home_fixture_deadline_time: '23:30',
             away_fixture_deadline_time: '23:45',
             result_entry_deadline_day_offset: 2,
-            result_entry_deadline_time: '00:30',
+            result_entry_deadline_time: '00:10',
             status: 'pending',
             is_active: false,
           };
