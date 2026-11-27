@@ -178,6 +178,27 @@ export async function GET(
       return null;
     };
 
+    let resolvedGroupName =
+      fixture.group_name ||
+      (!fixture.knockout_round ? String(fixture.id || '').match(/_grp([A-Za-z0-9]+)_/)?.[1] || null : null);
+
+    if (!resolvedGroupName && fixture.tournament_id && !fixture.knockout_round && fixture.home_team_id) {
+      try {
+        const grpRes = await sql`
+          SELECT group_name
+          FROM tournament_team_groups
+          WHERE tournament_id = ${fixture.tournament_id}
+            AND team_id = ${fixture.home_team_id}
+          LIMIT 1
+        `;
+        if (grpRes.length > 0 && grpRes[0].group_name) {
+          resolvedGroupName = grpRes[0].group_name;
+        }
+      } catch (grpErr) {
+        console.warn('Error resolving group_name from tournament_team_groups:', grpErr);
+      }
+    }
+
     const [home_team_logo, away_team_logo] = await Promise.all([
       getTeamLogo(fixture.home_team_id, fixture.season_id, fixture.home_team_name),
       getTeamLogo(fixture.away_team_id, fixture.season_id, fixture.away_team_name)
@@ -185,6 +206,7 @@ export async function GET(
 
     const fixtureWithLogos = {
       ...fixture,
+      group_name: resolvedGroupName,
       home_team_logo,
       away_team_logo
     };

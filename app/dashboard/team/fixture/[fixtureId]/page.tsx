@@ -19,7 +19,7 @@ import BlindLineupSubmission from '@/components/BlindLineupSubmission';
 import AuthGuard from '@/components/auth/AuthGuard';
 import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
 import PlayerPhoto from '@/components/PlayerPhoto';
-import { calculateTripleThreatFixture, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+import { calculateTripleThreatFixture, formatTripleThreatFixtureCopy, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 const isRealSubmittedLineup = (lineupData: any, isTripleThreatMode: boolean): boolean => {
   const l = lineupData?.success ? lineupData.lineups : null;
@@ -150,6 +150,7 @@ interface Fixture {
   tournament_id?: string;
   tournament_type?: string;
   matchday_format?: string;
+  group_name?: string | null;
   knockout_round?: 'quarter_finals' | 'semi_finals' | 'finals' | 'third_place' | null;
   knockout_format?: 'round_robin' | 'single_matchup' | 'triple_threat' | string | null;
   scoring_system?: 'goals' | 'wins' | 'triple_threat' | string | null;
@@ -401,6 +402,20 @@ export default function FixturePage() {
   const generateWhatsAppText = () => {
     if (!fixture || matchups.length === 0) return '';
 
+    const activeScoring = scoringSystem || tournamentSystem;
+    const isTTWhatsApp = Boolean(
+      activeScoring === 'triple_threat' ||
+      fixture.tournament_type === 'triple_threat' ||
+      fixture.matchday_format === 'triple_threat' ||
+      fixture.knockout_format === 'triple_threat' ||
+      fixture.tournament_id?.toLowerCase().includes('triple_threat') ||
+      matchups.some((m: any) => !!m.match_mode)
+    );
+
+    if (isTTWhatsApp) {
+      return formatTripleThreatFixtureCopy({ fixture, matchups });
+    }
+
     const homePlayerGoals = matchups.reduce((sum, m) => sum + (m.home_goals ?? 0), 0);
     const awayPlayerGoals = matchups.reduce((sum, m) => sum + (m.away_goals ?? 0), 0);
 
@@ -414,31 +429,8 @@ export default function FixturePage() {
 
     // Calculate scores based on tournament system
     let homeTotalScore, awayTotalScore, homePlayerScore, awayPlayerScore;
-    
-    // Use fixture-level scoring_system if available, otherwise fall back to tournament system
-    const activeScoring = scoringSystem || tournamentSystem;
-    const isTTWhatsApp = Boolean(
-      activeScoring === 'triple_threat' ||
-      (fixture as any)?.tournament_type === 'triple_threat' ||
-      (fixture as any)?.matchday_format === 'triple_threat' ||
-      (fixture as any)?.knockout_format === 'triple_threat' ||
-      matchups.some((m: any) => !!m.match_mode)
-    );
 
-    if (isTTWhatsApp) {
-      const ttRes = calculateTripleThreatFixture(
-        matchups.map((m: any) => ({
-          position: m.position,
-          mode: resolveTripleThreatMode(m),
-          home_goals: m.home_goals,
-          away_goals: m.away_goals,
-        }))
-      );
-      homePlayerScore = (fixture as any)?.home_points_earned ?? ttRes.home_total_points;
-      awayPlayerScore = (fixture as any)?.away_points_earned ?? ttRes.away_total_points;
-      homeTotalScore = homePlayerScore;
-      awayTotalScore = awayPlayerScore;
-    } else if (activeScoring === 'wins') {
+    if (activeScoring === 'wins') {
       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
       // Substitution penalties are added to MATCHUP score to determine winner
       let homePoints = 0;
