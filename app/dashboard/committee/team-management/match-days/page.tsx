@@ -55,12 +55,28 @@ export default function MatchDayManagementPage() {
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Bulk Schedule & Push Dates state
+  // Bulk Schedule, Push Dates & Bulk Times state
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [bulkActiveTab, setBulkActiveTab] = useState<'batch' | 'push'>('batch');
+  const [bulkActiveTab, setBulkActiveTab] = useState<'batch' | 'push' | 'deadlines'>('batch');
   const [bulkStartDate, setBulkStartDate] = useState(getISTToday());
   const [bulkIntervalDays, setBulkIntervalDays] = useState(1);
   const [bulkRoundDates, setBulkRoundDates] = useState<{ [key: string]: string }>({});
+
+  const [bulkPresetStart, setBulkPresetStart] = useState('09:00');
+  const [bulkPresetHome, setBulkPresetHome] = useState('17:00');
+  const [bulkPresetAway, setBulkPresetAway] = useState('19:00');
+  const [bulkPresetResultOffset, setBulkPresetResultOffset] = useState(2);
+  const [bulkPresetResultTime, setBulkPresetResultTime] = useState('00:10');
+  const [bulkRoundDeadlines, setBulkRoundDeadlines] = useState<{
+    [key: string]: {
+      selected: boolean;
+      round_start_time: string;
+      home_fixture_deadline_time: string;
+      away_fixture_deadline_time: string;
+      result_entry_deadline_day_offset: number;
+      result_entry_deadline_time: string;
+    };
+  }>({});
 
   // Push state
   const [pushFromRoundNumber, setPushFromRoundNumber] = useState(4);
@@ -546,15 +562,25 @@ export default function MatchDayManagementPage() {
     }
   };
 
-  const openBulkSchedule = (tab: 'batch' | 'push' = 'batch', startRound?: number, leg?: 'first' | 'second') => {
+  const openBulkSchedule = (tab: 'batch' | 'push' | 'deadlines' = 'batch', startRound?: number, leg?: 'first' | 'second') => {
     const initialDates: { [key: string]: string } = {};
-    filteredRounds.forEach(r => {
+    const initialDeadlines: typeof bulkRoundDeadlines = {};
+    filteredRounds.forEach((r: any) => {
       const key = `${r.round_number}_${r.leg}`;
       if (r.scheduled_date) {
-        initialDates[key] = (r.scheduled_date || '').split('T')[0];
+        initialDates[key] = extractISTDateString(r.scheduled_date);
       }
+      initialDeadlines[key] = {
+        selected: true,
+        round_start_time: r.round_start_time || '09:00',
+        home_fixture_deadline_time: r.home_fixture_deadline_time || '17:00',
+        away_fixture_deadline_time: r.away_fixture_deadline_time || '19:00',
+        result_entry_deadline_day_offset: r.result_entry_deadline_day_offset ?? 2,
+        result_entry_deadline_time: r.result_entry_deadline_time || '00:10',
+      };
     });
     setBulkRoundDates(initialDates);
+    setBulkRoundDeadlines(initialDeadlines);
 
     if (startRound !== undefined) {
       setPushFromRoundNumber(startRound);
@@ -567,22 +593,125 @@ export default function MatchDayManagementPage() {
     setIsBulkModalOpen(true);
   };
 
+  const handleApplyPresetToSelected = () => {
+    setBulkRoundDeadlines((prev) => {
+      const next: typeof prev = {};
+      Object.entries(prev).forEach(([key, row]) => {
+        next[key] = row.selected
+          ? {
+              ...row,
+              round_start_time: bulkPresetStart,
+              home_fixture_deadline_time: bulkPresetHome,
+              away_fixture_deadline_time: bulkPresetAway,
+              result_entry_deadline_day_offset: bulkPresetResultOffset,
+              result_entry_deadline_time: bulkPresetResultTime,
+            }
+          : row;
+      });
+      return next;
+    });
+  };
+
+  const handleSelectDeadlineRounds = (mode: 'all' | 'pending' | 'none') => {
+    setBulkRoundDeadlines((prev) => {
+      const next: typeof prev = {};
+      filteredRounds.forEach((r: any) => {
+        const key = `${r.round_number}_${r.leg}`;
+        const existing = prev[key] || {
+          selected: true,
+          round_start_time: r.round_start_time || '09:00',
+          home_fixture_deadline_time: r.home_fixture_deadline_time || '17:00',
+          away_fixture_deadline_time: r.away_fixture_deadline_time || '19:00',
+          result_entry_deadline_day_offset: r.result_entry_deadline_day_offset ?? 2,
+          result_entry_deadline_time: r.result_entry_deadline_time || '00:10',
+        };
+        const status = (r.status || 'pending').toLowerCase();
+        next[key] = {
+          ...existing,
+          selected: mode === 'all' ? true : mode === 'pending' ? status === 'pending' : false,
+        };
+      });
+      return next;
+    });
+  };
+
+  const handleSaveBulkDeadlines = async () => {
+    if (!activeSeasonId) return;
+
+    const payload = filteredRounds
+      .map((round: any) => {
+        const key = `${round.round_number}_${round.leg}`;
+        const row = bulkRoundDeadlines[key];
+        if (!row || !row.selected) return null;
+
+        const existingDate = round.scheduled_date ? extractISTDateString(round.scheduled_date) : undefined;
+        return {
+          tournament_id: round.tournament_id,
+          season_id: activeSeasonId,
+          round_number: round.round_number,
+          leg: round.leg,
+          ...(existingDate ? { scheduled_date: existingDate } : {}),
+          round_start_time: row.round_start_time,
+          home_fixture_deadline_time: row.home_fixture_deadline_time,
+          away_fixture_deadline_time: row.away_fixture_deadline_time,
+          result_entry_deadline_day_offset: row.result_entry_deadline_day_offset,
+          result_entry_deadline_time: row.result_entry_deadline_time,
+          status: round.status || 'pending',
+        };
+      })
+      .filter(Boolean);
+
+    if (payload.length === 0) {
+      showAlert({
+        type: 'warning',
+        title: 'No Rounds Selected',
+        message: 'Please select at least one round to update.'
+      });
+      return;
+    }
+
+    setIsSavingBulk(true);
+    try {
+      const res = await fetchWithTokenRefresh('/api/round-deadlines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round_deadlines: payload })
+      });
+
+      if (res.ok) {
+        await loadRounds();
+        setIsBulkModalOpen(false);
+        showAlert({
+          type: 'success',
+          title: 'Deadlines Updated',
+          message: `Successfully updated deadlines for ${payload.length} round(s)!`
+        });
+      } else {
+        const err = await res.json();
+        showAlert({
+          type: 'error',
+          title: 'Save Failed',
+          message: err.error || 'Failed to update round deadlines'
+        });
+      }
+    } catch (error: any) {
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to save deadlines: ' + error.message
+      });
+    } finally {
+      setIsSavingBulk(false);
+    }
+  };
+
   const handleGenerateSequence = (startDateStr: string, interval: number) => {
     if (!startDateStr) return;
     const newDates: { [key: string]: string } = {};
 
-    let curDate = new Date(startDateStr);
     filteredRounds.forEach((round, idx) => {
       const key = `${round.round_number}_${round.leg}`;
-      if (idx === 0) {
-        newDates[key] = startDateStr;
-      } else {
-        curDate.setDate(curDate.getDate() + interval);
-        const yyyy = curDate.getFullYear();
-        const mm = String(curDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(curDate.getDate()).padStart(2, '0');
-        newDates[key] = `${yyyy}-${mm}-${dd}`;
-      }
+      newDates[key] = addDaysToDateString(startDateStr, idx * interval);
     });
 
     setBulkRoundDates(newDates);
@@ -595,27 +724,24 @@ export default function MatchDayManagementPage() {
     if (pushMode === 'new_date' && pushNewDateValue) {
       const targetRound = filteredRounds.find(r => r.round_number === pushFromRoundNumber && r.leg === pushFromLeg);
       if (targetRound && targetRound.scheduled_date) {
-        const oldTime = new Date(targetRound.scheduled_date.split('T')[0]).getTime();
-        const newTime = new Date(pushNewDateValue).getTime();
+        const oldStr = extractISTDateString(targetRound.scheduled_date);
+        const [oy, om, od] = oldStr.split('-').map(Number);
+        const [ny, nm, nd] = pushNewDateValue.split('-').map(Number);
+        const oldTime = Date.UTC(oy, om - 1, od);
+        const newTime = Date.UTC(ny, nm - 1, nd);
         offsetDaysToAdd = Math.round((newTime - oldTime) / (1000 * 60 * 60 * 24));
       }
     }
 
     filteredRounds.forEach((round) => {
       const key = `${round.round_number}_${round.leg}`;
-      const oldDateStr = (round.scheduled_date || '').split('T')[0];
+      const oldDateStr = round.scheduled_date ? extractISTDateString(round.scheduled_date) : '';
 
       const isPushed = round.round_number > pushFromRoundNumber ||
         (round.round_number === pushFromRoundNumber && (round.leg === pushFromLeg || pushFromLeg === 'first'));
 
       if (isPushed && oldDateStr) {
-        const d = new Date(oldDateStr);
-        d.setDate(d.getDate() + offsetDaysToAdd);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const newDateStr = `${yyyy}-${mm}-${dd}`;
-        result[key] = { oldDate: oldDateStr, newDate: newDateStr, isPushed: true };
+        result[key] = { oldDate: oldDateStr, newDate: addDaysToDateString(oldDateStr, offsetDaysToAdd), isPushed: true };
       } else {
         result[key] = { oldDate: oldDateStr, newDate: oldDateStr, isPushed: false };
       }
@@ -645,7 +771,7 @@ export default function MatchDayManagementPage() {
             round_start_time: round.round_start_time || '09:00',
             home_fixture_deadline_time: round.home_fixture_deadline_time || '17:00',
             away_fixture_deadline_time: round.away_fixture_deadline_time || '19:00',
-            result_entry_deadline_day_offset: round.result_entry_deadline_day_offset || 2,
+            result_entry_deadline_day_offset: round.result_entry_deadline_day_offset ?? 2,
             result_entry_deadline_time: round.result_entry_deadline_time || '00:10',
             status: (round as any).status || 'pending'
           };
@@ -830,6 +956,12 @@ export default function MatchDayManagementPage() {
               <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mt-0.5">Configure schedule dates, phases, and deadlines</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => openBulkSchedule('deadlines')}
+                className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5" /> Bulk Edit Times
+              </button>
               <button
                 onClick={() => openBulkSchedule('batch')}
                 className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1573,10 +1705,10 @@ export default function MatchDayManagementPage() {
         </div>
       </div>
 
-      {/* ── Bulk Schedule & Push Dates Modal ─────────────────────────────────── */}
+      {/* ── Bulk Schedule, Push Dates & Bulk Times Modal ─────────────────────── */}
       {isBulkModalOpen && (
         <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh] my-auto relative">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[88vh] my-auto relative">
             {/* Modal Header */}
             <div className="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
@@ -1584,8 +1716,8 @@ export default function MatchDayManagementPage() {
                   <Calendar className="w-6 h-6 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-lg tracking-tight">Bulk Round Scheduler</h3>
-                  <p className="text-xs text-slate-400 font-mono">Set all round dates at once or push schedule from any round</p>
+                  <h3 className="font-extrabold text-lg tracking-tight">Bulk Round Scheduler &amp; Deadlines</h3>
+                  <p className="text-xs text-slate-400 font-mono">Set round dates, shift schedules, or bulk update start/home/away/result times</p>
                 </div>
               </div>
               <button
@@ -1617,6 +1749,16 @@ export default function MatchDayManagementPage() {
                 }`}
               >
                 2. Push Dates (From Round {pushFromRoundNumber}+)
+              </button>
+              <button
+                onClick={() => setBulkActiveTab('deadlines')}
+                className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-t border-x cursor-pointer whitespace-nowrap ${
+                  bulkActiveTab === 'deadlines'
+                    ? 'bg-white border-slate-200 text-purple-600 shadow-sm'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                3. Bulk Edit Times
               </button>
             </div>
 
@@ -1821,6 +1963,236 @@ export default function MatchDayManagementPage() {
                   </div>
                 </div>
               )}
+
+              {/* TAB 3: BULK EDIT TIMES & DEADLINES */}
+              {bulkActiveTab === 'deadlines' && (
+                <div className="space-y-5">
+                  {/* Preset Times Bar */}
+                  <div className="bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-purple-900 font-extrabold text-xs uppercase tracking-wider">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                        Set Preset Times (IST) &amp; Apply
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDeadlineRounds('all')}
+                          className="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded-lg text-[10px] font-extrabold text-purple-700 cursor-pointer"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDeadlineRounds('pending')}
+                          className="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded-lg text-[10px] font-extrabold text-purple-700 cursor-pointer"
+                        >
+                          Pending Only
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDeadlineRounds('none')}
+                          className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Start (IST)</label>
+                        <input
+                          type="time"
+                          value={bulkPresetStart}
+                          onChange={(e) => setBulkPresetStart(e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Home (IST)</label>
+                        <input
+                          type="time"
+                          value={bulkPresetHome}
+                          onChange={(e) => setBulkPresetHome(e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Away (IST)</label>
+                        <input
+                          type="time"
+                          value={bulkPresetAway}
+                          onChange={(e) => setBulkPresetAway(e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Result Day</label>
+                        <select
+                          value={bulkPresetResultOffset}
+                          onChange={(e) => setBulkPresetResultOffset(parseInt(e.target.value))}
+                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                        >
+                          <option value={0}>Day 0 (Same)</option>
+                          <option value={1}>Day 1 (+1d)</option>
+                          <option value={2}>Day 2 (+2d)</option>
+                          <option value={3}>Day 3 (+3d)</option>
+                          <option value={4}>Day 4 (+4d)</option>
+                          <option value={7}>Day 7 (+7d)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Result Time</label>
+                        <input
+                          type="time"
+                          value={bulkPresetResultTime}
+                          onChange={(e) => setBulkPresetResultTime(e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={handleApplyPresetToSelected}
+                          className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          Apply to Checked
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Per-Round Editable Times List */}
+                  <div>
+                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
+                      <span>
+                        Round Deadlines ({Object.values(bulkRoundDeadlines).filter(r => r.selected).length} / {filteredRounds.length} Selected)
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal">Checked rounds will be saved; uncheck any round to leave unchanged</span>
+                    </h4>
+
+                    <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                      {filteredRounds.map((round: any) => {
+                        const key = `${round.round_number}_${round.leg}`;
+                        const row = bulkRoundDeadlines[key] || {
+                          selected: true,
+                          round_start_time: round.round_start_time || '09:00',
+                          home_fixture_deadline_time: round.home_fixture_deadline_time || '17:00',
+                          away_fixture_deadline_time: round.away_fixture_deadline_time || '19:00',
+                          result_entry_deadline_day_offset: round.result_entry_deadline_day_offset ?? 2,
+                          result_entry_deadline_time: round.result_entry_deadline_time || '00:10',
+                        };
+                        const updateRow = (patch: Partial<typeof row>) => {
+                          setBulkRoundDeadlines(prev => ({
+                            ...prev,
+                            [key]: { ...(prev[key] || row), ...patch }
+                          }));
+                        };
+                        const rStatus = (round.status || 'pending').toLowerCase();
+
+                        return (
+                          <div
+                            key={key}
+                            className={`p-3 rounded-xl border transition-all ${
+                              row.selected
+                                ? 'bg-white border-purple-200 shadow-3xs'
+                                : 'bg-slate-50 border-slate-200 opacity-60'
+                            }`}
+                          >
+                            <div className="grid grid-cols-1 lg:grid-cols-[175px_1fr] gap-3 items-center">
+                              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={row.selected}
+                                  onChange={(e) => updateRow({ selected: e.target.checked })}
+                                  className="w-4 h-4 rounded accent-purple-600 cursor-pointer"
+                                />
+                                <div>
+                                  <div className="text-xs font-extrabold text-slate-900">
+                                    Round {round.round_number}{' '}
+                                    <span className="text-[10px] text-slate-400 font-semibold">({round.leg === 'first' ? '1st' : '2nd'})</span>
+                                  </div>
+                                  <span
+                                    className={`inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded mt-0.5 ${
+                                      rStatus === 'active'
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        : rStatus === 'completed'
+                                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                    }`}
+                                  >
+                                    {rStatus}
+                                  </span>
+                                </div>
+                              </label>
+
+                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                <div>
+                                  <span className="block text-[9px] font-bold text-purple-700 uppercase mb-0.5">Start</span>
+                                  <input
+                                    type="time"
+                                    disabled={!row.selected}
+                                    value={row.round_start_time}
+                                    onChange={(e) => updateRow({ round_start_time: e.target.value })}
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold disabled:cursor-not-allowed"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-bold text-blue-700 uppercase mb-0.5">Home</span>
+                                  <input
+                                    type="time"
+                                    disabled={!row.selected}
+                                    value={row.home_fixture_deadline_time}
+                                    onChange={(e) => updateRow({ home_fixture_deadline_time: e.target.value })}
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold disabled:cursor-not-allowed"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-bold text-cyan-700 uppercase mb-0.5">Away</span>
+                                  <input
+                                    type="time"
+                                    disabled={!row.selected}
+                                    value={row.away_fixture_deadline_time}
+                                    onChange={(e) => updateRow({ away_fixture_deadline_time: e.target.value })}
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold disabled:cursor-not-allowed"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-bold text-emerald-700 uppercase mb-0.5">Result Day</span>
+                                  <select
+                                    disabled={!row.selected}
+                                    value={row.result_entry_deadline_day_offset}
+                                    onChange={(e) => updateRow({ result_entry_deadline_day_offset: parseInt(e.target.value) })}
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold disabled:cursor-not-allowed cursor-pointer"
+                                  >
+                                    <option value={0}>Day 0</option>
+                                    <option value={1}>Day 1</option>
+                                    <option value={2}>Day 2</option>
+                                    <option value={3}>Day 3</option>
+                                    <option value={4}>Day 4</option>
+                                    <option value={7}>Day 7</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-bold text-emerald-700 uppercase mb-0.5">Result Time</span>
+                                  <input
+                                    type="time"
+                                    disabled={!row.selected}
+                                    value={row.result_entry_deadline_time}
+                                    onChange={(e) => updateRow({ result_entry_deadline_time: e.target.value })}
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold disabled:cursor-not-allowed"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -1842,7 +2214,7 @@ export default function MatchDayManagementPage() {
                 >
                   {isSavingBulk ? 'Saving...' : 'Save All Scheduled Dates'}
                 </button>
-              ) : (
+              ) : bulkActiveTab === 'push' ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -1857,6 +2229,17 @@ export default function MatchDayManagementPage() {
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingBulk ? 'Saving...' : `Apply & Save Push from Round ${pushFromRoundNumber}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSaveBulkDeadlines}
+                  disabled={isSavingBulk}
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingBulk
+                    ? 'Saving...'
+                    : `Save Times (${Object.values(bulkRoundDeadlines).filter(r => r.selected).length} Round${Object.values(bulkRoundDeadlines).filter(r => r.selected).length === 1 ? '' : 's'})`}
                 </button>
               )}
             </div>
