@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
       for (const d of deadlines) {
         const dateStr = normalizeDateString(d.scheduled_date);
         if (!dateStr) continue;
+        // Return normalized YYYY-MM-DD so clients never see server-TZ-shifted timestamps
+        d.scheduled_date = dateStr;
 
         const rawStartTime = d.round_start_time && /^\d{2}:\d{2}$/.test(d.round_start_time)
           ? d.round_start_time

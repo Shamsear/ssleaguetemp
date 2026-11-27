@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { getISTNow, parseISTDate, createISTDateTime } from '@/lib/utils/timezone';
+import { getISTNow, parseISTDate, createISTDateTime, computeISTResultDeadline } from '@/lib/utils/timezone';
 import { useRoundPhaseMonitor, calculatePhase } from '@/hooks/useRoundPhaseMonitor';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -210,7 +210,7 @@ export default function TeamMatchesPage() {
                     status: roundDeadline.status || 'pending',
                     home_fixture_deadline_time: roundDeadline.home_fixture_deadline_time || '17:00',
                     away_fixture_deadline_time: roundDeadline.away_fixture_deadline_time || '19:00',
-                    result_entry_deadline_day_offset: roundDeadline.result_entry_deadline_day_offset || 2,
+                    result_entry_deadline_day_offset: roundDeadline.result_entry_deadline_day_offset ?? 2,
                     result_entry_deadline_time: roundDeadline.result_entry_deadline_time || '00:10',
                     scheduled_date: roundDeadline.scheduled_date,
                   }
@@ -289,14 +289,14 @@ export default function TeamMatchesPage() {
 
           const awayDeadline = createISTDateTime(
             schedDateStr,
-            roundData.away_fixture_deadline_time || '17:00'
+            roundData.away_fixture_deadline_time || '19:00'
           );
 
-          const baseDate = parseISTDate(schedDateStr);
-          const resultDeadline = new Date(baseDate);
-          resultDeadline.setDate(resultDeadline.getDate() + (roundData.result_entry_deadline_day_offset || 2));
-          const [resultHour, resultMin] = (roundData.result_entry_deadline_time || '00:10').split(':').map(Number);
-          resultDeadline.setHours(Number.isFinite(resultHour) ? resultHour : 0, Number.isFinite(resultMin) ? resultMin : 10, 0, 0);
+          const resultDeadline = computeISTResultDeadline(
+            schedDateStr,
+            roundData.result_entry_deadline_day_offset,
+            roundData.result_entry_deadline_time
+          );
 
           if (now < homeDeadline) {
             return {

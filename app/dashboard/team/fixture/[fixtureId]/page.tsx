@@ -19,6 +19,7 @@ import BlindLineupSubmission from '@/components/BlindLineupSubmission';
 import AuthGuard from '@/components/auth/AuthGuard';
 import SearchablePlayerSelect from '@/components/SearchablePlayerSelect';
 import PlayerPhoto from '@/components/PlayerPhoto';
+import { extractISTDateString, computeISTResultDeadline } from '@/lib/utils/timezone';
 import { calculateTripleThreatFixture, computeAwayLineupDeadline, formatTripleThreatFixtureCopy, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
 
 const isRealSubmittedLineup = (lineupData: any, isTripleThreatMode: boolean): boolean => {
@@ -328,21 +329,9 @@ export default function FixturePage() {
 
       if (!roundDeadlines || !roundDeadlines.scheduled_date) return;
 
-      // Use scheduled_date or default to today if null
-      // scheduled_date might be a full timestamp or just a date string
-      // IMPORTANT: Convert to IST date, not UTC date
-      let scheduledDateStr = roundDeadlines.scheduled_date;
-      if (scheduledDateStr) {
-        // Parse the date and convert to IST
-        const scheduledDate = new Date(scheduledDateStr);
-        // Convert to IST by adding 5:30 hours
-        const istDate = new Date(scheduledDate.getTime() + (5.5 * 60 * 60 * 1000));
-        scheduledDateStr = istDate.toISOString().split('T')[0];
-      } else {
-        // Use current date in IST
-        const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-        scheduledDateStr = istNow.toISOString().split('T')[0];
-      }
+      const scheduledDateStr = roundDeadlines.scheduled_date
+        ? extractISTDateString(roundDeadlines.scheduled_date)
+        : extractISTDateString(now);
 
       // Validate and default time fields
       const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
@@ -352,11 +341,11 @@ export default function FixturePage() {
       // Parse all deadlines
       const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
       const awayDeadline = new Date(`${scheduledDateStr}T${awayTime}:00+05:30`);
-
-      const resultDate = new Date(scheduledDateStr);
-      resultDate.setDate(resultDate.getDate() + (roundDeadlines.result_entry_deadline_day_offset || 2));
-      const resultDateStr = resultDate.toISOString().split('T')[0];
-      const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
+      const resultDeadline = computeISTResultDeadline(
+        scheduledDateStr,
+        roundDeadlines.result_entry_deadline_day_offset,
+        resultTime
+      );
 
       // Calculate phase based on round status and deadlines
       const rNum = fixture?.round_number || 0;
@@ -1611,25 +1600,20 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     if (!roundDeadlines) return null;
     const now = new Date();
 
-    let scheduledDateStr = roundDeadlines.scheduled_date;
-    if (scheduledDateStr) {
-      const scheduledDate = new Date(scheduledDateStr);
-      const istDate = new Date(scheduledDate.getTime() + (5.5 * 60 * 60 * 1000));
-      scheduledDateStr = istDate.toISOString().split('T')[0];
-    } else {
-      const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-      scheduledDateStr = istNow.toISOString().split('T')[0];
-    }
+    const scheduledDateStr = roundDeadlines.scheduled_date
+      ? extractISTDateString(roundDeadlines.scheduled_date)
+      : extractISTDateString(now);
 
     const homeTime = roundDeadlines.home_fixture_deadline_time || '17:00';
     const resultTime = roundDeadlines.result_entry_deadline_time || '00:10';
 
     const homeDeadline = new Date(`${scheduledDateStr}T${homeTime}:00+05:30`);
-
-    const resultDate = new Date(scheduledDateStr);
-    resultDate.setDate(resultDate.getDate() + (roundDeadlines.result_entry_deadline_day_offset || 2));
-    const resultDateStr = resultDate.toISOString().split('T')[0];
-    const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
+    const resultDeadline = computeISTResultDeadline(
+      scheduledDateStr,
+      roundDeadlines.result_entry_deadline_day_offset,
+      resultTime
+    );
+    const resultDateStr = extractISTDateString(resultDeadline);
 
     const isHomeFixtureSet = matchups.length > 0;
     const isPastHomeDeadline = now >= homeDeadline;

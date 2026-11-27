@@ -15,7 +15,7 @@ import {
   completeRound,
   restartRound
 } from '@/lib/firebase/fixtures';
-import { getISTNow, parseISTDate, createISTDateTime, getISTToday } from '@/lib/utils/timezone';
+import { getISTNow, parseISTDate, createISTDateTime, getISTToday, extractISTDateString, addDaysToDateString, computeISTResultDeadline } from '@/lib/utils/timezone';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
@@ -200,8 +200,7 @@ export default function MatchDayManagementPage() {
                       const now = new Date();
                       let isPastStartTime = false;
                       if (deadline.scheduled_date) {
-                        let dStr = deadline.scheduled_date;
-                        if (typeof dStr === 'string' && dStr.includes('T')) dStr = dStr.split('T')[0];
+                        const dStr = extractISTDateString(deadline.scheduled_date);
                         const startTimeStr =
                           deadline.round_start_time && /^\d{2}:\d{2}$/.test(deadline.round_start_time)
                             ? deadline.round_start_time
@@ -889,9 +888,7 @@ export default function MatchDayManagementPage() {
                           const now = getISTNow();
 
                           // Extract date string from scheduled_date
-                          const scheduledDateStr = typeof round.scheduled_date === 'string' && round.scheduled_date.includes('T')
-                            ? round.scheduled_date.split('T')[0]
-                            : round.scheduled_date;
+                          const scheduledDateStr = extractISTDateString(round.scheduled_date);
 
                           // Parse deadlines using IST utilities
                           const homeDeadline = createISTDateTime(
@@ -904,20 +901,10 @@ export default function MatchDayManagementPage() {
                             round.away_fixture_deadline_time || '19:00'
                           );
 
-                          // Result deadline calculation - add days to the scheduled date
-                          const [year, month, day] = scheduledDateStr.split('-').map(Number);
-                          const offsetDays = round.result_entry_deadline_day_offset || 2;
-
-                          const scheduledDate = new Date(Date.UTC(year, month - 1, day));
-                          const resultDateObj = new Date(scheduledDate.getTime() + offsetDays * 24 * 60 * 60 * 1000);
-
-                          const resultYear = resultDateObj.getUTCFullYear();
-                          const resultMonth = String(resultDateObj.getUTCMonth() + 1).padStart(2, '0');
-                          const resultDay = String(resultDateObj.getUTCDate()).padStart(2, '0');
-                          const resultDateStr = `${resultYear}-${resultMonth}-${resultDay}`;
-                          const resultDeadline = createISTDateTime(
-                            resultDateStr,
-                            round.result_entry_deadline_time || '00:10'
+                          const resultDeadline = computeISTResultDeadline(
+                            scheduledDateStr,
+                            round.result_entry_deadline_day_offset,
+                            round.result_entry_deadline_time
                           );
 
                           if (now < homeDeadline) {
@@ -1069,11 +1056,12 @@ export default function MatchDayManagementPage() {
                                 <div className="flex items-center gap-1">
                                   <span className="uppercase text-[9px] px-1 bg-slate-50 border border-slate-200 rounded text-slate-500">RESULT:</span> {(() => {
                                     if (!round.scheduled_date) return 'Not scheduled';
-                                    const offsetDays = round.result_entry_deadline_day_offset || 2;
-                                    const scheduledDate = new Date(round.scheduled_date);
-                                    const resultDate = new Date(scheduledDate.getTime() + offsetDays * 24 * 60 * 60 * 1000);
-                                    const dateStr = resultDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
-                                    return `${dateStr} ${round.result_entry_deadline_time || '00:10'}`;
+                                    const resultDateStr = addDaysToDateString(
+                                      extractISTDateString(round.scheduled_date),
+                                      round.result_entry_deadline_day_offset ?? 2
+                                    );
+                                    const [, rMonth, rDay] = resultDateStr.split('-');
+                                    return `${rDay}/${rMonth} ${round.result_entry_deadline_time || '00:10'}`;
                                   })()}
                                 </div>
                               </div>
@@ -1210,9 +1198,7 @@ export default function MatchDayManagementPage() {
                       }
 
                       const now = getISTNow();
-                      const scheduledDateStr = typeof round.scheduled_date === 'string' && round.scheduled_date.includes('T')
-                        ? round.scheduled_date.split('T')[0]
-                        : round.scheduled_date;
+                      const scheduledDateStr = extractISTDateString(round.scheduled_date);
 
                       const homeDeadline = createISTDateTime(
                         scheduledDateStr,
@@ -1224,19 +1210,10 @@ export default function MatchDayManagementPage() {
                         round.away_fixture_deadline_time || '19:00'
                       );
 
-                      const [year, month, day] = scheduledDateStr.split('-').map(Number);
-                      const offsetDays = round.result_entry_deadline_day_offset || 2;
-
-                      const scheduledDate = new Date(Date.UTC(year, month - 1, day));
-                      const resultDateObj = new Date(scheduledDate.getTime() + offsetDays * 24 * 60 * 60 * 1000);
-
-                      const resultYear = resultDateObj.getUTCFullYear();
-                      const resultMonth = String(resultDateObj.getUTCMonth() + 1).padStart(2, '0');
-                      const resultDay = String(resultDateObj.getUTCDate()).padStart(2, '0');
-                      const resultDateStr = `${resultYear}-${resultMonth}-${resultDay}`;
-                      const resultDeadline = createISTDateTime(
-                        resultDateStr,
-                        round.result_entry_deadline_time || '00:10'
+                      const resultDeadline = computeISTResultDeadline(
+                        scheduledDateStr,
+                        round.result_entry_deadline_day_offset,
+                        round.result_entry_deadline_time
                       );
 
                       if (now < homeDeadline) {
@@ -1387,11 +1364,12 @@ export default function MatchDayManagementPage() {
                             <div className="flex items-center gap-1">
                               <span className="uppercase text-[9px] px-1 bg-slate-100 border border-slate-200 rounded text-slate-500">RESULT:</span> {(() => {
                                 if (!round.scheduled_date) return 'Not scheduled';
-                                const offsetDays = round.result_entry_deadline_day_offset || 2;
-                                const scheduledDate = new Date(round.scheduled_date);
-                                const resultDate = new Date(scheduledDate.getTime() + offsetDays * 24 * 60 * 60 * 1000);
-                                const dateStr = resultDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
-                                return `${dateStr} ${round.result_entry_deadline_time || '00:10'}`;
+                                const resultDateStr = addDaysToDateString(
+                                  extractISTDateString(round.scheduled_date),
+                                  round.result_entry_deadline_day_offset ?? 2
+                                );
+                                const [, rMonth, rDay] = resultDateStr.split('-');
+                                return `${rDay}/${rMonth} ${round.result_entry_deadline_time || '00:10'}`;
                               })()}
                             </div>
                           </div>

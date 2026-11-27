@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { computeISTResultDeadline } from '@/lib/utils/timezone';
 import { getAuctionDb } from '@/lib/neon/auction-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
@@ -568,7 +569,7 @@ export async function PATCH(
 
     // Get round deadlines
     const deadlines = await sql`
-      SELECT scheduled_date, result_entry_deadline_time, result_entry_deadline_day_offset
+      SELECT scheduled_date::text as scheduled_date_str, scheduled_date, result_entry_deadline_time, result_entry_deadline_day_offset
       FROM round_deadlines
       WHERE season_id = ${season_id}
       AND round_number = ${round_number}
@@ -578,31 +579,13 @@ export async function PATCH(
 
     // Deadline check disabled - phase logic on frontend controls access
     // The frontend already checks if we're in result_entry phase before allowing submission
-    if (deadlines.length > 0 && deadlines[0].scheduled_date) {
+    if (deadlines.length > 0 && (deadlines[0].scheduled_date_str || deadlines[0].scheduled_date)) {
       const deadline = deadlines[0];
-
-      let schedDateStr = '';
-      if (typeof deadline.scheduled_date === 'string') {
-        if (deadline.scheduled_date.includes('T')) {
-          const d = new Date(deadline.scheduled_date);
-          const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
-          schedDateStr = ist.toISOString().split('T')[0];
-        } else {
-          schedDateStr = deadline.scheduled_date.split('T')[0];
-        }
-      } else if (deadline.scheduled_date instanceof Date) {
-        const ist = new Date(deadline.scheduled_date.getTime() + (5.5 * 60 * 60 * 1000));
-        schedDateStr = ist.toISOString().split('T')[0];
-      } else {
-        schedDateStr = String(deadline.scheduled_date).split('T')[0];
-      }
-
-      const resultDate = new Date(schedDateStr);
-      resultDate.setDate(resultDate.getDate() + (deadline.result_entry_deadline_day_offset || 2));
-      const resultDateStr = resultDate.toISOString().split('T')[0];
-      const resultTime = deadline.result_entry_deadline_time || '00:10';
-
-      const resultDeadline = new Date(`${resultDateStr}T${resultTime}:00+05:30`);
+      const resultDeadline = computeISTResultDeadline(
+        deadline.scheduled_date_str || deadline.scheduled_date,
+        deadline.result_entry_deadline_day_offset,
+        deadline.result_entry_deadline_time
+      );
       const now = new Date();
 
       console.log('Result entry - Deadline info:', {

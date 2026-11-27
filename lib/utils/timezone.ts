@@ -101,6 +101,64 @@ export function createISTDateTime(dateString: string, timeString: string = '00:0
 }
 
 /**
+ * Extract an IST YYYY-MM-DD date string from either a YYYY-MM-DD string,
+ * an ISO timestamp string, or a Date object.
+ */
+export function extractISTDateString(dateInput: Date | string | null | undefined): string {
+  if (!dateInput) return '';
+  if (typeof dateInput === 'string') {
+    const trimmed = dateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) return trimmed.split('T')[0];
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(parsed);
+  }
+  if (dateInput instanceof Date && !Number.isNaN(dateInput.getTime())) {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(dateInput);
+  }
+  return '';
+}
+
+/**
+ * Add whole calendar days to a YYYY-MM-DD string in pure UTC calendar arithmetic
+ * so browser/server local timezones never shift the day.
+ */
+export function addDaysToDateString(dateString: string, days: number): string {
+  const parts = dateString.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return dateString;
+  const [year, month, day] = parts;
+  const utc = new Date(Date.UTC(year, month - 1, day + days));
+  const y = utc.getUTCFullYear();
+  const m = String(utc.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(utc.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Compute result entry deadline Date in IST (+05:30) from scheduled date + day offset + time.
+ */
+export function computeISTResultDeadline(
+  scheduledDate: Date | string,
+  offsetDays: number | null | undefined = 2,
+  timeString: string | null | undefined = '00:10'
+): Date {
+  const baseStr = extractISTDateString(scheduledDate);
+  const safeOffset = offsetDays ?? 2;
+  const resultDateStr = addDaysToDateString(baseStr, safeOffset);
+  return createISTDateTime(resultDateStr, timeString || '00:10');
+}
+
+/**
  * Convert IST Date to ISO string for Neon database storage
  * Neon/PostgreSQL stores timestamps with timezone info
  */

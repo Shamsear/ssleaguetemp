@@ -6,7 +6,13 @@ import { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 
 
-import { getISTToday, parseISTDate, createISTDateTime, formatISTDateTime } from '@/lib/utils/timezone';
+import {
+  getISTToday,
+  parseISTDate,
+  createISTDateTime,
+  extractISTDateString,
+  computeISTResultDeadline
+} from '@/lib/utils/timezone';
 import { useModal } from '@/hooks/useModal';
 import AlertModal from '@/components/modals/AlertModal';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
@@ -38,7 +44,7 @@ function EditRoundDeadlinesContent() {
   const [roundStartTime, setRoundStartTime] = useState('09:00');
   const [homeTime, setHomeTime] = useState('17:00');
   const [awayTime, setAwayTime] = useState('19:00');
-  const [resultDayOffset, setResultDayOffset] = useState(1);
+  const [resultDayOffset, setResultDayOffset] = useState(2);
   const [resultTime, setResultTime] = useState('00:10');
   const [scheduledDate, setScheduledDate] = useState('');
 
@@ -102,14 +108,10 @@ function EditRoundDeadlinesContent() {
         setRoundStartTime(deadlines.round_start_time || '09:00');
         setHomeTime(deadlines.home_fixture_deadline_time || '17:00');
         setAwayTime(deadlines.away_fixture_deadline_time || '19:00');
-        setResultDayOffset(deadlines.result_entry_deadline_day_offset || 2);
+        setResultDayOffset(deadlines.result_entry_deadline_day_offset ?? 2);
         setResultTime(deadlines.result_entry_deadline_time || '00:10');
-        
-        // Extract date part if scheduled_date is a timestamp
-        let dateValue = deadlines.scheduled_date || '';
-        if (dateValue && dateValue.includes('T')) {
-          dateValue = dateValue.split('T')[0]; // Extract YYYY-MM-DD
-        }
+
+        const dateValue = extractISTDateString(deadlines.scheduled_date);
         setScheduledDate(dateValue);
         
         console.log('Set values:', {
@@ -210,11 +212,6 @@ function EditRoundDeadlinesContent() {
     }
   };
 
-  const getExampleDay = () => {
-    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    return dayNames[(resultDayOffset) % 7];
-  };
-
   // Calculate actual deadlines based on scheduled date
   const calculatedDeadlines = useMemo(() => {
     if (!scheduledDate) {
@@ -223,26 +220,25 @@ function EditRoundDeadlinesContent() {
 
     try {
       const baseDate = parseISTDate(scheduledDate);
-      
+
+      // Round start time (auto-start & away lineup deadline)
+      const startDeadline = createISTDateTime(scheduledDate, roundStartTime);
+
       // Home fixture deadline
       const homeDeadline = createISTDateTime(scheduledDate, homeTime);
-      
+
       // Away fixture deadline
       const awayDeadline = createISTDateTime(scheduledDate, awayTime);
-      
-      // Result entry deadline (base date + offset days)
-      const resultDate = new Date(baseDate);
-      resultDate.setDate(resultDate.getDate() + resultDayOffset);
-      const resultDeadline = createISTDateTime(
-        `${resultDate.getFullYear()}-${String(resultDate.getMonth() + 1).padStart(2, '0')}-${String(resultDate.getDate()).padStart(2, '0')}`,
-        resultTime
-      );
+
+      // Result entry deadline using pure calendar-day addition in IST
+      const resultDeadline = computeISTResultDeadline(scheduledDate, resultDayOffset, resultTime);
 
       return {
+        start: startDeadline,
         home: homeDeadline,
         away: awayDeadline,
         result: resultDeadline,
-        scheduledDateFormatted: baseDate.toLocaleDateString('en-IN', { 
+        scheduledDateFormatted: baseDate.toLocaleDateString('en-IN', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
@@ -254,7 +250,7 @@ function EditRoundDeadlinesContent() {
       console.error('Error calculating deadlines:', error);
       return null;
     }
-  }, [scheduledDate, homeTime, awayTime, resultTime, resultDayOffset]);
+  }, [scheduledDate, roundStartTime, homeTime, awayTime, resultTime, resultDayOffset]);
 
   if (loading || isLoading) {
     return (
@@ -436,7 +432,30 @@ function EditRoundDeadlinesContent() {
                       <div className="pl-3 text-slate-900 font-extrabold text-sm border-l-2 border-amber-500">{calculatedDeadlines.scheduledDateFormatted}</div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="bg-white border border-slate-200/60 p-3 rounded-2xl space-y-1 shadow-sm">
+                        <div className="text-[9px] font-black uppercase text-purple-700 tracking-wider mb-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                          Round Start
+                        </div>
+                        <div className="text-xs font-black text-slate-900">
+                          {calculatedDeadlines.start.toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            timeZone: 'Asia/Kolkata'
+                          })}
+                          {' @ '}
+                          {calculatedDeadlines.start.toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                            hourCycle: 'h23',
+                            timeZone: 'Asia/Kolkata'
+                          })}
+                        </div>
+                        <div className="text-[8px] text-slate-500 leading-tight mt-1">Round auto-starts &amp; away lineup closes</div>
+                      </div>
+
                       <div className="bg-white border border-slate-200/60 p-3 rounded-2xl space-y-1 shadow-sm">
                         <div className="text-[9px] font-black uppercase text-blue-700 tracking-wider mb-1 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
@@ -453,6 +472,7 @@ function EditRoundDeadlinesContent() {
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: false,
+                            hourCycle: 'h23',
                             timeZone: 'Asia/Kolkata'
                           })}
                         </div>
@@ -475,6 +495,7 @@ function EditRoundDeadlinesContent() {
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: false,
+                            hourCycle: 'h23',
                             timeZone: 'Asia/Kolkata'
                           })}
                         </div>
@@ -497,6 +518,7 @@ function EditRoundDeadlinesContent() {
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: false,
+                            hourCycle: 'h23',
                             timeZone: 'Asia/Kolkata'
                           })}
                         </div>

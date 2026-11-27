@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { getISTNow, formatISTDateTime, parseISTDate, createISTDateTime } from '@/lib/utils/timezone';
+import { getISTNow, formatISTDateTime, parseISTDate, createISTDateTime, computeISTResultDeadline } from '@/lib/utils/timezone';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 interface Player {
@@ -160,11 +160,10 @@ export default function FixtureManagementPage() {
       roundData.away_fixture_deadline_time || '19:00'
     );
 
-    const resultDate = new Date(baseDate);
-    resultDate.setDate(resultDate.getDate() + (roundData.result_entry_deadline_day_offset || 2));
-    const resultDeadline = createISTDateTime(
-      `${resultDate.getFullYear()}-${String(resultDate.getMonth() + 1).padStart(2, '0')}-${String(resultDate.getDate()).padStart(2, '0')}`,
-      roundData.result_entry_deadline_time || '00:10'
+    const resultDeadline = computeISTResultDeadline(
+      scheduledDate,
+      roundData.result_entry_deadline_day_offset,
+      roundData.result_entry_deadline_time
     );
 
     // Determine phase and permissions
