@@ -102,9 +102,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Calculate round start time (away team deadline)
-    const roundStartTimeStr = roundData.round_start_time || roundData.home_fixture_deadline_time;
-    const baseDateStr = new Date(scheduledDate).toISOString().split('T')[0];
+    // Calculate away lineup lock deadline (Triple Threat locks at away_fixture_deadline_time; never treat 00:00 round start as lock time)
+    const roundStartTimeStr = isTripleThreat
+      ? (roundData.away_fixture_deadline_time || '14:00')
+      : (roundData.round_start_time && roundData.round_start_time !== '00:00'
+          ? roundData.round_start_time
+          : roundData.home_fixture_deadline_time || '17:00');
+    const baseDateStr = scheduledDate instanceof Date
+      ? `${scheduledDate.getFullYear()}-${String(scheduledDate.getMonth() + 1).padStart(2, '0')}-${String(scheduledDate.getDate()).padStart(2, '0')}`
+      : String(scheduledDate).split('T')[0];
     const [startHour, startMin] = roundStartTimeStr.split(':').map(Number);
     const roundStartDeadline = new Date(baseDateStr);
     roundStartDeadline.setUTCHours(startHour - 5, startMin - 30, 0, 0); // Convert IST to UTC

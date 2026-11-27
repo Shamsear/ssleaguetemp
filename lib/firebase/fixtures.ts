@@ -29,6 +29,7 @@ export interface TournamentRound {
   tournament_id?: string; // Added for multi-tournament support
   tournament_name?: string; // Added for display purposes
   // Deadline configuration (stored in a separate collection)
+  round_start_time?: string; // e.g., "00:00"
   home_fixture_deadline_time?: string; // e.g., "17:00"
   away_fixture_deadline_time?: string; // e.g., "17:00"
   result_entry_deadline_day_offset?: number; // Days after fixture date

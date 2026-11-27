@@ -197,17 +197,21 @@ export default function MatchDayManagementPage() {
                       round.result_entry_deadline_day_offset = deadline.result_entry_deadline_day_offset;
                       round.result_entry_deadline_time = deadline.result_entry_deadline_time;
                       const now = new Date();
-                      let isPastSixAm = false;
+                      let isPastStartTime = false;
                       if (deadline.scheduled_date) {
                         let dStr = deadline.scheduled_date;
                         if (typeof dStr === 'string' && dStr.includes('T')) dStr = dStr.split('T')[0];
-                        const sixAm = new Date(`${dStr}T06:00:00+05:30`);
-                        if (now >= sixAm) isPastSixAm = true;
+                        const startTimeStr =
+                          deadline.round_start_time && /^\d{2}:\d{2}$/.test(deadline.round_start_time)
+                            ? deadline.round_start_time
+                            : '06:00';
+                        const startAt = new Date(`${dStr}T${startTimeStr}:00+05:30`);
+                        if (now >= startAt) isPastStartTime = true;
                       }
 
-                      round.status = (deadline.status === 'completed' || deadline.status === 'closed')
+                      round.status = (deadline.status === 'completed' || deadline.status === 'closed' || deadline.status === 'paused')
                         ? deadline.status
-                        : (isPastSixAm || deadline.status === 'active')
+                        : (isPastStartTime || deadline.status === 'active')
                           ? 'active'
                           : (deadline.status || 'pending');
                       round.is_active = round.status === 'active';
@@ -638,6 +642,7 @@ export default function MatchDayManagementPage() {
             round_number: rNum,
             leg: rLeg,
             scheduled_date: dateStr,
+            round_start_time: round.round_start_time || '00:00',
             home_fixture_deadline_time: round.home_fixture_deadline_time || '17:00',
             away_fixture_deadline_time: round.away_fixture_deadline_time || '17:00',
             result_entry_deadline_day_offset: round.result_entry_deadline_day_offset || 2,

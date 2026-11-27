@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 
+function normalizeDateString(dateValue: any): string | null {
+  if (!dateValue) return null;
+  if (typeof dateValue === 'string') {
+    return dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
+  }
+  if (dateValue instanceof Date) {
+    const year = dateValue.getFullYear();
+    const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+    const day = String(dateValue.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  return null;
+}
+
 // GET - Fetch round deadlines
 export async function GET(request: NextRequest) {
   try {
@@ -11,22 +25,21 @@ export async function GET(request: NextRequest) {
     const roundNumber = searchParams.get('round_number');
     const leg = searchParams.get('leg');
 
-    // Helper to auto-start matchdays at 6:00 AM IST on their scheduled date
+    // Helper to auto-start matchdays at their configured round_start_time IST (fallback 06:00 AM IST)
     const autoStartMatchDays = async (deadlines: any[]) => {
       if (!deadlines || deadlines.length === 0) return deadlines;
       const now = new Date();
 
       for (const d of deadlines) {
-        if (!d.scheduled_date) continue;
-        let dateStr = d.scheduled_date;
-        if (typeof dateStr === 'string' && dateStr.includes('T')) {
-          dateStr = dateStr.split('T')[0];
-        }
+        const dateStr = normalizeDateString(d.scheduled_date);
+        if (!dateStr) continue;
 
-        // 6:00 AM IST start time on the scheduled date
-        const startSixAmIST = new Date(`${dateStr}T06:00:00+05:30`);
+        const rawStartTime = d.round_start_time && /^\d{2}:\d{2}$/.test(d.round_start_time)
+          ? d.round_start_time
+          : '06:00';
+        const startAtIST = new Date(`${dateStr}T${rawStartTime}:00+05:30`);
 
-        if (now >= startSixAmIST) {
+        if (now >= startAtIST) {
           const curStatus = d.status || 'pending';
           if (curStatus === 'pending' || curStatus === 'draft' || curStatus === 'inactive' || !d.status) {
             try {
@@ -37,7 +50,7 @@ export async function GET(request: NextRequest) {
               `;
               d.status = 'active';
               d.is_active = true;
-              console.log(`🚀 Auto-started matchday R${d.round_number} (${d.leg}) at 6:00 AM IST for date ${dateStr}`);
+              console.log(`🚀 Auto-started matchday R${d.round_number} (${d.leg}) at ${rawStartTime} IST for date ${dateStr}`);
             } catch (err: any) {
               console.error(`Error auto-starting matchday ${d.id}:`, err);
             }
@@ -122,20 +135,6 @@ export async function POST(request: NextRequest) {
     const items = Array.isArray(body)
       ? body
       : (Array.isArray(body.round_deadlines) ? body.round_deadlines : [body]);
-
-    const normalizeDateString = (dateValue: any): string | null => {
-      if (!dateValue) return null;
-      if (typeof dateValue === 'string') {
-        return dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
-      }
-      if (dateValue instanceof Date) {
-        const year = dateValue.getFullYear();
-        const month = String(dateValue.getMonth() + 1).padStart(2, '0');
-        const day = String(dateValue.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      }
-      return null;
-    };
 
     let processedCount = 0;
 

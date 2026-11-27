@@ -35,6 +35,7 @@ function EditRoundDeadlinesContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [seasonName, setSeasonName] = useState('');
   
+  const [roundStartTime, setRoundStartTime] = useState('00:00');
   const [homeTime, setHomeTime] = useState('17:00');
   const [awayTime, setAwayTime] = useState('17:00');
   const [resultDayOffset, setResultDayOffset] = useState(1);
@@ -98,6 +99,7 @@ function EditRoundDeadlinesContent() {
       const deadlines = roundDeadline;
       console.log('Loaded deadlines:', deadlines);
       if (deadlines) {
+        setRoundStartTime(deadlines.round_start_time || '00:00');
         setHomeTime(deadlines.home_fixture_deadline_time || '17:00');
         setAwayTime(deadlines.away_fixture_deadline_time || '17:00');
         setResultDayOffset(deadlines.result_entry_deadline_day_offset || 2);
@@ -130,6 +132,7 @@ function EditRoundDeadlinesContent() {
 
     try {
       const deadlineData: any = {
+        round_start_time: roundStartTime,
         home_fixture_deadline_time: homeTime,
         away_fixture_deadline_time: awayTime,
         result_entry_deadline_day_offset: resultDayOffset,
@@ -305,6 +308,22 @@ function EditRoundDeadlinesContent() {
           </div>
           <div className="p-0">
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="round_start_time" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-purple-500" />
+                  Round Start Time (IST)
+                </label>
+                <input
+                  type="time"
+                  id="round_start_time"
+                  value={roundStartTime}
+                  onChange={(e) => setRoundStartTime(e.target.value)}
+                  className="block w-full sm:max-w-xs px-4 py-2.5 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl text-sm font-bold transition-all"
+                  required
+                />
+                <p className="text-[10px] text-slate-500 mt-1 font-mono">Daily IST time when the round auto-starts on its scheduled date (00:00 = 12:00 AM)</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="home_deadline_time" className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-2 flex items-center gap-1.5">
