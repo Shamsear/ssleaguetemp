@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import { resolveSideGoalBreakdown } from '@/lib/tournament/triple-threat-engine';
 
 /**
  * GET /api/team/player-stats
@@ -142,60 +143,71 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Calculate stats from matchups table for the selected round range
+    // Calculate stats from matchups table for the selected round range (supports Co-op player arrays & per-player goals)
     let statsFromMatchups: any[] = [];
     try {
-      statsFromMatchups = await sql`
-        WITH player_matches AS (
-          SELECT 
-            m.fixture_id,
-            m.round_number,
-            m.home_player_id,
-            m.away_player_id,
-            m.home_goals,
-            m.away_goals,
-            CASE 
-              WHEN m.home_player_id = p.player_id THEN 'home'
-              WHEN m.away_player_id = p.player_id THEN 'away'
-            END as side,
-            p.player_id,
-            p.id as player_season_id,
-            CASE 
-              WHEN m.home_player_id = p.player_id THEN m.home_goals
-              WHEN m.away_player_id = p.player_id THEN m.away_goals
-            END as goals_scored,
-            CASE 
-              WHEN m.home_player_id = p.player_id THEN m.away_goals
-              WHEN m.away_player_id = p.player_id THEN m.home_goals
-            END as goals_conceded
+      const teamPlayerIds = playerInfo.map((p) => String(p.player_id)).filter(Boolean);
+      if (teamPlayerIds.length > 0) {
+        const rawMatchups = await sql`
+          SELECT m.*
           FROM matchups m
           JOIN fixtures f ON m.fixture_id = f.id
-          JOIN (
-            SELECT unnest(${playerInfo.map(p => p.player_id)}::text[]) as player_id,
-                   unnest(${playerInfo.map(p => p.id)}::text[]) as id
-          ) p ON (m.home_player_id = p.player_id OR m.away_player_id = p.player_id)
           WHERE m.season_id = ${seasonId}
             AND m.round_number >= ${fromRound}
             AND m.round_number <= ${toRound}
             AND f.status = 'completed'
             AND m.home_goals IS NOT NULL
             AND m.away_goals IS NOT NULL
-        )
-        SELECT 
-          player_season_id,
-          player_id,
-          COUNT(*) as matches_played,
-          SUM(goals_scored) as goals_scored,
-          SUM(goals_conceded) as goals_conceded,
-          SUM(goals_scored) - SUM(goals_conceded) as goal_difference,
-          SUM(CASE WHEN goals_scored > goals_conceded THEN 1 ELSE 0 END) as wins,
-          SUM(CASE WHEN goals_scored = goals_conceded THEN 1 ELSE 0 END) as draws,
-          SUM(CASE WHEN goals_scored < goals_conceded THEN 1 ELSE 0 END) as losses,
-          SUM(CASE WHEN goals_conceded = 0 THEN 1 ELSE 0 END) as clean_sheets,
-          SUM(CASE WHEN goals_scored > goals_conceded THEN 8 WHEN goals_scored = goals_conceded THEN 4 ELSE 1 END) as calculated_points
-        FROM player_matches
-        GROUP BY player_season_id, player_id
-      `;
+            AND (m.is_null IS NOT TRUE)
+            AND (
+              m.home_player_id = ANY(${teamPlayerIds})
+              OR m.away_player_id = ANY(${teamPlayerIds})
+              OR COALESCE(m.home_player_ids, ARRAY[]::text[]) && ${teamPlayerIds}::text[]
+              OR COALESCE(m.away_player_ids, ARRAY[]::text[]) && ${teamPlayerIds}::text[]
+            )
+        `;
+
+        const aggMap = new Map<string, any>();
+        const teamIdSet = new Set(teamPlayerIds);
+        for (const m of rawMatchups) {
+          for (const side of ['home', 'away'] as const) {
+            const breakdown = resolveSideGoalBreakdown(m, side);
+            const teamGD = breakdown.teamGoalsScored - breakdown.teamGoalsConceded;
+            const win = teamGD > 0 ? 1 : 0;
+            const draw = teamGD === 0 ? 1 : 0;
+            const loss = teamGD < 0 ? 1 : 0;
+            const cs = breakdown.teamGoalsConceded === 0 ? 1 : 0;
+            const calcPts = win ? 8 : draw ? 4 : 1;
+
+            for (const p of breakdown.players) {
+              if (!teamIdSet.has(p.id)) continue;
+              const prev = aggMap.get(p.id) || {
+                player_id: p.id,
+                matches_played: 0,
+                goals_scored: 0,
+                goals_conceded: 0,
+                goal_difference: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0,
+                clean_sheets: 0,
+                calculated_points: 0,
+              };
+              prev.matches_played += 1;
+              prev.goals_scored += p.goalsScored;
+              prev.goals_conceded += breakdown.teamGoalsConceded;
+              prev.goal_difference += p.goalsScored - breakdown.teamGoalsConceded;
+              prev.wins += win;
+              prev.draws += draw;
+              prev.losses += loss;
+              prev.clean_sheets += cs;
+              prev.calculated_points += calcPts;
+              aggMap.set(p.id, prev);
+            }
+          }
+        }
+        statsFromMatchups = Array.from(aggMap.values());
+      }
     } catch (err: any) {
       console.warn('[team player-stats API] Neon matchups aggregation warning:', err);
       statsFromMatchups = [];

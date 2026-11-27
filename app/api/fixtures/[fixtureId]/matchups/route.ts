@@ -4,7 +4,11 @@ import { getAuctionDb } from '@/lib/neon/auction-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
-import { calculateTripleThreatFixture, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+import {
+  calculateTripleThreatFixture,
+  normalizeResultGoals,
+  resolveTripleThreatMode,
+} from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Distribute match rewards (eCoin & SSCoin) to teams based on match result
@@ -622,13 +626,20 @@ export async function PATCH(
       }
     }
 
-    // Update match results (MOTM is now at fixture level, not matchup level)
-    for (const result of results) {
+    // Normalize and update match results (summing per-player Co-op goals when provided)
+    const normalizedResults = results.map((result: any) => ({
+      ...result,
+      ...normalizeResultGoals(result),
+    }));
+
+    for (const result of normalizedResults) {
       await sql`
         UPDATE matchups
         SET 
           home_goals = ${result.home_goals},
           away_goals = ${result.away_goals},
+          home_player_goals = ${result.home_player_goals},
+          away_player_goals = ${result.away_player_goals},
           result_entered_by = ${entered_by},
           result_entered_at = NOW(),
           updated_at = NOW()
@@ -685,7 +696,7 @@ export async function PATCH(
     
     if (isTripleThreat) {
       const ttResult = calculateTripleThreatFixture(
-        results.map((r: any) => ({
+        normalizedResults.map((r: any) => ({
           position: r.position,
           mode: resolveTripleThreatMode({
             mode: r.match_mode || modeMap.get(r.position),
@@ -727,7 +738,7 @@ export async function PATCH(
       let homeWins = 0;
       let awayWins = 0;
       
-      for (const result of results) {
+      for (const result of normalizedResults) {
         const penalties = penaltiesMap.get(result.position) || { home_sub_penalty: 0, away_sub_penalty: 0 };
         
         // Count goals (for primary score)
@@ -765,7 +776,7 @@ export async function PATCH(
       // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
       // Substitution penalties are added to the MATCHUP score to determine winner
       // but NOT to player stats
-      for (const result of results) {
+      for (const result of normalizedResults) {
         const penalties = penaltiesMap.get(result.position) || { home_sub_penalty: 0, away_sub_penalty: 0 };
         
         // Calculate matchup score WITH substitution penalties
@@ -793,7 +804,7 @@ export async function PATCH(
       console.log(`Win-based scoring - Total points: Home ${totalHomeScore}, Away ${totalAwayScore} (includes ${home_penalty_goals || 0} and ${away_penalty_goals || 0} fine penalties)`);
     } else {
       // Standard goal-based scoring: sum of all goals INCLUDING substitution penalties
-      for (const result of results) {
+      for (const result of normalizedResults) {
         totalHomeScore += result.home_goals;
         totalAwayScore += result.away_goals;
       }
@@ -883,7 +894,7 @@ export async function PATCH(
             home_penalty_goals: Number(home_penalty_goals) || 0,
             away_penalty_goals: Number(away_penalty_goals) || 0,
             scoring_type: scoringType,
-            matchups: results,
+            matchups: normalizedResults,
             ...(isTripleThreat ? { is_edit: current_status === 'completed' } : {})
           })
         });

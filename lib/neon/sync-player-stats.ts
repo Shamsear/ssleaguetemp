@@ -1,6 +1,10 @@
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getMainDb } from '@/lib/neon/main-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import {
+  calculateAverageCategoryPoints,
+  resolveSideGoalBreakdown,
+} from '@/lib/tournament/triple-threat-engine';
 
 export interface SyncPlayerStatsResult {
   success: boolean;
@@ -9,42 +13,6 @@ export interface SyncPlayerStatsResult {
   matchupsProcessed: number;
   playersUpdated: number;
   error?: string;
-}
-
-/**
- * Category-based points calculation helper for Season 18+
- * Win/Draw/Loss points awarded based on opponent's category:
- * - Opponent RED: Win +8, Draw +4, Loss -3
- * - Opponent BLACK: Win +7, Draw +3, Loss -4
- * - Opponent BLUE: Win +6, Draw +2, Loss -5
- * - Opponent WHITE: Win +5, Draw +1, Loss -6
- */
-function getPointsForOpponentCategory(oppCategory: string, outcome: 'win' | 'draw' | 'loss'): number {
-  const cat = (oppCategory || '').toLowerCase();
-  if (cat.includes('red') || cat === 'r') {
-    if (outcome === 'win') return 8;
-    if (outcome === 'draw') return 4;
-    return -3;
-  }
-  if (cat.includes('black')) {
-    if (outcome === 'win') return 7;
-    if (outcome === 'draw') return 3;
-    return -4;
-  }
-  if (cat.includes('blue') || cat === 'b') {
-    if (outcome === 'win') return 6;
-    if (outcome === 'draw') return 2;
-    return -5;
-  }
-  if (cat.includes('white') || cat === 'w') {
-    if (outcome === 'win') return 5;
-    if (outcome === 'draw') return 1;
-    return -6;
-  }
-  // Default fallback
-  if (outcome === 'win') return 8;
-  if (outcome === 'draw') return 4;
-  return -3;
 }
 
 interface PlayerStatAccumulator {
@@ -59,9 +27,11 @@ interface PlayerStatAccumulator {
     opponentId: string;
     goalsScored: number;
     goalsConceded: number;
+    teamGoalsScored: number;
+    teamGoalsConceded: number;
     isMotm: boolean;
     fixtureId: string;
-    opponentCat: string;
+    opponentCats: string[];
   }>;
   processedFixtures: string[];
 }
@@ -152,9 +122,13 @@ export async function syncPlayerStatsForSeason(
   `;
 
   const playerAccumulators = new Map<string, PlayerStatAccumulator>();
+  const playerCategoryMap = new Map<string, string>();
 
   for (const p of existingPlayers) {
     const key = String(p.player_id);
+    if (p.category) {
+      playerCategoryMap.set(key, String(p.category));
+    }
     playerAccumulators.set(key, {
       statsId: p.id || `${p.player_id}_${seasonId}`,
       playerId: p.player_id,
@@ -172,45 +146,20 @@ export async function syncPlayerStatsForSeason(
   for (const m of matchups) {
     if (m.is_null) continue;
 
-    const homeGoals = Number(m.home_goals) || 0;
-    const awayGoals = Number(m.away_goals) || 0;
+    const homeSide = resolveSideGoalBreakdown(m, 'home');
+    const awaySide = resolveSideGoalBreakdown(m, 'away');
+    const homeGoals = homeSide.teamGoalsScored;
+    const awayGoals = awaySide.teamGoalsScored;
 
-    const homePlayerEntries: Array<{ id: string; name: string }> = [];
-    if (m.home_player_ids && Array.isArray(m.home_player_ids) && m.home_player_ids.length > 0) {
-      m.home_player_ids.forEach((id: string, idx: number) => {
-        if (id) {
-          homePlayerEntries.push({
-            id: String(id),
-            name: m.home_player_names?.[idx] || m.home_player_name || `Player ${id}`
-          });
-        }
-      });
-    } else if (m.home_player_id) {
-      homePlayerEntries.push({
-        id: String(m.home_player_id),
-        name: m.home_player_name || `Player ${m.home_player_id}`
-      });
-    }
-
-    const awayPlayerEntries: Array<{ id: string; name: string }> = [];
-    if (m.away_player_ids && Array.isArray(m.away_player_ids) && m.away_player_ids.length > 0) {
-      m.away_player_ids.forEach((id: string, idx: number) => {
-        if (id) {
-          awayPlayerEntries.push({
-            id: String(id),
-            name: m.away_player_names?.[idx] || m.away_player_name || `Player ${id}`
-          });
-        }
-      });
-    } else if (m.away_player_id) {
-      awayPlayerEntries.push({
-        id: String(m.away_player_id),
-        name: m.away_player_name || `Player ${m.away_player_id}`
-      });
-    }
+    const homeOpponentCats = awaySide.players.map(
+      (ap) => playerCategoryMap.get(ap.id) || m.away_category || 'RED'
+    );
+    const awayOpponentCats = homeSide.players.map(
+      (hp) => playerCategoryMap.get(hp.id) || m.home_category || 'RED'
+    );
 
     // Home players
-    for (const hp of homePlayerEntries) {
+    for (const hp of homeSide.players) {
       const homePId = hp.id;
       if (!playerAccumulators.has(homePId)) {
         playerAccumulators.set(homePId, {
@@ -227,12 +176,14 @@ export async function syncPlayerStatsForSeason(
       }
       const acc = playerAccumulators.get(homePId)!;
       acc.matches.push({
-        opponentId: awayPlayerEntries[0]?.id || '',
-        goalsScored: homeGoals,
+        opponentId: awaySide.players[0]?.id || '',
+        goalsScored: hp.goalsScored,
         goalsConceded: awayGoals,
+        teamGoalsScored: homeGoals,
+        teamGoalsConceded: awayGoals,
         isMotm: fixtureMotmMap.get(m.fixture_id) === homePId,
         fixtureId: m.fixture_id,
-        opponentCat: m.away_category || 'RED',
+        opponentCats: homeOpponentCats.length > 0 ? homeOpponentCats : [m.away_category || 'RED'],
       });
       if (!acc.processedFixtures.includes(m.fixture_id)) {
         acc.processedFixtures.push(m.fixture_id);
@@ -240,7 +191,7 @@ export async function syncPlayerStatsForSeason(
     }
 
     // Away players
-    for (const ap of awayPlayerEntries) {
+    for (const ap of awaySide.players) {
       const awayPId = ap.id;
       if (!playerAccumulators.has(awayPId)) {
         playerAccumulators.set(awayPId, {
@@ -257,12 +208,14 @@ export async function syncPlayerStatsForSeason(
       }
       const acc = playerAccumulators.get(awayPId)!;
       acc.matches.push({
-        opponentId: homePlayerEntries[0]?.id || '',
-        goalsScored: awayGoals,
+        opponentId: homeSide.players[0]?.id || '',
+        goalsScored: ap.goalsScored,
         goalsConceded: homeGoals,
+        teamGoalsScored: awayGoals,
+        teamGoalsConceded: homeGoals,
         isMotm: fixtureMotmMap.get(m.fixture_id) === awayPId,
         fixtureId: m.fixture_id,
-        opponentCat: m.home_category || 'RED',
+        opponentCats: awayOpponentCats.length > 0 ? awayOpponentCats : [m.home_category || 'RED'],
       });
       if (!acc.processedFixtures.includes(m.fixture_id)) {
         acc.processedFixtures.push(m.fixture_id);
@@ -311,17 +264,17 @@ export async function syncPlayerStatsForSeason(
       if (match.goalsConceded === 0) cleanSheets++;
       if (match.isMotm) motmAwards++;
 
-      const gd = match.goalsScored - match.goalsConceded;
-      const res: 'win' | 'draw' | 'loss' = gd > 0 ? 'win' : gd === 0 ? 'draw' : 'loss';
+      const teamGD = match.teamGoalsScored - match.teamGoalsConceded;
+      const res: 'win' | 'draw' | 'loss' = teamGD > 0 ? 'win' : teamGD === 0 ? 'draw' : 'loss';
       if (res === 'win') wins++;
       else if (res === 'draw') draws++;
       else losses++;
 
       let matchPoints = 0;
       if (usesCategoryPoints) {
-        matchPoints = getPointsForOpponentCategory(match.opponentCat, res);
+        matchPoints = calculateAverageCategoryPoints(match.opponentCats, res);
       } else {
-        matchPoints = Math.max(-5, Math.min(5, gd));
+        matchPoints = Math.max(-5, Math.min(5, match.goalsScored - match.goalsConceded));
       }
 
       totalPoints += matchPoints;

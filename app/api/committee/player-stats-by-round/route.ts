@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import {
+  calculateAverageCategoryPoints,
+  resolveSideGoalBreakdown,
+} from '@/lib/tournament/triple-threat-engine';
 
 /**
  * GET /api/committee/player-stats-by-round
@@ -49,12 +53,7 @@ export async function GET(request: NextRequest) {
       if (viewMode === 'full-season') {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -80,12 +79,7 @@ export async function GET(request: NextRequest) {
       } else {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -119,12 +113,7 @@ export async function GET(request: NextRequest) {
       if (viewMode === 'full-season') {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -151,12 +140,7 @@ export async function GET(request: NextRequest) {
       } else {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -190,12 +174,7 @@ export async function GET(request: NextRequest) {
       if (viewMode === 'full-season') {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -221,12 +200,7 @@ export async function GET(request: NextRequest) {
       } else {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -258,12 +232,7 @@ export async function GET(request: NextRequest) {
       if (viewMode === 'full-season') {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -288,12 +257,7 @@ export async function GET(request: NextRequest) {
       } else {
         matchups = await sql`
           SELECT 
-            m.home_player_id,
-            m.home_player_name,
-            m.away_player_id,
-            m.away_player_name,
-            m.home_goals,
-            m.away_goals,
+            m.*,
             f.round_number,
             f.home_team_id,
             f.home_team_name,
@@ -330,50 +294,56 @@ export async function GET(request: NextRequest) {
       firebasePlayersMap.set(String(data.player_id), data);
     });
 
-    // Helper to calculate opponent category points matching syncPlayerStatsForSeason / realplayerstats
-    const getPointsForOpponentCategory = (oppCategory: string, outcome: 'win' | 'draw' | 'loss'): number => {
-      const cat = (oppCategory || '').toLowerCase();
-      if (cat.includes('red') || cat === 'r') {
-        if (outcome === 'win') return 8;
-        if (outcome === 'draw') return 4;
-        return -3;
-      }
-      if (cat.includes('black')) {
-        if (outcome === 'win') return 7;
-        if (outcome === 'draw') return 3;
-        return -4;
-      }
-      if (cat.includes('blue') || cat === 'b') {
-        if (outcome === 'win') return 6;
-        if (outcome === 'draw') return 2;
-        return -5;
-      }
-      if (cat.includes('white') || cat === 'w') {
-        if (outcome === 'win') return 5;
-        if (outcome === 'draw') return 1;
-        return -6;
-      }
-      // Default to RED tier if unknown
-      if (outcome === 'win') return 8;
-      if (outcome === 'draw') return 4;
-      return -3;
-    };
+    // Fetch Neon realplayerstats category map for exact Co-op opponent lookup
+    const neonCategoryMap = new Map<string, string>();
+    if (usesCategoryPoints) {
+      const rpsCats = await sql`SELECT player_id, category FROM realplayerstats WHERE season_id = ${seasonId}`;
+      rpsCats.forEach((r: any) => {
+        if (r.player_id && r.category) neonCategoryMap.set(String(r.player_id), String(r.category));
+      });
+    }
 
-    // Aggregate stats for each player
+    // Aggregate stats for each player (handles Co-op per-player goals and exact average category points)
     const playerStatsMap = new Map<string, any>();
 
     matchups.forEach((matchup: any) => {
-      const homeGoals = Number(matchup.home_goals) || 0;
-      const awayGoals = Number(matchup.away_goals) || 0;
+      const homeSide = resolveSideGoalBreakdown(matchup, 'home');
+      const awaySide = resolveSideGoalBreakdown(matchup, 'away');
+      const homeGoals = homeSide.teamGoalsScored;
+      const awayGoals = awaySide.teamGoalsScored;
 
-      // Process home player
-      if (matchup.home_player_id && matchup.home_player_name) {
-        if (!playerStatsMap.has(matchup.home_player_id)) {
-          playerStatsMap.set(matchup.home_player_id, {
-            player_id: matchup.home_player_id,
-            player_name: matchup.home_player_name,
-            team_name: matchup.home_team_name,
-            category: matchup.home_category || null,
+      const homeOpponentCats = awaySide.players.map(
+        (ap) =>
+          neonCategoryMap.get(ap.id) ||
+          matchup.away_category ||
+          firebasePlayersMap.get(ap.id)?.category ||
+          'RED'
+      );
+      const awayOpponentCats = homeSide.players.map(
+        (hp) =>
+          neonCategoryMap.get(hp.id) ||
+          matchup.home_category ||
+          firebasePlayersMap.get(hp.id)?.category ||
+          'RED'
+      );
+
+      const upsertAndAccumulate = (
+        entry: { id: string; name: string; goalsScored: number },
+        teamName: string,
+        fallbackCat: string | null,
+        goalsConceded: number,
+        teamGoalsScored: number,
+        teamGoalsConceded: number,
+        opponentCats: string[]
+      ) => {
+        if (!entry.id) return;
+        const resolvedCat = neonCategoryMap.get(entry.id) || fallbackCat || null;
+        if (!playerStatsMap.has(entry.id)) {
+          playerStatsMap.set(entry.id, {
+            player_id: entry.id,
+            player_name: entry.name,
+            team_name: teamName,
+            category: resolvedCat,
             matches_played: 0,
             wins: 0,
             draws: 0,
@@ -386,82 +356,53 @@ export async function GET(request: NextRequest) {
             rounds_played: new Set(),
           });
         } else {
-          const p = playerStatsMap.get(matchup.home_player_id);
-          if (!p.category && matchup.home_category) {
-            p.category = matchup.home_category;
-          }
+          const p = playerStatsMap.get(entry.id);
+          if (!p.category && resolvedCat) p.category = resolvedCat;
         }
 
-        const player = playerStatsMap.get(matchup.home_player_id);
+        const player = playerStatsMap.get(entry.id);
         player.matches_played++;
-        player.goals_scored += homeGoals;
-        player.goals_conceded += awayGoals;
+        player.goals_scored += entry.goalsScored;
+        player.goals_conceded += goalsConceded;
         player.rounds_played.add(matchup.round_number);
 
-        // Goal difference and result for this match
-        const matchGD = homeGoals - awayGoals;
-        const outcome = matchGD > 0 ? 'win' : matchGD === 0 ? 'draw' : 'loss';
-        const oppCat = matchup.away_category || (firebasePlayersMap.get(String(matchup.away_player_id))?.category) || 'RED';
-        const matchPoints = usesCategoryPoints 
-          ? getPointsForOpponentCategory(oppCat, outcome)
-          : Math.max(-5, Math.min(5, matchGD));
+        const teamGD = teamGoalsScored - teamGoalsConceded;
+        const outcome: 'win' | 'draw' | 'loss' = teamGD > 0 ? 'win' : teamGD === 0 ? 'draw' : 'loss';
+        const matchPoints = usesCategoryPoints
+          ? calculateAverageCategoryPoints(opponentCats, outcome)
+          : Math.max(-5, Math.min(5, entry.goalsScored - goalsConceded));
         player.points += matchPoints;
 
         if (outcome === 'win') player.wins++;
         else if (outcome === 'draw') player.draws++;
         else player.losses++;
 
-        if (awayGoals === 0) player.clean_sheets++;
-        if (matchup.motm_player_id === matchup.home_player_id) player.motm_awards++;
+        if (goalsConceded === 0) player.clean_sheets++;
+        if (matchup.motm_player_id === entry.id) player.motm_awards++;
+      };
+
+      for (const hp of homeSide.players) {
+        upsertAndAccumulate(
+          hp,
+          matchup.home_team_name,
+          matchup.home_category || null,
+          awayGoals,
+          homeGoals,
+          awayGoals,
+          homeOpponentCats
+        );
       }
 
-      // Process away player
-      if (matchup.away_player_id && matchup.away_player_name) {
-        if (!playerStatsMap.has(matchup.away_player_id)) {
-          playerStatsMap.set(matchup.away_player_id, {
-            player_id: matchup.away_player_id,
-            player_name: matchup.away_player_name,
-            team_name: matchup.away_team_name,
-            category: matchup.away_category || null,
-            matches_played: 0,
-            wins: 0,
-            draws: 0,
-            losses: 0,
-            goals_scored: 0,
-            goals_conceded: 0,
-            clean_sheets: 0,
-            motm_awards: 0,
-            points: 0,
-            rounds_played: new Set(),
-          });
-        } else {
-          const p = playerStatsMap.get(matchup.away_player_id);
-          if (!p.category && matchup.away_category) {
-            p.category = matchup.away_category;
-          }
-        }
-
-        const player = playerStatsMap.get(matchup.away_player_id);
-        player.matches_played++;
-        player.goals_scored += awayGoals;
-        player.goals_conceded += homeGoals;
-        player.rounds_played.add(matchup.round_number);
-
-        // Goal difference and result for this match
-        const matchGD = awayGoals - homeGoals;
-        const outcome = matchGD > 0 ? 'win' : matchGD === 0 ? 'draw' : 'loss';
-        const oppCat = matchup.home_category || (firebasePlayersMap.get(String(matchup.home_player_id))?.category) || 'RED';
-        const matchPoints = usesCategoryPoints 
-          ? getPointsForOpponentCategory(oppCat, outcome)
-          : Math.max(-5, Math.min(5, matchGD));
-        player.points += matchPoints;
-
-        if (outcome === 'win') player.wins++;
-        else if (outcome === 'draw') player.draws++;
-        else player.losses++;
-
-        if (homeGoals === 0) player.clean_sheets++;
-        if (matchup.motm_player_id === matchup.away_player_id) player.motm_awards++;
+      for (const ap of awaySide.players) {
+        upsertAndAccumulate(
+          ap,
+          matchup.away_team_name,
+          matchup.away_category || null,
+          homeGoals,
+          awayGoals,
+          homeGoals,
+          awayOpponentCats
+        );
       }
     });
 

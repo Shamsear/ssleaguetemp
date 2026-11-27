@@ -3,6 +3,10 @@ import { getFantasyDb } from '@/lib/neon/fantasy-config';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import {
+  calculateAverageCategoryPoints,
+  resolveSideGoalBreakdown,
+} from '@/lib/tournament/triple-threat-engine';
 
 /**
  * POST /api/fantasy/calculate-points
@@ -179,7 +183,14 @@ export async function POST(request: NextRequest) {
 
     // Fetch player categories from realplayerstats for category-based result points
     const tournamentSqlDb = getTournamentDb();
-    const playerIds = matchups.flatMap((m: any) => [m.home_player_id, m.away_player_id]).filter(Boolean);
+    const playerIds = Array.from(
+      new Set(
+        matchups.flatMap((m: any) => [
+          ...(Array.isArray(m.home_player_ids) && m.home_player_ids.length ? m.home_player_ids : [m.home_player_id]),
+          ...(Array.isArray(m.away_player_ids) && m.away_player_ids.length ? m.away_player_ids : [m.away_player_id]),
+        ]).filter(Boolean).map(String)
+      )
+    );
     let playerCategoryMap = new Map<string, string>();
     if (playerIds.length > 0) {
       try {
@@ -189,68 +200,79 @@ export async function POST(request: NextRequest) {
             AND player_id = ANY(${playerIds})
         `;
         categoryRows.forEach((r: any) => {
-          if (r.player_id && r.category) playerCategoryMap.set(r.player_id, r.category);
+          if (r.player_id && r.category) playerCategoryMap.set(String(r.player_id), String(r.category));
         });
       } catch (e) {
         console.warn('Could not fetch player categories for result points:', e);
       }
     }
 
-    // Process each player in the matchups
+    // Process each player in the matchups (handles Co-op per-player goals + exact average opponent category points)
     const pointsCalculated: any[] = [];
     const teamPointsMap = new Map<string, number>();
 
     for (const matchup of matchups) {
-      const homeCat = playerCategoryMap.get(matchup.home_player_id) || 'Red';
-      const awayCat = playerCategoryMap.get(matchup.away_player_id) || 'Red';
+      const homeSide = resolveSideGoalBreakdown(matchup, 'home');
+      const awaySide = resolveSideGoalBreakdown(matchup, 'away');
+      const homeTeamGoals = homeSide.teamGoalsScored;
+      const awayTeamGoals = awaySide.teamGoalsScored;
 
-      // Process home player
-      await processPlayer({
-        player_id: matchup.home_player_id,
-        player_name: matchup.home_player_name,
-        opponent_player_id: matchup.away_player_id,
-        opponent_category: awayCat,
-        goals_scored: matchup.home_goals || 0,
-        goals_conceded: matchup.away_goals || 0,
-        result: matchup.home_goals > matchup.away_goals ? 'win' : 
-                matchup.home_goals === matchup.away_goals ? 'draw' : 'loss',
-        is_motm: fixtureData.motm_player_id === matchup.home_player_id,
-        fine_goals: fixtureData.home_penalty_goals || 0,
-        substitution_penalty: matchup.home_sub_penalty || 0,
-        fantasy_league_id,
-        fixture_id,
-        round_number,
-        scoringRules,
-        categoriesMap,
-        realPlayersMap,
-        sql,
-        pointsCalculated,
-        teamPointsMap,
-      });
+      const awayCats = awaySide.players.map((ap) => playerCategoryMap.get(ap.id) || 'Red');
+      const homeCats = homeSide.players.map((hp) => playerCategoryMap.get(hp.id) || 'Red');
+      const homeResult: 'win' | 'draw' | 'loss' =
+        homeTeamGoals > awayTeamGoals ? 'win' : homeTeamGoals === awayTeamGoals ? 'draw' : 'loss';
+      const awayResult: 'win' | 'draw' | 'loss' =
+        awayTeamGoals > homeTeamGoals ? 'win' : awayTeamGoals === homeTeamGoals ? 'draw' : 'loss';
 
-      // Process away player
-      await processPlayer({
-        player_id: matchup.away_player_id,
-        player_name: matchup.away_player_name,
-        opponent_player_id: matchup.home_player_id,
-        opponent_category: homeCat,
-        goals_scored: matchup.away_goals || 0,
-        goals_conceded: matchup.home_goals || 0,
-        result: matchup.away_goals > matchup.home_goals ? 'win' : 
-                matchup.away_goals === matchup.home_goals ? 'draw' : 'loss',
-        is_motm: fixtureData.motm_player_id === matchup.away_player_id,
-        fine_goals: fixtureData.away_penalty_goals || 0,
-        substitution_penalty: matchup.away_sub_penalty || 0,
-        fantasy_league_id,
-        fixture_id,
-        round_number,
-        scoringRules,
-        categoriesMap,
-        realPlayersMap,
-        sql,
-        pointsCalculated,
-        teamPointsMap,
-      });
+      for (const hp of homeSide.players) {
+        await processPlayer({
+          player_id: hp.id,
+          player_name: hp.name,
+          opponent_player_id: awaySide.players[0]?.id || '',
+          opponent_category: awayCats[0] || 'Red',
+          opponent_categories: awayCats,
+          goals_scored: hp.goalsScored,
+          goals_conceded: awayTeamGoals,
+          result: homeResult,
+          is_motm: fixtureData.motm_player_id === hp.id,
+          fine_goals: fixtureData.home_penalty_goals || 0,
+          substitution_penalty: matchup.home_sub_penalty || 0,
+          fantasy_league_id,
+          fixture_id,
+          round_number,
+          scoringRules,
+          categoriesMap,
+          realPlayersMap,
+          sql,
+          pointsCalculated,
+          teamPointsMap,
+        });
+      }
+
+      for (const ap of awaySide.players) {
+        await processPlayer({
+          player_id: ap.id,
+          player_name: ap.name,
+          opponent_player_id: homeSide.players[0]?.id || '',
+          opponent_category: homeCats[0] || 'Red',
+          opponent_categories: homeCats,
+          goals_scored: ap.goalsScored,
+          goals_conceded: homeTeamGoals,
+          result: awayResult,
+          is_motm: fixtureData.motm_player_id === ap.id,
+          fine_goals: fixtureData.away_penalty_goals || 0,
+          substitution_penalty: matchup.away_sub_penalty || 0,
+          fantasy_league_id,
+          fixture_id,
+          round_number,
+          scoringRules,
+          categoriesMap,
+          realPlayersMap,
+          sql,
+          pointsCalculated,
+          teamPointsMap,
+        });
+      }
     }
 
     // Calculate team affiliation bonuses
@@ -297,6 +319,7 @@ async function processPlayer(params: {
   player_name: string;
   opponent_player_id: string;
   opponent_category: string;
+  opponent_categories?: string[];
   goals_scored: number;
   goals_conceded: number;
   result: 'win' | 'draw' | 'loss';
@@ -314,7 +337,7 @@ async function processPlayer(params: {
   teamPointsMap: Map<string, number>;
 }) {
   const {
-    player_id, player_name, opponent_player_id, opponent_category, goals_scored, goals_conceded, result,
+    player_id, player_name, opponent_player_id, opponent_category, opponent_categories, goals_scored, goals_conceded, result,
     is_motm, fine_goals, substitution_penalty, fantasy_league_id,
     fixture_id, round_number, scoringRules, categoriesMap, realPlayersMap,
     sql, pointsCalculated, teamPointsMap
@@ -418,17 +441,12 @@ async function processPlayer(params: {
     return;
   }
 
-  // --- Category-Based Result Points (based on opponent's category, same as main tournament) ---
-  const getCategoryResultPts = (oppCat: string, outcome: string): number => {
-    const cat = (oppCat || '').toLowerCase();
-    if (cat.includes('red') || cat === 'r')   return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3);
-    if (cat.includes('black'))                 return outcome === 'win' ? 7 : (outcome === 'draw' ? 3 : -4);
-    if (cat.includes('blue') || cat === 'b')  return outcome === 'win' ? 6 : (outcome === 'draw' ? 2 : -5);
-    if (cat.includes('white') || cat === 'w') return outcome === 'win' ? 5 : (outcome === 'draw' ? 1 : -6);
-    return outcome === 'win' ? 8 : (outcome === 'draw' ? 4 : -3); // default = Red
-  };
-  const resultPoints: number = getCategoryResultPts(opponent_category, result);
-  console.log(`📊 [Fantasy Result] ${player_name} [${result}] vs [${opponent_category}] → ${resultPoints} pts`);
+  // --- Category-Based Result Points (based on opponent's category / exact average in Co-op) ---
+  const oppCatsToScore = opponent_categories && opponent_categories.length > 0
+    ? opponent_categories
+    : [opponent_category];
+  const resultPoints: number = calculateAverageCategoryPoints(oppCatsToScore, result);
+  console.log(`📊 [Fantasy Result] ${player_name} [${result}] vs [${oppCatsToScore.join(', ')}] → ${resultPoints} pts`);
 
   // Calculate points breakdown (same for all teams)
   const is_clean_sheet = goals_conceded === 0;

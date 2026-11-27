@@ -468,3 +468,205 @@ export function calculateTripleThreatFixture(
     clean_sweep_winner: cleanSweepTeam,
   };
 }
+
+export interface SidePlayerGoalStat {
+  id: string;
+  name: string;
+  goalsScored: number;
+}
+
+/**
+ * Extracts each player participating on `side` ('home' | 'away') along with their individual goals scored.
+ * In Co-op (2v2), uses `home_player_goals` / `away_player_goals` when present; otherwise uses team `home_goals` / `away_goals`.
+ */
+export function resolveSideGoalBreakdown(
+  matchup: any,
+  side: 'home' | 'away'
+): { players: SidePlayerGoalStat[]; teamGoalsScored: number; teamGoalsConceded: number } {
+  const isHome = side === 'home';
+  const rawIds = isHome ? matchup.home_player_ids : matchup.away_player_ids;
+  const rawNames = isHome ? matchup.home_player_names : matchup.away_player_names;
+  const scalarId = isHome ? matchup.home_player_id : matchup.away_player_id;
+  const scalarName = isHome ? matchup.home_player_name : matchup.away_player_name;
+  const rawPlayerGoals = isHome ? matchup.home_player_goals : matchup.away_player_goals;
+  const teamGoalsScored = Number(isHome ? matchup.home_goals : matchup.away_goals) || 0;
+  const teamGoalsConceded = Number(isHome ? matchup.away_goals : matchup.home_goals) || 0;
+
+  const entries: Array<{ id: string; name: string }> = [];
+  if (Array.isArray(rawIds) && rawIds.length > 0) {
+    rawIds.forEach((id: any, idx: number) => {
+      if (id) {
+        entries.push({
+          id: String(id),
+          name: (Array.isArray(rawNames) && rawNames[idx]) || scalarName || `Player ${id}`,
+        });
+      }
+    });
+  } else if (scalarId) {
+    entries.push({
+      id: String(scalarId),
+      name: scalarName || `Player ${scalarId}`,
+    });
+  }
+
+  const hasPerPlayerGoals =
+    Array.isArray(rawPlayerGoals) &&
+    rawPlayerGoals.length > 0 &&
+    rawPlayerGoals.some((g: any) => g !== null && g !== undefined);
+
+  const players: SidePlayerGoalStat[] = entries.map((entry, idx) => ({
+    id: entry.id,
+    name: entry.name,
+    goalsScored: hasPerPlayerGoals && rawPlayerGoals[idx] !== null && rawPlayerGoals[idx] !== undefined
+      ? Math.max(0, Number(rawPlayerGoals[idx]) || 0)
+      : teamGoalsScored,
+  }));
+
+  return { players, teamGoalsScored, teamGoalsConceded };
+}
+
+/**
+ * Normalizes a result payload row so Co-op per-player goal arrays cleanly sum into `home_goals` / `away_goals`
+ * while non-Co-op rows keep scalar goals with `null` player goal arrays.
+ */
+export function normalizeResultGoals(result: any): {
+  home_goals: number;
+  away_goals: number;
+  home_player_goals: number[] | null;
+  away_player_goals: number[] | null;
+} {
+  const hasHomeArray = Array.isArray(result?.home_player_goals) && result.home_player_goals.length > 0;
+  const hasAwayArray = Array.isArray(result?.away_player_goals) && result.away_player_goals.length > 0;
+
+  const home_player_goals = hasHomeArray
+    ? result.home_player_goals.map((v: any) => Math.max(0, Number(v) || 0))
+    : null;
+  const away_player_goals = hasAwayArray
+    ? result.away_player_goals.map((v: any) => Math.max(0, Number(v) || 0))
+    : null;
+
+  const home_goals = home_player_goals
+    ? home_player_goals.reduce((sum: number, g: number) => sum + g, 0)
+    : Math.max(0, Number(result?.home_goals ?? 0) || 0);
+  const away_goals = away_player_goals
+    ? away_player_goals.reduce((sum: number, g: number) => sum + g, 0)
+    : Math.max(0, Number(result?.away_goals ?? 0) || 0);
+
+  return { home_goals, away_goals, home_player_goals, away_player_goals };
+}
+
+/**
+ * Season 18+ opponent-category points lookup.
+ */
+export function getPointsForOpponentCategory(
+  oppCategory: string,
+  outcome: 'win' | 'draw' | 'loss'
+): number {
+  const cat = (oppCategory || '').toLowerCase();
+  if (cat.includes('red') || cat === 'r') {
+    if (outcome === 'win') return 8;
+    if (outcome === 'draw') return 4;
+    return -3;
+  }
+  if (cat.includes('black')) {
+    if (outcome === 'win') return 7;
+    if (outcome === 'draw') return 3;
+    return -4;
+  }
+  if (cat.includes('blue') || cat === 'b') {
+    if (outcome === 'win') return 6;
+    if (outcome === 'draw') return 2;
+    return -5;
+  }
+  if (cat.includes('white') || cat === 'w') {
+    if (outcome === 'win') return 5;
+    if (outcome === 'draw') return 1;
+    return -6;
+  }
+  if (outcome === 'win') return 8;
+  if (outcome === 'draw') return 4;
+  return -3;
+}
+
+/**
+ * Exact average category points across one (1v1) or multiple (Co-op 2v2) opponents.
+ */
+export function calculateAverageCategoryPoints(
+  opponentCategories: string[],
+  outcome: 'win' | 'draw' | 'loss'
+): number {
+  const valid = (opponentCategories || []).filter(Boolean);
+  if (valid.length === 0) {
+    return getPointsForOpponentCategory('RED', outcome);
+  }
+  const total = valid.reduce((sum, cat) => sum + getPointsForOpponentCategory(cat, outcome), 0);
+  return total / valid.length;
+}
+
+/**
+ * Aggregates Golden Boot & Golden Glove stats across matchups (handling Co-op arrays and per-player goals).
+ */
+export function aggregateMatchupAwardStats(matchups: any[]): Array<{
+  player_id: string;
+  player_name: string;
+  total_goals: number;
+  matches_played: number;
+  goals_conceded: number;
+  clean_sheets: number;
+  goals_per_match: number;
+}> {
+  const byPlayer = new Map<
+    string,
+    {
+      player_id: string;
+      player_name: string;
+      total_goals: number;
+      matches_played: number;
+      goals_conceded: number;
+      clean_sheets: number;
+    }
+  >();
+
+  for (const m of matchups) {
+    if (m.is_null || m.home_goals === null || m.away_goals === null) continue;
+    const homeSide = resolveSideGoalBreakdown(m, 'home');
+    const awaySide = resolveSideGoalBreakdown(m, 'away');
+
+    for (const hp of homeSide.players) {
+      const prev = byPlayer.get(hp.id) || {
+        player_id: hp.id,
+        player_name: hp.name,
+        total_goals: 0,
+        matches_played: 0,
+        goals_conceded: 0,
+        clean_sheets: 0,
+      };
+      prev.total_goals += hp.goalsScored;
+      prev.matches_played += 1;
+      prev.goals_conceded += homeSide.teamGoalsConceded;
+      if (homeSide.teamGoalsConceded === 0) prev.clean_sheets += 1;
+      byPlayer.set(hp.id, prev);
+    }
+
+    for (const ap of awaySide.players) {
+      const prev = byPlayer.get(ap.id) || {
+        player_id: ap.id,
+        player_name: ap.name,
+        total_goals: 0,
+        matches_played: 0,
+        goals_conceded: 0,
+        clean_sheets: 0,
+      };
+      prev.total_goals += ap.goalsScored;
+      prev.matches_played += 1;
+      prev.goals_conceded += awaySide.teamGoalsConceded;
+      if (awaySide.teamGoalsConceded === 0) prev.clean_sheets += 1;
+      byPlayer.set(ap.id, prev);
+    }
+  }
+
+  return Array.from(byPlayer.values()).map((p) => ({
+    ...p,
+    goals_per_match: p.matches_played > 0 ? p.goals_conceded / p.matches_played : 0,
+  }));
+}

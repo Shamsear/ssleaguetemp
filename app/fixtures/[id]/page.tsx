@@ -20,6 +20,12 @@ interface Matchup {
   away_substituted?: boolean;
   away_original_player_name?: string;
   away_sub_penalty?: number;
+  home_player_ids?: string[];
+  home_player_names?: string[];
+  away_player_ids?: string[];
+  away_player_names?: string[];
+  home_player_goals?: number[] | null;
+  away_player_goals?: number[] | null;
 }
 
 interface Fixture {
@@ -283,6 +289,11 @@ export default function PublicFixtureDetailPage() {
                       <p className="font-bold text-slate-900 text-sm truncate">
                         {matchup.home_player_name}
                       </p>
+                      {hasResults && Array.isArray(matchup.home_player_goals) && matchup.home_player_goals.length > 0 && (
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                          {(matchup.home_player_names || []).map((n, i) => `${n}: ${matchup.home_player_goals?.[i] ?? 0}G`).join(' • ')}
+                        </p>
+                      )}
                       {matchup.home_substituted && (
                         <p className="text-[10px] text-amber-650 font-mono mt-0.5">
                           <Repeat className="w-3.5 h-3.5 text-slate-500 inline mr-1 align-text-bottom" /> SUB: {matchup.home_original_player_name}
@@ -319,6 +330,11 @@ export default function PublicFixtureDetailPage() {
                       <p className="font-bold text-slate-900 text-sm truncate">
                         {matchup.away_player_name}
                       </p>
+                      {hasResults && Array.isArray(matchup.away_player_goals) && matchup.away_player_goals.length > 0 && (
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                          {(matchup.away_player_names || []).map((n, i) => `${n}: ${matchup.away_player_goals?.[i] ?? 0}G`).join(' • ')}
+                        </p>
+                      )}
                       {matchup.away_substituted && (
                         <p className="text-[10px] text-amber-655 font-mono mt-0.5">
                           <Repeat className="w-3.5 h-3.5 text-slate-500 inline mr-1 align-text-bottom" /> SUB: {matchup.away_original_player_name}

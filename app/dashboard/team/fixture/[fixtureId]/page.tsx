@@ -83,7 +83,50 @@ interface Matchup {
   away_original_player_name?: string;
   away_substituted?: boolean;
   away_sub_penalty?: number; // Penalty goals awarded to opponent (2 or 3)
+  match_mode?: string;
+  home_player_ids?: string[];
+  home_player_names?: string[];
+  away_player_ids?: string[];
+  away_player_names?: string[];
+  home_player_goals?: number[] | null;
+  away_player_goals?: number[] | null;
 }
+
+interface MatchResultEntry {
+  home_goals: number;
+  away_goals: number;
+  home_player_goals?: number[];
+  away_player_goals?: number[];
+}
+
+const buildInitialMatchResultEntry = (m: Matchup): MatchResultEntry => {
+  const isCoop =
+    resolveTripleThreatMode(m as any) === 'coop' ||
+    (m.home_player_ids?.length || 0) > 1 ||
+    (m.away_player_ids?.length || 0) > 1;
+  if (!isCoop) {
+    return {
+      home_goals: m.home_goals ?? 0,
+      away_goals: m.away_goals ?? 0,
+    };
+  }
+  const hLen = Math.max(m.home_player_ids?.length || 0, 2);
+  const aLen = Math.max(m.away_player_ids?.length || 0, 2);
+  const home_player_goals =
+    Array.isArray(m.home_player_goals) && m.home_player_goals.length === hLen
+      ? m.home_player_goals.map((g) => Number(g ?? 0))
+      : Array.from({ length: hLen }, (_, i) => (i === 0 ? (m.home_goals ?? 0) : 0));
+  const away_player_goals =
+    Array.isArray(m.away_player_goals) && m.away_player_goals.length === aLen
+      ? m.away_player_goals.map((g) => Number(g ?? 0))
+      : Array.from({ length: aLen }, (_, i) => (i === 0 ? (m.away_goals ?? 0) : 0));
+  return {
+    home_goals: home_player_goals.reduce((s, g) => s + g, 0),
+    away_goals: away_player_goals.reduce((s, g) => s + g, 0),
+    home_player_goals,
+    away_player_goals,
+  };
+};
 
 interface Fixture {
   id: string;
@@ -172,7 +215,7 @@ export default function FixturePage() {
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Result entry state
-  const [matchResults, setMatchResults] = useState<{ [key: number]: { home_goals: number, away_goals: number } }>({});
+  const [matchResults, setMatchResults] = useState<{ [key: number]: MatchResultEntry }>({});
   const [motmPlayerId, setMotmPlayerId] = useState<string | null>(null);
   const [isResultMode, setIsResultMode] = useState(false);
 
@@ -520,7 +563,13 @@ ${matchups.map((m, idx) => {
 
       let line = '';
       if (hasResults && m.home_goals !== null && m.away_goals !== null) {
-        line = `${homePlayerDisplay} *${m.home_goals}-${m.away_goals}* ${awayPlayerDisplay}`;
+        const hBreakdown = Array.isArray(m.home_player_goals) && m.home_player_goals.length > 1
+          ? ` (${(m.home_player_names || []).map((n, i) => `${n}: ${m.home_player_goals?.[i] ?? 0}G`).join(', ')})`
+          : '';
+        const aBreakdown = Array.isArray(m.away_player_goals) && m.away_player_goals.length > 1
+          ? ` (${(m.away_player_names || []).map((n, i) => `${n}: ${m.away_player_goals?.[i] ?? 0}G`).join(', ')})`
+          : '';
+        line = `${homePlayerDisplay}${hBreakdown} *${m.home_goals}-${m.away_goals}* ${awayPlayerDisplay}${aBreakdown}`;
       } else {
         line = `${homePlayerDisplay} vs ${awayPlayerDisplay}`;
       }
@@ -2289,12 +2338,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       if (isResultMode) {
                         setIsResultMode(false);
                       } else {
-                        const initialResults: any = {};
+                        const initialResults: { [key: number]: MatchResultEntry } = {};
                         matchups.forEach((m, idx) => {
-                          initialResults[idx] = {
-                            home_goals: m.home_goals ?? 0,
-                            away_goals: m.away_goals ?? 0
-                          };
+                          initialResults[idx] = buildInitialMatchResultEntry(m);
                         });
                         setMatchResults(initialResults);
                         setMotmPlayerId(fixture?.motm_player_id || null);
@@ -2908,6 +2954,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   <span className={`font-extrabold text-sm text-slate-900 truncate ${homePOTD ? 'text-amber-900' : ''}`}>
                                     {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
                                   </span>
+                                  {hasResult && Array.isArray(matchup.home_player_goals) && matchup.home_player_goals.length > 0 && (
+                                    <span className="text-[11px] font-bold text-indigo-700 mt-0.5">
+                                      {(matchup.home_player_names || []).map((n, i) => `${n}: ${matchup.home_player_goals?.[i] ?? 0}G`).join(' • ')}
+                                    </span>
+                                  )}
                                   {homeCategory && (
                                     <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
                                       {homeCategory}
@@ -2984,6 +3035,11 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   <span className={`font-extrabold text-sm text-slate-900 truncate ${awayPOTD ? 'text-amber-900' : ''}`}>
                                     {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
                                   </span>
+                                  {hasResult && Array.isArray(matchup.away_player_goals) && matchup.away_player_goals.length > 0 && (
+                                    <span className="text-[11px] font-bold text-indigo-700 mt-0.5">
+                                      {(matchup.away_player_names || []).map((n, i) => `${n}: ${matchup.away_player_goals?.[i] ?? 0}G`).join(' • ')}
+                                    </span>
+                                  )}
                                   {awayCategory && (
                                     <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
                                       {awayCategory}
@@ -3037,12 +3093,9 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     <button
                       onClick={() => {
                         // Initialize results from existing data
-                        const initialResults: any = {};
+                        const initialResults: { [key: number]: MatchResultEntry } = {};
                         matchups.forEach((m, idx) => {
-                          initialResults[idx] = {
-                            home_goals: m.home_goals ?? 0,
-                            away_goals: m.away_goals ?? 0
-                          };
+                          initialResults[idx] = buildInitialMatchResultEntry(m);
                         });
                         setMatchResults(initialResults);
                         setMotmPlayerId(fixture.motm_player_id || null);
@@ -3426,6 +3479,161 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           </div>
                         )}
 
+                        {(() => {
+                          const isCoopMatch =
+                            resolveTripleThreatMode(matchup as any) === 'coop' ||
+                            (matchup.home_player_ids?.length || 0) > 1 ||
+                            (matchup.away_player_ids?.length || 0) > 1;
+                          if (!isCoopMatch) return null;
+
+                          const hIds = matchup.home_player_ids?.length ? matchup.home_player_ids : (matchup.home_player_id ? [matchup.home_player_id] : []);
+                          const hNames = matchup.home_player_names?.length ? matchup.home_player_names : [matchup.home_player_name];
+                          const aIds = matchup.away_player_ids?.length ? matchup.away_player_ids : (matchup.away_player_id ? [matchup.away_player_id] : []);
+                          const aNames = matchup.away_player_names?.length ? matchup.away_player_names : [matchup.away_player_name];
+                          const curEntry = matchResults[idx] || { home_goals: 0, away_goals: 0 };
+
+                          return (
+                            <div className="space-y-3 font-mono">
+                              <div className="flex items-center justify-center gap-3 py-2 px-3 bg-indigo-50 border border-indigo-200 rounded-xl">
+                                <span className="text-xs font-extrabold text-slate-700 truncate">{fixture.home_team_name}</span>
+                                <span className="px-3 py-1 rounded-lg bg-slate-900 text-white font-black text-base">
+                                  {curEntry.home_goals ?? 0} - {curEntry.away_goals ?? 0}
+                                </span>
+                                <span className="text-xs font-extrabold text-slate-700 truncate">{fixture.away_team_name}</span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
+                                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-blue-900">
+                                    <span>{fixture.home_team_name} Goals</span>
+                                    <span>Total: {curEntry.home_goals ?? 0}</span>
+                                  </div>
+                                  {hIds.map((pid, pIdx) => {
+                                    const pMatch = homeSquadById.get(pid) || homeSquadByName.get((hNames[pIdx] || '').toLowerCase());
+                                    const pGoals = curEntry.home_player_goals?.[pIdx] ?? 0;
+                                    return (
+                                      <div key={`team-coop-h-${pid}-${pIdx}`} className="flex items-center justify-between gap-2 bg-white/90 border border-blue-200/80 rounded-lg px-2.5 py-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <PlayerPhoto
+                                            photoUrl={pMatch?.photo_url}
+                                            playerName={hNames[pIdx] || `Player ${pIdx + 1}`}
+                                            size={28}
+                                            shape="circle"
+                                            posXCircle={pMatch?.photo_position_x_circle}
+                                            posYCircle={pMatch?.photo_position_y_circle}
+                                            scaleCircle={pMatch?.photo_scale_circle}
+                                            className="border border-blue-300 flex-shrink-0"
+                                          />
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="font-extrabold text-xs text-slate-900 truncate">
+                                              {hNames[pIdx] || `Player ${pIdx + 1}`}
+                                            </span>
+                                            {pMatch?.category && (
+                                              <span className={`inline-block text-[8px] uppercase px-1 rounded border self-start mt-0.5 ${getCategoryBadgeClass(pMatch.category)}`}>
+                                                {pMatch.category}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="99"
+                                          value={pGoals}
+                                          onChange={(e) => {
+                                            const raw = parseInt(e.target.value);
+                                            const val = isNaN(raw) ? 0 : Math.max(0, raw);
+                                            setMatchResults(prev => {
+                                              const existing = prev[idx] || { home_goals: 0, away_goals: 0 };
+                                              const nextArr = [...(existing.home_player_goals || Array(hIds.length).fill(0))];
+                                              nextArr[pIdx] = val;
+                                              return {
+                                                ...prev,
+                                                [idx]: {
+                                                  ...existing,
+                                                  home_player_goals: nextArr,
+                                                  home_goals: nextArr.reduce((s, g) => s + (Number(g) || 0), 0),
+                                                },
+                                              };
+                                            });
+                                          }}
+                                          className="w-14 h-9 text-center font-black text-base text-emerald-700 bg-white border-2 border-emerald-300 rounded-lg focus:border-emerald-500 outline-none shrink-0"
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-slate-700">
+                                    <span>{fixture.away_team_name} Goals</span>
+                                    <span>Total: {curEntry.away_goals ?? 0}</span>
+                                  </div>
+                                  {aIds.map((pid, pIdx) => {
+                                    const pMatch = awaySquadById.get(pid) || awaySquadByName.get((aNames[pIdx] || '').toLowerCase());
+                                    const pGoals = curEntry.away_player_goals?.[pIdx] ?? 0;
+                                    return (
+                                      <div key={`team-coop-a-${pid}-${pIdx}`} className="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-lg px-2.5 py-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <PlayerPhoto
+                                            photoUrl={pMatch?.photo_url}
+                                            playerName={aNames[pIdx] || `Player ${pIdx + 1}`}
+                                            size={28}
+                                            shape="circle"
+                                            posXCircle={pMatch?.photo_position_x_circle}
+                                            posYCircle={pMatch?.photo_position_y_circle}
+                                            scaleCircle={pMatch?.photo_scale_circle}
+                                            className="border border-slate-300 flex-shrink-0"
+                                          />
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="font-extrabold text-xs text-slate-900 truncate">
+                                              {aNames[pIdx] || `Player ${pIdx + 1}`}
+                                            </span>
+                                            {pMatch?.category && (
+                                              <span className={`inline-block text-[8px] uppercase px-1 rounded border self-start mt-0.5 ${getCategoryBadgeClass(pMatch.category)}`}>
+                                                {pMatch.category}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          max="99"
+                                          value={pGoals}
+                                          onChange={(e) => {
+                                            const raw = parseInt(e.target.value);
+                                            const val = isNaN(raw) ? 0 : Math.max(0, raw);
+                                            setMatchResults(prev => {
+                                              const existing = prev[idx] || { home_goals: 0, away_goals: 0 };
+                                              const nextArr = [...(existing.away_player_goals || Array(aIds.length).fill(0))];
+                                              nextArr[pIdx] = val;
+                                              return {
+                                                ...prev,
+                                                [idx]: {
+                                                  ...existing,
+                                                  away_player_goals: nextArr,
+                                                  away_goals: nextArr.reduce((s, g) => s + (Number(g) || 0), 0),
+                                                },
+                                              };
+                                            });
+                                          }}
+                                          className="w-14 h-9 text-center font-black text-base text-emerald-700 bg-white border-2 border-emerald-300 rounded-lg focus:border-emerald-500 outline-none shrink-0"
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {!(
+                          resolveTripleThreatMode(matchup as any) === 'coop' ||
+                          (matchup.home_player_ids?.length || 0) > 1 ||
+                          (matchup.away_player_ids?.length || 0) > 1
+                        ) && (
+                        <>
                         {/* Mobile & Small Screens Layout (Stacked for full name visibility) */}
                         <div className="flex flex-col gap-2.5 sm:hidden font-mono">
                           {/* Players Row */}
@@ -3652,6 +3860,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             );
                           })()}
                         </div>
+                        </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -3810,18 +4020,15 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             matchups.forEach((m, idx) => {
                               const homeGoals = matchResults[idx]?.home_goals ?? 0;
                               const awayGoals = matchResults[idx]?.away_goals ?? 0;
+                              const homePlayerGoals = matchResults[idx]?.home_player_goals;
+                              const awayPlayerGoals = matchResults[idx]?.away_player_goals;
 
-                              // Score for home player
                               const homeWon = homeGoals > awayGoals;
                               const homeDraw = homeGoals === awayGoals;
-                              const homeScore = (homeGoals * 10) + (homeWon ? 5 : 0) + (homeDraw ? 2 : 0) - (awayGoals * 2);
-
-                              // Score for away player
                               const awayWon = awayGoals > homeGoals;
                               const awayDraw = homeGoals === awayGoals;
-                              const awayScore = (awayGoals * 10) + (awayWon ? 5 : 0) + (awayDraw ? 2 : 0) - (homeGoals * 2);
 
-                              // Evaluate all home players (handles Co-op 2v2 home_player_ids cleanly)
+                              // Evaluate all home players (uses individual goals in Co-op 2v2 when present)
                               const hIds: string[] = (m as any).home_player_ids?.length
                                 ? (m as any).home_player_ids
                                 : (m.home_player_id ? [m.home_player_id] : []);
@@ -3829,19 +4036,23 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 ? (m as any).home_player_names
                                 : (m.home_player_name ? [m.home_player_name] : []);
                               hIds.forEach((pId, pIdx) => {
-                                if (pId && homeScore > bestScore) {
-                                  bestScore = homeScore;
+                                const pGoals = Array.isArray(homePlayerGoals) && homePlayerGoals[pIdx] !== undefined
+                                  ? homePlayerGoals[pIdx]
+                                  : homeGoals;
+                                const pScore = (pGoals * 10) + (homeWon ? 5 : 0) + (homeDraw ? 2 : 0) - (awayGoals * 2);
+                                if (pId && pScore > bestScore) {
+                                  bestScore = pScore;
                                   bestPlayer = {
                                     id: pId,
                                     name: hNames[pIdx] || m.home_player_name,
-                                    goals: homeGoals,
+                                    goals: pGoals,
                                     conceded: awayGoals,
                                     result: homeWon ? 'W' : homeDraw ? 'D' : 'L'
                                   };
                                 }
                               });
 
-                              // Evaluate all away players (handles Co-op 2v2 away_player_ids cleanly)
+                              // Evaluate all away players (uses individual goals in Co-op 2v2 when present)
                               const aIds: string[] = (m as any).away_player_ids?.length
                                 ? (m as any).away_player_ids
                                 : (m.away_player_id ? [m.away_player_id] : []);
@@ -3849,12 +4060,16 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 ? (m as any).away_player_names
                                 : (m.away_player_name ? [m.away_player_name] : []);
                               aIds.forEach((pId, pIdx) => {
-                                if (pId && awayScore > bestScore) {
-                                  bestScore = awayScore;
+                                const pGoals = Array.isArray(awayPlayerGoals) && awayPlayerGoals[pIdx] !== undefined
+                                  ? awayPlayerGoals[pIdx]
+                                  : awayGoals;
+                                const pScore = (pGoals * 10) + (awayWon ? 5 : 0) + (awayDraw ? 2 : 0) - (homeGoals * 2);
+                                if (pId && pScore > bestScore) {
+                                  bestScore = pScore;
                                   bestPlayer = {
                                     id: pId,
                                     name: aNames[pIdx] || m.away_player_name,
-                                    goals: awayGoals,
+                                    goals: pGoals,
                                     conceded: homeGoals,
                                     result: awayWon ? 'W' : awayDraw ? 'D' : 'L'
                                   };
@@ -3890,23 +4105,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {(() => {
-                            const homeCandidates: { id: string; name: string; matchupIndex: number }[] = [];
+                            const homeCandidates: { id: string; name: string; matchupIndex: number; playerIdx: number }[] = [];
                             matchups.forEach((m, idx) => {
                               const ids = (m as any).home_player_ids;
                               const names = (m as any).home_player_names;
                               if (ids && ids.length > 0) {
                                 ids.forEach((id: string, pIdx: number) => {
-                                  homeCandidates.push({ id, name: names?.[pIdx] || id, matchupIndex: idx });
+                                  homeCandidates.push({ id, name: names?.[pIdx] || id, matchupIndex: idx, playerIdx: pIdx });
                                 });
                               } else if (m.home_player_id) {
-                                homeCandidates.push({ id: m.home_player_id, name: m.home_player_name, matchupIndex: idx });
+                                homeCandidates.push({ id: m.home_player_id, name: m.home_player_name, matchupIndex: idx, playerIdx: 0 });
                               }
                             });
 
                             return homeCandidates.map((cand, cIdx) => {
                               const isSelected = motmPlayerId === cand.id;
-                              const goals = matchResults[cand.matchupIndex]?.home_goals ?? 0;
-                              const conceded = matchResults[cand.matchupIndex]?.away_goals ?? 0;
+                              const mr = matchResults[cand.matchupIndex];
+                              const goals = Array.isArray(mr?.home_player_goals) && mr.home_player_goals[cand.playerIdx] !== undefined
+                                ? mr.home_player_goals[cand.playerIdx]
+                                : (mr?.home_goals ?? 0);
+                              const conceded = mr?.away_goals ?? 0;
                               const homeMatch = homeSquadById.get(cand.id) || homeSquadByName.get(cand.name?.toLowerCase());
                               const category = homeMatch?.category;
 
@@ -3966,23 +4184,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {(() => {
-                            const awayCandidates: { id: string; name: string; matchupIndex: number }[] = [];
+                            const awayCandidates: { id: string; name: string; matchupIndex: number; playerIdx: number }[] = [];
                             matchups.forEach((m, idx) => {
                               const ids = (m as any).away_player_ids;
                               const names = (m as any).away_player_names;
                               if (ids && ids.length > 0) {
                                 ids.forEach((id: string, pIdx: number) => {
-                                  awayCandidates.push({ id, name: names?.[pIdx] || id, matchupIndex: idx });
+                                  awayCandidates.push({ id, name: names?.[pIdx] || id, matchupIndex: idx, playerIdx: pIdx });
                                 });
                               } else if (m.away_player_id) {
-                                awayCandidates.push({ id: m.away_player_id, name: m.away_player_name, matchupIndex: idx });
+                                awayCandidates.push({ id: m.away_player_id, name: m.away_player_name, matchupIndex: idx, playerIdx: 0 });
                               }
                             });
 
                             return awayCandidates.map((cand, cIdx) => {
                               const isSelected = motmPlayerId === cand.id;
-                              const goals = matchResults[cand.matchupIndex]?.away_goals ?? 0;
-                              const conceded = matchResults[cand.matchupIndex]?.home_goals ?? 0;
+                              const mr = matchResults[cand.matchupIndex];
+                              const goals = Array.isArray(mr?.away_player_goals) && mr.away_player_goals[cand.playerIdx] !== undefined
+                                ? mr.away_player_goals[cand.playerIdx]
+                                : (mr?.away_goals ?? 0);
+                              const conceded = mr?.home_goals ?? 0;
                               const awayMatch = awaySquadById.get(cand.id) || awaySquadByName.get(cand.name?.toLowerCase());
                               const category = awayMatch?.category;
 
@@ -4107,10 +4328,14 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                         const displayPlayerName = isHome
                           ? (hNames[hIdx] || selectedPlayer.home_player_name)
                           : (aNames[aIdx] || selectedPlayer.away_player_name);
-                        const goals = isHome ? (matchResults[idx]?.home_goals ?? 0) : (matchResults[idx]?.away_goals ?? 0);
-                        const conceded = isHome ? (matchResults[idx]?.away_goals ?? 0) : (matchResults[idx]?.home_goals ?? 0);
-                        const won = goals > conceded;
-                        const draw = goals === conceded;
+                        const mr = matchResults[idx];
+                        const goals = isHome
+                          ? (Array.isArray(mr?.home_player_goals) && mr.home_player_goals[hIdx] !== undefined ? mr.home_player_goals[hIdx] : (mr?.home_goals ?? 0))
+                          : (Array.isArray(mr?.away_player_goals) && mr.away_player_goals[aIdx] !== undefined ? mr.away_player_goals[aIdx] : (mr?.away_goals ?? 0));
+                        const teamScored = isHome ? (mr?.home_goals ?? 0) : (mr?.away_goals ?? 0);
+                        const conceded = isHome ? (mr?.away_goals ?? 0) : (mr?.home_goals ?? 0);
+                        const won = teamScored > conceded;
+                        const draw = teamScored === conceded;
 
                         return (
                           <div className="mt-3 p-3 bg-yellow-100 border border-yellow-400 rounded-lg">
@@ -4159,10 +4384,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
 
                         setIsSaving(true);
                         try {
-                          // Save matchup results (goals only)
+                          // Save matchup results (including Co-op per-player goals when present)
                           const results = matchups.map((m, idx) => ({
                             position: m.position,
                             ...(isTT && (m as any).match_mode ? { match_mode: (m as any).match_mode } : {}),
+                            ...(matchResults[idx]?.home_player_goals ? { home_player_goals: matchResults[idx].home_player_goals } : {}),
+                            ...(matchResults[idx]?.away_player_goals ? { away_player_goals: matchResults[idx].away_player_goals } : {}),
                             home_goals: matchResults[idx]?.home_goals ?? 0,
                             away_goals: matchResults[idx]?.away_goals ?? 0,
                           }));
@@ -4418,6 +4645,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           const results = matchups.map((m, idx) => ({
                             position: m.position,
                             ...(isTT && (m as any).match_mode ? { match_mode: (m as any).match_mode } : {}),
+                            ...(matchResults[idx]?.home_player_goals ? { home_player_goals: matchResults[idx].home_player_goals } : {}),
+                            ...(matchResults[idx]?.away_player_goals ? { away_player_goals: matchResults[idx].away_player_goals } : {}),
                             home_goals: matchResults[idx]?.home_goals ?? 0,
                             away_goals: matchResults[idx]?.away_goals ?? 0,
                           }));
@@ -4878,14 +5107,26 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                             </div>
                             {/* Performance statistics line when result is recorded */}
                             {hasResult && (
-                              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                              <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold">{matchup.home_player_name}:</span>
-                                  <span>{matchup.home_goals} goals</span>
+                                  <span className="font-semibold">
+                                    {Array.isArray(matchup.home_player_goals) && matchup.home_player_goals.length > 0
+                                      ? (matchup.home_player_names || []).map((n, i) => `${n}: ${matchup.home_player_goals?.[i] ?? 0}G`).join(' • ')
+                                      : `${matchup.home_player_name}:`}
+                                  </span>
+                                  {!(Array.isArray(matchup.home_player_goals) && matchup.home_player_goals.length > 0) && (
+                                    <span>{matchup.home_goals} goals</span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold">{matchup.away_player_name}:</span>
-                                  <span>{matchup.away_goals} goals</span>
+                                  <span className="font-semibold">
+                                    {Array.isArray(matchup.away_player_goals) && matchup.away_player_goals.length > 0
+                                      ? (matchup.away_player_names || []).map((n, i) => `${n}: ${matchup.away_player_goals?.[i] ?? 0}G`).join(' • ')
+                                      : `${matchup.away_player_name}:`}
+                                  </span>
+                                  {!(Array.isArray(matchup.away_player_goals) && matchup.away_player_goals.length > 0) && (
+                                    <span>{matchup.away_goals} goals</span>
+                                  )}
                                 </div>
                               </div>
                             )}

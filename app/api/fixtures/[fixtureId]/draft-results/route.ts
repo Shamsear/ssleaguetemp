@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { calculateTripleThreatFixture, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+import {
+  calculateTripleThreatFixture,
+  normalizeResultGoals,
+  resolveTripleThreatMode,
+} from '@/lib/tournament/triple-threat-engine';
 
 /**
  * PUT /api/fixtures/[fixtureId]/draft-results
@@ -26,13 +30,20 @@ export async function PUT(
 
     console.log(`💾 Saving draft results for fixture ${fixtureId}`);
 
-    // Update match results in matchups (goals only, no status changes)
-    for (const result of results) {
+    // Normalize & update match results in matchups (summing per-player Co-op goals when provided)
+    const normalizedResults = results.map((result: any) => ({
+      ...result,
+      ...normalizeResultGoals(result),
+    }));
+
+    for (const result of normalizedResults) {
       await sql`
         UPDATE matchups
         SET 
           home_goals = ${result.home_goals},
           away_goals = ${result.away_goals},
+          home_player_goals = ${result.home_player_goals},
+          away_player_goals = ${result.away_player_goals},
           result_entered_by = ${entered_by},
           result_entered_at = NOW(),
           updated_at = NOW()
@@ -68,7 +79,7 @@ export async function PUT(
         if (m.match_mode) modeByPos.set(m.position, m.match_mode);
       });
       const ttResult = calculateTripleThreatFixture(
-        results.map((r: any) => ({
+        normalizedResults.map((r: any) => ({
           position: r.position,
           mode: resolveTripleThreatMode({
             mode: r.match_mode || modeByPos.get(r.position),
@@ -81,7 +92,7 @@ export async function PUT(
       totalHomeScore = ttResult.home_total_points;
       totalAwayScore = ttResult.away_total_points;
     } else {
-      for (const result of results) {
+      for (const result of normalizedResults) {
         totalHomeScore += result.home_goals;
         totalAwayScore += result.away_goals;
       }

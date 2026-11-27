@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { adminDb } from '@/lib/neon/admin-db-wrapper';
+import {
+  calculateAverageCategoryPoints,
+  resolveSideGoalBreakdown,
+} from '@/lib/tournament/triple-threat-engine';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -22,7 +25,6 @@ export async function GET(request: NextRequest) {
 
     const seasonNum = parseInt(season_id.replace(/\D/g, '')) || 0;
     const usesCategoryPoints = seasonNum >= 18;
-    const isModern = seasonNum === 16 || seasonNum === 17;
 
     // First, get the actual player_id from the correct table
     let playerInfo;
@@ -49,222 +51,108 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const actualPlayerId = playerInfo[0].player_id;
+    const actualPlayerId = String(playerInfo[0].player_id);
 
-    // Get matchday-by-matchday stats for the player using the actual player_id
-    let rawMatchdayStats;
-    if (usesCategoryPoints) {
-      rawMatchdayStats = await sql`
-        WITH player_matches AS (
-          SELECT 
-            m.fixture_id,
-            m.round_number,
-            m.home_player_id,
-            m.away_player_id,
-            m.home_goals,
-            m.away_goals,
-            m.home_player_name,
-            m.away_player_name,
-            f.home_team_name,
-            f.away_team_name,
-            f.status,
-            CASE 
-              WHEN m.home_player_id = ${actualPlayerId} THEN 'home'
-              WHEN m.away_player_id = ${actualPlayerId} THEN 'away'
-            END as player_side,
-            CASE 
-              WHEN m.home_player_id = ${actualPlayerId} THEN m.home_goals
-              WHEN m.away_player_id = ${actualPlayerId} THEN m.away_goals
-            END as goals_scored,
-            CASE 
-              WHEN m.home_player_id = ${actualPlayerId} THEN m.away_goals
-              WHEN m.away_player_id = ${actualPlayerId} THEN m.home_goals
-            END as goals_conceded,
-            CASE
-              WHEN m.home_player_id = ${actualPlayerId} AND m.home_substituted = true THEN true
-              WHEN m.away_player_id = ${actualPlayerId} AND m.away_substituted = true THEN true
-              ELSE false
-            END as was_substitute,
-            COALESCE(m.is_null, false) as is_null
-          FROM matchups m
-          JOIN fixtures f ON m.fixture_id = f.id
-          WHERE m.season_id = ${season_id}
-          AND (
-            m.home_player_id = ${actualPlayerId} 
-            OR m.away_player_id = ${actualPlayerId}
-          )
-          AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
-          AND m.home_goals IS NOT NULL
-          AND m.away_goals IS NOT NULL
+    // Fetch matchups involving this player (covers both 1v1 scalar IDs and Co-op 2v2 player_ids arrays)
+    const rawMatchups = await sql`
+      SELECT 
+        m.*,
+        f.home_team_name,
+        f.away_team_name,
+        f.status,
+        rps_home.category as home_category,
+        rps_away.category as away_category
+      FROM matchups m
+      JOIN fixtures f ON m.fixture_id = f.id
+      LEFT JOIN realplayerstats rps_home ON m.home_player_id = rps_home.player_id AND rps_home.season_id = ${season_id}
+      LEFT JOIN realplayerstats rps_away ON m.away_player_id = rps_away.player_id AND rps_away.season_id = ${season_id}
+      WHERE m.season_id = ${season_id}
+        AND (
+          m.home_player_id = ${actualPlayerId}
+          OR m.away_player_id = ${actualPlayerId}
+          OR ${actualPlayerId} = ANY(COALESCE(m.home_player_ids, ARRAY[]::text[]))
+          OR ${actualPlayerId} = ANY(COALESCE(m.away_player_ids, ARRAY[]::text[]))
         )
-        SELECT 
-          pm.round_number as matchday,
-          pm.fixture_id,
-          pm.player_side,
-          pm.home_team_name,
-          pm.away_team_name,
-          pm.home_player_name,
-          pm.away_player_name,
-          pm.goals_scored,
-          pm.goals_conceded,
-          (pm.goals_scored - pm.goals_conceded) as goal_difference,
-          pm.was_substitute,
-          pm.is_null,
-          p_home.category as home_category,
-          p_away.category as away_category
-        FROM player_matches pm
-        LEFT JOIN realplayerstats p_home ON pm.home_player_id = p_home.player_id AND p_home.season_id = ${season_id}
-        LEFT JOIN realplayerstats p_away ON pm.away_player_id = p_away.player_id AND p_away.season_id = ${season_id}
-        WHERE pm.player_side IS NOT NULL
-        ORDER BY pm.round_number ASC
-      `;
-    } else {
-      rawMatchdayStats = await sql`
-        WITH player_matches AS (
-          SELECT 
-            m.fixture_id,
-            m.round_number,
-            m.home_player_id,
-            m.away_player_id,
-            m.home_goals,
-            m.away_goals,
-            m.home_player_name,
-            m.away_player_name,
-            f.home_team_name,
-            f.away_team_name,
-            f.status,
-            CASE 
-              WHEN m.home_player_id = ${actualPlayerId} THEN 'home'
-              WHEN m.away_player_id = ${actualPlayerId} THEN 'away'
-            END as player_side,
-            CASE 
-              WHEN m.home_player_id = ${actualPlayerId} THEN m.home_goals
-              WHEN m.away_player_id = ${actualPlayerId} THEN m.away_goals
-            END as goals_scored,
-            CASE 
-              WHEN m.home_player_id = ${actualPlayerId} THEN m.away_goals
-              WHEN m.away_player_id = ${actualPlayerId} THEN m.home_goals
-            END as goals_conceded,
-            CASE
-              WHEN m.home_player_id = ${actualPlayerId} AND m.home_substituted = true THEN true
-              WHEN m.away_player_id = ${actualPlayerId} AND m.away_substituted = true THEN true
-              ELSE false
-            END as was_substitute,
-            COALESCE(m.is_null, false) as is_null
-          FROM matchups m
-          JOIN fixtures f ON m.fixture_id = f.id
-          WHERE m.season_id = ${season_id}
-          AND (
-            m.home_player_id = ${actualPlayerId} 
-            OR m.away_player_id = ${actualPlayerId}
-          )
-          AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
-          AND m.home_goals IS NOT NULL
-          AND m.away_goals IS NOT NULL
-        )
-        SELECT 
-          pm.round_number as matchday,
-          pm.fixture_id,
-          pm.player_side,
-          pm.home_team_name,
-          pm.away_team_name,
-          pm.home_player_name,
-          pm.away_player_name,
-          pm.goals_scored,
-          pm.goals_conceded,
-          (pm.goals_scored - pm.goals_conceded) as goal_difference,
-          CASE 
-            WHEN pm.is_null = true THEN 0
-            WHEN (pm.goals_scored - pm.goals_conceded) > 5 THEN 5
-            WHEN (pm.goals_scored - pm.goals_conceded) < -5 THEN -5
-            ELSE (pm.goals_scored - pm.goals_conceded)
-          END as points,
-          pm.was_substitute,
-          pm.is_null
-        FROM player_matches pm
-        WHERE pm.player_side IS NOT NULL
-        ORDER BY pm.round_number ASC
-      `;
-    }
+        AND (f.status = 'completed' OR f.status = 'cancelled' OR f.result = 'null')
+        AND m.home_goals IS NOT NULL
+        AND m.away_goals IS NOT NULL
+      ORDER BY m.round_number ASC
+    `;
 
-    let matchdayStats = rawMatchdayStats;
-
+    // Map all player categories for exact Co-op opponent category lookup
+    const playerCategoryMap = new Map<string, string>();
     if (usesCategoryPoints) {
-      // Fetch Firestore categories to calculate category points dynamically
-      const categoriesSnapshot = await adminDb.collection('categories').get();
-      const categoriesMap = new Map();
-      categoriesSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        categoriesMap.set(doc.id.toLowerCase(), data);
-        if (data.name) {
-          categoriesMap.set(data.name.toLowerCase(), data);
+      const catRows = await sql`
+        SELECT player_id, category FROM realplayerstats WHERE season_id = ${season_id}
+      `;
+      catRows.forEach((r: any) => {
+        if (r.player_id && r.category) {
+          playerCategoryMap.set(String(r.player_id), String(r.category));
         }
       });
+    }
 
-      const getCategoryConfig = (catStr: string) => {
-        const c = (catStr || '').trim().toLowerCase();
-        if (categoriesMap.has(c)) return categoriesMap.get(c);
-        if (c.includes('red') || c.includes('legend') || c === 'r') return categoriesMap.get('red') || categoriesMap.get('cat_red') || { priority: 1, name: 'Red' };
-        if (c.includes('black') || c.includes('elite')) return categoriesMap.get('black') || categoriesMap.get('cat_black') || { priority: 2, name: 'Black' };
-        if (c.includes('blue') || c.includes('pro') || c === 'b') return categoriesMap.get('blue') || categoriesMap.get('cat_blue') || { priority: 3, name: 'Blue' };
-        if (c.includes('white') || c.includes('amateur') || c === 'w') return categoriesMap.get('white') || categoriesMap.get('cat_white') || { priority: 4, name: 'White' };
-        return { priority: 1, name: 'Red' };
-      };
+    const matchdayStats = rawMatchups.map((m: any) => {
+      const homeSide = resolveSideGoalBreakdown(m, 'home');
+      const awaySide = resolveSideGoalBreakdown(m, 'away');
+      const homeEntry = homeSide.players.find((p) => p.id === actualPlayerId);
+      const isHome = !!homeEntry;
+      const ownEntry = isHome ? homeEntry! : awaySide.players.find((p) => p.id === actualPlayerId);
 
-      const getPointsForOpponentCategory = (oppCategory: string, outcome: string) => {
-        const cat = (oppCategory || '').toLowerCase();
-        if (cat.includes('red') || cat === 'r') {
-          if (outcome === 'win') return 8;
-          if (outcome === 'draw') return 4;
-          return -3;
-        }
-        if (cat.includes('black')) {
-          if (outcome === 'win') return 7;
-          if (outcome === 'draw') return 3;
-          return -4;
-        }
-        if (cat.includes('blue') || cat === 'b') {
-          if (outcome === 'win') return 6;
-          if (outcome === 'draw') return 2;
-          return -5;
-        }
-        if (cat.includes('white') || cat === 'w') {
-          if (outcome === 'win') return 5;
-          if (outcome === 'draw') return 1;
-          return -6;
-        }
-        if (outcome === 'win') return 8;
-        if (outcome === 'draw') return 4;
-        return -3;
-      };
+      const goalsScored = ownEntry ? ownEntry.goalsScored : (isHome ? homeSide.teamGoalsScored : awaySide.teamGoalsScored);
+      const teamGoalsScored = isHome ? homeSide.teamGoalsScored : awaySide.teamGoalsScored;
+      const goalsConceded = isHome ? homeSide.teamGoalsConceded : awaySide.teamGoalsConceded;
+      const goalDifference = goalsScored - goalsConceded;
+      const teamGD = teamGoalsScored - goalsConceded;
+      const isNull = Boolean(m.is_null);
 
-      matchdayStats = rawMatchdayStats.map((match: any) => {
-        const rawOppCat = (match.player_side === 'home' ? match.away_category : match.home_category) || 'Red';
-        const oppCat = String(rawOppCat).replace(/^cat_/i, '').trim();
-        if (match.is_null) {
-          return {
-            ...match,
-            opponent_category: oppCat.toUpperCase(),
-            points_reason: 'NULL MATCHUP (EXCLUDED - 0 Pts)',
-            points: 0
-          };
-        }
+      const oppEntries = isHome ? awaySide.players : homeSide.players;
+      const oppCats = oppEntries.map(
+        (op) =>
+          playerCategoryMap.get(op.id) ||
+          (isHome ? m.away_category : m.home_category) ||
+          'Red'
+      );
+      const formattedOppCat = oppCats
+        .map((c) => String(c).replace(/^cat_/i, '').trim().toUpperCase())
+        .join(' & ');
 
-        const gd = match.goals_scored - match.goals_conceded;
-        const res = gd > 0 ? 'win' : (gd === 0 ? 'draw' : 'loss');
+      let points = 0;
+      let pointsReason = '';
 
-        const points = getPointsForOpponentCategory(oppCat, res);
+      if (isNull) {
+        points = 0;
+        pointsReason = 'NULL MATCHUP (EXCLUDED - 0 Pts)';
+      } else if (usesCategoryPoints) {
+        const res: 'win' | 'draw' | 'loss' = teamGD > 0 ? 'win' : teamGD === 0 ? 'draw' : 'loss';
+        points = calculateAverageCategoryPoints(oppCats, res);
         const sign = points >= 0 ? `+${points}` : `${points}`;
-        const pointsReason = `${res.toUpperCase()} VS ${oppCat.toUpperCase()} (${sign} Pts)`;
+        pointsReason = `${res.toUpperCase()} VS ${formattedOppCat} (${sign} Pts)`;
+      } else {
+        const gd = goalsScored - goalsConceded;
+        points = gd > 5 ? 5 : gd < -5 ? -5 : gd;
+      }
 
-        return {
-          ...match,
-          opponent_category: oppCat.toUpperCase(),
-          points_reason: pointsReason,
-          points
-        };
-      });
-    }
+      return {
+        matchday: m.round_number,
+        fixture_id: m.fixture_id,
+        player_side: isHome ? 'home' : 'away',
+        home_team_name: m.home_team_name,
+        away_team_name: m.away_team_name,
+        home_player_name: m.home_player_name,
+        away_player_name: m.away_player_name,
+        goals_scored: goalsScored,
+        goals_conceded: goalsConceded,
+        goal_difference: goalDifference,
+        was_substitute: isHome ? Boolean(m.home_substituted) : Boolean(m.away_substituted),
+        is_null: isNull,
+        home_category: m.home_category,
+        away_category: m.away_category,
+        opponent_category: formattedOppCat,
+        ...(pointsReason ? { points_reason: pointsReason } : {}),
+        points,
+      };
+    });
 
     // Calculate total points based on calculated/mapped matchday points (excluding null matches)
     const totalPoints = matchdayStats.reduce((sum: number, match: any) => sum + (match.is_null ? 0 : (match.points || 0)), 0);

@@ -5,7 +5,11 @@ import { triggerNews } from '@/lib/news/trigger';
 import { triggerPlayerOfMatchPoll } from '@/lib/polls/auto-trigger';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
-import { calculateTripleThreatFixture, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+import {
+  calculateTripleThreatFixture,
+  normalizeResultGoals,
+  resolveTripleThreatMode,
+} from '@/lib/tournament/triple-threat-engine';
 
 /**
  * Revert match rewards that were previously distributed
@@ -345,9 +349,14 @@ export async function PATCH(
     `;
 
 
-    // Step 3: Update matchups with new scores and sub penalties
+    // Step 3: Normalize per-player Co-op goals & update matchups with new scores and sub penalties
     console.log('Updating matchups...');
-    for (const matchup of matchups) {
+    const normalizedMatchups = matchups.map((m: any) => ({
+      ...m,
+      ...normalizeResultGoals(m),
+    }));
+
+    for (const matchup of normalizedMatchups) {
       const hasHomeSubPenalty = matchup.home_sub_penalty !== undefined;
       const hasAwaySubPenalty = matchup.away_sub_penalty !== undefined;
 
@@ -356,6 +365,8 @@ export async function PATCH(
         SET 
           home_goals = ${matchup.home_goals},
           away_goals = ${matchup.away_goals},
+          home_player_goals = ${matchup.home_player_goals},
+          away_player_goals = ${matchup.away_player_goals},
           home_sub_penalty = ${hasHomeSubPenalty ? matchup.home_sub_penalty : sql`home_sub_penalty`},
           away_sub_penalty = ${hasAwaySubPenalty ? matchup.away_sub_penalty : sql`away_sub_penalty`},
           updated_at = NOW()
@@ -364,9 +375,10 @@ export async function PATCH(
       `;
     }
 
-    // Fetch updated matchups to get fresh sub penalties and match_mode
+    // Fetch updated matchups to get fresh sub penalties, match_mode, and Co-op player IDs
     const updatedMatchupsRes = await sql`
-      SELECT position, match_mode, home_sub_penalty, away_sub_penalty FROM matchups WHERE fixture_id = ${fixtureId}
+      SELECT position, match_mode, home_player_id, away_player_id, home_player_ids, away_player_ids, home_sub_penalty, away_sub_penalty
+      FROM matchups WHERE fixture_id = ${fixtureId}
     `;
     const dbModeByPos = new Map<number, string>();
     updatedMatchupsRes.forEach((um: any) => {
@@ -385,7 +397,7 @@ export async function PATCH(
 
     if (isTripleThreat) {
       const ttResult = calculateTripleThreatFixture(
-        matchups.map((m: any) => ({
+        normalizedMatchups.map((m: any) => ({
           position: m.position,
           mode: resolveTripleThreatMode({
             mode: m.match_mode || dbModeByPos.get(m.position),
@@ -419,8 +431,8 @@ export async function PATCH(
         `;
       }
     } else {
-      const matchupHomeGoals = matchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
-      const matchupAwayGoals = matchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
+      const matchupHomeGoals = normalizedMatchups.reduce((sum: number, m: any) => sum + (m.home_goals || 0), 0);
+      const matchupAwayGoals = normalizedMatchups.reduce((sum: number, m: any) => sum + (m.away_goals || 0), 0);
 
       // Get sub penalties from updated matchups
       const totalHomeSubPenalty = updatedMatchupsRes.reduce((sum: number, m: any) => sum + (Number(m.home_sub_penalty) || 0), 0);
@@ -477,9 +489,17 @@ export async function PATCH(
     let finalMotmPlayerName: string | null = motm_player_name !== undefined ? (motm_player_name || null) : (fixture.motm_player_name || null);
 
     if (finalMotmPlayerId) {
-      const motmStillInMatch = matchups.some(
-        (m: any) => m.home_player_id === finalMotmPlayerId || m.away_player_id === finalMotmPlayerId
-      );
+      const checkSources = [...normalizedMatchups, ...updatedMatchupsRes, ...oldMatchups];
+      const motmStillInMatch = checkSources.some((m: any) => {
+        const hIds: string[] = Array.isArray(m.home_player_ids) ? m.home_player_ids.map(String) : [];
+        const aIds: string[] = Array.isArray(m.away_player_ids) ? m.away_player_ids.map(String) : [];
+        return (
+          String(m.home_player_id) === String(finalMotmPlayerId) ||
+          String(m.away_player_id) === String(finalMotmPlayerId) ||
+          hIds.includes(String(finalMotmPlayerId)) ||
+          aIds.includes(String(finalMotmPlayerId))
+        );
+      });
       if (!motmStillInMatch) {
         console.log(`⚠️  MOTM player ${finalMotmPlayerName} is not in match - clearing MOTM`);
         finalMotmPlayerId = null;
@@ -564,7 +584,7 @@ export async function PATCH(
           fixture_id: fixtureId,
           season_id: seasonId,
           old_matchups: oldMatchups,
-          new_matchups: matchups,
+          new_matchups: normalizedMatchups,
         })
       });
 
@@ -595,7 +615,7 @@ export async function PATCH(
           home_penalty_goals: homePenaltyGoalsVal,
           away_penalty_goals: awayPenaltyGoalsVal,
           scoring_type: isTripleThreat ? 'triple_threat' : 'goals',
-          matchups: matchups,
+          matchups: normalizedMatchups,
           is_edit: true  // Flag to indicate this is an edit
         })
       });
@@ -689,7 +709,7 @@ export async function PATCH(
             home_score: totalHomeScore,
             away_score: totalAwayScore,
             result: newResult,
-            matchups: matchups
+            matchups: normalizedMatchups
           },
           edit_reason: edit_reason || 'Result edited by committee admin',
           season_id: fixture.season_id,

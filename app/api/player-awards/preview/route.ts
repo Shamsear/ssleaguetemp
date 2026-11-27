@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
+import { aggregateMatchupAwardStats } from '@/lib/tournament/triple-threat-engine';
 
 // POST - Preview player awards based on tournament statistics
 export async function POST(request: NextRequest) {
@@ -19,109 +20,55 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Previewing player awards for tournament ${tournament_id}...`);
 
+    let matchupAwardStats: ReturnType<typeof aggregateMatchupAwardStats> | null = null;
+    if (award_types.includes('Golden Boot') || award_types.includes('Golden Glove')) {
+      const tournamentMatchups = await sql`
+        SELECT * FROM matchups
+        WHERE tournament_id = ${tournament_id}
+          AND season_id = ${season_id}
+          AND home_goals IS NOT NULL
+          AND away_goals IS NOT NULL
+          AND (is_null IS NOT TRUE)
+      `;
+      matchupAwardStats = aggregateMatchupAwardStats(tournamentMatchups);
+    }
+
     for (const awardType of award_types) {
       console.log(`  📊 Previewing ${awardType}...`);
 
       if (awardType === 'Golden Boot') {
-        // Top goal scorer - aggregate from matchups (home + away)
-        const topScorer = await sql`
-          WITH player_goals AS (
-            SELECT 
-              home_player_id as player_id,
-              home_player_name as player_name,
-              SUM(home_goals) as total_goals
-            FROM matchups
-            WHERE tournament_id = ${tournament_id}
-              AND season_id = ${season_id}
-            GROUP BY home_player_id, home_player_name
-            
-            UNION ALL
-            
-            SELECT 
-              away_player_id as player_id,
-              away_player_name as player_name,
-              SUM(away_goals) as total_goals
-            FROM matchups
-            WHERE tournament_id = ${tournament_id}
-              AND season_id = ${season_id}
-            GROUP BY away_player_id, away_player_name
-          )
-          SELECT 
-            player_id,
-            player_name,
-            SUM(total_goals) as total_goals
-          FROM player_goals
-          GROUP BY player_id, player_name
-          ORDER BY total_goals DESC
-          LIMIT 1
-        `;
+        const topScorer = [...(matchupAwardStats || [])]
+          .sort((a, b) => b.total_goals - a.total_goals)[0];
 
-        if (topScorer.length > 0) {
+        if (topScorer) {
           preview.push({
             award_type: 'Golden Boot',
             award_category: 'individual',
             award_position: 'Winner',
-            player_id: topScorer[0].player_id,
-            player_name: topScorer[0].player_name,
+            player_id: topScorer.player_id,
+            player_name: topScorer.player_name,
             player_category: null,
-            stats: { goals: topScorer[0].total_goals }
+            stats: { goals: topScorer.total_goals }
           });
         }
       } else if (awardType === 'Golden Glove') {
-        // Best goalkeeper (lowest goals conceded per match)
-        const topKeeper = await sql`
-          WITH keeper_stats AS (
-            SELECT 
-              home_player_id as player_id,
-              home_player_name as player_name,
-              COUNT(*) as matches_played,
-              SUM(away_goals) as goals_conceded,
-              SUM(CASE WHEN away_goals = 0 THEN 1 ELSE 0 END) as clean_sheets
-            FROM matchups
-            WHERE tournament_id = ${tournament_id}
-              AND season_id = ${season_id}
-            GROUP BY home_player_id, home_player_name
-            
-            UNION ALL
-            
-            SELECT 
-              away_player_id as player_id,
-              away_player_name as player_name,
-              COUNT(*) as matches_played,
-              SUM(home_goals) as goals_conceded,
-              SUM(CASE WHEN home_goals = 0 THEN 1 ELSE 0 END) as clean_sheets
-            FROM matchups
-            WHERE tournament_id = ${tournament_id}
-              AND season_id = ${season_id}
-            GROUP BY away_player_id, away_player_name
-          )
-          SELECT 
-            player_id,
-            player_name,
-            SUM(matches_played) as total_matches,
-            SUM(goals_conceded) as total_goals_conceded,
-            SUM(clean_sheets) as total_clean_sheets,
-            CAST(SUM(goals_conceded) AS FLOAT) / NULLIF(SUM(matches_played), 0) as goals_per_match
-          FROM keeper_stats
-          GROUP BY player_id, player_name
-          HAVING SUM(matches_played) >= 5
-          ORDER BY goals_per_match ASC, total_clean_sheets DESC
-          LIMIT 1
-        `;
+        const topKeeper = [...(matchupAwardStats || [])]
+          .filter((p) => p.matches_played >= 5)
+          .sort((a, b) => a.goals_per_match - b.goals_per_match || b.clean_sheets - a.clean_sheets)[0];
 
-        if (topKeeper.length > 0) {
+        if (topKeeper) {
           preview.push({
             award_type: 'Golden Glove',
             award_category: 'individual',
             award_position: 'Winner',
-            player_id: topKeeper[0].player_id,
-            player_name: topKeeper[0].player_name,
+            player_id: topKeeper.player_id,
+            player_name: topKeeper.player_name,
             player_category: null,
             stats: { 
-              goals_conceded: topKeeper[0].total_goals_conceded,
-              matches: topKeeper[0].total_matches,
-              goals_per_match: parseFloat(topKeeper[0].goals_per_match).toFixed(2),
-              clean_sheets: topKeeper[0].total_clean_sheets
+              goals_conceded: topKeeper.goals_conceded,
+              matches: topKeeper.matches_played,
+              goals_per_match: topKeeper.goals_per_match.toFixed(2),
+              clean_sheets: topKeeper.clean_sheets
             }
           });
         }

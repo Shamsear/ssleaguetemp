@@ -35,6 +35,8 @@ interface Matchup {
   home_player_names?: string[];
   away_player_ids?: string[];
   away_player_names?: string[];
+  home_player_goals?: number[] | null;
+  away_player_goals?: number[] | null;
   points_awarded_home?: number;
   points_awarded_away?: number;
   bonus_awarded_home?: number;
@@ -95,7 +97,9 @@ export default function CommitteeFixtureDetailPage() {
   const [showMatchupCreator, setShowMatchupCreator] = useState(false);
   const [showLineupEditor, setShowLineupEditor] = useState<'home' | 'away' | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedScores, setEditedScores] = useState<{ [key: number]: { home: number, away: number } }>({});
+  const [editedScores, setEditedScores] = useState<{
+    [key: number]: { home: number; away: number; homePlayers?: number[]; awayPlayers?: number[] };
+  }>({});
   const [editedSubPenalties, setEditedSubPenalties] = useState<{ [key: number]: { home: number, away: number } }>({});
   const [motmPlayerId, setMotmPlayerId] = useState<string | null>(null);
   const [motmPlayerName, setMotmPlayerName] = useState<string | null>(null);
@@ -164,14 +168,37 @@ export default function CommitteeFixtureDetailPage() {
       if (matchupsData.matchups) {
         setMatchups(matchupsData.matchups);
 
-        // Initialize edited scores and sub penalties
-        const scores: { [key: number]: { home: number, away: number } } = {};
+        // Initialize edited scores and sub penalties (with per-player arrays for Co-op 2v2)
+        const scores: { [key: number]: { home: number; away: number; homePlayers?: number[]; awayPlayers?: number[] } } = {};
         const subPenalties: { [key: number]: { home: number, away: number } } = {};
         matchupsData.matchups.forEach((m: Matchup) => {
-          scores[m.position] = {
-            home: m.home_goals ?? 0,
-            away: m.away_goals ?? 0
-          };
+          const isCoop =
+            resolveTripleThreatMode(m) === 'coop' ||
+            (m.home_player_ids?.length || 0) > 1 ||
+            (m.away_player_ids?.length || 0) > 1;
+          if (isCoop) {
+            const hLen = Math.max(m.home_player_ids?.length || 0, 2);
+            const aLen = Math.max(m.away_player_ids?.length || 0, 2);
+            const homePlayers =
+              Array.isArray(m.home_player_goals) && m.home_player_goals.length === hLen
+                ? m.home_player_goals.map((g) => Number(g ?? 0))
+                : Array.from({ length: hLen }, (_, i) => (i === 0 ? (m.home_goals ?? 0) : 0));
+            const awayPlayers =
+              Array.isArray(m.away_player_goals) && m.away_player_goals.length === aLen
+                ? m.away_player_goals.map((g) => Number(g ?? 0))
+                : Array.from({ length: aLen }, (_, i) => (i === 0 ? (m.away_goals ?? 0) : 0));
+            scores[m.position] = {
+              home: homePlayers.reduce((a, b) => a + b, 0),
+              away: awayPlayers.reduce((a, b) => a + b, 0),
+              homePlayers,
+              awayPlayers,
+            };
+          } else {
+            scores[m.position] = {
+              home: m.home_goals ?? 0,
+              away: m.away_goals ?? 0,
+            };
+          }
           subPenalties[m.position] = {
             home: m.home_sub_penalty ?? 0,
             away: m.away_sub_penalty ?? 0
@@ -448,33 +475,49 @@ export default function CommitteeFixtureDetailPage() {
 
     setIsSaving(true);
     try {
-      // Find selected MOTM player name if set
+      // Find selected MOTM player name if set (supports Co-op home_player_ids / away_player_ids)
       let selMotmName = motmPlayerName;
       if (motmPlayerId) {
         for (const m of matchups) {
-          if (m.home_player_id === motmPlayerId) {
-            selMotmName = m.home_player_name;
+          const hIds = m.home_player_ids?.length ? m.home_player_ids : (m.home_player_id ? [m.home_player_id] : []);
+          const hNames = m.home_player_names?.length ? m.home_player_names : (m.home_player_name ? [m.home_player_name] : []);
+          const hIdx = hIds.indexOf(motmPlayerId);
+          if (hIdx !== -1) {
+            selMotmName = hNames[hIdx] || m.home_player_name;
             break;
           }
-          if (m.away_player_id === motmPlayerId) {
-            selMotmName = m.away_player_name;
+          const aIds = m.away_player_ids?.length ? m.away_player_ids : (m.away_player_id ? [m.away_player_id] : []);
+          const aNames = m.away_player_names?.length ? m.away_player_names : (m.away_player_name ? [m.away_player_name] : []);
+          const aIdx = aIds.indexOf(motmPlayerId);
+          if (aIdx !== -1) {
+            selMotmName = aNames[aIdx] || m.away_player_name;
             break;
           }
         }
       }
 
-      // Prepare edited matchups with scores and sub penalties
-      const editedMatchups = matchups.map(m => ({
-        position: m.position,
-        home_player_id: m.home_player_id,
-        home_player_name: m.home_player_name,
-        away_player_id: m.away_player_id,
-        away_player_name: m.away_player_name,
-        home_goals: editedScores[m.position]?.home ?? m.home_goals ?? 0,
-        away_goals: editedScores[m.position]?.away ?? m.away_goals ?? 0,
-        home_sub_penalty: editedSubPenalties[m.position]?.home ?? m.home_sub_penalty ?? 0,
-        away_sub_penalty: editedSubPenalties[m.position]?.away ?? m.away_sub_penalty ?? 0,
-      }));
+      // Prepare edited matchups with scores, Co-op per-player goals, and sub penalties
+      const editedMatchups = matchups.map(m => {
+        const entry = editedScores[m.position];
+        const homePlayers = entry?.homePlayers;
+        const awayPlayers = entry?.awayPlayers;
+        return {
+          position: m.position,
+          home_player_id: m.home_player_id,
+          home_player_name: m.home_player_name,
+          away_player_id: m.away_player_id,
+          away_player_name: m.away_player_name,
+          ...(m.home_player_ids ? { home_player_ids: m.home_player_ids } : {}),
+          ...(m.away_player_ids ? { away_player_ids: m.away_player_ids } : {}),
+          ...(m.match_mode ? { match_mode: m.match_mode } : {}),
+          ...(homePlayers ? { home_player_goals: homePlayers } : {}),
+          ...(awayPlayers ? { away_player_goals: awayPlayers } : {}),
+          home_goals: homePlayers ? homePlayers.reduce((s, g) => s + (Number(g) || 0), 0) : (entry?.home ?? m.home_goals ?? 0),
+          away_goals: awayPlayers ? awayPlayers.reduce((s, g) => s + (Number(g) || 0), 0) : (entry?.away ?? m.away_goals ?? 0),
+          home_sub_penalty: editedSubPenalties[m.position]?.home ?? m.home_sub_penalty ?? 0,
+          away_sub_penalty: editedSubPenalties[m.position]?.away ?? m.away_sub_penalty ?? 0,
+        };
+      });
 
       const response = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/edit-result`, {
         method: 'PATCH',
@@ -1193,55 +1236,164 @@ export default function CommitteeFixtureDetailPage() {
                         )}
                       </div>
                     )}
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                        <p className="font-bold text-slate-800 text-sm truncate">{homeName}</p>
-                        {isHomeMotm && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
-                            <Star className="w-3 h-3 fill-white" /> MOTM
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mx-2 shrink-0">
-                        {isEditMode ? (
-                          <>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editedScores[matchup.position]?.home ?? 0}
-                              onChange={(e) => setEditedScores(prev => ({
-                                ...prev,
-                                [matchup.position]: { ...prev[matchup.position], home: parseInt(e.target.value) || 0 }
-                              }))}
-                              className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                            />
-                            <span className="text-slate-400 font-bold">-</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editedScores[matchup.position]?.away ?? 0}
-                              onChange={(e) => setEditedScores(prev => ({
-                                ...prev,
-                                [matchup.position]: { ...prev[matchup.position], away: parseInt(e.target.value) || 0 }
-                              }))}
-                              className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                            />
-                          </>
-                        ) : (
-                          <span className="px-4 py-1.5 bg-white border border-slate-150 rounded-xl text-sm font-black text-slate-800 font-mono shadow-sm">
-                            {matchup.home_goals ?? '-'} : {matchup.away_goals ?? '-'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 text-right min-w-0 flex items-center justify-end gap-1.5">
-                        {isAwayMotm && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
-                            <Star className="w-3 h-3 fill-white" /> MOTM
-                          </span>
-                        )}
-                        <p className="font-bold text-slate-800 text-sm truncate">{awayName}</p>
-                      </div>
-                    </div>
+                    {(() => {
+                      const isCoopMatch =
+                        (isTT && modeDisplay?.mode === 'coop') ||
+                        (matchup.home_player_ids?.length || 0) > 1 ||
+                        (matchup.away_player_ids?.length || 0) > 1;
+                      const hIds = matchup.home_player_ids?.length ? matchup.home_player_ids : (matchup.home_player_id ? [matchup.home_player_id] : []);
+                      const hNames = matchup.home_player_names?.length ? matchup.home_player_names : [matchup.home_player_name];
+                      const aIds = matchup.away_player_ids?.length ? matchup.away_player_ids : (matchup.away_player_id ? [matchup.away_player_id] : []);
+                      const aNames = matchup.away_player_names?.length ? matchup.away_player_names : [matchup.away_player_name];
+                      const currentEntry = editedScores[matchup.position] || { home: 0, away: 0 };
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                              <p className="font-bold text-slate-800 text-sm truncate">{homeName}</p>
+                              {isHomeMotm && (
+                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
+                                  <Star className="w-3 h-3 fill-white" /> MOTM
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mx-2 shrink-0">
+                              {isEditMode && !isCoopMatch ? (
+                                <>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={editedScores[matchup.position]?.home ?? 0}
+                                    onChange={(e) => setEditedScores(prev => ({
+                                      ...prev,
+                                      [matchup.position]: { ...prev[matchup.position], home: parseInt(e.target.value) || 0 }
+                                    }))}
+                                    className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                  />
+                                  <span className="text-slate-400 font-bold">-</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={editedScores[matchup.position]?.away ?? 0}
+                                    onChange={(e) => setEditedScores(prev => ({
+                                      ...prev,
+                                      [matchup.position]: { ...prev[matchup.position], away: parseInt(e.target.value) || 0 }
+                                    }))}
+                                    className="w-16 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                  />
+                                </>
+                              ) : (
+                                <span className="px-4 py-1.5 bg-white border border-slate-150 rounded-xl text-sm font-black text-slate-800 font-mono shadow-sm">
+                                  {isEditMode ? `${currentEntry.home} : ${currentEntry.away}` : `${matchup.home_goals ?? '-'} : ${matchup.away_goals ?? '-'}`}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 text-right min-w-0 flex items-center justify-end gap-1.5">
+                              {isAwayMotm && (
+                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-2xs shrink-0">
+                                  <Star className="w-3 h-3 fill-white" /> MOTM
+                                </span>
+                              )}
+                              <p className="font-bold text-slate-800 text-sm truncate">{awayName}</p>
+                            </div>
+                          </div>
+
+                          {/* Co-op 2v2 Per-Player Goal Inputs (Edit Mode) or Goal Breakdown (View Mode) */}
+                          {isCoopMatch && isEditMode && (
+                            <div className="mt-3 pt-3 border-t border-indigo-200/70 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="p-2.5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl space-y-2">
+                                <div className="flex items-center justify-between text-[10px] font-mono font-black uppercase text-indigo-800">
+                                  <span>{fixture.home_team_name} Scorers</span>
+                                  <span>Total: {currentEntry.home}</span>
+                                </div>
+                                {hIds.map((pid, pIdx) => {
+                                  const pGoals = currentEntry.homePlayers?.[pIdx] ?? 0;
+                                  return (
+                                    <div key={`committee-coop-h-${pid}-${pIdx}`} className="flex items-center justify-between gap-2">
+                                      <span className="text-xs font-bold text-slate-700 truncate">
+                                        {hNames[pIdx] || `Player ${pIdx + 1}`}
+                                      </span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={pGoals}
+                                        onChange={(e) => {
+                                          const val = Math.max(0, parseInt(e.target.value) || 0);
+                                          setEditedScores(prev => {
+                                            const existing = prev[matchup.position] || { home: 0, away: 0 };
+                                            const nextHome = [...(existing.homePlayers || Array(hIds.length).fill(0))];
+                                            nextHome[pIdx] = val;
+                                            return {
+                                              ...prev,
+                                              [matchup.position]: {
+                                                ...existing,
+                                                homePlayers: nextHome,
+                                                home: nextHome.reduce((a, b) => a + (Number(b) || 0), 0),
+                                              },
+                                            };
+                                          });
+                                        }}
+                                        className="w-16 px-2.5 py-1 bg-white border border-indigo-300 rounded-lg text-center font-bold text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="p-2.5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl space-y-2">
+                                <div className="flex items-center justify-between text-[10px] font-mono font-black uppercase text-indigo-800">
+                                  <span>{fixture.away_team_name} Scorers</span>
+                                  <span>Total: {currentEntry.away}</span>
+                                </div>
+                                {aIds.map((pid, pIdx) => {
+                                  const pGoals = currentEntry.awayPlayers?.[pIdx] ?? 0;
+                                  return (
+                                    <div key={`committee-coop-a-${pid}-${pIdx}`} className="flex items-center justify-between gap-2">
+                                      <span className="text-xs font-bold text-slate-700 truncate">
+                                        {aNames[pIdx] || `Player ${pIdx + 1}`}
+                                      </span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={pGoals}
+                                        onChange={(e) => {
+                                          const val = Math.max(0, parseInt(e.target.value) || 0);
+                                          setEditedScores(prev => {
+                                            const existing = prev[matchup.position] || { home: 0, away: 0 };
+                                            const nextAway = [...(existing.awayPlayers || Array(aIds.length).fill(0))];
+                                            nextAway[pIdx] = val;
+                                            return {
+                                              ...prev,
+                                              [matchup.position]: {
+                                                ...existing,
+                                                awayPlayers: nextAway,
+                                                away: nextAway.reduce((a, b) => a + (Number(b) || 0), 0),
+                                              },
+                                            };
+                                          });
+                                        }}
+                                        className="w-16 px-2.5 py-1 bg-white border border-indigo-300 rounded-lg text-center font-bold text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {isCoopMatch && !isEditMode && (matchup.home_player_goals?.length || matchup.away_player_goals?.length) && (
+                            <div className="mt-2 pt-2 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-600">
+                              <div>
+                                {hNames.map((n, i) => `${n}: ${matchup.home_player_goals?.[i] ?? 0}G`).join(' • ')}
+                              </div>
+                              <div>
+                                {aNames.map((n, i) => `${n}: ${matchup.away_player_goals?.[i] ?? 0}G`).join(' • ')}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                   {/* Sub Penalty Controls in Edit Mode */}
                   {isEditMode && (
