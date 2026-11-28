@@ -381,9 +381,15 @@ export async function POST(
 
     // Get fixture to extract season_id, round_number, and tournament_id
     const fixtures = await sql`
-      SELECT season_id, round_number, tournament_id, home_team_id, away_team_id, home_team_name, away_team_name 
-      FROM fixtures 
-      WHERE id = ${fixtureId} 
+      SELECT
+        f.season_id, f.round_number, f.tournament_id,
+        f.home_team_id, f.away_team_id, f.home_team_name, f.away_team_name,
+        f.scoring_system, f.knockout_format,
+        t.tournament_type, ts.matchday_format
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.id = ${fixtureId}
       LIMIT 1
     `;
 
@@ -396,6 +402,171 @@ export async function POST(
 
     const fixture = fixtures[0];
     const { season_id: seasonId, round_number: roundNumber, tournament_id: tournamentId, home_team_id, away_team_id, home_team_name, away_team_name } = fixture;
+
+    // Special mode: manual pairing of the 2 Duo (2 × 1v1) matchups after Co-op & Single auto-creation
+    if (body.mode === 'triple_threat_duo') {
+      if (matchups.length !== 2) {
+        return NextResponse.json(
+          { error: 'Duo (2 × 1v1) mode requires exactly 2 matchups' },
+          { status: 400 }
+        );
+      }
+
+      const normalizedDuo = matchups.map((m: any, idx: number) => {
+        const homeId = String(m.home_player_id || m.home_player_ids?.[0] || '').trim();
+        const homeName = String(m.home_player_name || m.home_player_names?.[0] || '').trim();
+        const awayId = String(m.away_player_id || m.away_player_ids?.[0] || '').trim();
+        const awayName = String(m.away_player_name || m.away_player_names?.[0] || '').trim();
+        const dur = Number(m.match_duration);
+        return {
+          position: idx === 0 ? 2 : 3,
+          home_player_id: homeId,
+          home_player_name: homeName,
+          away_player_id: awayId,
+          away_player_name: awayName,
+          match_duration: Number.isFinite(dur) && dur > 0 ? dur : 6,
+        };
+      });
+
+      const homeDuoIds = normalizedDuo.map((m) => m.home_player_id).filter(Boolean);
+      const awayDuoIds = normalizedDuo.map((m) => m.away_player_id).filter(Boolean);
+      if (new Set(homeDuoIds).size !== 2 || new Set(awayDuoIds).size !== 2) {
+        return NextResponse.json(
+          { error: 'Duo (2 × 1v1) requires 2 distinct Home players and 2 distinct Away players' },
+          { status: 400 }
+        );
+      }
+
+      const existingRows = await sql`
+        SELECT position, match_mode, home_player_id, home_player_ids, away_player_id, away_player_ids
+        FROM matchups
+        WHERE fixture_id = ${fixtureId}
+      `;
+
+      const existingDuoCount = existingRows.filter(
+        (r: any) => r.match_mode === 'duo' || r.position === 2 || r.position === 3
+      ).length;
+
+      if (existingDuoCount > 0 && !allow_overwrite) {
+        return NextResponse.json(
+          {
+            error: 'MATCHUPS_ALREADY_EXIST',
+            message: 'Duo matchups have already been created for this fixture',
+          },
+          { status: 409 }
+        );
+      }
+
+      const nonDuoHomeIds = new Set<string>();
+      const nonDuoAwayIds = new Set<string>();
+      existingRows
+        .filter((r: any) => r.match_mode !== 'duo' && r.position !== 2 && r.position !== 3)
+        .forEach((r: any) => {
+          (Array.isArray(r.home_player_ids) && r.home_player_ids.length > 0 ? r.home_player_ids : [r.home_player_id])
+            .filter(Boolean)
+            .forEach((id: any) => nonDuoHomeIds.add(String(id)));
+          (Array.isArray(r.away_player_ids) && r.away_player_ids.length > 0 ? r.away_player_ids : [r.away_player_id])
+            .filter(Boolean)
+            .forEach((id: any) => nonDuoAwayIds.add(String(id)));
+        });
+
+      if (homeDuoIds.some((id) => nonDuoHomeIds.has(id)) || awayDuoIds.some((id) => nonDuoAwayIds.has(id))) {
+        return NextResponse.json(
+          { error: 'Players already assigned to Co-op or Single cannot be used in Duo matchups' },
+          { status: 400 }
+        );
+      }
+
+      if (existingDuoCount > 0) {
+        await sql`
+          DELETE FROM matchups
+          WHERE fixture_id = ${fixtureId}
+            AND (match_mode = 'duo' OR position IN (2, 3))
+        `;
+      }
+
+      for (const m of normalizedDuo) {
+        await sql`
+          INSERT INTO matchups (
+            fixture_id, season_id, tournament_id, round_number, position, match_mode,
+            home_player_id, home_player_name, away_player_id, away_player_name,
+            home_player_ids, home_player_names, away_player_ids, away_player_names,
+            match_duration, created_by, created_at, updated_at
+          ) VALUES (
+            ${fixtureId}, ${seasonId}, ${tournamentId}, ${roundNumber}, ${m.position}, 'duo',
+            ${m.home_player_id}, ${m.home_player_name},
+            ${m.away_player_id}, ${m.away_player_name},
+            ${[m.home_player_id]}, ${[m.home_player_name]},
+            ${[m.away_player_id]}, ${[m.away_player_name]},
+            ${m.match_duration}, ${created_by || 'team'}, NOW(), NOW()
+          )
+        `;
+      }
+
+      await sql`
+        UPDATE fixtures
+        SET
+          matchups_created_by = COALESCE(matchups_created_by, ${created_by || 'team'}),
+          matchups_created_at = COALESCE(matchups_created_at, NOW()),
+          updated_at = NOW()
+        WHERE id = ${fixtureId}
+      `;
+
+      // Sync Duo order into lineups.triple_threat_lineup while keeping Co-op & Single intact
+      const syncSideDuoLineup = async (teamId: string | null | undefined, duoPairs: Array<{ player_id: string; player_name: string }>) => {
+        if (!teamId || duoPairs.length !== 2) return;
+        try {
+          const rows = await sql`
+            SELECT id, triple_threat_lineup
+            FROM lineups
+            WHERE fixture_id = ${fixtureId}
+              AND team_id = ${teamId}
+              AND COALESCE(submitted_by, '') <> 'system_auto'
+            LIMIT 1
+          `;
+          if (rows.length === 0 || !rows[0].triple_threat_lineup) return;
+          const existingTT = rows[0].triple_threat_lineup;
+          const nextTT = {
+            coop: Array.isArray(existingTT.coop) ? existingTT.coop : [],
+            duo: duoPairs,
+            single: Array.isArray(existingTT.single) ? existingTT.single : [],
+          };
+          const nextStartingXi = [
+            ...(Array.isArray(nextTT.coop) ? nextTT.coop : []).map((p: any, i: number) => ({ ...p, mode: 'coop', slot: i + 1 })),
+            ...duoPairs.map((p: any, i: number) => ({ ...p, mode: 'duo', slot: i + 1 })),
+            ...(Array.isArray(nextTT.single) ? nextTT.single : []).map((p: any, i: number) => ({ ...p, mode: 'single', slot: i + 1 })),
+          ];
+          await sql`
+            UPDATE lineups
+            SET
+              triple_threat_lineup = ${JSON.stringify(nextTT)}::jsonb,
+              starting_xi = ${JSON.stringify(nextStartingXi)}::jsonb,
+              updated_at = NOW()
+            WHERE id = ${rows[0].id}
+          `;
+        } catch (syncErr) {
+          console.warn('Could not sync Duo lineup order:', syncErr);
+        }
+      };
+
+      await Promise.all([
+        syncSideDuoLineup(home_team_id, normalizedDuo.map((m) => ({ player_id: m.home_player_id, player_name: m.home_player_name }))),
+        syncSideDuoLineup(away_team_id, normalizedDuo.map((m) => ({ player_id: m.away_player_id, player_name: m.away_player_name }))),
+      ]);
+
+      const updatedMatchups = await sql`
+        SELECT * FROM matchups
+        WHERE fixture_id = ${fixtureId}
+        ORDER BY position ASC
+      `;
+
+      return NextResponse.json({
+        success: true,
+        message: 'Duo (2 × 1v1) matchups created successfully',
+        was_overwritten: existingDuoCount > 0,
+        matchups: updatedMatchups,
+      });
+    }
 
     // Check if matchups already exist
     const existingMatchups = await sql`
@@ -697,18 +868,34 @@ export async function PUT(
         const duoRows = sorted.filter((m: any) => m.match_mode === 'duo');
         const singleRow = sorted.find((m: any) => m.match_mode === 'single');
         const coop = coopRow ? getSidePairs(coopRow).slice(0, 2) : [];
-        const duo = duoRows.flatMap((dm: any) => getSidePairs(dm).slice(0, 1)).slice(0, 2);
+        let duo = duoRows.flatMap((dm: any) => getSidePairs(dm).slice(0, 1)).slice(0, 2);
         const single = singleRow ? getSidePairs(singleRow).slice(0, 1) : [];
-        if (coop.length !== 2 || duo.length !== 2 || single.length !== 1) return;
-
-        const ttPayload = { coop, duo, single };
-        const startingXiPayload = [
-          ...coop.map((p: any, i: number) => ({ ...p, mode: 'coop', slot: i + 1 })),
-          ...duo.map((p: any, i: number) => ({ ...p, mode: 'duo', slot: i + 1 })),
-          ...single.map((p: any, i: number) => ({ ...p, mode: 'single', slot: i + 1 })),
-        ];
+        if (coop.length !== 2 || single.length !== 1) return;
 
         try {
+          if (duo.length < 2) {
+            const existingRows = await sql`
+              SELECT triple_threat_lineup
+              FROM lineups
+              WHERE fixture_id = ${fixtureId}
+                AND team_id = ${teamId}
+                AND COALESCE(submitted_by, '') <> 'system_auto'
+              LIMIT 1
+            `;
+            const existingDuo = existingRows[0]?.triple_threat_lineup?.duo;
+            if (Array.isArray(existingDuo) && existingDuo.length >= 2) {
+              duo = existingDuo.slice(0, 2);
+            }
+          }
+          if (duo.length !== 2) return;
+
+          const ttPayload = { coop, duo, single };
+          const startingXiPayload = [
+            ...coop.map((p: any, i: number) => ({ ...p, mode: 'coop', slot: i + 1 })),
+            ...duo.map((p: any, i: number) => ({ ...p, mode: 'duo', slot: i + 1 })),
+            ...single.map((p: any, i: number) => ({ ...p, mode: 'single', slot: i + 1 })),
+          ];
+
           await sql`
             UPDATE lineups
             SET

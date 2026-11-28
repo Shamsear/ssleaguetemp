@@ -65,7 +65,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Successfully generated 4 Triple Threat matchups across 3 modes!',
+      message: 'Generated Co-op & Single Triple Threat matchups. Pair Duo (2 × 1v1) manually.',
       matchups_count: result.matchupsCount
     });
   } catch (error: any) {

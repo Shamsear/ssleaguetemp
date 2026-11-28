@@ -166,6 +166,54 @@ export function resolveTripleThreatMode(match: {
   return 'single';
 }
 
+/**
+ * Extracts normalized positional player IDs and names for one side of a Triple Threat matchup
+ * (2 slots for Co-op 2v2, 1 slot for Duo/Single 1v1).
+ */
+export function getTripleThreatSidePlayers(
+  m: {
+    match_mode?: string | null;
+    mode?: string | null;
+    position?: number;
+    home_player_id?: string | null;
+    home_player_name?: string | null;
+    home_player_ids?: string[];
+    home_player_names?: string[];
+    away_player_id?: string | null;
+    away_player_name?: string | null;
+    away_player_ids?: string[];
+    away_player_names?: string[];
+  },
+  side: 'home' | 'away'
+): { ids: string[]; names: string[] } {
+  const isHome = side === 'home';
+  const rawIds = isHome ? m.home_player_ids : m.away_player_ids;
+  const rawNames = isHome ? m.home_player_names : m.away_player_names;
+  const fallbackId = String((isHome ? m.home_player_id : m.away_player_id) || '').trim();
+  const fallbackName = String((isHome ? m.home_player_name : m.away_player_name) || '').trim();
+  const isCoop = resolveTripleThreatMode(m) === 'coop';
+
+  const ids =
+    Array.isArray(rawIds) && rawIds.length > 0
+      ? rawIds.map((v) => String(v || '').trim())
+      : fallbackId
+        ? [fallbackId]
+        : [];
+  const names =
+    Array.isArray(rawNames) && rawNames.length > 0
+      ? rawNames.map((v) => String(v || '').trim())
+      : fallbackName
+        ? isCoop
+          ? fallbackName.split(/\s*&\s*/).map((v) => v.trim())
+          : [fallbackName]
+        : [];
+
+  const targetLen = isCoop ? 2 : 1;
+  while (ids.length < targetLen) ids.push('');
+  while (names.length < targetLen) names.push('');
+  return { ids: ids.slice(0, targetLen), names: names.slice(0, targetLen) };
+}
+
 export interface TripleThreatModeDisplay {
   mode: TripleThreatMode;
   title: string;
@@ -232,16 +280,17 @@ export interface BuiltTripleThreatMatchup {
 }
 
 /**
- * Builds the 4 Triple Threat matchup rows from both submitted lineups:
- * - Pos 1: Co-op (2v2)
- * - Pos 2: Duo 1v1 #1 (Home Duo P1 vs Away Duo P1)
- * - Pos 3: Duo 1v1 #2 (Home Duo P2 vs Away Duo P2)
- * - Pos 4: Single (1v1)
+ * Builds Triple Threat matchup rows from both submitted lineups.
+ * By default, only deterministic modes are auto-created on lineup submission:
+ * - Pos 1: Co-op (2v2, 8 min)
+ * - Pos 4: Single (1v1, 6 min)
+ * Duo (Pos 2 & Pos 3, 2 × 1v1) is paired manually unless `options.includeDuo` is true.
  */
 export function buildTripleThreatMatchups(
   homeTT: TripleThreatLineupSubmission,
   awayTT: TripleThreatLineupSubmission,
-  getNames: (ids: string[]) => string[]
+  getNames: (ids: string[]) => string[],
+  options?: { includeDuo?: boolean }
 ): BuiltTripleThreatMatchup[] {
   const homeCoopIds = (homeTT.coop || []).map(extractPlayerId).filter(Boolean);
   const homeDuoIds = (homeTT.duo || []).map(extractPlayerId).filter(Boolean);
@@ -259,7 +308,7 @@ export function buildTripleThreatMatchups(
   const awayDuoNames = getNames(awayDuoIds);
   const awaySingleNames = getNames(awaySingleIds);
 
-  return [
+  const matchups: BuiltTripleThreatMatchup[] = [
     {
       position: 1,
       match_mode: 'coop',
@@ -273,46 +322,54 @@ export function buildTripleThreatMatchups(
       away_player_names: awayCoopNames,
       match_duration: 8,
     },
-    {
-      position: 2,
-      match_mode: 'duo',
-      home_player_id: homeDuoIds[0] || '',
-      home_player_name: homeDuoNames[0] || '',
-      away_player_id: awayDuoIds[0] || '',
-      away_player_name: awayDuoNames[0] || '',
-      home_player_ids: homeDuoIds[0] ? [homeDuoIds[0]] : [],
-      home_player_names: homeDuoNames[0] ? [homeDuoNames[0]] : [],
-      away_player_ids: awayDuoIds[0] ? [awayDuoIds[0]] : [],
-      away_player_names: awayDuoNames[0] ? [awayDuoNames[0]] : [],
-      match_duration: 6,
-    },
-    {
-      position: 3,
-      match_mode: 'duo',
-      home_player_id: homeDuoIds[1] || '',
-      home_player_name: homeDuoNames[1] || '',
-      away_player_id: awayDuoIds[1] || '',
-      away_player_name: awayDuoNames[1] || '',
-      home_player_ids: homeDuoIds[1] ? [homeDuoIds[1]] : [],
-      home_player_names: homeDuoNames[1] ? [homeDuoNames[1]] : [],
-      away_player_ids: awayDuoIds[1] ? [awayDuoIds[1]] : [],
-      away_player_names: awayDuoNames[1] ? [awayDuoNames[1]] : [],
-      match_duration: 6,
-    },
-    {
-      position: 4,
-      match_mode: 'single',
-      home_player_id: homeSingleIds[0] || '',
-      home_player_name: homeSingleNames[0] || '',
-      away_player_id: awaySingleIds[0] || '',
-      away_player_name: awaySingleNames[0] || '',
-      home_player_ids: homeSingleIds,
-      home_player_names: homeSingleNames,
-      away_player_ids: awaySingleIds,
-      away_player_names: awaySingleNames,
-      match_duration: 6,
-    },
   ];
+
+  if (options?.includeDuo) {
+    matchups.push(
+      {
+        position: 2,
+        match_mode: 'duo',
+        home_player_id: homeDuoIds[0] || '',
+        home_player_name: homeDuoNames[0] || '',
+        away_player_id: awayDuoIds[0] || '',
+        away_player_name: awayDuoNames[0] || '',
+        home_player_ids: homeDuoIds[0] ? [homeDuoIds[0]] : [],
+        home_player_names: homeDuoNames[0] ? [homeDuoNames[0]] : [],
+        away_player_ids: awayDuoIds[0] ? [awayDuoIds[0]] : [],
+        away_player_names: awayDuoNames[0] ? [awayDuoNames[0]] : [],
+        match_duration: 6,
+      },
+      {
+        position: 3,
+        match_mode: 'duo',
+        home_player_id: homeDuoIds[1] || '',
+        home_player_name: homeDuoNames[1] || '',
+        away_player_id: awayDuoIds[1] || '',
+        away_player_name: awayDuoNames[1] || '',
+        home_player_ids: homeDuoIds[1] ? [homeDuoIds[1]] : [],
+        home_player_names: homeDuoNames[1] ? [homeDuoNames[1]] : [],
+        away_player_ids: awayDuoIds[1] ? [awayDuoIds[1]] : [],
+        away_player_names: awayDuoNames[1] ? [awayDuoNames[1]] : [],
+        match_duration: 6,
+      }
+    );
+  }
+
+  matchups.push({
+    position: 4,
+    match_mode: 'single',
+    home_player_id: homeSingleIds[0] || '',
+    home_player_name: homeSingleNames[0] || '',
+    away_player_id: awaySingleIds[0] || '',
+    away_player_name: awaySingleNames[0] || '',
+    home_player_ids: homeSingleIds,
+    home_player_names: homeSingleNames,
+    away_player_ids: awaySingleIds,
+    away_player_names: awaySingleNames,
+    match_duration: 6,
+  });
+
+  return matchups;
 }
 
 /**
@@ -846,59 +903,27 @@ export function formatTripleThreatFixtureCopy(params: {
 
   // DUO (2 × 1V1 or legacy 2V2 fallback)
   let duoSection: string;
-  if (duoMatches.length > 1) {
-    const duoBlocks = duoMatches.map((dm, idx) => {
-      const dScored = isScoredMatchup(dm);
-      const dHome = formatTripleThreatSideDisplay(
-        dm.home_player_names,
-        dm.home_player_name,
-        dm.home_player_goals,
-        dScored
-      );
-      const dAway = formatTripleThreatSideDisplay(
-        dm.away_player_names,
-        dm.away_player_name,
-        dm.away_player_goals,
-        dScored
-      );
-      const dmDurationTag = formatMatchDurationTag(dm.match_duration, 6);
-      return [
-        `MATCH ${idx + 1} (${dmDurationTag}):`,
-        dHome,
-        '🆚',
-        dAway,
-        `SCORE: ${formatScoreValue(dm)}`,
-      ].join('\n');
-    });
-    const duoTotalStr = ttRes.modeResults.duo.played
-      ? `${ttRes.modeResults.duo.home_goals} – ${ttRes.modeResults.duo.away_goals}`
-      : '__ – __';
-    duoSection = [
-      '⚔️ DUO (2 × 1V1)',
-      '',
-      ...duoBlocks.flatMap((block, idx) => (idx === 0 ? [block] : ['', block])),
-      '',
-      `DUO TOTAL: ${duoTotalStr}`,
-    ].join('\n');
-  } else {
+  const isLegacy2v2Duo =
+    duoMatches.length === 1 &&
+    ((duoMatches[0].home_player_names?.length ?? 0) > 1 ||
+      (duoMatches[0].away_player_names?.length ?? 0) > 1 ||
+      String(duoMatches[0].home_player_name || '').includes('&'));
+
+  if (isLegacy2v2Duo) {
     const soloDuo = duoMatches[0];
     const dScored = isScoredMatchup(soloDuo);
-    const dHome = soloDuo
-      ? formatTripleThreatSideDisplay(
-          soloDuo.home_player_names,
-          soloDuo.home_player_name,
-          soloDuo.home_player_goals,
-          dScored
-        )
-      : 'TBD';
-    const dAway = soloDuo
-      ? formatTripleThreatSideDisplay(
-          soloDuo.away_player_names,
-          soloDuo.away_player_name,
-          soloDuo.away_player_goals,
-          dScored
-        )
-      : 'TBD';
+    const dHome = formatTripleThreatSideDisplay(
+      soloDuo.home_player_names,
+      soloDuo.home_player_name,
+      soloDuo.home_player_goals,
+      dScored
+    );
+    const dAway = formatTripleThreatSideDisplay(
+      soloDuo.away_player_names,
+      soloDuo.away_player_name,
+      soloDuo.away_player_goals,
+      dScored
+    );
     const soloDuoDurationTag = formatMatchDurationTag(soloDuo?.match_duration, 6);
     duoSection = [
       `⚔️ DUO (2V2) • ${soloDuoDurationTag}`,
@@ -910,6 +935,42 @@ export function formatTripleThreatFixtureCopy(params: {
       dAway,
       '',
       `SCORE: ${formatScoreValue(soloDuo)}`,
+    ].join('\n');
+  } else {
+    const duoSlots = [0, 1].map((idx) => duoMatches[idx]);
+    const duoBlocks = duoSlots.map((dm, idx) => {
+      const dScored = isScoredMatchup(dm);
+      const dHome = dm
+        ? formatTripleThreatSideDisplay(
+            dm.home_player_names,
+            dm.home_player_name,
+            dm.home_player_goals,
+            dScored
+          )
+        : 'TBD';
+      const dAway = dm
+        ? formatTripleThreatSideDisplay(
+            dm.away_player_names,
+            dm.away_player_name,
+            dm.away_player_goals,
+            dScored
+          )
+        : 'TBD';
+      const header =
+        dm && Number.isFinite(Number(dm.match_duration)) && Number(dm.match_duration) > 0
+          ? `MATCH ${idx + 1} (${formatMatchDurationTag(dm.match_duration, 6)}):`
+          : `MATCH ${idx + 1}:`;
+      return [header, dHome, '🆚', dAway, `SCORE: ${formatScoreValue(dm)}`].join('\n');
+    });
+    const duoTotalStr = ttRes.modeResults.duo.played
+      ? `${ttRes.modeResults.duo.home_goals} – ${ttRes.modeResults.duo.away_goals}`
+      : '__ – __';
+    duoSection = [
+      '⚔️ DUO (2 × 1V1)',
+      '',
+      ...duoBlocks.flatMap((block, idx) => (idx === 0 ? [block] : ['', block])),
+      '',
+      `DUO TOTAL: ${duoTotalStr}`,
     ].join('\n');
   }
 
@@ -1010,21 +1071,19 @@ export function formatTripleThreatFixtureCopy(params: {
       : null;
 
   let duoSoloDurationLine = "⏱️ DUO & SOLO: HOME TEAM'S CHOICE";
-  const allChoiceDurs = [...duoDurations, ...(soloMinutes !== null ? [soloMinutes] : [])];
-  if (allChoiceDurs.length > 0) {
+  if (duoDurations.length >= 2 && soloMinutes !== null) {
+    const allChoiceDurs = [...duoDurations, soloMinutes];
     const allSame = allChoiceDurs.every((d) => d === allChoiceDurs[0]);
     if (allSame) {
       duoSoloDurationLine = `⏱️ DUO & SOLO: ${allChoiceDurs[0]} MINUTES`;
     } else {
-      const duoPart =
-        duoDurations.length === 0
-          ? "HOME TEAM'S CHOICE"
-          : duoDurations.every((d) => d === duoDurations[0])
-            ? `${duoDurations[0]} MIN`
-            : duoDurations.map((d, i) => `M${i + 1}: ${d} MIN`).join(' / ');
-      const soloPart = soloMinutes !== null ? `${soloMinutes} MIN` : "HOME TEAM'S CHOICE";
-      duoSoloDurationLine = `⏱️ DUO: ${duoPart} • SOLO: ${soloPart}`;
+      const duoPart = duoDurations.every((d) => d === duoDurations[0])
+        ? `${duoDurations[0]} MIN`
+        : duoDurations.map((d, i) => `M${i + 1}: ${d} MIN`).join(' / ');
+      duoSoloDurationLine = `⏱️ DUO: ${duoPart} • SOLO: ${soloMinutes} MIN`;
     }
+  } else if (soloMinutes !== null) {
+    duoSoloDurationLine = `⏱️ DUO: PENDING • SOLO: ${soloMinutes} MIN`;
   }
 
   parts.push(
@@ -1106,14 +1165,18 @@ export function extractTripleThreatLineupFromMatchups(
     return singleName ? [String(singleName).trim()] : [];
   };
 
-  const coopMatch = matchups.find((m) => m?.match_mode === 'coop') || matchups[0];
+  const hasExplicitModes = matchups.some((m) => Boolean(m?.match_mode));
+  const coopMatch = hasExplicitModes
+    ? matchups.find((m) => m?.match_mode === 'coop')
+    : matchups[0];
   const duoMatches = matchups.filter((m) => m?.match_mode === 'duo');
   const resolvedDuos =
-    duoMatches.length > 0
+    duoMatches.length > 0 || hasExplicitModes
       ? duoMatches
       : matchups.slice(1, matchups.length > 2 ? 3 : 2);
-  const singleMatch =
-    matchups.find((m) => m?.match_mode === 'single') || matchups[matchups.length - 1];
+  const singleMatch = hasExplicitModes
+    ? matchups.find((m) => m?.match_mode === 'single')
+    : matchups[matchups.length - 1];
 
   const coop = coopMatch ? getSideNames(coopMatch) : [];
   const duo = resolvedDuos.flatMap((dm) => getSideNames(dm).slice(0, 1));

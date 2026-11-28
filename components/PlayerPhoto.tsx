@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 interface PlayerPhotoProps {
   photoUrl?: string;
@@ -20,7 +20,7 @@ interface PlayerPhotoProps {
   showFallback?: boolean;
 }
 
-export default function PlayerPhoto({
+function PlayerPhoto({
   photoUrl,
   playerName,
   shape = 'circle',
@@ -38,43 +38,40 @@ export default function PlayerPhoto({
 }: PlayerPhotoProps) {
   
   // Determine which settings to use based on shape
-  const { position, scale, posX, posY } = useMemo(() => {
+  const { scale, posX, posY } = useMemo(() => {
     if (shape === 'circle') {
       return {
-        position: positionCircle || 'center',
         scale: scaleCircle || 1,
         posX: posXCircle ?? 50,
         posY: posYCircle ?? 50,
       };
     } else {
       return {
-        position: positionSquare || 'center',
         scale: scaleSquare || 1,
         posX: posXSquare ?? 50,
         posY: posYSquare ?? 50,
       };
     }
-  }, [shape, positionCircle, scaleCircle, posXCircle, posYCircle, positionSquare, scaleSquare, posXSquare, posYSquare]);
-
-  // Calculate final position
-  const displayPosition = position === 'custom' ? `${posX}% ${posY}%` : position;
+  }, [shape, scaleCircle, posXCircle, posYCircle, scaleSquare, posXSquare, posYSquare]);
 
   const wrapperClass = shape === 'circle' ? 'rounded-full' : 'rounded-lg';
-  const initials = playerName.charAt(0).toUpperCase();
+  const initials = (playerName || '?').charAt(0).toUpperCase();
 
   return (
     <div 
       className={`relative overflow-hidden bg-gray-100 ${wrapperClass} ${className}`}
-      style={{ width: size, height: size, transform: 'translateZ(0)', isolation: 'isolate' }}
+      style={{ width: size, height: size, isolation: 'isolate' }}
     >
       {photoUrl ? (
         <img
           src={photoUrl}
           alt={playerName}
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             objectPosition: `${posX}% ${posY}%`,
-            transform: `scale(${scale})`,
+            transform: scale !== 1 ? `scale(${scale})` : undefined,
             transformOrigin: `${posX}% ${posY}%`
           }}
         />
@@ -86,3 +83,5 @@ export default function PlayerPhoto({
     </div>
   );
 }
+
+export default memo(PlayerPhoto);

@@ -92,6 +92,9 @@ export default function CommitteeFixtureDetailPage() {
   const [awayLineup, setAwayLineup] = useState<any>(null);
   const [showTTLineupModal, setShowTTLineupModal] = useState<'home' | 'away' | null>(null);
   const [isGeneratingTTMatchups, setIsGeneratingTTMatchups] = useState(false);
+  const [ttDuoAwayIds, setTtDuoAwayIds] = useState<[string, string]>(['', '']);
+  const [ttDuoDurations, setTtDuoDurations] = useState<[number, number]>([6, 6]);
+  const [isSavingTTDuo, setIsSavingTTDuo] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showTimeline, setShowTimeline] = useState(false);
   const [showMatchupCreator, setShowMatchupCreator] = useState(false);
@@ -429,7 +432,7 @@ export default function CommitteeFixtureDetailPage() {
         showAlert({
           type: 'success',
           title: 'Matchups Generated',
-          message: `Successfully generated ${data.matchups_count || 4} Triple Threat matchups across 3 modes!`
+          message: `Generated ${data.matchups_count || 2} Triple Threat matchups (Co-op & Single). Pair Duo (2 × 1v1) manually below!`
         });
         fetchFixtureData();
       } else {
@@ -1158,11 +1161,140 @@ export default function CommitteeFixtureDetailPage() {
                 <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] font-mono text-amber-900 flex items-start gap-2">
                   <span className="text-amber-600 text-sm">💡</span>
                   <span>
-                    <strong>Option 2: Committee Submits on Their Behalf</strong> — If the Away Team (or Home Team) shared their lineup in WhatsApp or had a technical issue, use the buttons above to select 5 players from their active roster. All 4 matchups across the 3 modes will be automatically generated immediately.
+                    <strong>Option 2: Committee Submits on Their Behalf</strong> — If the Away Team (or Home Team) shared their lineup in WhatsApp or had a technical issue, use the buttons above to select 5 players from their active roster. Co-op (2v2) and Single (1v1) matchups will be generated automatically; Duo (2 × 1v1) is paired manually so teams choose their 1v1 pairings.
                   </span>
                 </div>
               </div>
             )}
+
+            {isTripleThreat &&
+              matchups.length > 0 &&
+              !matchups.some((m) => resolveTripleThreatMode(m) === 'duo') &&
+              homeLineup?.triple_threat_lineup?.duo?.length >= 2 &&
+              awayLineup?.triple_threat_lineup?.duo?.length >= 2 && (() => {
+                const homeDuo = homeLineup.triple_threat_lineup.duo.slice(0, 2);
+                const awayDuo = awayLineup.triple_threat_lineup.duo.slice(0, 2);
+                const getId = (p: any) => String(typeof p === 'object' ? (p.player_id || p.id || '') : p);
+                const getName = (p: any) => String(typeof p === 'object' ? (p.player_name || p.name || p.player_id || '') : p);
+
+                const handleSaveCommitteeDuo = async () => {
+                  if (!ttDuoAwayIds[0] || !ttDuoAwayIds[1] || ttDuoAwayIds[0] === ttDuoAwayIds[1]) {
+                    showAlert({
+                      type: 'warning',
+                      title: 'Incomplete Duo Pairings',
+                      message: 'Select distinct Away Duo players for both Duo 1v1 matches.',
+                    });
+                    return;
+                  }
+                  setIsSavingTTDuo(true);
+                  try {
+                    const res = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        mode: 'triple_threat_duo',
+                        created_by: user?.uid || 'admin',
+                        allow_overwrite: false,
+                        matchups: [0, 1].map((slotIdx) => {
+                          const hp = homeDuo[slotIdx];
+                          const ap = awayDuo.find((p: any) => getId(p) === ttDuoAwayIds[slotIdx]) || awayDuo[slotIdx];
+                          return {
+                            position: slotIdx + 2,
+                            match_mode: 'duo',
+                            home_player_id: getId(hp),
+                            home_player_name: getName(hp),
+                            away_player_id: getId(ap),
+                            away_player_name: getName(ap),
+                            match_duration: ttDuoDurations[slotIdx] || 6,
+                          };
+                        }),
+                      }),
+                    });
+                    const json = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(json.error || 'Failed to save Duo matchups');
+                    showAlert({
+                      type: 'success',
+                      title: 'Duo Matchups Saved',
+                      message: 'Duo (2 × 1v1) matchups created successfully!',
+                    });
+                    fetchFixtureData();
+                  } catch (err: any) {
+                    showAlert({
+                      type: 'error',
+                      title: 'Save Failed',
+                      message: err?.message || 'Failed to create Duo matchups',
+                    });
+                  } finally {
+                    setIsSavingTTDuo(false);
+                  }
+                };
+
+                return (
+                  <div className="mb-4 p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-3 font-mono">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-emerald-900">
+                        🤝 Pair Duo (2 × 1v1) Matchups
+                      </span>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        Pending Pairing
+                      </span>
+                    </div>
+                    {[0, 1].map((slotIdx) => (
+                      <div key={slotIdx} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto] gap-2 items-center bg-white border border-slate-200 rounded-xl p-2.5">
+                        <div className="text-xs font-extrabold text-slate-900 px-2">
+                          Match #{slotIdx + 2}: {getName(homeDuo[slotIdx])}
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 text-center">VS</span>
+                        <select
+                          value={ttDuoAwayIds[slotIdx]}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setTtDuoAwayIds((prev) => {
+                              const next: [string, string] = [...prev] as [string, string];
+                              next[slotIdx] = val;
+                              if (val && awayDuo.length === 2) {
+                                const other = awayDuo.find((p: any) => getId(p) !== val);
+                                if (other) next[slotIdx === 0 ? 1 : 0] = getId(other);
+                              }
+                              return next;
+                            });
+                          }}
+                          className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                        >
+                          <option value="">Select Away Duo player...</option>
+                          {awayDuo.map((p: any) => (
+                            <option key={getId(p)} value={getId(p)}>{getName(p)}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={ttDuoDurations[slotIdx]}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 6;
+                            setTtDuoDurations((prev) => {
+                              const next: [number, number] = [...prev] as [number, number];
+                              next[slotIdx] = val;
+                              return next;
+                            });
+                          }}
+                          className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700"
+                        >
+                          {[6, 7, 8, 9, 10, 11, 12].map((m) => (
+                            <option key={m} value={m}>{m}m</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={handleSaveCommitteeDuo}
+                      disabled={isSavingTTDuo || !ttDuoAwayIds[0] || !ttDuoAwayIds[1]}
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSavingTTDuo ? 'Saving Duo...' : '✓ Save Duo (2 × 1v1) Matchups'}
+                    </button>
+                  </div>
+                );
+              })()}
 
             {!isTripleThreat && matchups.length === 0 && (
               <div className="p-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl">

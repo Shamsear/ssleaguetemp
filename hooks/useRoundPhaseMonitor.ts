@@ -3,7 +3,7 @@
  * Automatically updates match phases without page refresh
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { listenToSeasonRoundUpdates } from '@/lib/realtime/listeners';
 import { getISTNow } from '@/lib/utils/timezone';
 
@@ -33,6 +33,8 @@ export function useRoundPhaseMonitor({
 }: UseRoundPhaseMonitorOptions) {
   const [lastCheck, setLastCheck] = useState(Date.now());
   const [isConnected, setIsConnected] = useState(false);
+  const onPhaseChangeRef = useRef(onPhaseChange);
+  onPhaseChangeRef.current = onPhaseChange;
 
   // Subscribe to season-level phase updates via Firebase Realtime DB
   useEffect(() => {
@@ -43,15 +45,16 @@ export function useRoundPhaseMonitor({
       console.log('[Phase Monitor] Received update:', message);
 
       switch (message.type) {
-        case 'phase_change':
+        case 'phase_change': {
           // Admin manually changed phase or automatic phase transition
-          const { round_number, new_phase, tournament_id } = message;
+          const { round_number, new_phase } = message;
           console.log(`📅 Phase changed for Round ${round_number}: ${new_phase}`);
-          onPhaseChange?.(round_number, new_phase);
+          onPhaseChangeRef.current?.(round_number, new_phase);
           
           // Trigger a re-check
           setLastCheck(Date.now());
           break;
+        }
 
         case 'deadline_update':
           // Deadline was updated by admin
@@ -73,7 +76,7 @@ export function useRoundPhaseMonitor({
       unsubscribe();
       setIsConnected(false);
     };
-  }, [seasonId, enabled, onPhaseChange]);
+  }, [seasonId, enabled]);
 
   // Check phases every minute for deadline transitions
   useEffect(() => {

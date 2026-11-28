@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useId, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, ChevronDown, Check, User } from 'lucide-react';
 import PlayerPhoto from '@/components/PlayerPhoto';
@@ -21,6 +21,7 @@ interface SearchablePlayerSelectProps {
   placeholder?: string;
   disabled?: boolean;
   allowClear?: boolean;
+  assignedByPlayerId?: Record<string, string>;
 }
 
 const getCategoryPriority = (category?: string): number => {
@@ -59,75 +60,89 @@ const getCategoryBadgeClass = (category?: string) => {
   return 'bg-slate-100 text-slate-700 border-slate-200';
 };
 
-export default function SearchablePlayerSelect({
+function SearchablePlayerSelect({
   players,
   value,
   onChange,
   placeholder = 'Select player...',
   disabled = false,
   allowClear = true,
+  assignedByPlayerId,
 }: SearchablePlayerSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const keyboardNavRef = useRef(false);
   const searchInputId = useId();
 
   const [dropdownPosition, setDropdownPosition] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
 
-  // Update dropdown position when opened or scrolled/resized
+  // Update dropdown position only while open, throttled to rAF and deduplicated
   useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const updatePosition = (e?: Event) => {
-        // Ignore scroll events originating inside the dropdown panel itself
-        if (e && dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
-          return;
-        }
+    if (!isOpen || !buttonRef.current) return;
 
-        if (buttonRef.current) {
-          const rect = buttonRef.current.getBoundingClientRect();
-          const spaceBelow = window.innerHeight - rect.bottom;
-          const spaceAbove = rect.top;
-          // Only open upward if space below is less than 150px AND space above is greater
-          const openUpward = spaceBelow < 150 && spaceAbove > spaceBelow;
+    let rafId = 0;
+    const computePosition = () => {
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const openUpward = spaceBelow < 150 && spaceAbove > spaceBelow;
 
-          if (openUpward) {
-            setDropdownPosition({
-              bottom: Math.max(10, window.innerHeight - rect.top + 6),
-              left: Math.max(10, rect.left),
-              width: Math.min(rect.width, window.innerWidth - 20),
-            });
-          } else {
-            setDropdownPosition({
-              top: rect.bottom + 6,
-              left: Math.max(10, rect.left),
-              width: Math.min(rect.width, window.innerWidth - 20),
-            });
+      const nextPos = openUpward
+        ? {
+            bottom: Math.round(Math.max(10, window.innerHeight - rect.top + 6)),
+            left: Math.round(Math.max(10, rect.left)),
+            width: Math.round(Math.min(rect.width, window.innerWidth - 20)),
           }
+        : {
+            top: Math.round(rect.bottom + 6),
+            left: Math.round(Math.max(10, rect.left)),
+            width: Math.round(Math.min(rect.width, window.innerWidth - 20)),
+          };
+
+      setDropdownPosition((prev) => {
+        if (
+          prev.top === nextPos.top &&
+          prev.bottom === nextPos.bottom &&
+          prev.left === nextPos.left &&
+          prev.width === nextPos.width
+        ) {
+          return prev;
         }
-      };
+        return nextPos;
+      });
+    };
 
-      updatePosition();
+    const schedulePositionUpdate = (e?: Event) => {
+      if (e && dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
+        return;
+      }
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        computePosition();
+      });
+    };
 
-      const handleScroll = (e: Event) => {
-        updatePosition(e);
-      };
+    computePosition();
 
-      window.addEventListener('resize', updatePosition);
-      window.addEventListener('scroll', handleScroll, true);
-      return () => {
-        window.removeEventListener('resize', updatePosition);
-        window.removeEventListener('scroll', handleScroll, true);
-      };
-    }
+    window.addEventListener('resize', schedulePositionUpdate);
+    window.addEventListener('scroll', schedulePositionUpdate, true);
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', schedulePositionUpdate);
+      window.removeEventListener('scroll', schedulePositionUpdate, true);
+    };
   }, [isOpen]);
 
-  // Deduplicate input players by player_id
+  // Deduplicate input players by player_id cleanly
   const uniquePlayers = useMemo(() => {
     const map = new Map<string, PlayerOption>();
     (players || []).forEach(p => {
@@ -138,14 +153,18 @@ export default function SearchablePlayerSelect({
     return Array.from(map.values());
   }, [players]);
 
-  const selectedPlayer = uniquePlayers.find(p => p.player_id === value);
+  const selectedPlayer = useMemo(
+    () => uniquePlayers.find(p => p.player_id === value),
+    [uniquePlayers, value]
+  );
 
-  // Filter & sort players based on category priority & search query
+  // Only filter & sort when dropdown is actually open
   const filteredPlayers = useMemo(() => {
+    if (!isOpen) return [];
+    const term = searchTerm.trim().toLowerCase();
     return uniquePlayers
       .filter(p => {
-        if (!searchTerm.trim()) return true;
-        const term = searchTerm.toLowerCase();
+        if (!term) return true;
         return (
           (p.player_name && p.player_name.toLowerCase().includes(term)) ||
           (p.category && p.category.toLowerCase().includes(term))
@@ -157,10 +176,11 @@ export default function SearchablePlayerSelect({
         if (pA !== pB) return pA - pB;
         return (a.player_name || '').localeCompare(b.player_name || '');
       });
-  }, [uniquePlayers, searchTerm]);
+  }, [isOpen, uniquePlayers, searchTerm]);
 
-  // Close when clicking outside
+  // Close when clicking outside (listener attached only while open)
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (
         containerRef.current && !containerRef.current.contains(event.target as Node) &&
@@ -171,11 +191,14 @@ export default function SearchablePlayerSelect({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   // Reset highlight index when filter changes or dropdown opens
   useEffect(() => {
-    setHighlightedIndex(0);
+    if (isOpen) {
+      keyboardNavRef.current = false;
+      setHighlightedIndex(0);
+    }
   }, [searchTerm, isOpen]);
 
   // Focus search input when dropdown opens
@@ -185,13 +208,14 @@ export default function SearchablePlayerSelect({
     }
   }, [isOpen]);
 
-  // Auto-scroll highlighted item into view during keyboard navigation
+  // Auto-scroll highlighted item into view ONLY during keyboard navigation (never mouse hover)
   useEffect(() => {
-    if (isOpen && listRef.current) {
-      const highlightedEl = listRef.current.children[highlightedIndex] as HTMLElement;
+    if (isOpen && keyboardNavRef.current && highlightedIndex >= 0 && listRef.current) {
+      const highlightedEl = listRef.current.children[highlightedIndex] as HTMLElement | undefined;
       if (highlightedEl) {
-        highlightedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        highlightedEl.scrollIntoView({ block: 'nearest' });
       }
+      keyboardNavRef.current = false;
     }
   }, [highlightedIndex, isOpen]);
 
@@ -209,14 +233,17 @@ export default function SearchablePlayerSelect({
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
+      keyboardNavRef.current = true;
       setHighlightedIndex(prev => (prev + 1) % Math.max(1, filteredPlayers.length));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      keyboardNavRef.current = true;
       setHighlightedIndex(prev => (prev - 1 + filteredPlayers.length) % Math.max(1, filteredPlayers.length));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredPlayers[highlightedIndex]) {
-        onChange(filteredPlayers[highlightedIndex].player_id);
+      const targetIdx = highlightedIndex >= 0 ? highlightedIndex : 0;
+      if (filteredPlayers[targetIdx]) {
+        onChange(filteredPlayers[targetIdx].player_id);
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -232,14 +259,14 @@ export default function SearchablePlayerSelect({
         ref={buttonRef}
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((prev) => !prev)}
         onKeyDown={handleKeyDown}
-        className={`w-full flex items-center justify-between px-3 py-2.5 bg-white border-2 rounded-xl text-left transition-all shadow-sm ${
+        className={`w-full flex items-center justify-between px-3 py-2 bg-white border-2 rounded-xl text-left transition-colors duration-75 shadow-xs ${
           disabled
             ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
             : isOpen
             ? 'border-blue-500 ring-2 ring-blue-500/20'
-            : 'border-slate-300 hover:border-slate-400'
+            : 'border-slate-300 hover:border-slate-400 cursor-pointer'
         }`}
       >
         <div className="flex items-center gap-2.5 overflow-hidden flex-1 mr-2">
@@ -278,7 +305,7 @@ export default function SearchablePlayerSelect({
         </div>
 
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${
+          className={`w-4 h-4 text-slate-400 transition-transform duration-150 flex-shrink-0 ${
             isOpen ? 'rotate-180 text-blue-600' : ''
           }`}
         />
@@ -294,7 +321,7 @@ export default function SearchablePlayerSelect({
           />
           <div
             ref={dropdownRef}
-            className="fixed z-[9999] bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono animate-in fade-in zoom-in-95 duration-150"
+            className="fixed z-[9999] bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden flex flex-col font-mono"
             style={{
               top: dropdownPosition.top !== undefined ? `${dropdownPosition.top}px` : undefined,
               bottom: dropdownPosition.bottom !== undefined ? `${dropdownPosition.bottom}px` : undefined,
@@ -337,7 +364,7 @@ export default function SearchablePlayerSelect({
                     setIsOpen(false);
                     setSearchTerm('');
                   }}
-                  className="flex items-center justify-between p-2 rounded-xl cursor-pointer text-rose-700 bg-rose-50/80 hover:bg-rose-100 border border-dashed border-rose-200/90 transition-colors mb-1 shadow-2xs"
+                  className="flex items-center justify-between p-2 rounded-xl cursor-pointer text-rose-700 bg-rose-50/80 hover:bg-rose-100 border border-dashed border-rose-200/90 transition-colors duration-75 mb-1 shadow-2xs"
                 >
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center text-[10px] font-black">✕</span>
@@ -354,6 +381,7 @@ export default function SearchablePlayerSelect({
                 filteredPlayers.map((player, idx) => {
                   const isSelected = player.player_id === value;
                   const isHighlighted = idx === highlightedIndex;
+                  const assignedLabel = assignedByPlayerId?.[player.player_id] ?? player.assigned_label;
 
                   return (
                     <li
@@ -363,13 +391,12 @@ export default function SearchablePlayerSelect({
                         setIsOpen(false);
                         setSearchTerm('');
                       }}
-                      onMouseEnter={() => setHighlightedIndex(idx)}
-                      className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors duration-75 ${
                         isSelected
                           ? 'bg-blue-50 border border-blue-200 text-blue-900'
                           : isHighlighted
                           ? 'bg-slate-100 text-slate-900'
-                          : 'hover:bg-slate-50 text-slate-800'
+                          : 'hover:bg-slate-100 text-slate-800'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -397,9 +424,9 @@ export default function SearchablePlayerSelect({
                                 {player.category}
                               </span>
                             )}
-                            {player.assigned_label && (
+                            {assignedLabel && (
                               <span className="text-[8px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded uppercase">
-                                In {player.assigned_label}
+                                In {assignedLabel}
                               </span>
                             )}
                           </div>
@@ -419,3 +446,5 @@ export default function SearchablePlayerSelect({
     </div>
   );
 }
+
+export default memo(SearchablePlayerSelect);
