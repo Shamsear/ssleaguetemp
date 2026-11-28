@@ -141,17 +141,6 @@ const buildInitialMatchResultEntry = (m: Matchup): MatchResultEntry => {
   };
 };
 
-const formatSideDisplayNames = (
-  names: string[] | undefined,
-  fallbackName: string
-): string => {
-  if (Array.isArray(names) && names.length > 0) {
-    const clean = names.map((n) => String(n || '').trim()).filter(Boolean);
-    if (clean.length > 0) return clean.join(' & ');
-  }
-  return fallbackName;
-};
-
 interface Fixture {
   id: string;
   season_id: string;
@@ -440,6 +429,255 @@ export default function FixturePage() {
 
   // Auto-lock lineups when deadline passes
   useAutoLockLineups(fixtureId);
+
+  const getMatchupSideEntries = (matchup: any, side: 'home' | 'away') => {
+    const isHome = side === 'home';
+    const squadMap = isHome ? homeSquadById : awaySquadById;
+    const squadNameMap = isHome ? homeSquadByName : awaySquadByName;
+    const sidePlayers = getTripleThreatSidePlayers(matchup, side);
+    const ids = sidePlayers.ids.map((id) => String(id || '').trim());
+    let names = sidePlayers.names.map((n) => String(n || '').trim()).filter(Boolean);
+
+    if (names.length <= 1 && (names[0] || '').includes(' & ')) {
+      names = (names[0] || '').split(/\s*&\s*/).map((n) => n.trim()).filter(Boolean);
+    }
+
+    const count = Math.max(ids.length, names.length, 1);
+    const playerGoalsArr = isHome ? matchup?.home_player_goals : matchup?.away_player_goals;
+
+    return Array.from({ length: count }, (_, i) => {
+      const pid = ids[i] || '';
+      const pname = names[i] || '';
+      const squadMatch =
+        (pid ? squadMap.get(pid) : undefined) ||
+        (pname ? squadNameMap.get(pname.toLowerCase()) : undefined);
+      const fallbackCategory =
+        i === 0 ? (isHome ? matchup?.home_category : matchup?.away_category) : undefined;
+      const fallbackPhoto =
+        i === 0 ? (isHome ? matchup?.home_photo_url : matchup?.away_photo_url) : undefined;
+      const playerGoals =
+        Array.isArray(playerGoalsArr) && playerGoalsArr.length > i
+          ? Number(playerGoalsArr[i] ?? 0)
+          : null;
+
+      return {
+        key: pid || pname || `${side}-${i}`,
+        name: pname || squadMatch?.player_name || 'TBD',
+        category: squadMatch?.category || fallbackCategory,
+        photoUrl: squadMatch?.photo_url || fallbackPhoto,
+        posXCircle: squadMatch?.photo_position_x_circle,
+        posYCircle: squadMatch?.photo_position_y_circle,
+        scaleCircle: squadMatch?.photo_scale_circle,
+        goals: playerGoals,
+      };
+    });
+  };
+
+  const renderMatchupSideBox = (
+    side: 'home' | 'away',
+    matchup: any,
+    opts: {
+      isPOTD?: boolean;
+      won?: boolean;
+      lost?: boolean;
+      isDraw?: boolean;
+      hasResult?: boolean;
+      showTeamName?: boolean;
+      showGoalsLine?: boolean;
+      showOutcomeBadge?: boolean;
+      alignRightOnMobile?: boolean;
+    } = {}
+  ) => {
+    const isHome = side === 'home';
+    const {
+      isPOTD = false,
+      won = false,
+      lost = false,
+      isDraw = false,
+      hasResult = false,
+      showTeamName = false,
+      showGoalsLine = false,
+      showOutcomeBadge = false,
+      alignRightOnMobile = !isHome,
+    } = opts;
+
+    const entries = getMatchupSideEntries(matchup, side);
+    const isMulti = entries.length > 1;
+    const teamLabel = isHome ? fixture?.home_team_name || 'Home Team' : fixture?.away_team_name || 'Away Team';
+    const boxClass = isPOTD
+      ? 'bg-amber-50/60 border-amber-300'
+      : won
+        ? 'bg-emerald-50/30 border-emerald-200'
+        : isDraw
+          ? 'bg-slate-50 border-slate-200'
+          : lost
+            ? 'bg-red-50/20 border-red-200'
+            : 'bg-slate-50 border-slate-200';
+    const photoBorder = isHome ? 'border-blue-300' : 'border-slate-300';
+    const isTTMatchCard =
+      (fixture as any)?.tournament_type === 'triple_threat' ||
+      (fixture as any)?.matchday_format === 'triple_threat' ||
+      Boolean(matchup?.match_mode);
+    const sideGoals = isHome ? matchup?.home_goals : matchup?.away_goals;
+
+    if (!isMulti) {
+      const entry = entries[0];
+      return (
+        <div className={`p-3 rounded-xl border transition-all ${boxClass}`}>
+          <div
+            className={`flex items-center gap-3 ${
+              alignRightOnMobile ? 'flex-row-reverse sm:flex-row' : ''
+            }`}
+          >
+            <PlayerPhoto
+              photoUrl={entry.photoUrl}
+              playerName={entry.name}
+              size={40}
+              shape="circle"
+              posXCircle={entry.posXCircle}
+              posYCircle={entry.posYCircle}
+              scaleCircle={entry.scaleCircle}
+              className={`border ${photoBorder} flex-shrink-0`}
+            />
+            <div
+              className={`flex flex-col min-w-0 ${
+                alignRightOnMobile ? 'text-right sm:text-left' : 'text-left'
+              }`}
+            >
+              {(showTeamName || isPOTD) && (
+                <div
+                  className={`flex items-center gap-1 ${
+                    alignRightOnMobile ? 'justify-end sm:justify-start' : ''
+                  }`}
+                >
+                  {isPOTD && (
+                    <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  )}
+                  {showTeamName && (
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {teamLabel}
+                    </span>
+                  )}
+                </div>
+              )}
+              <span className={`font-extrabold text-sm text-slate-900 truncate ${isPOTD ? 'text-amber-900' : ''}`}>
+                {entry.name}
+              </span>
+              {showGoalsLine && hasResult && entry.goals !== null && (
+                <span className="text-[11px] font-bold text-indigo-700 mt-0.5">
+                  {entry.name}: {entry.goals}G
+                </span>
+              )}
+              {entry.category && (
+                <span
+                  className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border mt-0.5 ${
+                    alignRightOnMobile ? 'self-end sm:self-start' : 'self-start'
+                  } ${getCategoryBadgeClass(entry.category)}`}
+                >
+                  {entry.category}
+                </span>
+              )}
+              {showOutcomeBadge && hasResult && (
+                <div className="mt-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
+                      won ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {won ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
+                    {isTTMatchCard
+                      ? resolveTripleThreatMode(matchup) === 'duo'
+                        ? ` (${sideGoals ?? 0} goals)`
+                        : ` (${won ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`
+                      : ` (${sideGoals ?? 0} goals)`}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`p-3 rounded-xl border transition-all space-y-2 ${boxClass}`}>
+        {(showTeamName || isPOTD) && (
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1 min-w-0">
+              {isPOTD && (
+                <svg className="w-3 h-3 text-yellow-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              )}
+              {showTeamName && (
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                  {teamLabel}
+                </span>
+              )}
+            </div>
+            <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider shrink-0">
+              2v2 Pair
+            </span>
+          </div>
+        )}
+        <div className="space-y-2">
+          {entries.map((entry) => (
+            <div key={entry.key} className="flex items-center justify-between gap-2.5 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerPhoto
+                  photoUrl={entry.photoUrl}
+                  playerName={entry.name}
+                  size={34}
+                  shape="circle"
+                  posXCircle={entry.posXCircle}
+                  posYCircle={entry.posYCircle}
+                  scaleCircle={entry.scaleCircle}
+                  className={`border ${photoBorder} flex-shrink-0`}
+                />
+                <div className="flex flex-col min-w-0 text-left">
+                  <span className={`font-extrabold text-sm text-slate-900 truncate ${isPOTD ? 'text-amber-900' : ''}`}>
+                    {entry.name}
+                  </span>
+                  {entry.category && (
+                    <span
+                      className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(
+                        entry.category
+                      )}`}
+                    >
+                      {entry.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {showGoalsLine && hasResult && entry.goals !== null && (
+                <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-[11px] font-bold text-indigo-700 shrink-0">
+                  {entry.goals}G
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        {showOutcomeBadge && hasResult && (
+          <div className="pt-1">
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
+                won ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
+              }`}
+            >
+              {won ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
+              {isTTMatchCard
+                ? resolveTripleThreatMode(matchup) === 'duo'
+                  ? ` (${sideGoals ?? 0} goals)`
+                  : ` (${won ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`
+                : ` (${sideGoals ?? 0} goals)`}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Function to generate WhatsApp share text
   const generateWhatsAppText = () => {
@@ -2996,62 +3234,17 @@ export default function FixturePage() {
                           {/* Main Matchup Display */}
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                             {/* Home Player */}
-                            <div className={`p-3 rounded-xl border transition-all ${homePOTD ? 'bg-amber-50/60 border-amber-300' :
-                              homeWon ? 'bg-emerald-50/30 border-emerald-200' :
-                                isDraw ? 'bg-slate-50 border-slate-200' :
-                                  awayWon ? 'bg-red-50/20 border-red-200' :
-                                    'bg-slate-50 border-slate-200'
-                              }`}>
-                              <div className="flex items-center gap-3">
-                                <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
-                                  playerName={matchup.home_player_name}
-                                  size={40}
-                                  shape="circle"
-                                  posXCircle={homeMatch?.photo_position_x_circle}
-                                  posYCircle={homeMatch?.photo_position_y_circle}
-                                  scaleCircle={homeMatch?.photo_scale_circle}
-                                  className="border border-blue-300 flex-shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0 text-left">
-                                  <div className="flex items-center gap-1">
-                                    {homePOTD && (
-                                      <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                      </svg>
-                                    )}
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.home_team_name}</span>
-                                  </div>
-                                  <span className={`font-extrabold text-sm text-slate-900 truncate ${homePOTD ? 'text-amber-900' : ''}`}>
-                                    {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
-                                  </span>
-                                  {hasResult && Array.isArray(matchup.home_player_goals) && matchup.home_player_goals.length > 0 && (
-                                    <span className="text-[11px] font-bold text-indigo-700 mt-0.5">
-                                      {(matchup.home_player_names || []).map((n, i) => `${n}: ${matchup.home_player_goals?.[i] ?? 0}G`).join(' • ')}
-                                    </span>
-                                  )}
-                                  {homeCategory && (
-                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
-                                      {homeCategory}
-                                    </span>
-                                  )}
-                                  {hasResult && (
-                                    <div className="mt-1.5">
-                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
-                                        homeWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
-                                      }`}>
-                                        {homeWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
-                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode)
-                                          ? (resolveTripleThreatMode(matchup as any) === 'duo'
-                                            ? ` (${matchup.home_goals} goals)`
-                                            : ` (${homeWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`)
-                                          : ` (${matchup.home_goals} goals)`}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                            {renderMatchupSideBox('home', matchup, {
+                              isPOTD: homePOTD,
+                              won: homeWon,
+                              lost: awayWon,
+                              isDraw,
+                              hasResult,
+                              showTeamName: true,
+                              showGoalsLine: true,
+                              showOutcomeBadge: true,
+                              alignRightOnMobile: false,
+                            })}
 
                             {/* Score Badge */}
                             <div className="flex flex-col items-center gap-1 sm:gap-2 my-1 sm:my-0">
@@ -3077,62 +3270,17 @@ export default function FixturePage() {
                             </div>
 
                             {/* Away Player */}
-                            <div className={`p-3 rounded-xl border transition-all ${awayPOTD ? 'bg-amber-50/60 border-amber-300' :
-                              awayWon ? 'bg-emerald-50/30 border-emerald-200' :
-                                isDraw ? 'bg-slate-50 border-slate-200' :
-                                  homeWon ? 'bg-red-50/20 border-red-200' :
-                                    'bg-slate-50 border-slate-200'
-                              }`}>
-                              <div className="flex items-center gap-3 flex-row-reverse sm:flex-row">
-                                <PlayerPhoto
-                                  photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
-                                  playerName={matchup.away_player_name}
-                                  size={40}
-                                  shape="circle"
-                                  posXCircle={awayMatch?.photo_position_x_circle}
-                                  posYCircle={awayMatch?.photo_position_y_circle}
-                                  scaleCircle={awayMatch?.photo_scale_circle}
-                                  className="border border-slate-300 flex-shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0 text-right sm:text-left">
-                                  <div className="flex items-center justify-end sm:justify-start gap-1">
-                                    {awayPOTD && (
-                                      <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                      </svg>
-                                    )}
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{fixture.away_team_name}</span>
-                                  </div>
-                                  <span className={`font-extrabold text-sm text-slate-900 truncate ${awayPOTD ? 'text-amber-900' : ''}`}>
-                                    {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
-                                  </span>
-                                  {hasResult && Array.isArray(matchup.away_player_goals) && matchup.away_player_goals.length > 0 && (
-                                    <span className="text-[11px] font-bold text-indigo-700 mt-0.5">
-                                      {(matchup.away_player_names || []).map((n, i) => `${n}: ${matchup.away_player_goals?.[i] ?? 0}G`).join(' • ')}
-                                    </span>
-                                  )}
-                                  {awayCategory && (
-                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
-                                      {awayCategory}
-                                    </span>
-                                  )}
-                                  {hasResult && (
-                                    <div className="mt-1.5">
-                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-xs ${
-                                        awayWon ? 'bg-emerald-500 text-white' : isDraw ? 'bg-slate-400 text-white' : 'bg-red-100 text-red-700'
-                                      }`}>
-                                        {awayWon ? '🎉 Won' : isDraw ? '◆ Draw' : '✗ Lost'}
-                                        {((fixture as any)?.tournament_type === 'triple_threat' || (fixture as any)?.matchday_format === 'triple_threat' || !!(matchup as any).match_mode)
-                                          ? (resolveTripleThreatMode(matchup as any) === 'duo'
-                                            ? ` (${matchup.away_goals} goals)`
-                                            : ` (${awayWon ? '+3 pts' : isDraw ? '+1 pt' : '0 pts'})`)
-                                          : ` (${matchup.away_goals} goals)`}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                            {renderMatchupSideBox('away', matchup, {
+                              isPOTD: awayPOTD,
+                              won: awayWon,
+                              lost: homeWon,
+                              isDraw,
+                              hasResult,
+                              showTeamName: true,
+                              showGoalsLine: true,
+                              showOutcomeBadge: true,
+                              alignRightOnMobile: true,
+                            })}
                           </div>
 
                           {/* Match Stats Summary - Hidden on mobile */}
@@ -5107,35 +5255,13 @@ export default function FixturePage() {
                             {/* Main Matchup Display */}
                             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                               {/* Home Player */}
-                              <div className={`p-3 rounded-xl border transition-all ${homePOTD ? 'bg-amber-50/60 border-amber-300' :
-                                homeWon ? 'bg-emerald-50/30 border-emerald-200' :
-                                  isDraw ? 'bg-slate-50 border-slate-200' :
-                                    awayWon ? 'bg-red-50/20 border-red-200' :
-                                      'bg-slate-50 border-slate-200'
-                                }`}>
-                                <div className="flex items-center gap-3">
-                                  <PlayerPhoto
-                                    photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
-                                    playerName={matchup.home_player_name}
-                                    size={40}
-                                    shape="circle"
-                                    posXCircle={homeMatch?.photo_position_x_circle}
-                                    posYCircle={homeMatch?.photo_position_y_circle}
-                                    scaleCircle={homeMatch?.photo_scale_circle}
-                                    className="border border-blue-300 flex-shrink-0"
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-extrabold text-sm text-slate-900 truncate">
-                                      {(matchup as any).home_player_names?.length > 1 ? (matchup as any).home_player_names.join(' & ') : matchup.home_player_name}
-                                    </span>
-                                    {homeCategory && (
-                                      <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
-                                        {homeCategory}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
+                              {renderMatchupSideBox('home', matchup, {
+                                isPOTD: homePOTD,
+                                won: homeWon,
+                                lost: awayWon,
+                                isDraw,
+                                alignRightOnMobile: false,
+                              })}
 
                               {/* VS or Score */}
                               <div className="text-center">
@@ -5157,35 +5283,13 @@ export default function FixturePage() {
                               </div>
 
                               {/* Away Player */}
-                              <div className={`p-3 rounded-xl border transition-all ${awayPOTD ? 'bg-amber-50/60 border-amber-300' :
-                                awayWon ? 'bg-emerald-50/30 border-emerald-200' :
-                                  isDraw ? 'bg-slate-50 border-slate-200' :
-                                    homeWon ? 'bg-red-50/20 border-red-200' :
-                                      'bg-slate-50 border-slate-200'
-                                }`}>
-                                <div className="flex items-center gap-3 flex-row-reverse sm:flex-row text-right sm:text-left">
-                                  <PlayerPhoto
-                                    photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
-                                    playerName={matchup.away_player_name}
-                                    size={40}
-                                    shape="circle"
-                                    posXCircle={awayMatch?.photo_position_x_circle}
-                                    posYCircle={awayMatch?.photo_position_y_circle}
-                                    scaleCircle={awayMatch?.photo_scale_circle}
-                                    className="border border-slate-300 flex-shrink-0"
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-extrabold text-sm text-slate-900 truncate">
-                                      {(matchup as any).away_player_names?.length > 1 ? (matchup as any).away_player_names.join(' & ') : matchup.away_player_name}
-                                    </span>
-                                    {awayCategory && (
-                                      <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
-                                        {awayCategory}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
+                              {renderMatchupSideBox('away', matchup, {
+                                isPOTD: awayPOTD,
+                                won: awayWon,
+                                lost: homeWon,
+                                isDraw,
+                                alignRightOnMobile: true,
+                              })}
                             </div>
                             {/* Performance statistics line when result is recorded */}
                             {hasResult && (
@@ -5424,30 +5528,7 @@ export default function FixturePage() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center">
                             {/* Home Player */}
-                            <div className="p-3 rounded-xl border bg-slate-50 border-slate-200">
-                              <div className="flex items-center gap-3">
-                                <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
-                                  playerName={matchup.home_player_name}
-                                  size={40}
-                                  shape="circle"
-                                  posXCircle={homeMatch?.photo_position_x_circle}
-                                  posYCircle={homeMatch?.photo_position_y_circle}
-                                  scaleCircle={homeMatch?.photo_scale_circle}
-                                  className="border border-blue-300 flex-shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0">
-                                  <span className="font-extrabold text-sm text-slate-900 truncate">
-                                    {formatSideDisplayNames((matchup as any).home_player_names, matchup.home_player_name)}
-                                  </span>
-                                  {homeCategory && (
-                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
-                                      {homeCategory}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                            {renderMatchupSideBox('home', matchup, { alignRightOnMobile: false })}
 
                             {/* VS */}
                             <div className="text-center">
@@ -5457,30 +5538,7 @@ export default function FixturePage() {
                             </div>
 
                             {/* Away Player */}
-                            <div className="p-3 rounded-xl border bg-slate-50 border-slate-200">
-                              <div className="flex items-center gap-3 flex-row-reverse sm:flex-row text-right sm:text-left">
-                                <PlayerPhoto
-                                  photoUrl={awayMatch?.photo_url || (matchup as any).away_photo_url}
-                                  playerName={matchup.away_player_name}
-                                  size={40}
-                                  shape="circle"
-                                  posXCircle={awayMatch?.photo_position_x_circle}
-                                  posYCircle={awayMatch?.photo_position_y_circle}
-                                  scaleCircle={awayMatch?.photo_scale_circle}
-                                  className="border border-slate-300 flex-shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0">
-                                  <span className="font-extrabold text-sm text-slate-900 truncate">
-                                    {formatSideDisplayNames((matchup as any).away_player_names, matchup.away_player_name)}
-                                  </span>
-                                  {awayCategory && (
-                                    <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>
-                                      {awayCategory}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                            {renderMatchupSideBox('away', matchup, { alignRightOnMobile: true })}
                           </div>
                         </div>
                       );
