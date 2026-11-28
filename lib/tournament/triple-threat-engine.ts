@@ -797,24 +797,20 @@ function formatTripleThreatSideDisplay(
   return cleanNames.join(' & ');
 }
 
-function formatMatchDurationTag(
+function resolveValidDuration(
   duration: number | null | undefined,
   fallbackDuration: number
-): string {
+): number {
   const mins = Number(duration);
-  const valid = Number.isFinite(mins) && mins > 0 ? mins : fallbackDuration;
-  return `⏱️ ${valid} MIN`;
+  return Number.isFinite(mins) && mins > 0 ? mins : fallbackDuration;
 }
 
-function formatScoreValue(
-  matchup: TripleThreatCopyMatchupInput | undefined
-): string {
-  if (!matchup || !isScoredMatchup(matchup)) return '__ – __';
-  return `${Number(matchup.home_goals)} – ${Number(matchup.away_goals)}`;
+function formatGoalParen(goals: number | null | undefined, scored: boolean): string {
+  return scored ? `(${Number(goals ?? 0)})` : '()';
 }
 
 /**
- * Formats a Triple Threat fixture + matchups into the official WhatsApp copy / share template.
+ * Formats a Triple Threat fixture + matchups into the compact WhatsApp copy / share template.
  */
 export function formatTripleThreatFixtureCopy(params: {
   fixture: TripleThreatCopyFixtureInput;
@@ -828,27 +824,23 @@ export function formatTripleThreatFixtureCopy(params: {
 
   const roundStr = String(fixture.round_number || 1).padStart(2, '0');
   const knockoutLabelMap: Record<string, string> = {
-    quarter_finals: 'QUARTER FINALS',
-    semi_finals: 'SEMI FINALS',
-    finals: 'FINALS',
-    third_place: 'THIRD PLACE PLAYOFF',
+    quarter_finals: 'Quarter Finals',
+    semi_finals: 'Semi Finals',
+    finals: 'Finals',
+    third_place: 'Third Place Playoff',
   };
   const knockoutLabel = fixture.knockout_round
     ? knockoutLabelMap[fixture.knockout_round] ||
-      String(fixture.knockout_round).replace(/_/g, ' ').toUpperCase()
+      String(fixture.knockout_round).replace(/_/g, ' ')
     : '';
-  const matchdayLine = knockoutLabel ? `📋 ${knockoutLabel}` : `📋 MATCHDAY – ${roundStr}`;
+  const roundPart = knockoutLabel ? knockoutLabel : `Matchday ${roundStr}`;
 
   const rawGroup =
     fixture.group_name ||
     String(fixture.id || '').match(/_grp([A-Za-z0-9]+)_/)?.[1] ||
     '';
   const cleanGroup = rawGroup.replace(/^group\s*[-–:]?\s*/i, '').trim().toUpperCase();
-  const groupLine = cleanGroup
-    ? `🏴 GROUP – ${cleanGroup}`
-    : knockoutLabel
-      ? null
-      : '🏴 GROUP – ';
+  const metaLine = cleanGroup ? `📋 ${roundPart} • Group ${cleanGroup}` : `📋 ${roundPart}`;
 
   const homeTeam = (fixture.home_team_name || 'HOME TEAM').trim().toUpperCase();
   const awayTeam = (fixture.away_team_name || 'AWAY TEAM').trim().toUpperCase();
@@ -869,7 +861,7 @@ export function formatTripleThreatFixtureCopy(params: {
     }))
   );
 
-  // CO-OP (2V2)
+  // CO-OP (2v2)
   const coopScored = isScoredMatchup(coopMatch);
   const coopHome = coopMatch
     ? formatTripleThreatSideDisplay(
@@ -887,27 +879,29 @@ export function formatTripleThreatFixtureCopy(params: {
         coopScored
       )
     : 'TBD';
-
-  const coopDurationTag = formatMatchDurationTag(coopMatch?.match_duration, 8);
+  const coopMinutes = resolveValidDuration(coopMatch?.match_duration, 8);
   const coopSection = [
-    `⚔️ CO-OP (2V2) • ${coopDurationTag}`,
-    '',
-    coopHome,
-    '',
-    '🆚',
-    '',
-    coopAway,
-    '',
-    `SCORE: ${formatScoreValue(coopMatch)}`,
+    `⚔️ *CO-OP (2v2)* • ${coopMinutes}m`,
+    `${coopHome} ${formatGoalParen(coopMatch?.home_goals, coopScored)}`,
+    'vs',
+    `${coopAway} ${formatGoalParen(coopMatch?.away_goals, coopScored)}`,
   ].join('\n');
 
-  // DUO (2 × 1V1 or legacy 2V2 fallback)
+  // DUO (2 × 1v1 or legacy 2v2 fallback)
   let duoSection: string;
   const isLegacy2v2Duo =
     duoMatches.length === 1 &&
     ((duoMatches[0].home_player_names?.length ?? 0) > 1 ||
       (duoMatches[0].away_player_names?.length ?? 0) > 1 ||
       String(duoMatches[0].home_player_name || '').includes('&'));
+
+  const duoDurations = duoMatches
+    .map((m) => Number(m.match_duration))
+    .filter((d) => Number.isFinite(d) && d > 0);
+  const soloMinutes =
+    Number.isFinite(Number(soloMatch?.match_duration)) && Number(soloMatch?.match_duration) > 0
+      ? Number(soloMatch?.match_duration)
+      : null;
 
   if (isLegacy2v2Duo) {
     const soloDuo = duoMatches[0];
@@ -924,21 +918,24 @@ export function formatTripleThreatFixtureCopy(params: {
       soloDuo.away_player_goals,
       dScored
     );
-    const soloDuoDurationTag = formatMatchDurationTag(soloDuo?.match_duration, 6);
+    const duoMins = resolveValidDuration(soloDuo?.match_duration, 6);
     duoSection = [
-      `⚔️ DUO (2V2) • ${soloDuoDurationTag}`,
-      '',
-      dHome,
-      '',
-      '🆚',
-      '',
-      dAway,
-      '',
-      `SCORE: ${formatScoreValue(soloDuo)}`,
+      `⚔️ *DUO (2v2)* • ${duoMins}m`,
+      `${dHome} ${formatGoalParen(soloDuo?.home_goals, dScored)}`,
+      'vs',
+      `${dAway} ${formatGoalParen(soloDuo?.away_goals, dScored)}`,
     ].join('\n');
   } else {
     const duoSlots = [0, 1].map((idx) => duoMatches[idx]);
-    const duoBlocks = duoSlots.map((dm, idx) => {
+    const duoDursEqual =
+      duoDurations.length >= 2 && duoDurations.every((d) => d === duoDurations[0]);
+    const duoHeaderTag = duoDursEqual
+      ? ` • ${duoDurations[0]}m`
+      : duoDurations.length >= 2
+        ? ` • ${duoDurations.join('m / ')}m`
+        : '';
+
+    const duoLines = duoSlots.map((dm, idx) => {
       const dScored = isScoredMatchup(dm);
       const dHome = dm
         ? formatTripleThreatSideDisplay(
@@ -956,25 +953,25 @@ export function formatTripleThreatFixtureCopy(params: {
             dScored
           )
         : 'TBD';
-      const header =
-        dm && Number.isFinite(Number(dm.match_duration)) && Number(dm.match_duration) > 0
-          ? `MATCH ${idx + 1} (${formatMatchDurationTag(dm.match_duration, 6)}):`
-          : `MATCH ${idx + 1}:`;
-      return [header, dHome, '🆚', dAway, `SCORE: ${formatScoreValue(dm)}`].join('\n');
+      const perLineDur =
+        !duoDursEqual && dm && Number.isFinite(Number(dm.match_duration)) && Number(dm.match_duration) > 0
+          ? ` (${Number(dm.match_duration)}m)`
+          : '';
+      return `${idx + 1}. ${dHome} ${formatGoalParen(dm?.home_goals, dScored)} vs ${dAway} ${formatGoalParen(dm?.away_goals, dScored)}${perLineDur}`;
     });
+
     const duoTotalStr = ttRes.modeResults.duo.played
-      ? `${ttRes.modeResults.duo.home_goals} – ${ttRes.modeResults.duo.away_goals}`
-      : '__ – __';
+      ? `(${ttRes.modeResults.duo.home_goals}) – (${ttRes.modeResults.duo.away_goals})`
+      : '() – ()';
+
     duoSection = [
-      '⚔️ DUO (2 × 1V1)',
-      '',
-      ...duoBlocks.flatMap((block, idx) => (idx === 0 ? [block] : ['', block])),
-      '',
-      `DUO TOTAL: ${duoTotalStr}`,
+      `⚔️ *DUO (2×1v1)*${duoHeaderTag}`,
+      ...duoLines,
+      `Total: ${duoTotalStr}`,
     ].join('\n');
   }
 
-  // SOLO (1V1)
+  // SOLO (1v1)
   const soloScored = isScoredMatchup(soloMatch);
   const soloHome = soloMatch
     ? formatTripleThreatSideDisplay(
@@ -992,16 +989,10 @@ export function formatTripleThreatFixtureCopy(params: {
         soloScored
       )
     : 'TBD';
-
-  const soloDurationTag = formatMatchDurationTag(soloMatch?.match_duration, 6);
+  const soloDisplayMin = resolveValidDuration(soloMatch?.match_duration, 6);
   const soloSection = [
-    `⚔️ SOLO (1V1) • ${soloDurationTag}`,
-    '',
-    `HOME: ${soloHome}`,
-    '🆚',
-    `AWAY: ${soloAway}`,
-    '',
-    `SCORE: ${formatScoreValue(soloMatch)}`,
+    `⚔️ *SOLO (1v1)* • ${soloDisplayMin}m`,
+    `${soloHome} ${formatGoalParen(soloMatch?.home_goals, soloScored)} vs ${soloAway} ${formatGoalParen(soloMatch?.away_goals, soloScored)}`,
   ].join('\n');
 
   // Final Points, Bonus & Winner
@@ -1014,106 +1005,60 @@ export function formatTripleThreatFixtureCopy(params: {
     allModesPlayed ||
     (hasAnyResults && String(fixture.status || '').toLowerCase() === 'completed');
 
-  let finalHomeLine = '🏠 HOME TEAM: ';
-  let finalAwayLine = '✈️ AWAY TEAM: ';
-  let bonusLine = '🎯 BONUS POINT:';
-  let winnerLine = '🏆 WINNER:';
+  const finalPointsLine = isComplete
+    ? `📊 *FINAL:* ${homeTeam} (${ttRes.home_total_points}) – (${ttRes.away_total_points}) ${awayTeam}`
+    : hasAnyResults
+      ? `📊 *FINAL:* ${homeTeam} (${ttRes.home_total_points}) – (${ttRes.away_total_points}) ${awayTeam} (Live)`
+      : `📊 *FINAL:* ${homeTeam} () – () ${awayTeam}`;
 
+  let bonusWinnerLine = '🎯 Bonus:   |  🏆 Winner:';
   if (isComplete) {
-    finalHomeLine = `🏠 HOME TEAM: ${ttRes.home_total_points} PTS`;
-    finalAwayLine = `✈️ AWAY TEAM: ${ttRes.away_total_points} PTS`;
-
     const bonusText =
       ttRes.clean_sweep_team === 'home'
         ? `+1 (${homeTeam})`
         : ttRes.clean_sweep_team === 'away'
           ? `+1 (${awayTeam})`
           : 'None';
-    bonusLine = `🎯 BONUS POINT: ${bonusText}`;
-
     const winnerText =
       ttRes.fixture_winner === 'home'
         ? homeTeam
         : ttRes.fixture_winner === 'away'
           ? awayTeam
           : 'DRAW';
-    winnerLine = `🏆 WINNER: ${winnerText}`;
-  } else if (hasAnyResults) {
-    finalHomeLine = `🏠 HOME TEAM: ${ttRes.home_total_points} PTS (IN PROGRESS)`;
-    finalAwayLine = `✈️ AWAY TEAM: ${ttRes.away_total_points} PTS (IN PROGRESS)`;
+    bonusWinnerLine = `🎯 Bonus: ${bonusText}  |  🏆 Winner: ${winnerText}`;
   }
 
-  const parts: string[] = [
-    `🏆 SS SUPER LEAGUE – SEASON ${seasonNumber}`,
-    '⚔️ THE TRIPLE THREAT',
-    '',
-    divider,
-    matchdayLine,
-    divider,
-    '',
-  ];
-
-  if (groupLine !== null) {
-    parts.push(groupLine, '');
-  }
-
-  const coopMinutes =
-    Number.isFinite(Number(coopMatch?.match_duration)) && Number(coopMatch?.match_duration) > 0
-      ? Number(coopMatch?.match_duration)
-      : 8;
-
-  const duoDurations = duoMatches
-    .map((m) => Number(m.match_duration))
-    .filter((d) => Number.isFinite(d) && d > 0);
-  const soloMinutes =
-    Number.isFinite(Number(soloMatch?.match_duration)) && Number(soloMatch?.match_duration) > 0
-      ? Number(soloMatch?.match_duration)
-      : null;
-
-  let duoSoloDurationLine = "⏱️ DUO & SOLO: HOME TEAM'S CHOICE";
+  let duoSoloFooterPart = 'Duo/Solo Home Choice';
   if (duoDurations.length >= 2 && soloMinutes !== null) {
     const allChoiceDurs = [...duoDurations, soloMinutes];
     const allSame = allChoiceDurs.every((d) => d === allChoiceDurs[0]);
     if (allSame) {
-      duoSoloDurationLine = `⏱️ DUO & SOLO: ${allChoiceDurs[0]} MINUTES`;
+      duoSoloFooterPart = `Duo/Solo ${allChoiceDurs[0]}m`;
     } else {
       const duoPart = duoDurations.every((d) => d === duoDurations[0])
-        ? `${duoDurations[0]} MIN`
-        : duoDurations.map((d, i) => `M${i + 1}: ${d} MIN`).join(' / ');
-      duoSoloDurationLine = `⏱️ DUO: ${duoPart} • SOLO: ${soloMinutes} MIN`;
+        ? `${duoDurations[0]}m`
+        : duoDurations.map((d) => `${d}m`).join('/');
+      duoSoloFooterPart = `Duo ${duoPart} • Solo ${soloMinutes}m`;
     }
   } else if (soloMinutes !== null) {
-    duoSoloDurationLine = `⏱️ DUO: PENDING • SOLO: ${soloMinutes} MIN`;
+    duoSoloFooterPart = `Duo Pending • Solo ${soloMinutes}m`;
   }
 
-  parts.push(
-    `🏠 HOME TEAM: ${homeTeam}`,
-    `✈️ AWAY TEAM: ${awayTeam}`,
-    '',
+  return [
+    `🏆 *SS SUPER LEAGUE S${seasonNumber} – TRIPLE THREAT*`,
+    metaLine,
+    `🏠 *${homeTeam}* vs *${awayTeam}* ✈️`,
+    divider,
     coopSection,
     '',
     duoSection,
     '',
     soloSection,
-    '',
     divider,
-    '📊 FINAL POINTS',
-    '',
-    finalHomeLine,
-    finalAwayLine,
-    '',
-    bonusLine,
-    winnerLine,
-    divider,
-    '',
-    `⏱️ CO-OP: ${coopMinutes} MINUTES`,
-    duoSoloDurationLine,
-    '🟢 CONDITION: EXCELLENT',
-    '',
-    `SEASON ${seasonNumber} COMMITTEE`
-  );
-
-  return parts.join('\n');
+    finalPointsLine,
+    bonusWinnerLine,
+    `⏱️ Co-op ${coopMinutes}m • ${duoSoloFooterPart} • 🟢 Excellent`,
+  ].join('\n');
 }
 
 function resolveLineupSlotNames(

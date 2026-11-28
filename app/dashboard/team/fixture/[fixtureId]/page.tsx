@@ -2686,6 +2686,13 @@ export default function FixturePage() {
                   homeSquadByName={homeSquadByName}
                   awaySquadById={awaySquadById}
                   awaySquadByName={awaySquadByName}
+                  homeDuoCandidates={isTT ? resolveTTDuoCandidates('home') : undefined}
+                  awayDuoCandidates={isTT ? resolveTTDuoCandidates('away') : undefined}
+                  canPairDuo={
+                    isAdmin ||
+                    isHomeTeam ||
+                    (phase !== 'home_fixture' && phase !== 'draft' && isAwayTeam)
+                  }
                   getCategoryPriority={getCategoryPriority}
                   getCategoryBadgeClass={getCategoryBadgeClass}
                   showAlert={showAlert}

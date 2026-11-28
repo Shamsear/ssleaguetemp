@@ -57,6 +57,9 @@ interface EditMatchupsSectionProps {
   homeSquadByName: Map<string, any>;
   awaySquadById: Map<string, any>;
   awaySquadByName: Map<string, any>;
+  homeDuoCandidates?: any[];
+  awayDuoCandidates?: any[];
+  canPairDuo?: boolean;
   getCategoryPriority: (category?: string) => number;
   getCategoryBadgeClass: (category?: string) => string;
   showAlert: (opts: {
@@ -92,6 +95,9 @@ function EditMatchupsSection({
   homeSquadByName,
   awaySquadById,
   awaySquadByName,
+  homeDuoCandidates,
+  awayDuoCandidates,
+  canPairDuo = true,
   getCategoryPriority,
   getCategoryBadgeClass,
   showAlert,
@@ -471,17 +477,76 @@ function EditMatchupsSection({
       </div>
 
       {isTTEdit && !draftMatchups.some((m) => resolveTripleThreatMode(m) === 'duo') && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl font-sans text-xs text-emerald-900 flex items-center justify-between gap-3">
-          <span>
-            <strong>🤝 Duo (2 × 1v1) Not Paired Yet:</strong> Pair Duo matchups on the fixture view right between Co-op and Single (Co-op &amp; Single edits below will be saved cleanly).
-          </span>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="shrink-0 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg cursor-pointer"
-          >
-            Go Pair Duo
-          </button>
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl font-sans text-xs text-emerald-950 flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div>
+              <strong>🤝 Duo (2 × 1v1) Not Paired Yet:</strong>{' '}
+              {canPairDuo
+                ? 'Add and pair the two Duo (2 × 1v1) matchups right here below, or exit to pair them between Co-op and Single.'
+                : 'Waiting for the Home team to pair the Duo (2 × 1v1) matchups.'}
+            </div>
+            {awayDuoCandidates && awayDuoCandidates.length > 0 && (
+              <div className="text-[11px] font-mono text-emerald-800">
+                <strong>{fixture.away_team_name} Duo Pool:</strong>{' '}
+                {awayDuoCandidates.map((p: any) => p.player_name).filter(Boolean).join(' & ')}
+              </div>
+            )}
+          </div>
+          {canPairDuo && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftMatchups((prev) => {
+                    if (prev.some((m) => resolveTripleThreatMode(m) === 'duo')) return prev;
+                    const usedHomeIds = new Set<string>();
+                    prev.forEach((m) => {
+                      getTripleThreatSidePlayers(m, 'home').ids.forEach((id) => {
+                        if (id) usedHomeIds.add(id);
+                      });
+                    });
+                    const preferredHome = (homeDuoCandidates || []).filter(
+                      (p: any) => p?.player_id && !usedHomeIds.has(p.player_id)
+                    );
+                    const fallbackHome = homeEditablePool.filter(
+                      (p: any) => p?.player_id && !usedHomeIds.has(p.player_id) && !preferredHome.some((x: any) => x.player_id === p.player_id)
+                    );
+                    const duoHomePool = [...preferredHome, ...fallbackHome].slice(0, 2);
+
+                    const makeDuoRow = (position: number, hp: any): EditableMatchupItem => ({
+                      position,
+                      match_mode: 'duo',
+                      match_duration: 6,
+                      home_player_id: hp?.player_id || '',
+                      home_player_name: hp?.player_name || '',
+                      home_player_ids: hp?.player_id ? [hp.player_id] : [''],
+                      home_player_names: hp?.player_name ? [hp.player_name] : [''],
+                      away_player_id: '',
+                      away_player_name: '',
+                      away_player_ids: [''],
+                      away_player_names: [''],
+                    });
+
+                    return [
+                      ...prev,
+                      makeDuoRow(2, duoHomePool[0]),
+                      makeDuoRow(3, duoHomePool[1]),
+                    ].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+                  });
+                }}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg cursor-pointer shadow-xs"
+              >
+                + Add Duo (2 × 1v1) Here
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-2.5 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg cursor-pointer"
+              >
+                Exit Edit
+              </button>
+            </div>
+          )}
         </div>
       )}
 

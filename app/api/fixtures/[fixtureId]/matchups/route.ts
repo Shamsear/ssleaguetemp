@@ -740,7 +740,8 @@ export async function PUT(
 
     const fixtureMetaRows = await sql`
       SELECT
-        f.id, f.home_team_id, f.away_team_id,
+        f.id, f.season_id, f.tournament_id, f.round_number,
+        f.home_team_id, f.away_team_id, f.matchups_created_by,
         f.scoring_system, f.knockout_format,
         t.tournament_type, ts.matchday_format
       FROM fixtures f
@@ -823,9 +824,9 @@ export async function PUT(
       }
     }
 
-    // Update existing matchups (including Triple Threat player arrays and substitution fields)
+    // Update existing matchups (or insert missing Triple Threat mode positions added during edit)
     for (const matchup of normalizedMatchups) {
-      await sql`
+      const updatedRows = await sql`
         UPDATE matchups
         SET
           home_player_id = ${matchup.homeSide.scalarId},
@@ -849,7 +850,68 @@ export async function PUT(
           updated_at = NOW()
         WHERE fixture_id = ${fixtureId}
         AND position = ${matchup.position}
+        RETURNING id
       `;
+
+      if (updatedRows.length === 0 && isTripleThreat && fixtureMeta) {
+        await sql`
+          INSERT INTO matchups (
+            fixture_id,
+            season_id,
+            tournament_id,
+            round_number,
+            home_player_id,
+            home_player_name,
+            home_player_ids,
+            home_player_names,
+            away_player_id,
+            away_player_name,
+            away_player_ids,
+            away_player_names,
+            position,
+            match_mode,
+            match_duration,
+            home_original_player_id,
+            home_original_player_name,
+            home_substituted,
+            home_sub_penalty,
+            away_original_player_id,
+            away_original_player_name,
+            away_substituted,
+            away_sub_penalty,
+            created_by,
+            created_at,
+            updated_at
+          ) VALUES (
+            ${fixtureId},
+            ${fixtureMeta.season_id},
+            ${fixtureMeta.tournament_id || null},
+            ${fixtureMeta.round_number},
+            ${matchup.homeSide.scalarId},
+            ${matchup.homeSide.scalarName},
+            ${matchup.homeSide.ids},
+            ${matchup.homeSide.names},
+            ${matchup.awaySide.scalarId},
+            ${matchup.awaySide.scalarName},
+            ${matchup.awaySide.ids},
+            ${matchup.awaySide.names},
+            ${matchup.position},
+            ${matchup.match_mode},
+            ${matchup.match_duration},
+            ${matchup.home_original_player_id || null},
+            ${matchup.home_original_player_name || null},
+            ${matchup.home_substituted || false},
+            ${matchup.home_sub_penalty || 0},
+            ${matchup.away_original_player_id || null},
+            ${matchup.away_original_player_name || null},
+            ${matchup.away_substituted || false},
+            ${matchup.away_sub_penalty || 0},
+            ${fixtureMeta.matchups_created_by || 'team'},
+            NOW(),
+            NOW()
+          )
+        `;
+      }
     }
 
     // Keep Triple Threat team lineups in sync with edited matchups
