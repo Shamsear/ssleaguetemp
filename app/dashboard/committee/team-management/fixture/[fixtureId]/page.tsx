@@ -1,5 +1,5 @@
 'use client';
-import { Activity, AlertTriangle, ClipboardList, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft, Star, CheckCircle2, Clock, Zap, Gamepad2, Users, Flame } from 'lucide-react';
+import { Activity, AlertTriangle, Check, ClipboardList, Copy, Crown, Pencil, Save, Settings, Trophy, XCircle, Swords, ArrowLeft, Star, CheckCircle2, Clock, Zap, Gamepad2, Users, Flame } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
@@ -15,7 +15,14 @@ import CommitteeMatchupCreator from '@/components/CommitteeMatchupCreator';
 import TripleThreatLineupSubmission from '@/components/TripleThreatLineupSubmission';
 import { fetchWithTokenRefresh } from '@/lib/token-refresh';
 import AuthGuard from '@/components/auth/AuthGuard';
-import { calculateTripleThreatFixture, getTripleThreatModeDisplay, resolveTripleThreatMode } from '@/lib/tournament/triple-threat-engine';
+import {
+  calculateTripleThreatFixture,
+  extractTripleThreatLineupFromMatchups,
+  formatTripleThreatLineupCopy,
+  getTripleThreatModeDisplay,
+  resolveTripleThreatMode,
+} from '@/lib/tournament/triple-threat-engine';
+import { formatFixtureShareText } from '@/lib/tournament/fixture-share';
 
 interface Matchup {
   id: number;
@@ -78,6 +85,10 @@ interface Fixture {
   home_points_difference?: number;
   away_points_difference?: number;
   clean_sweep_winner?: string;
+  group_name?: string | null;
+  notes?: string;
+  round_status?: string | null;
+  raw_status?: string;
 }
 
 export default function CommitteeFixtureDetailPage() {
@@ -111,6 +122,7 @@ export default function CommitteeFixtureDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingRoundRobin, setIsGeneratingRoundRobin] = useState(false);
   const [knockoutFormat, setKnockoutFormat] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<'fixture' | 'home' | 'away' | null>(null);
 
   // Modal system
   const {
@@ -626,6 +638,104 @@ export default function CommitteeFixtureDetailPage() {
     }).find(p => p.id === (fixture?.motm_player_id || motmPlayerId))?.name : null
   );
 
+  const getShareableFixtureText = () => {
+    if (!fixture) return '';
+    return formatFixtureShareText({
+      fixture: {
+        ...fixture,
+        motm_player_name: displayMotmName || fixture.motm_player_name,
+        home_penalty_goals: homePenaltyGoals,
+        away_penalty_goals: awayPenaltyGoals,
+      },
+      matchups,
+      scoringSystem: fixture.scoring_system || fixture.scoring_type,
+      homePenaltyGoals,
+      awayPenaltyGoals,
+    });
+  };
+
+  const copyWithFeedback = async (text: string, key: 'fixture' | 'home' | 'away', successMessage: string) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey((prev) => (prev === key ? null : prev)), 2000);
+      showAlert({
+        type: 'success',
+        title: 'Copied!',
+        message: successMessage,
+      });
+    } catch {
+      showAlert({
+        type: 'error',
+        title: 'Copy Failed',
+        message: 'Failed to copy to clipboard',
+      });
+    }
+  };
+
+  const handleCopyFixtureText = () => {
+    const text = getShareableFixtureText();
+    if (!text) {
+      showAlert({
+        type: 'warning',
+        title: 'Nothing to Copy',
+        message: 'Create matchups first before copying standard fixture text.',
+      });
+      return;
+    }
+    copyWithFeedback(text, 'fixture', 'Fixture text copied to clipboard');
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = getShareableFixtureText();
+    if (!text) {
+      showAlert({
+        type: 'warning',
+        title: 'Nothing to Share',
+        message: 'Create matchups first before sharing on WhatsApp.',
+      });
+      return;
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const resolvedHomeTTLineup =
+    homeLineup?.triple_threat_lineup ||
+    (isTripleThreat ? extractTripleThreatLineupFromMatchups(matchups, 'home') : null);
+  const resolvedAwayTTLineup =
+    awayLineup?.triple_threat_lineup ||
+    (isTripleThreat ? extractTripleThreatLineupFromMatchups(matchups, 'away') : null);
+
+  const handleCopyTripleThreatLineup = (side: 'home' | 'away') => {
+    if (!fixture) return;
+    const lineup = side === 'home' ? resolvedHomeTTLineup : resolvedAwayTTLineup;
+    if (!lineup) return;
+    const teamName = side === 'home' ? fixture.home_team_name : fixture.away_team_name;
+    const text = formatTripleThreatLineupCopy({
+      teamName,
+      side,
+      lineup,
+      fixture,
+    });
+    copyWithFeedback(text, side, `${teamName} lineup copied to clipboard`);
+  };
+
+  const fixtureDisplayStatus = String(fixture.status || 'scheduled').toLowerCase();
+  const isFixtureCompleted = fixtureDisplayStatus === 'completed';
+  const isFixtureCancelled = fixtureDisplayStatus === 'cancelled';
+  const isFixturePaused =
+    !isFixtureCompleted &&
+    !isFixtureCancelled &&
+    (fixtureDisplayStatus === 'paused' || fixture.round_status === 'paused');
+  const isFixtureActive =
+    !isFixtureCompleted &&
+    !isFixtureCancelled &&
+    !isFixturePaused &&
+    (fixtureDisplayStatus === 'in_progress' ||
+      fixtureDisplayStatus === 'active' ||
+      fixture.round_status === 'active');
+
   return (
     <AuthGuard requiredRole="committee_admin">
     <div className="console-bg min-h-screen text-slate-800 relative pt-5 lg:pt-24 pb-8 px-4 sm:px-6">
@@ -681,14 +791,21 @@ export default function CommitteeFixtureDetailPage() {
                 </>
               )}
               
-              {(fixture as any).scoring_system && (
+              {(isTripleThreat || (fixture as any).scoring_system) && (
                 <>
                   <span>•</span>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${(fixture as any).scoring_system === 'wins'
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                    isTripleThreat
                       ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                      : 'bg-blue-50 text-blue-800 border border-blue-200'
-                    }`}>
-                    {(fixture as any).scoring_system === 'wins' ? 'Win-Based' : 'Goal-Based'}
+                      : (fixture as any).scoring_system === 'wins'
+                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                        : 'bg-blue-50 text-blue-800 border border-blue-200'
+                  }`}>
+                    {isTripleThreat
+                      ? '⚡ Triple Threat'
+                      : (fixture as any).scoring_system === 'wins'
+                        ? 'Win-Based'
+                        : 'Goal-Based'}
                   </span>
                 </>
               )}
@@ -746,16 +863,18 @@ export default function CommitteeFixtureDetailPage() {
                 )}
                 {isTripleThreat && (fixture.home_points_difference !== undefined) && (
                   <div className="text-[10px] font-mono font-bold text-slate-500 mt-1">
-                    GD: {fixture.home_points_difference > 0 ? `+${fixture.home_points_difference}` : fixture.home_points_difference} vs {fixture.away_points_difference > 0 ? `+${fixture.away_points_difference}` : fixture.away_points_difference}
+                    GD: {(fixture.home_points_difference ?? 0) > 0 ? `+${fixture.home_points_difference}` : (fixture.home_points_difference ?? 0)} vs {(fixture.away_points_difference ?? 0) > 0 ? `+${fixture.away_points_difference}` : (fixture.away_points_difference ?? 0)}
                   </div>
                 )}
                 <div className="mt-1">
                   <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase ${
-                    fixture.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-250' :
-                    fixture.status === 'in_progress' ? 'bg-amber-50 text-amber-700 border border-amber-250' :
+                    isFixtureCompleted ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                    isFixtureCancelled ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                    isFixturePaused ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                    isFixtureActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                     'bg-sky-50 text-sky-700 border border-sky-250'
                   }`}>
-                    {fixture.status}
+                    {isFixtureCompleted ? 'completed' : isFixtureCancelled ? 'cancelled' : isFixturePaused ? 'paused' : isFixtureActive ? 'active' : fixture.status}
                   </span>
                 </div>
                 {matchups.length === 0 && fixture.status !== 'completed' && (
@@ -883,10 +1002,29 @@ export default function CommitteeFixtureDetailPage() {
 
           {/* Matchups */}
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
               <h3 className="text-lg font-black text-gray-900 tracking-tight">Individual Matchups</h3>
               {!isEditMode && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {(matchups.length > 0 || isTripleThreat) && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleWhatsAppShare}
+                        className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all border border-emerald-200/80 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>WhatsApp</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyFixtureText}
+                        className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all border border-blue-200/80 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        {copiedKey === 'fixture' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === 'fixture' ? 'Copied' : 'Copy Fixture'}</span>
+                      </button>
+                    </>
+                  )}
                   <button
                     onClick={() => setShowMatchupCreator(true)}
                     className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all border border-slate-200 shadow-sm flex items-center gap-1.5 cursor-pointer"
@@ -1110,14 +1248,27 @@ export default function CommitteeFixtureDetailPage() {
                         Home team has not submitted their 5 players yet.
                       </p>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setShowTTLineupModal('home')}
-                      className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      {homeLineup?.triple_threat_lineup ? 'Edit Home Lineup' : 'Set Home Lineup (5 Players)'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowTTLineupModal('home')}
+                        className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        {homeLineup?.triple_threat_lineup ? 'Edit Home Lineup' : 'Set Home Lineup (5 Players)'}
+                      </button>
+                      {resolvedHomeTTLineup && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTripleThreatLineup('home')}
+                          className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          title="Copy Home Lineup"
+                        >
+                          {copiedKey === 'home' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedKey === 'home' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Away Team Card */}
@@ -1147,14 +1298,27 @@ export default function CommitteeFixtureDetailPage() {
                         Away team has not submitted. Committee can submit on their behalf.
                       </p>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setShowTTLineupModal('away')}
-                      className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      {awayLineup?.triple_threat_lineup ? 'Edit Away Lineup' : 'Submit Away Lineup (On Behalf)'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowTTLineupModal('away')}
+                        className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        {awayLineup?.triple_threat_lineup ? 'Edit Away Lineup' : 'Submit Away Lineup (On Behalf)'}
+                      </button>
+                      {resolvedAwayTTLineup && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTripleThreatLineup('away')}
+                          className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          title="Copy Away Lineup"
+                        >
+                          {copiedKey === 'away' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedKey === 'away' ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1632,6 +1796,53 @@ export default function CommitteeFixtureDetailPage() {
           <div className="console-card bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm">
             <h3 className="text-lg font-black text-gray-900 tracking-tight mb-4">Committee Actions</h3>
             <div className="space-y-3">
+              {/* Copy Fixture Text & WhatsApp Share */}
+              {(matchups.length > 0 || isTripleThreat) && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyFixtureText}
+                    className="px-3 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {copiedKey === 'fixture' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedKey === 'fixture' ? 'Copied!' : 'Copy Text'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleWhatsAppShare}
+                    className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>WhatsApp</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Triple Threat Quick Lineup Copy */}
+              {isTripleThreat && (resolvedHomeTTLineup || resolvedAwayTTLineup) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {resolvedHomeTTLineup && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyTripleThreatLineup('home')}
+                      className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-[11px] font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate"
+                    >
+                      {copiedKey === 'home' ? <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
+                      <span className="truncate">{copiedKey === 'home' ? 'Home Copied' : 'Copy Home Lineup'}</span>
+                    </button>
+                  )}
+                  {resolvedAwayTTLineup && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyTripleThreatLineup('away')}
+                      className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-[11px] font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate"
+                    >
+                      {copiedKey === 'away' ? <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
+                      <span className="truncate">{copiedKey === 'away' ? 'Away Copied' : 'Copy Away Lineup'}</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Share Button */}
               <div className="flex justify-center w-full">
                 <FixtureShareButton fixture={fixture} matchups={matchups} />

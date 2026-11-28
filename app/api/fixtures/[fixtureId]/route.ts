@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
-import { computeISTResultDeadline } from '@/lib/utils/timezone';
+import {
+  computeISTResultDeadline,
+  resolveFixtureDisplayStatus,
+  resolveRoundDeadlineStatus,
+} from '@/lib/utils/timezone';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { syncPlayerStatsForSeason } from '@/lib/neon/sync-player-stats';
 
@@ -200,13 +204,29 @@ export async function GET(
       }
     }
 
-    const [home_team_logo, away_team_logo] = await Promise.all([
+    const [home_team_logo, away_team_logo, deadlineRows] = await Promise.all([
       getTeamLogo(fixture.home_team_id, fixture.season_id, fixture.home_team_name),
-      getTeamLogo(fixture.away_team_id, fixture.season_id, fixture.away_team_name)
+      getTeamLogo(fixture.away_team_id, fixture.season_id, fixture.away_team_name),
+      sql`
+        SELECT status, scheduled_date, round_start_time
+        FROM round_deadlines
+        WHERE (tournament_id = ${fixture.tournament_id || ''} OR season_id = ${fixture.season_id || ''})
+          AND round_number = ${fixture.round_number}
+          AND leg = ${fixture.leg || 'first'}
+        ORDER BY CASE WHEN tournament_id = ${fixture.tournament_id || ''} THEN 0 ELSE 1 END
+        LIMIT 1
+      `,
     ]);
+
+    const deadline = deadlineRows[0] || null;
+    const roundStatus = resolveRoundDeadlineStatus(deadline);
 
     const fixtureWithLogos = {
       ...fixture,
+      raw_status: fixture.status,
+      round_status: roundStatus,
+      status: resolveFixtureDisplayStatus(fixture.status, roundStatus),
+      scheduled_date: fixture.scheduled_date || deadline?.scheduled_date || null,
       group_name: resolvedGroupName,
       home_team_logo,
       away_team_logo

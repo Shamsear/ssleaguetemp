@@ -240,3 +240,64 @@ export function getISTDaysDiff(date1: Date, date2: Date): number {
   
   return Math.floor((ist2.getTime() - ist1.getTime()) / (1000 * 60 * 60 * 24));
 }
+
+const ACTIVE_ROUND_STATUSES = new Set([
+  'active',
+  'in_progress',
+  'started',
+  'live',
+  'home_fixture',
+  'fixture_entry',
+  'result_entry',
+]);
+
+const FINAL_ROUND_STATUSES = new Set(['completed', 'finalized', 'closed', 'paused']);
+
+/**
+ * Resolve effective round status from a `round_deadlines` row using IST start time fallback.
+ */
+export function resolveRoundDeadlineStatus(deadline: any): string | null {
+  if (!deadline) return null;
+  const raw = String(deadline.status || '').toLowerCase().trim();
+  if (FINAL_ROUND_STATUSES.has(raw)) {
+    return raw;
+  }
+  if (ACTIVE_ROUND_STATUSES.has(raw)) {
+    return 'active';
+  }
+  if (deadline.scheduled_date) {
+    const dateStr = extractISTDateString(deadline.scheduled_date);
+    if (dateStr) {
+      const startTimeStr =
+        deadline.round_start_time && /^\d{2}:\d{2}$/.test(deadline.round_start_time)
+          ? deadline.round_start_time
+          : '09:00';
+      const startAt = createISTDateTime(dateStr, startTimeStr);
+      if (!Number.isNaN(startAt.getTime()) && Date.now() >= startAt.getTime()) {
+        return 'active';
+      }
+    }
+  }
+  return raw || 'pending';
+}
+
+/**
+ * Derive display/effective fixture status by combining `fixtures.status` and its `round_deadlines` status.
+ */
+export function resolveFixtureDisplayStatus(
+  fixtureStatus: string | null | undefined,
+  roundStatus: string | null | undefined
+): string {
+  const rawFixture = String(fixtureStatus || 'scheduled').toLowerCase().trim();
+  if (['completed', 'finalized', 'closed', 'cancelled'].includes(rawFixture)) {
+    return rawFixture;
+  }
+  const rawRound = String(roundStatus || '').toLowerCase().trim();
+  if (ACTIVE_ROUND_STATUSES.has(rawRound)) {
+    return 'in_progress';
+  }
+  if (rawRound === 'paused') {
+    return 'paused';
+  }
+  return rawFixture || 'scheduled';
+}

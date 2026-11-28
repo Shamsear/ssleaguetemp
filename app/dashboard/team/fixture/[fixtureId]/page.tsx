@@ -25,13 +25,13 @@ import {
   calculateTripleThreatFixture,
   computeAwayLineupDeadline,
   extractTripleThreatLineupFromMatchups,
-  formatTripleThreatFixtureCopy,
   formatTripleThreatLineupCopy,
   getTripleThreatModeDisplay,
   getTripleThreatSidePlayers,
   isRoundStartedFromDeadline,
   resolveTripleThreatMode,
 } from '@/lib/tournament/triple-threat-engine';
+import { formatFixtureShareText } from '@/lib/tournament/fixture-share';
 
 const isRealSubmittedLineup = (lineupData: any, isTripleThreatMode: boolean): boolean => {
   const l = lineupData?.success ? lineupData.lineups : null;
@@ -443,208 +443,16 @@ export default function FixturePage() {
 
   // Function to generate WhatsApp share text
   const generateWhatsAppText = () => {
-    if (!fixture || matchups.length === 0) return '';
-
-    const activeScoring = scoringSystem || tournamentSystem;
-    const isTTWhatsApp = Boolean(
-      activeScoring === 'triple_threat' ||
-      fixture.tournament_type === 'triple_threat' ||
-      fixture.matchday_format === 'triple_threat' ||
-      fixture.knockout_format === 'triple_threat' ||
-      fixture.tournament_id?.toLowerCase().includes('triple_threat') ||
-      matchups.some((m: any) => !!m.match_mode)
-    );
-
-    if (isTTWhatsApp) {
-      return formatTripleThreatFixtureCopy({ fixture, matchups });
-    }
-
-    const homePlayerGoals = matchups.reduce((sum, m) => sum + (m.home_goals ?? 0), 0);
-    const awayPlayerGoals = matchups.reduce((sum, m) => sum + (m.away_goals ?? 0), 0);
-
-    // Calculate substitution penalties (awarded TO opponent)
-    const homeSubPenalties = matchups.reduce((sum, m) => sum + (m.home_sub_penalty ?? 0), 0);
-    const awaySubPenalties = matchups.reduce((sum, m) => sum + (m.away_sub_penalty ?? 0), 0);
-
-    // Effective fine/violation penalty goals
-    const effectiveHomePenaltyGoals = Number(fixture.home_penalty_goals ?? homePenaltyGoals ?? 0);
-    const effectiveAwayPenaltyGoals = Number(fixture.away_penalty_goals ?? awayPenaltyGoals ?? 0);
-
-    // Calculate scores based on tournament system
-    let homeTotalScore, awayTotalScore, homePlayerScore, awayPlayerScore;
-
-    if (activeScoring === 'wins') {
-      // Win-based scoring: 3 points for win, 1 for draw, 0 for loss
-      // Substitution penalties are added to MATCHUP score to determine winner
-      let homePoints = 0;
-      let awayPoints = 0;
-      
-      matchups.forEach(m => {
-        if (m.home_goals !== null && m.away_goals !== null) {
-          // Add substitution penalties to matchup scores
-          // home_sub_penalty = penalty awarded TO away (when home subs)
-          // away_sub_penalty = penalty awarded TO home (when away subs)
-          const homeMatchupScore = (m.home_goals ?? 0) + (m.away_sub_penalty ?? 0);
-          const awayMatchupScore = (m.away_goals ?? 0) + (m.home_sub_penalty ?? 0);
-          
-          if (homeMatchupScore > awayMatchupScore) {
-            homePoints += 3; // Home wins this matchup
-          } else if (awayMatchupScore > homeMatchupScore) {
-            awayPoints += 3; // Away wins this matchup
-          } else {
-            homePoints += 1; // Draw
-            awayPoints += 1; // Draw
-          }
-        }
-      });
-      
-      homePlayerScore = homePoints;
-      awayPlayerScore = awayPoints;
-      
-      // Add fine/violation penalties to total (these affect final result)
-      homeTotalScore = homePoints + effectiveHomePenaltyGoals;
-      awayTotalScore = awayPoints + effectiveAwayPenaltyGoals;
-    } else {
-      // Goal-based scoring: sum of all goals
-      homePlayerScore = homePlayerGoals;
-      awayPlayerScore = awayPlayerGoals;
-      homeTotalScore = homePlayerGoals + awaySubPenalties + effectiveHomePenaltyGoals;
-      awayTotalScore = awayPlayerGoals + homeSubPenalties + effectiveAwayPenaltyGoals;
-    }
-
-    const hasResults = matchups.some(m => m.home_goals !== null);
-    const winner = hasResults
-      ? homeTotalScore > awayTotalScore
-        ? fixture.home_team_name
-        : awayTotalScore > homeTotalScore
-          ? fixture.away_team_name
-          : 'DRAW'
-      : '';
-
-    // Build Score Breakdown details
-    let homeDetails = '';
-    if (hasResults) {
-      if (activeScoring === 'wins') {
-        if (effectiveHomePenaltyGoals > 0) {
-          homeDetails = `\n   - Fine/Violation Goals: +${effectiveHomePenaltyGoals}`;
-        }
-      } else {
-        const details = [];
-        if (awaySubPenalties > 0) {
-          details.push(`   - Opponent Sub Penalties: +${awaySubPenalties}`);
-        }
-        if (effectiveHomePenaltyGoals > 0) {
-          details.push(`   - Fine/Violation Goals: +${effectiveHomePenaltyGoals}`);
-        }
-        if (details.length > 0) {
-          homeDetails = '\n' + details.join('\n');
-        }
-      }
-    }
-
-    let awayDetails = '';
-    if (hasResults) {
-      if (activeScoring === 'wins') {
-        if (effectiveAwayPenaltyGoals > 0) {
-          awayDetails = `\n   - Fine/Violation Goals: +${effectiveAwayPenaltyGoals}`;
-        }
-      } else {
-        const details = [];
-        if (homeSubPenalties > 0) {
-          details.push(`   - Opponent Sub Penalties: +${homeSubPenalties}`);
-        }
-        if (effectiveAwayPenaltyGoals > 0) {
-          details.push(`   - Fine/Violation Goals: +${effectiveAwayPenaltyGoals}`);
-        }
-        if (details.length > 0) {
-          awayDetails = '\n' + details.join('\n');
-        }
-      }
-    }
-
-    const motmName = fixture.motm_player_name ? fixture.motm_player_name.toUpperCase() : 'Not selected';
-
-    // Extract season number from season_id (e.g., SSPSLS16 {"->"} 16)
-    const seasonMatch = fixture.season_id.match(/\d+$/);
-    const seasonNumber = seasonMatch ? seasonMatch[0] : '15';
-
-    // Get knockout round display name
-    const knockoutRoundName = fixture.knockout_round
-      ? fixture.knockout_round === 'quarter_finals' ? 'QUARTER FINALS'
-        : fixture.knockout_round === 'semi_finals' ? 'SEMI FINALS'
-          : fixture.knockout_round === 'finals' ? 'FINALS'
-            : fixture.knockout_round === 'third_place' ? 'THIRD PLACE PLAYOFF'
-              : ''
-      : '';
-
-    // Get substitution details
-    const substitutions = matchups.filter(m => m.home_substituted || m.away_substituted);
-    const hasSubstitutions = substitutions.length > 0;
-
-    // Get substitute players (all players beyond the first 5)
-    const homeSubstitutes = homeStartingXI.length > 5 ? homeStartingXI.slice(5) : [];
-    const awaySubstitutes = awayStartingXI.length > 5 ? awayStartingXI.slice(5) : [];
-    const hasAnySubstitutes = homeSubstitutes.length > 0 || awaySubstitutes.length > 0;
-
-    const text = `*SS PES SUPER LEAGUE - S${seasonNumber}*
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${knockoutRoundName ? `*${knockoutRoundName}* 🏆\n` : `*MATCHDAY ${fixture.round_number}* - ${fixture.leg === 'first' ? '1st' : '2nd'} Leg\n`}*${fixture.home_team_name}*  vs  *${fixture.away_team_name}*
-${scoringSystem && scoringSystem !== tournamentSystem ? `⚡ *${scoringSystem === 'wins' ? 'WIN-BASED' : 'GOAL-BASED'} SCORING*\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-*MATCHUPS:*
-${matchups.map((m, idx) => {
-      // Format player names - show substitute name only (not original)
-      const homePlayerDisplay = (m.home_player_name || '').toUpperCase();
-      const awayPlayerDisplay = (m.away_player_name || '').toUpperCase();
-
-      let line = '';
-      if (hasResults && m.home_goals !== null && m.away_goals !== null) {
-        const hBreakdown = Array.isArray(m.home_player_goals) && m.home_player_goals.length > 1
-          ? ` (${(m.home_player_names || []).map((n, i) => `${n}: ${m.home_player_goals?.[i] ?? 0}G`).join(', ')})`
-          : '';
-        const aBreakdown = Array.isArray(m.away_player_goals) && m.away_player_goals.length > 1
-          ? ` (${(m.away_player_names || []).map((n, i) => `${n}: ${m.away_player_goals?.[i] ?? 0}G`).join(', ')})`
-          : '';
-        line = `${homePlayerDisplay}${hBreakdown} *${m.home_goals}-${m.away_goals}* ${awayPlayerDisplay}${aBreakdown}`;
-      } else {
-        line = `${homePlayerDisplay} vs ${awayPlayerDisplay}`;
-      }
-      line += ` (${m.match_duration || 6}min)`;
-
-      return line;
-    }).join('\n')}
-${hasAnySubstitutes ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-*SUBSTITUTES:*
-${homeSubstitutes.length > 0 ? `*${fixture.home_team_name}:*\n${homeSubstitutes.map((sub, idx) => `   ${idx + 1}. ${(sub.player_name || '').toUpperCase()}`).join('\n')}` : ''}${homeSubstitutes.length > 0 && awaySubstitutes.length > 0 ? '\n\n' : ''}${awaySubstitutes.length > 0 ? `*${fixture.away_team_name}:*\n${awaySubstitutes.map((sub, idx) => `   ${idx + 1}. ${(sub.player_name || '').toUpperCase()}`).join('\n')}` : ''}
-` : ''}${hasSubstitutions ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-*SUBSTITUTIONS MADE:*
-${substitutions.map(m => {
-      let subText = [];
-      if (m.home_substituted) {
-        subText.push(`⚠️ ${fixture.home_team_name}: ${(m.home_original_player_name || '').toUpperCase()} -> ${(m.home_player_name || '').toUpperCase()} (+${m.home_sub_penalty || 0} penalty to opponent)`);
-      }
-      if (m.away_substituted) {
-        subText.push(`⚠️ ${fixture.away_team_name}: ${(m.away_original_player_name || '').toUpperCase()} -> ${(m.away_player_name || '').toUpperCase()} (+${m.away_sub_penalty || 0} penalty to opponent)`);
-      }
-      return subText.join('\n');
-    }).join('\n')}
-` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-*SCORE BREAKDOWN:*
-
-*${fixture.home_team_name}*
-Total: *${hasResults ? homeTotalScore : 0}* ${activeScoring === 'wins' ? 'points' : 'goals'}${homeDetails}
-
-*${fixture.away_team_name}*
-Total: *${hasResults ? awayTotalScore : 0}* ${activeScoring === 'wins' ? 'points' : 'goals'}${awayDetails}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-*MAN OF THE MATCH*
-${hasResults ? `${motmName}` : 'To be announced'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${hasResults ? `*RESULT*
-${winner === 'DRAW' ? '*MATCH DRAWN*' : `*${winner.toUpperCase()} WON!*`}` : `*Match yet to be played*`}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_Powered by SS Super League S${seasonNumber} Committee_`;
-
-    return text;
+    return formatFixtureShareText({
+      fixture,
+      matchups,
+      scoringSystem,
+      tournamentSystem,
+      homeStartingXI,
+      awayStartingXI,
+      homePenaltyGoals,
+      awayPenaltyGoals,
+    });
   };
 
   const handleWhatsAppShare = () => {

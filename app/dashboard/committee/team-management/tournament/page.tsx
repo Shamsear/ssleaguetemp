@@ -2849,7 +2849,7 @@ export function TournamentDashboardPageContent() {
                       </div>
                       <div>
                         <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
-                          <span>Scheduled Fixtures</span>
+                          <span>Tournament Fixtures</span>
                           <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                             {filteredFixtures.length} of {fixturesForSelectedTournament.length}
                           </span>
@@ -3010,7 +3010,18 @@ export function TournamentDashboardPageContent() {
                     const isHomeWinner = fixture.result === 'home_win';
                     const isAwayWinner = fixture.result === 'away_win';
                     const isCompleted = fixture.status === 'completed';
-                    const isLive = fixture.status === 'in_progress';
+                    const isCancelled = fixture.status === 'cancelled';
+                    const isPaused =
+                      !isCompleted &&
+                      !isCancelled &&
+                      (fixture.status === 'paused' || fixture.round_status === 'paused');
+                    const isLive =
+                      !isCompleted &&
+                      !isCancelled &&
+                      !isPaused &&
+                      (fixture.status === 'in_progress' ||
+                        fixture.status === 'active' ||
+                        fixture.round_status === 'active');
                     const isTTFixture = (fixture as any).scoring_system === 'triple_threat' || (fixture as any).knockout_format === 'triple_threat' || isTripleThreatTournament;
                     const fixtureGroupName = fixture.group_name || fixture.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null;
                     const formattedGroup = fixtureGroupName
@@ -3066,9 +3077,12 @@ export function TournamentDashboardPageContent() {
                                 ⚡ Triple Threat
                               </span>
                             )}
-                            {(fixture as any).knockout_format === 'triple_threat' && (
+                            {(isTTFixture || (fixture as any).knockout_format === 'triple_threat') &&
+                              typeof fixture.matchups_count === 'number' && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-300">
-                                3 Matchups
+                                {fixture.matchups_count > 0
+                                  ? `${fixture.matchups_count} ${fixture.matchups_count === 1 ? 'Matchup' : 'Matchups'}`
+                                  : 'No Matchups'}
                               </span>
                             )}
                             {(fixture as any).clean_sweep_winner && (
@@ -3081,12 +3095,16 @@ export function TournamentDashboardPageContent() {
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                               isCompleted
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : isLive
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse'
-                                  : 'bg-slate-100 text-slate-600 border-slate-200'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : isCancelled
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : isPaused
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : isLive
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-slate-100 text-slate-600 border-slate-200'
                             }`}>
-                              ● {fixture.status || 'scheduled'}
+                              ● {isCompleted ? 'COMPLETED' : isCancelled ? 'CANCELLED' : isPaused ? 'PAUSED' : isLive ? 'ACTIVE' : (fixture.status || 'SCHEDULED').toUpperCase()}
                             </span>
 
                             <Link

@@ -3,6 +3,7 @@ import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { getMainDb } from '@/lib/neon/main-config';
 import { adminDb } from '@/lib/neon/admin-db-wrapper';
 import { sendNotificationToSeason } from '@/lib/notifications/send-notification';
+import { resolveFixtureDisplayStatus, resolveRoundDeadlineStatus } from '@/lib/utils/timezone';
 import {
   buildGroupStageFixtures,
   buildLeagueFixtures,
@@ -335,6 +336,36 @@ export async function GET(
       ORDER BY round_number ASC, COALESCE(group_name, 'ZZZ') ASC, match_number ASC
     `;
 
+    // Fetch round deadlines and matchup counts in parallel so fixture status & badge counts stay accurate
+    const [roundDeadlines, matchupCounts] = await Promise.all([
+      sql`
+        SELECT round_number, leg, status, scheduled_date, round_start_time
+        FROM round_deadlines
+        WHERE tournament_id = ${tournamentId}
+      `,
+      sql`
+        SELECT m.fixture_id, COUNT(*)::int as count
+        FROM matchups m
+        INNER JOIN fixtures f ON m.fixture_id = f.id
+        WHERE f.tournament_id = ${tournamentId}
+        GROUP BY m.fixture_id
+      `,
+    ]);
+
+    const deadlineByKey = new Map<string, any>();
+    const deadlineByRound = new Map<number, any>();
+    roundDeadlines.forEach((rd: any) => {
+      deadlineByKey.set(`${rd.round_number}_${rd.leg || 'first'}`, rd);
+      if (!deadlineByRound.has(rd.round_number)) {
+        deadlineByRound.set(rd.round_number, rd);
+      }
+    });
+
+    const matchupsCountMap = new Map<string, number>();
+    matchupCounts.forEach((row: any) => {
+      matchupsCountMap.set(row.fixture_id, Number(row.count) || 0);
+    });
+
     // Fetch team logos from Neon Main database (where teams and team_seasons reside)
     const logosMap: Record<string, string | null> = {};
     if (fixtures.length > 0) {
@@ -390,12 +421,23 @@ export async function GET(
       }
     }
 
-    const fixturesWithLogos = fixtures.map((f: any) => ({
-      ...f,
-      group_name: f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null,
-      home_team_logo: logosMap[f.home_team_id] || (f.home_team_name ? logosMap[f.home_team_name.toLowerCase()] : null) || null,
-      away_team_logo: logosMap[f.away_team_id] || (f.away_team_name ? logosMap[f.away_team_name.toLowerCase()] : null) || null,
-    }));
+    const fixturesWithLogos = fixtures.map((f: any) => {
+      const deadline =
+        deadlineByKey.get(`${f.round_number}_${f.leg || 'first'}`) ||
+        deadlineByRound.get(f.round_number);
+      const roundStatus = resolveRoundDeadlineStatus(deadline);
+      return {
+        ...f,
+        raw_status: f.status,
+        round_status: roundStatus,
+        status: resolveFixtureDisplayStatus(f.status, roundStatus),
+        scheduled_date: f.scheduled_date || deadline?.scheduled_date || null,
+        matchups_count: matchupsCountMap.get(f.id) ?? 0,
+        group_name: f.group_name || f.id?.match(/_grp([A-Za-z0-9]+)_/)?.[1] || null,
+        home_team_logo: logosMap[f.home_team_id] || (f.home_team_name ? logosMap[f.home_team_name.toLowerCase()] : null) || null,
+        away_team_logo: logosMap[f.away_team_id] || (f.away_team_name ? logosMap[f.away_team_name.toLowerCase()] : null) || null,
+      };
+    });
 
     return NextResponse.json({ success: true, fixtures: fixturesWithLogos });
   } catch (error: any) {
