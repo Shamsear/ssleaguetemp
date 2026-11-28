@@ -1270,9 +1270,9 @@ export default function FixturePage() {
     const pollStatus = async () => {
       try {
         const [homeLineupResponse, awayLineupResponse, matchupsResponse] = await Promise.all([
-          fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixture.home_team_id}`),
-          fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixture.away_team_id}`),
-          fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`)
+          fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixture.home_team_id}`, { cache: 'no-store' }),
+          fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}&team_id=${fixture.away_team_id}`, { cache: 'no-store' }),
+          fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`, { cache: 'no-store' })
         ]);
 
         const isTTPoll = Boolean(

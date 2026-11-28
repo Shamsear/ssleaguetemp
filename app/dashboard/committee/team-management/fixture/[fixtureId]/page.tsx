@@ -145,11 +145,47 @@ export default function CommitteeFixtureDetailPage() {
     }
   }, [fixtureId, user]);
 
-  const fetchFixtureData = async () => {
-    setIsLoading(true);
+  // Keep matchups synced when teams or another tab create/update matchups
+  useEffect(() => {
+    if (!fixtureId || user?.role !== 'committee_admin' || isEditMode || isSaving || isSavingTTDuo) {
+      return;
+    }
+
+    const syncMatchups = async () => {
+      try {
+        const res = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data.matchups)) {
+          setMatchups((prev) =>
+            JSON.stringify(prev) === JSON.stringify(data.matchups) ? prev : data.matchups
+          );
+        }
+      } catch {
+        // Silent background sync
+      }
+    };
+
+    const handleFocus = () => {
+      syncMatchups();
+    };
+    const intervalId = setInterval(syncMatchups, 5000);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fixtureId, user?.role, isEditMode, isSaving, isSavingTTDuo]);
+
+  const fetchFixtureData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       // Fetch fixture
-      const fixtureRes = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}`);
+      const fixtureRes = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}`, {
+        cache: 'no-store',
+      });
       const fixtureData = await fixtureRes.json();
 
       if (fixtureData.fixture) {
@@ -162,7 +198,9 @@ export default function CommitteeFixtureDetailPage() {
 
         // Fetch lineups for both teams
         try {
-          const lineupsRes = await fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}`);
+          const lineupsRes = await fetchWithTokenRefresh(`/api/lineups?fixture_id=${fixtureId}`, {
+            cache: 'no-store',
+          });
           if (lineupsRes.ok) {
             const lineupsData = await lineupsRes.json();
             const allL = Array.isArray(lineupsData.lineups) ? lineupsData.lineups : [];
@@ -177,7 +215,9 @@ export default function CommitteeFixtureDetailPage() {
       }
 
       // Fetch matchups
-      const matchupsRes = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`);
+      const matchupsRes = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`, {
+        cache: 'no-store',
+      });
       const matchupsData = await matchupsRes.json();
 
       if (matchupsData.matchups) {
@@ -1375,13 +1415,25 @@ export default function CommitteeFixtureDetailPage() {
                       }),
                     });
                     const json = await res.json().catch(() => ({}));
+                    if (res.status === 409 && json.error === 'MATCHUPS_ALREADY_EXIST') {
+                      showAlert({
+                        type: 'info',
+                        title: 'Duo Already Created',
+                        message: 'Duo matchups were already created. Refreshing fixture data...',
+                      });
+                      await fetchFixtureData(true);
+                      return;
+                    }
                     if (!res.ok) throw new Error(json.error || 'Failed to save Duo matchups');
+                    if (Array.isArray(json.matchups)) {
+                      setMatchups(json.matchups);
+                    }
                     showAlert({
                       type: 'success',
                       title: 'Duo Matchups Saved',
                       message: 'Duo (2 × 1v1) matchups created successfully!',
                     });
-                    fetchFixtureData();
+                    await fetchFixtureData(true);
                   } catch (err: any) {
                     showAlert({
                       type: 'error',

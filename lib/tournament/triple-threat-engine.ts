@@ -882,6 +882,7 @@ export function formatTripleThreatFixtureCopy(params: {
   const coopMinutes = resolveValidDuration(coopMatch?.match_duration, 8);
   const coopSection = [
     `⚔️ *CO-OP (2v2)* • ${coopMinutes}m`,
+    '',
     `${coopHome} ${formatGoalParen(coopMatch?.home_goals, coopScored)}`,
     'vs',
     `${coopAway} ${formatGoalParen(coopMatch?.away_goals, coopScored)}`,
@@ -921,6 +922,7 @@ export function formatTripleThreatFixtureCopy(params: {
     const duoMins = resolveValidDuration(soloDuo?.match_duration, 6);
     duoSection = [
       `⚔️ *DUO (2v2)* • ${duoMins}m`,
+      '',
       `${dHome} ${formatGoalParen(soloDuo?.home_goals, dScored)}`,
       'vs',
       `${dAway} ${formatGoalParen(soloDuo?.away_goals, dScored)}`,
@@ -929,11 +931,7 @@ export function formatTripleThreatFixtureCopy(params: {
     const duoSlots = [0, 1].map((idx) => duoMatches[idx]);
     const duoDursEqual =
       duoDurations.length >= 2 && duoDurations.every((d) => d === duoDurations[0]);
-    const duoHeaderTag = duoDursEqual
-      ? ` • ${duoDurations[0]}m`
-      : duoDurations.length >= 2
-        ? ` • ${duoDurations.join('m / ')}m`
-        : '';
+    const duoHeaderTag = duoDursEqual ? ` • ${duoDurations[0]}m` : '';
 
     const duoLines = duoSlots.map((dm, idx) => {
       const dScored = isScoredMatchup(dm);
@@ -955,7 +953,7 @@ export function formatTripleThreatFixtureCopy(params: {
         : 'TBD';
       const perLineDur =
         !duoDursEqual && dm && Number.isFinite(Number(dm.match_duration)) && Number(dm.match_duration) > 0
-          ? ` (${Number(dm.match_duration)}m)`
+          ? ` · ${Number(dm.match_duration)}m`
           : '';
       return `${idx + 1}. ${dHome} ${formatGoalParen(dm?.home_goals, dScored)} vs ${dAway} ${formatGoalParen(dm?.away_goals, dScored)}${perLineDur}`;
     });
@@ -966,7 +964,9 @@ export function formatTripleThreatFixtureCopy(params: {
 
     duoSection = [
       `⚔️ *DUO (2×1v1)*${duoHeaderTag}`,
+      '',
       ...duoLines,
+      '',
       `Total: ${duoTotalStr}`,
     ].join('\n');
   }
@@ -992,6 +992,7 @@ export function formatTripleThreatFixtureCopy(params: {
   const soloDisplayMin = resolveValidDuration(soloMatch?.match_duration, 6);
   const soloSection = [
     `⚔️ *SOLO (1v1)* • ${soloDisplayMin}m`,
+    '',
     `${soloHome} ${formatGoalParen(soloMatch?.home_goals, soloScored)} vs ${soloAway} ${formatGoalParen(soloMatch?.away_goals, soloScored)}`,
   ].join('\n');
 
@@ -1005,13 +1006,19 @@ export function formatTripleThreatFixtureCopy(params: {
     allModesPlayed ||
     (hasAnyResults && String(fixture.status || '').toLowerCase() === 'completed');
 
-  const finalPointsLine = isComplete
-    ? `📊 *FINAL:* ${homeTeam} (${ttRes.home_total_points}) – (${ttRes.away_total_points}) ${awayTeam}`
+  const finalHomeLine = isComplete
+    ? `🏠 ${homeTeam}: (${ttRes.home_total_points})`
     : hasAnyResults
-      ? `📊 *FINAL:* ${homeTeam} (${ttRes.home_total_points}) – (${ttRes.away_total_points}) ${awayTeam} (Live)`
-      : `📊 *FINAL:* ${homeTeam} () – () ${awayTeam}`;
+      ? `🏠 ${homeTeam}: (${ttRes.home_total_points}) Live`
+      : `🏠 ${homeTeam}: ()`;
+  const finalAwayLine = isComplete
+    ? `✈️ ${awayTeam}: (${ttRes.away_total_points})`
+    : hasAnyResults
+      ? `✈️ ${awayTeam}: (${ttRes.away_total_points}) Live`
+      : `✈️ ${awayTeam}: ()`;
 
-  let bonusWinnerLine = '🎯 Bonus:   |  🏆 Winner:';
+  let bonusLine = '🎯 Bonus: ';
+  let winnerLine = '🏆 Winner:';
   if (isComplete) {
     const bonusText =
       ttRes.clean_sweep_team === 'home'
@@ -1025,7 +1032,8 @@ export function formatTripleThreatFixtureCopy(params: {
         : ttRes.fixture_winner === 'away'
           ? awayTeam
           : 'DRAW';
-    bonusWinnerLine = `🎯 Bonus: ${bonusText}  |  🏆 Winner: ${winnerText}`;
+    bonusLine = `🎯 Bonus: ${bonusText}`;
+    winnerLine = `🏆 Winner: ${winnerText}`;
   }
 
   let duoSoloFooterPart = 'Duo/Solo Home Choice';
@@ -1047,17 +1055,28 @@ export function formatTripleThreatFixtureCopy(params: {
   return [
     `🏆 *SS SUPER LEAGUE S${seasonNumber} – TRIPLE THREAT*`,
     metaLine,
+    '',
     `🏠 *${homeTeam}* vs *${awayTeam}* ✈️`,
     divider,
+    '',
     coopSection,
     '',
     duoSection,
     '',
     soloSection,
+    '',
     divider,
-    finalPointsLine,
-    bonusWinnerLine,
-    `⏱️ Co-op ${coopMinutes}m • ${duoSoloFooterPart} • 🟢 Excellent`,
+    '📊 *FINAL POINTS*',
+    '',
+    finalHomeLine,
+    finalAwayLine,
+    '',
+    bonusLine,
+    winnerLine,
+    divider,
+    '',
+    `⏱️ Co-op ${coopMinutes}m • ${duoSoloFooterPart}`,
+    '🟢 Condition: Excellent',
   ].join('\n');
 }
 

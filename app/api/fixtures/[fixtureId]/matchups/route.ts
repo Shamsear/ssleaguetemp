@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTournamentDb } from '@/lib/neon/tournament-config';
 import { verifyAuth } from '@/lib/auth-helper';
+
+export const dynamic = 'force-dynamic';
 import { isRoundStartedFromDeadline, materializeTripleThreatMatchups } from '@/lib/lineup-validation';
 import { computeISTResultDeadline } from '@/lib/utils/timezone';
 import { getAuctionDb } from '@/lib/neon/auction-config';
@@ -311,10 +313,13 @@ export async function GET(
         ['committee_admin', 'super_admin', 'superadmin', 'admin'].includes(roleLower)
       );
       if (!isAdmin) {
-        return NextResponse.json({
-          matchups: [],
-          hidden_until_round_start: true,
-        });
+        return NextResponse.json(
+          {
+            matchups: [],
+            hidden_until_round_start: true,
+          },
+          { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+        );
       }
     }
 
@@ -341,7 +346,10 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ matchups });
+    return NextResponse.json(
+      { matchups },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    );
   } catch (error: any) {
     console.error('Error fetching matchups:', error);
     return NextResponse.json(
