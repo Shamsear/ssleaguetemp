@@ -139,6 +139,49 @@ const buildInitialMatchResultEntry = (m: Matchup): MatchResultEntry => {
   };
 };
 
+const getTripleThreatSidePlayers = (
+  m: Matchup,
+  side: 'home' | 'away'
+): { ids: string[]; names: string[] } => {
+  const isHome = side === 'home';
+  const rawIds = isHome ? m.home_player_ids : m.away_player_ids;
+  const rawNames = isHome ? m.home_player_names : m.away_player_names;
+  const fallbackId = String((isHome ? m.home_player_id : m.away_player_id) || '').trim();
+  const fallbackName = String((isHome ? m.home_player_name : m.away_player_name) || '').trim();
+  const isCoop = resolveTripleThreatMode(m as any) === 'coop';
+
+  const ids =
+    Array.isArray(rawIds) && rawIds.length > 0
+      ? rawIds.map((v) => String(v || '').trim())
+      : fallbackId
+        ? [fallbackId]
+        : [];
+  const names =
+    Array.isArray(rawNames) && rawNames.length > 0
+      ? rawNames.map((v) => String(v || '').trim())
+      : fallbackName
+        ? isCoop
+          ? fallbackName.split(/\s*&\s*/).map((v) => v.trim())
+          : [fallbackName]
+        : [];
+
+  const targetLen = isCoop ? 2 : 1;
+  while (ids.length < targetLen) ids.push('');
+  while (names.length < targetLen) names.push('');
+  return { ids: ids.slice(0, targetLen), names: names.slice(0, targetLen) };
+};
+
+const formatSideDisplayNames = (
+  names: string[] | undefined,
+  fallbackName: string
+): string => {
+  if (Array.isArray(names) && names.length > 0) {
+    const clean = names.map((n) => String(n || '').trim()).filter(Boolean);
+    if (clean.length > 0) return clean.join(' & ');
+  }
+  return fallbackName;
+};
+
 interface Fixture {
   id: string;
   season_id: string;
@@ -654,12 +697,13 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
     });
   };
 
+  const getEffectiveTripleThreatLineup = (side: 'home' | 'away') =>
+    (matchups.length > 0 ? extractTripleThreatLineupFromMatchups(matchups, side) : null) ||
+    (side === 'home' ? homeTTLineup : awayTTLineup);
+
   const handleCopyTeamLineup = (side: 'home' | 'away') => {
     if (!fixture) return;
-    const rawLineup =
-      side === 'home'
-        ? homeTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'home')
-        : awayTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'away');
+    const rawLineup = getEffectiveTripleThreatLineup(side);
     if (!rawLineup) return;
 
     const text = formatTripleThreatLineupCopy({
@@ -2068,8 +2112,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
               const isTTHeader = fixture?.tournament_type === 'triple_threat' || fixture?.matchday_format === 'triple_threat' || matchups.some(m => !!(m as any).match_mode);
               if (!isTTHeader) return null;
 
-              const effectiveHomeTT = homeTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'home');
-              const effectiveAwayTT = awayTTLineup || extractTripleThreatLineupFromMatchups(matchups, 'away');
+              const effectiveHomeTT = getEffectiveTripleThreatLineup('home');
+              const effectiveAwayTT = getEffectiveTripleThreatLineup('away');
               const canCopyHome = Boolean(effectiveHomeTT && (isHomeTeam || isAdmin || matchups.length > 0));
               const canCopyAway = Boolean(effectiveAwayTT && (isRoundStarted || isAwayTeam || isAdmin || matchups.length > 0));
 
@@ -2675,74 +2719,297 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                 )}
               </div>
 
-              {canEditMatchups && isEditMode ? (
+              {canEditMatchups && isEditMode ? (() => {
+                const isTTEdit = isTT || matchups.some((m) => Boolean((m as any).match_mode));
+                const canEditHomeSide = isHomeTeam || isAdmin;
+                const canEditAwaySide = isHomeTeam || isAwayTeam || isAdmin;
+                const canEditDuration = !isTTEdit || isHomeTeam || isAdmin;
+
+                const buildEditablePool = (side: 'home' | 'away') => {
+                  const squadMap = side === 'home' ? homeSquadById : awaySquadById;
+                  const startingList = side === 'home' ? homeStartingXI : awayStartingXI;
+                  const poolMap = new Map<string, any>();
+                  squadMap.forEach((p, pid) => {
+                    if (pid) poolMap.set(pid, p);
+                  });
+                  startingList.forEach((p: any) => {
+                    const pid = String(p?.player_id || '');
+                    if (pid && !poolMap.has(pid)) poolMap.set(pid, p);
+                  });
+                  return Array.from(poolMap.values()).sort((a: any, b: any) => {
+                    const pA = getCategoryPriority(a.category);
+                    const pB = getCategoryPriority(b.category);
+                    if (pA !== pB) return pA - pB;
+                    return (a.player_name || '').localeCompare(b.player_name || '');
+                  });
+                };
+
+                const homeEditablePool = isTTEdit ? buildEditablePool('home') : homeStartingXI;
+                const awayEditablePool = isTTEdit ? buildEditablePool('away') : awayStartingXI;
+
+                const buildOptionsForSlot = (
+                  side: 'home' | 'away',
+                  targetMatchIdx: number,
+                  targetSlotIdx: number
+                ) => {
+                  const pool = side === 'home' ? homeEditablePool : awayEditablePool;
+                  return pool.map((p: any) => {
+                    let assigned_label: string | undefined;
+                    for (let mIdx = 0; mIdx < matchups.length; mIdx++) {
+                      const sideArr = getTripleThreatSidePlayers(matchups[mIdx], side);
+                      const foundSlot = sideArr.ids.findIndex(
+                        (id, sIdx) =>
+                          id === p.player_id &&
+                          !(mIdx === targetMatchIdx && sIdx === targetSlotIdx)
+                      );
+                      if (foundSlot !== -1) {
+                        const modeMeta = getTripleThreatModeDisplay(matchups as any[], matchups[mIdx] as any);
+                        assigned_label = modeMeta?.title || `Match #${matchups[mIdx].position}`;
+                        break;
+                      }
+                    }
+                    return {
+                      player_id: p.player_id,
+                      player_name: p.player_name,
+                      category: p.category,
+                      photo_url: p.photo_url,
+                      photo_position_x_circle: p.photo_position_x_circle,
+                      photo_position_y_circle: p.photo_position_y_circle,
+                      photo_scale_circle: p.photo_scale_circle,
+                      assigned_label,
+                    };
+                  });
+                };
+
+                const handleTripleThreatSlotChange = (
+                  targetMatchIdx: number,
+                  side: 'home' | 'away',
+                  targetSlotIdx: number,
+                  newPlayerId: string
+                ) => {
+                  const pool = side === 'home' ? homeEditablePool : awayEditablePool;
+                  const squadMap = side === 'home' ? homeSquadById : awaySquadById;
+                  const nextMatchups = matchups.map((m) => ({
+                    ...m,
+                    home_player_ids: m.home_player_ids ? [...m.home_player_ids] : undefined,
+                    home_player_names: m.home_player_names ? [...m.home_player_names] : undefined,
+                    away_player_ids: m.away_player_ids ? [...m.away_player_ids] : undefined,
+                    away_player_names: m.away_player_names ? [...m.away_player_names] : undefined,
+                  }));
+
+                  const currentSide = getTripleThreatSidePlayers(nextMatchups[targetMatchIdx], side);
+                  const oldPlayerId = currentSide.ids[targetSlotIdx] || '';
+                  const oldPlayerName =
+                    currentSide.names[targetSlotIdx] ||
+                    squadMap.get(oldPlayerId)?.player_name ||
+                    '';
+
+                  if (newPlayerId && newPlayerId === oldPlayerId) return;
+
+                  const syncMatchupSide = (mIdx: number, ids: string[], names: string[]) => {
+                    const cleanPairs = ids
+                      .map((id, i) => ({ id: id.trim(), name: (names[i] || '').trim() }))
+                      .filter((p) => p.id);
+                    const target = nextMatchups[mIdx] as any;
+                    target[`${side}_player_ids`] = ids;
+                    target[`${side}_player_names`] = names;
+                    target[`${side}_player_id`] = cleanPairs[0]?.id || '';
+                    target[`${side}_player_name`] = cleanPairs.map((p) => p.name).filter(Boolean).join(' & ');
+                  };
+
+                  if (newPlayerId) {
+                    const selectedPlayer =
+                      pool.find((p: any) => p.player_id === newPlayerId) ||
+                      squadMap.get(newPlayerId);
+                    const newPlayerName = selectedPlayer?.player_name || '';
+
+                    // If selectedPlayer is already in another Triple Threat slot, swap cleanly with oldPlayerId
+                    for (let mIdx = 0; mIdx < nextMatchups.length; mIdx++) {
+                      const otherSide = getTripleThreatSidePlayers(nextMatchups[mIdx], side);
+                      const dupIdx = otherSide.ids.findIndex(
+                        (id, sIdx) =>
+                          id === newPlayerId &&
+                          !(mIdx === targetMatchIdx && sIdx === targetSlotIdx)
+                      );
+                      if (dupIdx !== -1) {
+                        const updatedOtherIds = [...otherSide.ids];
+                        const updatedOtherNames = [...otherSide.names];
+                        updatedOtherIds[dupIdx] = oldPlayerId;
+                        updatedOtherNames[dupIdx] = oldPlayerName;
+                        syncMatchupSide(mIdx, updatedOtherIds, updatedOtherNames);
+                        if (mIdx === targetMatchIdx) {
+                          currentSide.ids[dupIdx] = oldPlayerId;
+                          currentSide.names[dupIdx] = oldPlayerName;
+                        }
+                        break;
+                      }
+                    }
+
+                    const updatedIds = [...currentSide.ids];
+                    const updatedNames = [...currentSide.names];
+                    updatedIds[targetSlotIdx] = newPlayerId;
+                    updatedNames[targetSlotIdx] = newPlayerName;
+                    syncMatchupSide(targetMatchIdx, updatedIds, updatedNames);
+                  } else {
+                    const updatedIds = [...currentSide.ids];
+                    const updatedNames = [...currentSide.names];
+                    updatedIds[targetSlotIdx] = '';
+                    updatedNames[targetSlotIdx] = '';
+                    syncMatchupSide(targetMatchIdx, updatedIds, updatedNames);
+                  }
+
+                  setMatchups(nextMatchups);
+                };
+
+                return (
                 // Edit Mode
                 <>
                   {/* Quick Actions Toolbar */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl mb-3 font-mono text-xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const availableAway = [...awayStartingXI];
-                        const updatedMatchups = matchups.map(m => {
-                          const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
-                          const homeCat = ((m as any).home_category || homeMatch?.category || '').toUpperCase();
-                          let matchIdx = availableAway.findIndex(aP => (aP.category || '').toUpperCase() === homeCat);
-                          if (matchIdx === -1) matchIdx = 0;
-                          let selectedAway = availableAway[matchIdx];
-                          if (selectedAway) {
-                            availableAway.splice(matchIdx, 1);
-                            return {
-                              ...m,
-                              away_player_id: selectedAway.player_id,
-                              away_player_name: selectedAway.player_name,
-                            };
-                          }
-                          return m;
-                        });
-                        setMatchups(updatedMatchups);
-                      }}
-                      className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all"
-                    >
-                      ⚡ Auto-Pair by Category
-                    </button>
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl mb-3 font-mono text-xs">
+                    {isTTEdit ? (
+                      <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
+                        <span>⚡ Triple Threat</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-indigo-700">Co-op: 8m default</span>
+                        <span className="hidden sm:inline text-slate-400">|</span>
+                        <span className="hidden sm:inline text-emerald-700">Duo &amp; Solo: Home&apos;s choice</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const availableAway = [...awayStartingXI];
+                          const updatedMatchups = matchups.map(m => {
+                            const homeMatch = homeSquadById.get(m.home_player_id) || homeSquadByName.get(m.home_player_name?.toLowerCase());
+                            const homeCat = ((m as any).home_category || homeMatch?.category || '').toUpperCase();
+                            let matchIdx = availableAway.findIndex(aP => (aP.category || '').toUpperCase() === homeCat);
+                            if (matchIdx === -1) matchIdx = 0;
+                            const selectedAway = availableAway[matchIdx];
+                            if (selectedAway) {
+                              availableAway.splice(matchIdx, 1);
+                              return {
+                                ...m,
+                                away_player_id: selectedAway.player_id,
+                                away_player_name: selectedAway.player_name,
+                              };
+                            }
+                            return m;
+                          });
+                          setMatchups(updatedMatchups);
+                        }}
+                        className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all"
+                      >
+                        ⚡ Auto-Pair by Category
+                      </button>
+                    )}
 
-                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
-                      <span className="hidden sm:inline">Set All:</span>
-                      {[6, 8, 10].map(dur => (
-                        <button
-                          key={dur}
-                          type="button"
-                          onClick={() => {
-                            setMatchups(matchups.map(m => ({ ...m, match_duration: dur })));
-                          }}
-                          className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-extrabold shadow-3xs transition-all"
-                        >
-                          {dur}m
-                        </button>
-                      ))}
-                    </div>
+                    {canEditDuration && (
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 ml-auto">
+                        <span className="hidden sm:inline">
+                          {isTTEdit ? 'Set Duo & Solo:' : 'Set All:'}
+                        </span>
+                        {(isTTEdit ? [6, 7, 8, 10] : [6, 8, 10]).map(dur => (
+                          <button
+                            key={dur}
+                            type="button"
+                            onClick={() => {
+                              setMatchups(
+                                matchups.map(m => {
+                                  if (isTTEdit && resolveTripleThreatMode(m as any) === 'coop') {
+                                    return m;
+                                  }
+                                  return { ...m, match_duration: dur };
+                                })
+                              );
+                            }}
+                            className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-extrabold shadow-3xs transition-all cursor-pointer"
+                          >
+                            {dur}m
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {matchups.map((matchup, idx) => (
+                  {matchups.map((matchup, idx) => {
+                    const ttMode = isTTEdit ? resolveTripleThreatMode(matchup as any) : null;
+                    const modeMeta = isTTEdit ? getTripleThreatModeDisplay(matchups as any[], matchup as any) : null;
+                    const isCoopMatch = ttMode === 'coop';
+                    const defaultDur = isCoopMatch ? 8 : 6;
+                    const homeSide = isTTEdit ? getTripleThreatSidePlayers(matchup, 'home') : null;
+                    const awaySide = isTTEdit ? getTripleThreatSidePlayers(matchup, 'away') : null;
+
+                    const renderReadOnlyPlayerChip = (
+                      side: 'home' | 'away',
+                      pid: string,
+                      pname: string,
+                      catOverride?: string
+                    ) => {
+                      const squadMap = side === 'home' ? homeSquadById : awaySquadById;
+                      const squadNameMap = side === 'home' ? homeSquadByName : awaySquadByName;
+                      const pMatch = squadMap.get(pid) || (pname ? squadNameMap.get(pname.toLowerCase()) : undefined);
+                      const pCat = catOverride || pMatch?.category;
+                      const boxTone =
+                        side === 'home'
+                          ? 'bg-blue-50/60 border-blue-200/80'
+                          : 'bg-slate-50 border-slate-200/80';
+                      const photoBorder = side === 'home' ? 'border-blue-300' : 'border-slate-300';
+                      return (
+                        <div key={pid || pname} className={`p-2 rounded-xl border min-w-0 ${boxTone}`}>
+                          <div className="flex items-center gap-2">
+                            <PlayerPhoto
+                              photoUrl={pMatch?.photo_url || (side === 'home' ? (matchup as any).home_photo_url : (matchup as any).away_photo_url)}
+                              playerName={pname}
+                              size={32}
+                              shape="circle"
+                              posXCircle={pMatch?.photo_position_x_circle}
+                              posYCircle={pMatch?.photo_position_y_circle}
+                              scaleCircle={pMatch?.photo_scale_circle}
+                              className={`border ${photoBorder} flex-shrink-0`}
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-black text-xs text-slate-900 truncate">
+                                {pname || 'TBD'}
+                              </span>
+                              {pCat && (
+                                <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(pCat)}`}>
+                                  {pCat}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    };
+
+                    return (
                     <div key={idx} className="console-card bg-white border border-slate-200/60 rounded-2xl p-3.5 shadow-sm transition-all font-mono hover:border-amber-400/40">
-                      {/* Header with Match # and Duration */}
+                      {/* Header with Match #, Mode Badge, and Duration */}
                       <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-100">
-                        <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-800 text-white text-[10px] font-bold rounded-md">
-                          Match #{matchup.position}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-800 text-white text-[10px] font-bold rounded-md">
+                            Match #{matchup.position}
+                          </span>
+                          {isTTEdit && modeMeta && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-extrabold rounded-md border ${modeMeta.badgeClass}`}>
+                              <span>{modeMeta.icon}</span>
+                              <span>{modeMeta.title}</span>
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1.5">
                           <svg className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <select
-                            value={matchup.match_duration ?? 6}
+                            value={matchup.match_duration ?? defaultDur}
+                            disabled={!canEditDuration}
                             onChange={(e) => {
                               const newMatchups = [...matchups];
                               newMatchups[idx].match_duration = Number(e.target.value);
                               setMatchups(newMatchups);
                             }}
-                            className="px-2 py-0.5 text-[10px] font-bold border border-slate-300 rounded-md bg-slate-50 focus:ring-1 focus:ring-emerald-500"
+                            className="!px-2 !py-1 text-[11px] font-bold border border-slate-300 rounded-lg bg-slate-50 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
                           >
                             <option value={6}>6 min</option>
                             <option value={7}>7 min</option>
@@ -2756,125 +3023,166 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                       </div>
 
                       {/* Players Grid */}
-                      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                        {/* Home Player */}
-                        {(() => {
-                          const homeMatch = homeSquadById.get(matchup.home_player_id) || homeSquadByName.get(matchup.home_player_name?.toLowerCase());
-                          const homeCategory = (matchup as any).home_category || homeMatch?.category;
-                          return (
-                            <div className="p-2 rounded-xl bg-blue-50/60 border border-blue-200/80 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <PlayerPhoto
-                                  photoUrl={homeMatch?.photo_url || (matchup as any).home_photo_url}
-                                  playerName={matchup.home_player_name}
-                                  size={32}
-                                  shape="circle"
-                                  posXCircle={homeMatch?.photo_position_x_circle}
-                                  posYCircle={homeMatch?.photo_position_y_circle}
-                                  scaleCircle={homeMatch?.photo_scale_circle}
-                                  className="border border-blue-300 flex-shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0">
-                                  <span className="font-black text-xs text-slate-900 truncate">
-                                    {matchup.home_player_name}
-                                  </span>
-                                  {homeCategory && (
-                                    <span className={`inline-block text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
-                                      {homeCategory}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                      {isTTEdit && homeSide && awaySide ? (
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2.5 items-center">
+                          {/* Home Side (1 player for Duo/Single, 2 partners for Co-op 2v2) */}
+                          <div className="space-y-1.5 min-w-0">
+                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                              {fixture.home_team_name} {isCoopMatch ? '(2v2 Pair)' : ''}
                             </div>
-                          );
-                        })()}
+                            {canEditHomeSide ? (
+                              <div className="space-y-1.5">
+                                {homeSide.ids.map((slotId, sIdx) => (
+                                  <SearchablePlayerSelect
+                                    key={`home-${idx}-${sIdx}`}
+                                    players={buildOptionsForSlot('home', idx, sIdx)}
+                                    value={slotId}
+                                    onChange={(val) => handleTripleThreatSlotChange(idx, 'home', sIdx, val)}
+                                    placeholder={isCoopMatch ? `Select home partner ${sIdx + 1}...` : 'Select home player...'}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                {homeSide.ids.map((pid, sIdx) =>
+                                  renderReadOnlyPlayerChip('home', pid, homeSide.names[sIdx] || '')
+                                )}
+                              </div>
+                            )}
+                          </div>
 
-                        {/* VS */}
-                        <div className="px-2 py-0.5 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm text-center">
-                          VS
+                          {/* VS */}
+                          <div className="flex justify-center">
+                            <div className="px-2.5 py-0.5 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm text-center">
+                              VS
+                            </div>
+                          </div>
+
+                          {/* Away Side (1 player for Duo/Single, 2 partners for Co-op 2v2) */}
+                          <div className="space-y-1.5 min-w-0">
+                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider md:text-right">
+                              {fixture.away_team_name} {isCoopMatch ? '(2v2 Pair)' : ''}
+                            </div>
+                            {canEditAwaySide ? (
+                              <div className="space-y-1.5">
+                                {awaySide.ids.map((slotId, sIdx) => (
+                                  <SearchablePlayerSelect
+                                    key={`away-${idx}-${sIdx}`}
+                                    players={buildOptionsForSlot('away', idx, sIdx)}
+                                    value={slotId}
+                                    onChange={(val) => handleTripleThreatSlotChange(idx, 'away', sIdx, val)}
+                                    placeholder={isCoopMatch ? `Select away partner ${sIdx + 1}...` : 'Select away player...'}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                {awaySide.ids.map((pid, sIdx) =>
+                                  renderReadOnlyPlayerChip('away', pid, awaySide.names[sIdx] || '')
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
+                      ) : (
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                          {/* Home Player */}
+                          {renderReadOnlyPlayerChip(
+                            'home',
+                            matchup.home_player_id,
+                            matchup.home_player_name,
+                            (matchup as any).home_category
+                          )}
 
-                        {/* Away Player Select */}
-                        <div className="min-w-0">
-                          <SearchablePlayerSelect
-                            players={awayStartingXI.map(p => {
-                              const assignedMatch = matchups.find((m, mIdx) => mIdx !== idx && m.away_player_id === p.player_id);
-                              const assigned_label = assignedMatch ? `Match #${assignedMatch.position}` : undefined;
-                              return {
-                                player_id: p.player_id,
-                                player_name: p.player_name,
-                                category: p.category,
-                                photo_url: p.photo_url,
-                                photo_position_x_circle: p.photo_position_x_circle,
-                                photo_position_y_circle: p.photo_position_y_circle,
-                                photo_scale_circle: p.photo_scale_circle,
-                                assigned_label,
-                              };
-                            })}
-                            value={matchup.away_player_id || ''}
-                            onChange={(val) => {
-                              const newMatchups = [...matchups];
-                              if (val) {
-                                // If player was assigned to another matchup, set that matchup to unassigned (null)
-                                const otherIdx = newMatchups.findIndex((m, mIdx) => mIdx !== idx && m.away_player_id === val);
-                                if (otherIdx !== -1) {
-                                  newMatchups[otherIdx].away_player_id = '';
-                                  newMatchups[otherIdx].away_player_name = '';
+                          {/* VS */}
+                          <div className="px-2 py-0.5 bg-slate-800 text-amber-400 text-[10px] font-black rounded-full shadow-sm text-center">
+                            VS
+                          </div>
+
+                          {/* Away Player Select */}
+                          <div className="min-w-0">
+                            <SearchablePlayerSelect
+                              players={awayStartingXI.map(p => {
+                                const assignedMatch = matchups.find((m, mIdx) => mIdx !== idx && m.away_player_id === p.player_id);
+                                const assigned_label = assignedMatch ? `Match #${assignedMatch.position}` : undefined;
+                                return {
+                                  player_id: p.player_id,
+                                  player_name: p.player_name,
+                                  category: p.category,
+                                  photo_url: p.photo_url,
+                                  photo_position_x_circle: p.photo_position_x_circle,
+                                  photo_position_y_circle: p.photo_position_y_circle,
+                                  photo_scale_circle: p.photo_scale_circle,
+                                  assigned_label,
+                                };
+                              })}
+                              value={matchup.away_player_id || ''}
+                              onChange={(val) => {
+                                const newMatchups = [...matchups];
+                                if (val) {
+                                  const otherIdx = newMatchups.findIndex((m, mIdx) => mIdx !== idx && m.away_player_id === val);
+                                  if (otherIdx !== -1) {
+                                    newMatchups[otherIdx].away_player_id = '';
+                                    newMatchups[otherIdx].away_player_name = '';
+                                  }
+                                  const selectedPlayer = awayStartingXI.find(p => p.player_id === val);
+                                  newMatchups[idx].away_player_id = val;
+                                  newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
+                                } else {
+                                  newMatchups[idx].away_player_id = '';
+                                  newMatchups[idx].away_player_name = '';
                                 }
-                                const selectedPlayer = awayStartingXI.find(p => p.player_id === val);
-                                newMatchups[idx].away_player_id = val;
-                                newMatchups[idx].away_player_name = selectedPlayer?.player_name || '';
-                              } else {
-                                newMatchups[idx].away_player_id = '';
-                                newMatchups[idx].away_player_name = '';
-                              }
-                              setMatchups(newMatchups);
-                            }}
-                            placeholder="Select away player..."
-                          />
+                                setMatchups(newMatchups);
+                              }}
+                              placeholder="Select away player..."
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      {/* Sub Penalty Adjuster Controls in Edit Mode */}
-                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                        <div className="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200/80 px-2.5 py-1 rounded-xl">
-                          <span className="text-[10px] font-bold text-orange-900 uppercase tracking-wider">
-                            Home Sub Penalty:
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={matchup.home_sub_penalty ?? 0}
-                            onChange={(e) => {
-                              const newMatchups = [...matchups];
-                              newMatchups[idx].home_sub_penalty = Math.max(0, parseInt(e.target.value) || 0);
-                              setMatchups(newMatchups);
-                            }}
-                            className="w-12 px-1 py-0.5 bg-white border border-orange-300 rounded-lg text-center font-bold text-xs text-orange-900 focus:ring-1 focus:ring-orange-500"
-                          />
-                          <span className="text-[10px] font-bold text-orange-700">goals to away</span>
-                        </div>
+                      {/* Sub Penalty Adjuster Controls in Edit Mode (Standard tournaments only) */}
+                      {!isTTEdit && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                          <div className="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200/80 px-2.5 py-1 rounded-xl">
+                            <span className="text-[10px] font-bold text-orange-900 uppercase tracking-wider">
+                              Home Sub Penalty:
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={matchup.home_sub_penalty ?? 0}
+                              onChange={(e) => {
+                                const newMatchups = [...matchups];
+                                newMatchups[idx].home_sub_penalty = Math.max(0, parseInt(e.target.value) || 0);
+                                setMatchups(newMatchups);
+                              }}
+                              className="!w-14 !px-1.5 !py-1 bg-white border border-orange-300 rounded-lg text-center font-bold text-xs text-orange-900 focus:ring-1 focus:ring-orange-500"
+                            />
+                            <span className="text-[10px] font-bold text-orange-700">goals to away</span>
+                          </div>
 
-                        <div className="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200/80 px-2.5 py-1 rounded-xl">
-                          <span className="text-[10px] font-bold text-orange-900 uppercase tracking-wider">
-                            Away Sub Penalty:
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={matchup.away_sub_penalty ?? 0}
-                            onChange={(e) => {
-                              const newMatchups = [...matchups];
-                              newMatchups[idx].away_sub_penalty = Math.max(0, parseInt(e.target.value) || 0);
-                              setMatchups(newMatchups);
-                            }}
-                            className="w-12 px-1 py-0.5 bg-white border border-orange-300 rounded-lg text-center font-bold text-xs text-orange-900 focus:ring-1 focus:ring-orange-500"
-                          />
-                          <span className="text-[10px] font-bold text-orange-700">goals to home</span>
+                          <div className="flex items-center gap-1.5 bg-orange-50/80 border border-orange-200/80 px-2.5 py-1 rounded-xl">
+                            <span className="text-[10px] font-bold text-orange-900 uppercase tracking-wider">
+                              Away Sub Penalty:
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={matchup.away_sub_penalty ?? 0}
+                              onChange={(e) => {
+                                const newMatchups = [...matchups];
+                                newMatchups[idx].away_sub_penalty = Math.max(0, parseInt(e.target.value) || 0);
+                                setMatchups(newMatchups);
+                              }}
+                              className="!w-14 !px-1.5 !py-1 bg-white border border-orange-300 rounded-lg text-center font-bold text-xs text-orange-900 focus:ring-1 focus:ring-orange-500"
+                            />
+                            <span className="text-[10px] font-bold text-orange-700">goals to home</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
 
                   <div className="flex gap-3">
                     <button
@@ -2891,14 +3199,71 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </button>
                     <button
                       onClick={async () => {
+                        if (isTTEdit) {
+                          const homeAll: string[] = [];
+                          const awayAll: string[] = [];
+                          for (const m of matchups) {
+                            const mode = resolveTripleThreatMode(m as any);
+                            const required = mode === 'coop' ? 2 : 1;
+                            const hSide = getTripleThreatSidePlayers(m, 'home');
+                            const aSide = getTripleThreatSidePlayers(m, 'away');
+                            const hFilled = hSide.ids.filter(Boolean);
+                            const aFilled = aSide.ids.filter(Boolean);
+                            if (hFilled.length !== required || aFilled.length !== required) {
+                              showAlert({
+                                type: 'warning',
+                                title: 'Incomplete Selection',
+                                message: `Please select all required players for Match #${m.position} (${mode === 'coop' ? '2v2 Co-op' : '1v1'}).`,
+                              });
+                              return;
+                            }
+                            homeAll.push(...hFilled);
+                            awayAll.push(...aFilled);
+                          }
+                          if (new Set(homeAll).size !== homeAll.length || new Set(awayAll).size !== awayAll.length) {
+                            showAlert({
+                              type: 'warning',
+                              title: 'Duplicate Players',
+                              message: 'Each player can only be assigned to one Triple Threat slot per fixture.',
+                            });
+                            return;
+                          }
+                        }
+
+                        const payloadMatchups = matchups.map((m) => {
+                          if (!isTTEdit) return m;
+                          const mode = resolveTripleThreatMode(m as any);
+                          const hSide = getTripleThreatSidePlayers(m, 'home');
+                          const aSide = getTripleThreatSidePlayers(m, 'away');
+                          const hIds = hSide.ids.filter(Boolean);
+                          const hNames = hSide.names.filter(Boolean);
+                          const aIds = aSide.ids.filter(Boolean);
+                          const aNames = aSide.names.filter(Boolean);
+                          return {
+                            ...m,
+                            match_mode: mode,
+                            home_player_ids: hIds,
+                            home_player_names: hNames,
+                            home_player_id: hIds[0] || '',
+                            home_player_name: hNames.join(' & '),
+                            away_player_ids: aIds,
+                            away_player_names: aNames,
+                            away_player_id: aIds[0] || '',
+                            away_player_name: aNames.join(' & '),
+                          };
+                        });
+
                         setIsSaving(true);
                         try {
                           const response = await fetchWithTokenRefresh(`/api/fixtures/${fixtureId}/matchups`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ matchups }),
+                            body: JSON.stringify({ matchups: payloadMatchups }),
                           });
-                          if (!response.ok) throw new Error('Failed to update matchups');
+                          if (!response.ok) {
+                            const errJson = await response.json().catch(() => ({}));
+                            throw new Error(errJson.error || 'Failed to update matchups');
+                          }
                           showAlert({
                             type: 'success',
                             title: 'Updated',
@@ -2911,7 +3276,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                           showAlert({
                             type: 'error',
                             title: 'Update Failed',
-                            message: 'Failed to update matchups'
+                            message: error?.message || 'Failed to update matchups'
                           });
                         } finally {
                           setIsSaving(false);
@@ -2941,7 +3306,8 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                     </button>
                   </div>
                 </>
-              ) : !isResultMode ? (
+                );
+              })() : !isResultMode ? (
                 // View Mode with Results + Enter Results Button
                 <div className="space-y-4">
                   {/* Team Totals & Winner */}
@@ -5511,7 +5877,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 />
                                 <div className="flex flex-col min-w-0">
                                   <span className="font-extrabold text-sm text-slate-900 truncate">
-                                    {matchup.home_player_name}
+                                    {formatSideDisplayNames((matchup as any).home_player_names, matchup.home_player_name)}
                                   </span>
                                   {homeCategory && (
                                     <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start mt-0.5 ${getCategoryBadgeClass(homeCategory)}`}>
@@ -5544,7 +5910,7 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                 />
                                 <div className="flex flex-col min-w-0">
                                   <span className="font-extrabold text-sm text-slate-900 truncate">
-                                    {matchup.away_player_name}
+                                    {formatSideDisplayNames((matchup as any).away_player_names, matchup.away_player_name)}
                                   </span>
                                   {awayCategory && (
                                     <span className={`inline-block text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-end sm:self-start mt-0.5 ${getCategoryBadgeClass(awayCategory)}`}>

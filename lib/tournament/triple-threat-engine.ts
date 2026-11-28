@@ -271,7 +271,7 @@ export function buildTripleThreatMatchups(
       home_player_names: homeCoopNames,
       away_player_ids: awayCoopIds,
       away_player_names: awayCoopNames,
-      match_duration: 6,
+      match_duration: 8,
     },
     {
       position: 2,
@@ -688,6 +688,7 @@ export interface TripleThreatCopyMatchupInput {
   position?: number;
   match_mode?: string | null;
   mode?: string | null;
+  match_duration?: number | null;
   home_player_name?: string | null;
   away_player_name?: string | null;
   home_player_ids?: string[];
@@ -737,6 +738,15 @@ function formatTripleThreatSideDisplay(
   }
 
   return cleanNames.join(' & ');
+}
+
+function formatMatchDurationTag(
+  duration: number | null | undefined,
+  fallbackDuration: number
+): string {
+  const mins = Number(duration);
+  const valid = Number.isFinite(mins) && mins > 0 ? mins : fallbackDuration;
+  return `⏱️ ${valid} MIN`;
 }
 
 function formatScoreValue(
@@ -821,8 +831,9 @@ export function formatTripleThreatFixtureCopy(params: {
       )
     : 'TBD';
 
+  const coopDurationTag = formatMatchDurationTag(coopMatch?.match_duration, 8);
   const coopSection = [
-    '⚔️ CO-OP (2V2)',
+    `⚔️ CO-OP (2V2) • ${coopDurationTag}`,
     '',
     coopHome,
     '',
@@ -850,8 +861,9 @@ export function formatTripleThreatFixtureCopy(params: {
         dm.away_player_goals,
         dScored
       );
+      const dmDurationTag = formatMatchDurationTag(dm.match_duration, 6);
       return [
-        `MATCH ${idx + 1}:`,
+        `MATCH ${idx + 1} (${dmDurationTag}):`,
         dHome,
         '🆚',
         dAway,
@@ -887,8 +899,9 @@ export function formatTripleThreatFixtureCopy(params: {
           dScored
         )
       : 'TBD';
+    const soloDuoDurationTag = formatMatchDurationTag(soloDuo?.match_duration, 6);
     duoSection = [
-      '⚔️ DUO (2V2)',
+      `⚔️ DUO (2V2) • ${soloDuoDurationTag}`,
       '',
       dHome,
       '',
@@ -919,8 +932,9 @@ export function formatTripleThreatFixtureCopy(params: {
       )
     : 'TBD';
 
+  const soloDurationTag = formatMatchDurationTag(soloMatch?.match_duration, 6);
   const soloSection = [
-    '⚔️ SOLO (1V1)',
+    `⚔️ SOLO (1V1) • ${soloDurationTag}`,
     '',
     `HOME: ${soloHome}`,
     '🆚',
@@ -982,6 +996,37 @@ export function formatTripleThreatFixtureCopy(params: {
     parts.push(groupLine, '');
   }
 
+  const coopMinutes =
+    Number.isFinite(Number(coopMatch?.match_duration)) && Number(coopMatch?.match_duration) > 0
+      ? Number(coopMatch?.match_duration)
+      : 8;
+
+  const duoDurations = duoMatches
+    .map((m) => Number(m.match_duration))
+    .filter((d) => Number.isFinite(d) && d > 0);
+  const soloMinutes =
+    Number.isFinite(Number(soloMatch?.match_duration)) && Number(soloMatch?.match_duration) > 0
+      ? Number(soloMatch?.match_duration)
+      : null;
+
+  let duoSoloDurationLine = "⏱️ DUO & SOLO: HOME TEAM'S CHOICE";
+  const allChoiceDurs = [...duoDurations, ...(soloMinutes !== null ? [soloMinutes] : [])];
+  if (allChoiceDurs.length > 0) {
+    const allSame = allChoiceDurs.every((d) => d === allChoiceDurs[0]);
+    if (allSame) {
+      duoSoloDurationLine = `⏱️ DUO & SOLO: ${allChoiceDurs[0]} MINUTES`;
+    } else {
+      const duoPart =
+        duoDurations.length === 0
+          ? "HOME TEAM'S CHOICE"
+          : duoDurations.every((d) => d === duoDurations[0])
+            ? `${duoDurations[0]} MIN`
+            : duoDurations.map((d, i) => `M${i + 1}: ${d} MIN`).join(' / ');
+      const soloPart = soloMinutes !== null ? `${soloMinutes} MIN` : "HOME TEAM'S CHOICE";
+      duoSoloDurationLine = `⏱️ DUO: ${duoPart} • SOLO: ${soloPart}`;
+    }
+  }
+
   parts.push(
     `🏠 HOME TEAM: ${homeTeam}`,
     `✈️ AWAY TEAM: ${awayTeam}`,
@@ -1002,8 +1047,8 @@ export function formatTripleThreatFixtureCopy(params: {
     winnerLine,
     divider,
     '',
-    '⏱️ CO-OP: 8 MINUTES',
-    "⏱️ DUO & SOLO: HOME TEAM'S CHOICE",
+    `⏱️ CO-OP: ${coopMinutes} MINUTES`,
+    duoSoloDurationLine,
     '🟢 CONDITION: EXCELLENT',
     '',
     `SEASON ${seasonNumber} COMMITTEE`

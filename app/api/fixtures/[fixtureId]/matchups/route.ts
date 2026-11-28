@@ -567,16 +567,106 @@ export async function PUT(
       );
     }
 
-    // Update existing matchups (including substitution fields)
-    for (const matchup of matchups) {
+    const fixtureMetaRows = await sql`
+      SELECT
+        f.id, f.home_team_id, f.away_team_id,
+        f.scoring_system, f.knockout_format,
+        t.tournament_type, ts.matchday_format
+      FROM fixtures f
+      LEFT JOIN tournaments t ON f.tournament_id = t.id
+      LEFT JOIN tournament_settings ts ON t.id = ts.tournament_id
+      WHERE f.id = ${fixtureId}
+      LIMIT 1
+    `;
+    const fixtureMeta = fixtureMetaRows[0] || null;
+    const isTripleThreat = Boolean(
+      (fixtureMeta && (
+        fixtureMeta.tournament_type === 'triple_threat' ||
+        fixtureMeta.matchday_format === 'triple_threat' ||
+        fixtureMeta.scoring_system === 'triple_threat' ||
+        fixtureMeta.knockout_format === 'triple_threat' ||
+        String(fixtureMeta.id || '').toLowerCase().includes('triple_threat')
+      )) ||
+      matchups.some((m: any) => Boolean(m?.match_mode))
+    );
+
+    const normalizeSide = (m: any, side: 'home' | 'away') => {
+      const isHome = side === 'home';
+      const idsRaw = isHome ? m.home_player_ids : m.away_player_ids;
+      const namesRaw = isHome ? m.home_player_names : m.away_player_names;
+      const fallbackId = String((isHome ? m.home_player_id : m.away_player_id) || '').trim();
+      const fallbackName = String((isHome ? m.home_player_name : m.away_player_name) || '').trim();
+      const isCoop = resolveTripleThreatMode(m) === 'coop';
+
+      const ids: string[] = Array.isArray(idsRaw) && idsRaw.length > 0
+        ? idsRaw.map((v: any) => String(v || '').trim()).filter(Boolean)
+        : (fallbackId ? [fallbackId] : []);
+      const names: string[] = Array.isArray(namesRaw) && namesRaw.length > 0
+        ? namesRaw.map((v: any) => String(v || '').trim()).filter(Boolean)
+        : (fallbackName
+            ? (isCoop ? fallbackName.split(/\s*&\s*/).map((v) => v.trim()).filter(Boolean) : [fallbackName])
+            : []);
+
+      return {
+        ids,
+        names,
+        scalarId: ids[0] || fallbackId || '',
+        scalarName: names.length > 1 ? names.join(' & ') : (names[0] || fallbackName || ''),
+      };
+    };
+
+    const normalizedMatchups = matchups.map((m: any) => {
+      const mode = isTripleThreat ? resolveTripleThreatMode(m) : (m.match_mode || null);
+      const defaultDuration = mode === 'coop' ? 8 : 6;
+      const parsedDuration = Number(m.match_duration);
+      return {
+        ...m,
+        match_mode: mode,
+        match_duration: Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : defaultDuration,
+        homeSide: normalizeSide(m, 'home'),
+        awaySide: normalizeSide(m, 'away'),
+      };
+    });
+
+    if (isTripleThreat) {
+      const allHomeIds: string[] = [];
+      const allAwayIds: string[] = [];
+      for (const m of normalizedMatchups) {
+        const reqCount = m.match_mode === 'coop' ? 2 : 1;
+        if (m.homeSide.ids.length !== reqCount || m.awaySide.ids.length !== reqCount) {
+          return NextResponse.json(
+            {
+              error: `Match #${m.position} (${m.match_mode === 'coop' ? 'Co-op 2v2' : '1v1'}) requires ${reqCount} player(s) per side`,
+            },
+            { status: 400 }
+          );
+        }
+        allHomeIds.push(...m.homeSide.ids);
+        allAwayIds.push(...m.awaySide.ids);
+      }
+      if (new Set(allHomeIds).size !== allHomeIds.length || new Set(allAwayIds).size !== allAwayIds.length) {
+        return NextResponse.json(
+          { error: 'Each player can only be assigned to one Triple Threat slot per fixture' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Update existing matchups (including Triple Threat player arrays and substitution fields)
+    for (const matchup of normalizedMatchups) {
       await sql`
         UPDATE matchups
-        SET 
-          home_player_id = ${matchup.home_player_id},
-          home_player_name = ${matchup.home_player_name},
-          away_player_id = ${matchup.away_player_id},
-          away_player_name = ${matchup.away_player_name},
-          match_duration = ${matchup.match_duration || 6},
+        SET
+          home_player_id = ${matchup.homeSide.scalarId},
+          home_player_name = ${matchup.homeSide.scalarName},
+          home_player_ids = ${isTripleThreat || matchup.homeSide.ids.length > 0 ? matchup.homeSide.ids : null},
+          home_player_names = ${isTripleThreat || matchup.homeSide.names.length > 0 ? matchup.homeSide.names : null},
+          away_player_id = ${matchup.awaySide.scalarId},
+          away_player_name = ${matchup.awaySide.scalarName},
+          away_player_ids = ${isTripleThreat || matchup.awaySide.ids.length > 0 ? matchup.awaySide.ids : null},
+          away_player_names = ${isTripleThreat || matchup.awaySide.names.length > 0 ? matchup.awaySide.names : null},
+          match_mode = COALESCE(${matchup.match_mode}, match_mode),
+          match_duration = ${matchup.match_duration},
           home_original_player_id = ${matchup.home_original_player_id || null},
           home_original_player_name = ${matchup.home_original_player_name || null},
           home_substituted = ${matchup.home_substituted || false},
@@ -589,6 +679,55 @@ export async function PUT(
         WHERE fixture_id = ${fixtureId}
         AND position = ${matchup.position}
       `;
+    }
+
+    // Keep Triple Threat team lineups in sync with edited matchups
+    if (isTripleThreat && fixtureMeta) {
+      const sorted = [...normalizedMatchups].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
+      const syncSideLineup = async (teamId: string | null | undefined, side: 'home' | 'away') => {
+        if (!teamId) return;
+        const getSidePairs = (m: any) => {
+          const s = side === 'home' ? m.homeSide : m.awaySide;
+          return s.ids.map((id: string, i: number) => ({
+            player_id: id,
+            player_name: s.names[i] || id,
+          }));
+        };
+        const coopRow = sorted.find((m: any) => m.match_mode === 'coop');
+        const duoRows = sorted.filter((m: any) => m.match_mode === 'duo');
+        const singleRow = sorted.find((m: any) => m.match_mode === 'single');
+        const coop = coopRow ? getSidePairs(coopRow).slice(0, 2) : [];
+        const duo = duoRows.flatMap((dm: any) => getSidePairs(dm).slice(0, 1)).slice(0, 2);
+        const single = singleRow ? getSidePairs(singleRow).slice(0, 1) : [];
+        if (coop.length !== 2 || duo.length !== 2 || single.length !== 1) return;
+
+        const ttPayload = { coop, duo, single };
+        const startingXiPayload = [
+          ...coop.map((p: any, i: number) => ({ ...p, mode: 'coop', slot: i + 1 })),
+          ...duo.map((p: any, i: number) => ({ ...p, mode: 'duo', slot: i + 1 })),
+          ...single.map((p: any, i: number) => ({ ...p, mode: 'single', slot: i + 1 })),
+        ];
+
+        try {
+          await sql`
+            UPDATE lineups
+            SET
+              triple_threat_lineup = ${JSON.stringify(ttPayload)}::jsonb,
+              starting_xi = ${JSON.stringify(startingXiPayload)}::jsonb,
+              updated_at = NOW()
+            WHERE fixture_id = ${fixtureId}
+              AND team_id = ${teamId}
+              AND COALESCE(submitted_by, '') <> 'system_auto'
+          `;
+        } catch (syncErr) {
+          console.warn('Could not sync Triple Threat lineup after matchup edit:', syncErr);
+        }
+      };
+
+      await Promise.all([
+        syncSideLineup(fixtureMeta.home_team_id, 'home'),
+        syncSideLineup(fixtureMeta.away_team_id, 'away'),
+      ]);
     }
 
     return NextResponse.json({ success: true, message: 'Matchups updated successfully' });
