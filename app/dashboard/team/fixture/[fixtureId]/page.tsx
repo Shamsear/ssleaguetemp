@@ -1240,15 +1240,27 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
         if (homeLineupResponse.ok) {
           const homeLineupData = await homeLineupResponse.json();
           const hValid = isRealSubmittedLineup(homeLineupData, isTTPoll);
-          setHomeLineupSubmitted(hValid);
-          setHomeTTLineup(hValid && !homeLineupData.lineups?.hidden_until_round_start ? (homeLineupData.lineups?.triple_threat_lineup || null) : null);
+          const nextHomeTT =
+            hValid && !homeLineupData.lineups?.hidden_until_round_start
+              ? (homeLineupData.lineups?.triple_threat_lineup || null)
+              : null;
+          setHomeLineupSubmitted((prev) => (prev === hValid ? prev : hValid));
+          setHomeTTLineup((prev: any) =>
+            JSON.stringify(prev) === JSON.stringify(nextHomeTT) ? prev : nextHomeTT
+          );
         }
 
         if (awayLineupResponse.ok) {
           const awayLineupData = await awayLineupResponse.json();
           const aValid = isRealSubmittedLineup(awayLineupData, isTTPoll);
-          setAwayLineupSubmitted(aValid);
-          setAwayTTLineup(aValid && !awayLineupData.lineups?.hidden_until_round_start ? (awayLineupData.lineups?.triple_threat_lineup || null) : null);
+          const nextAwayTT =
+            aValid && !awayLineupData.lineups?.hidden_until_round_start
+              ? (awayLineupData.lineups?.triple_threat_lineup || null)
+              : null;
+          setAwayLineupSubmitted((prev) => (prev === aValid ? prev : aValid));
+          setAwayTTLineup((prev: any) =>
+            JSON.stringify(prev) === JSON.stringify(nextAwayTT) ? prev : nextAwayTT
+          );
         }
 
         // Poll matchups - auto-update when created
@@ -5494,13 +5506,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2.5 items-center">
                                     <div className="min-w-0">
                                       <SearchablePlayerSelect
-                                        players={homeDuoCandidates.map((p: any) => ({
-                                          ...p,
-                                          assigned_label:
-                                            ttDuoHomeIds[slotIdx === 0 ? 1 : 0] === p.player_id
-                                              ? `Duo #${slotIdx === 0 ? 2 : 1}`
-                                              : undefined,
-                                        }))}
+                                        players={homeDuoCandidates}
+                                        assignedByPlayerId={
+                                          ttDuoHomeIds[slotIdx === 0 ? 1 : 0]
+                                            ? { [ttDuoHomeIds[slotIdx === 0 ? 1 : 0]]: `Duo #${slotIdx === 0 ? 2 : 1}` }
+                                            : undefined
+                                        }
                                         value={ttDuoHomeIds[slotIdx] || ''}
                                         onChange={(val) => handleDuoSideSelect('home', slotIdx, val)}
                                         placeholder={`Select ${fixture.home_team_name} Duo player...`}
@@ -5513,13 +5524,12 @@ _Powered by SS Super League S${seasonNumber} Committee_`;
                                     </div>
                                     <div className="min-w-0">
                                       <SearchablePlayerSelect
-                                        players={awayDuoCandidates.map((p: any) => ({
-                                          ...p,
-                                          assigned_label:
-                                            ttDuoAwayIds[slotIdx === 0 ? 1 : 0] === p.player_id
-                                              ? `Duo #${slotIdx === 0 ? 2 : 1}`
-                                              : undefined,
-                                        }))}
+                                        players={awayDuoCandidates}
+                                        assignedByPlayerId={
+                                          ttDuoAwayIds[slotIdx === 0 ? 1 : 0]
+                                            ? { [ttDuoAwayIds[slotIdx === 0 ? 1 : 0]]: `Duo #${slotIdx === 0 ? 2 : 1}` }
+                                            : undefined
+                                        }
                                         value={ttDuoAwayIds[slotIdx] || ''}
                                         onChange={(val) => handleDuoSideSelect('away', slotIdx, val)}
                                         placeholder={`Select ${fixture.away_team_name} Duo player...`}

@@ -470,6 +470,21 @@ function EditMatchupsSection({
         )}
       </div>
 
+      {isTTEdit && !draftMatchups.some((m) => resolveTripleThreatMode(m) === 'duo') && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl font-sans text-xs text-emerald-900 flex items-center justify-between gap-3">
+          <span>
+            <strong>🤝 Duo (2 × 1v1) Not Paired Yet:</strong> Pair Duo matchups on the fixture view right between Co-op and Single (Co-op &amp; Single edits below will be saved cleanly).
+          </span>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="shrink-0 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg cursor-pointer"
+          >
+            Go Pair Duo
+          </button>
+        </div>
+      )}
+
       {/* Matchup Cards (Static surface — no hover transform or shimmer repaint) */}
       {draftMatchups.map((matchup, idx) => {
         const ttMode = isTTEdit ? resolveTripleThreatMode(matchup) : null;
